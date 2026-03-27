@@ -12,7 +12,7 @@ artifacts/
 *.user
 *.userosscache
 *.sln.docstates
-
+*.txt
 # NuGet
 packages/
 *.nupkg
