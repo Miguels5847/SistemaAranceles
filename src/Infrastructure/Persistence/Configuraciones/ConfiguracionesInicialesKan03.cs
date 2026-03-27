@@ -472,3 +472,153 @@ internal sealed class DetalleSimulacionRetencionConfiguracion : IEntityTypeConfi
         builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
     }
 }
+
+internal sealed class ProyeccionEstudiantesConfiguracion : IEntityTypeConfiguration<ProyeccionEstudiantes>
+{
+    public void Configure(EntityTypeBuilder<ProyeccionEstudiantes> builder)
+    {
+        builder.ToTable("proyeccion_estudiantes");
+        ConfigurarCamposAuditoria(builder);
+
+        builder.Property(x => x.CarreraId).HasColumnName("carrera_id").IsRequired();
+        builder.Property(x => x.EscenarioProyeccionId).HasColumnName("escenario_proyeccion_id").IsRequired();
+        builder.Property(x => x.AnioBase).HasColumnName("anio_base").IsRequired();
+        builder.Property(x => x.SemanasPorSemestre).HasColumnName("semanas_por_semestre").IsRequired();
+
+        builder.HasOne(x => x.Carrera)
+            .WithMany()
+            .HasForeignKey(x => x.CarreraId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.EscenarioProyeccion)
+            .WithMany(x => x.ProyeccionesEstudiantes)
+            .HasForeignKey(x => x.EscenarioProyeccionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(x => new { x.CarreraId, x.EscenarioProyeccionId }).IsUnique();
+    }
+
+    private static void ConfigurarCamposAuditoria(EntityTypeBuilder<ProyeccionEstudiantes> builder)
+    {
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+        builder.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
+        builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
+        builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
+        builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
+        builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+    }
+}
+
+internal sealed class DetalleProyeccionEstudiantesConfiguracion : IEntityTypeConfiguration<DetalleProyeccionEstudiantes>
+{
+    public void Configure(EntityTypeBuilder<DetalleProyeccionEstudiantes> builder)
+    {
+        builder.ToTable("detalle_proyeccion_estudiantes");
+        ConfigurarCamposAuditoria(builder);
+
+        builder.Property(x => x.ProyeccionEstudiantesId).HasColumnName("proyeccion_estudiantes_id").IsRequired();
+        builder.Property(x => x.PeriodoAcademicoId).HasColumnName("periodo_academico_id").IsRequired();
+        builder.Property(x => x.NumeroCiclo).HasColumnName("numero_ciclo").IsRequired();
+        builder.Property(x => x.CantidadParalelos).HasColumnName("cantidad_paralelos").IsRequired();
+        builder.Property(x => x.TotalEstudiantes).HasColumnName("total_estudiantes").HasColumnType("decimal(9,4)").IsRequired();
+
+        builder.HasOne(x => x.ProyeccionEstudiantes)
+            .WithMany(x => x.DetallesProyeccionEstudiantes)
+            .HasForeignKey(x => x.ProyeccionEstudiantesId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.PeriodoAcademico)
+            .WithMany()
+            .HasForeignKey(x => x.PeriodoAcademicoId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(x => new { x.ProyeccionEstudiantesId, x.PeriodoAcademicoId, x.NumeroCiclo }).IsUnique();
+    }
+
+    private static void ConfigurarCamposAuditoria(EntityTypeBuilder<DetalleProyeccionEstudiantes> builder)
+    {
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+        builder.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
+        builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
+        builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
+        builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
+        builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+    }
+}
+
+internal sealed class ConfiguracionCargaDocenteConfiguracion : IEntityTypeConfiguration<ConfiguracionCargaDocente>
+{
+    public void Configure(EntityTypeBuilder<ConfiguracionCargaDocente> builder)
+    {
+        builder.ToTable("configuracion_carga_docente");
+        ConfigurarCamposAuditoria(builder);
+
+        builder.Property(x => x.ProyeccionEstudiantesId).HasColumnName("proyeccion_estudiantes_id").IsRequired();
+        builder.Property(x => x.HorasDocenciaEstandar).HasColumnName("horas_docencia_estandar").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.HorasTecnicoEstandar).HasColumnName("horas_tecnico_estandar").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.ProporcionPhdPorcentaje).HasColumnName("proporcion_phd_porcentaje").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.ProporcionMgsPorcentaje).HasColumnName("proporcion_mgs_porcentaje").HasColumnType("decimal(9,4)").IsRequired();
+
+        builder.HasOne(x => x.ProyeccionEstudiantes)
+            .WithMany(x => x.ConfiguracionesCargaDocente)
+            .HasForeignKey(x => x.ProyeccionEstudiantesId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+
+    private static void ConfigurarCamposAuditoria(EntityTypeBuilder<ConfiguracionCargaDocente> builder)
+    {
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+        builder.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
+        builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
+        builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
+        builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
+        builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+    }
+}
+
+internal sealed class ProyeccionRequerimientoDocenteConfiguracion : IEntityTypeConfiguration<ProyeccionRequerimientoDocente>
+{
+    public void Configure(EntityTypeBuilder<ProyeccionRequerimientoDocente> builder)
+    {
+        builder.ToTable("proyeccion_requerimiento_docente");
+        ConfigurarCamposAuditoria(builder);
+
+        builder.Property(x => x.ConfiguracionCargaDocenteId).HasColumnName("configuracion_carga_docente_id").IsRequired();
+        builder.Property(x => x.PeriodoAcademicoId).HasColumnName("periodo_academico_id").IsRequired();
+        builder.Property(x => x.TotalDocentes).HasColumnName("total_docentes").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.DocentesPhd).HasColumnName("docentes_phd").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.DocentesMgs).HasColumnName("docentes_mgs").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.DocentesParcial).HasColumnName("docentes_parcial").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.DocentesTecnico).HasColumnName("docentes_tecnico").HasColumnType("decimal(9,4)").IsRequired();
+
+        builder.HasOne(x => x.ConfiguracionCargaDocente)
+            .WithMany(x => x.ProyeccionesRequerimientoDocente)
+            .HasForeignKey(x => x.ConfiguracionCargaDocenteId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.PeriodoAcademico)
+            .WithMany()
+            .HasForeignKey(x => x.PeriodoAcademicoId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(x => new { x.ConfiguracionCargaDocenteId, x.PeriodoAcademicoId }).IsUnique();
+    }
+
+    private static void ConfigurarCamposAuditoria(EntityTypeBuilder<ProyeccionRequerimientoDocente> builder)
+    {
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+        builder.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
+        builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
+        builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
+        builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
+        builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+    }
+}

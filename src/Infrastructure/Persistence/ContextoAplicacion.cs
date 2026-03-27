@@ -21,6 +21,10 @@ public sealed class ContextoAplicacion(DbContextOptions<ContextoAplicacion> opti
     public DbSet<CriterioReferenciaRetencion> CriteriosReferenciaRetencion => Set<CriterioReferenciaRetencion>();
     public DbSet<SimulacionRetencion> SimulacionesRetencion => Set<SimulacionRetencion>();
     public DbSet<DetalleSimulacionRetencion> DetallesSimulacionRetencion => Set<DetalleSimulacionRetencion>();
+    public DbSet<ProyeccionEstudiantes> ProyeccionesEstudiantes => Set<ProyeccionEstudiantes>();
+    public DbSet<DetalleProyeccionEstudiantes> DetallesProyeccionEstudiantes => Set<DetalleProyeccionEstudiantes>();
+    public DbSet<ConfiguracionCargaDocente> ConfiguracionesCargaDocente => Set<ConfiguracionCargaDocente>();
+    public DbSet<ProyeccionRequerimientoDocente> ProyeccionesRequerimientoDocente => Set<ProyeccionRequerimientoDocente>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

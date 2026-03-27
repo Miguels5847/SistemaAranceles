@@ -107,6 +107,7 @@ public sealed class EscenarioProyeccion : EntidadBase
 
     public ICollection<InflacionProyectada> InflacionesProyectadas { get; set; } = new List<InflacionProyectada>();
     public ICollection<ConfiguracionRetencion> ConfiguracionesRetencion { get; set; } = new List<ConfiguracionRetencion>();
+    public ICollection<ProyeccionEstudiantes> ProyeccionesEstudiantes { get; set; } = new List<ProyeccionEstudiantes>();
 }
 
 public sealed class InflacionAnual : EntidadBase
@@ -175,4 +176,55 @@ public sealed class DetalleSimulacionRetencion : EntidadBase
     public string TipoZona { get; set; } = string.Empty;
 
     public SimulacionRetencion? SimulacionRetencion { get; set; }
+}
+
+public sealed class ProyeccionEstudiantes : EntidadBase
+{
+    public int CarreraId { get; set; }
+    public int EscenarioProyeccionId { get; set; }
+    public int AnioBase { get; set; }
+    public int SemanasPorSemestre { get; set; }
+
+    public Carrera? Carrera { get; set; }
+    public EscenarioProyeccion? EscenarioProyeccion { get; set; }
+    public ICollection<DetalleProyeccionEstudiantes> DetallesProyeccionEstudiantes { get; set; } = new List<DetalleProyeccionEstudiantes>();
+    public ICollection<ConfiguracionCargaDocente> ConfiguracionesCargaDocente { get; set; } = new List<ConfiguracionCargaDocente>();
+}
+
+public sealed class DetalleProyeccionEstudiantes : EntidadBase
+{
+    public int ProyeccionEstudiantesId { get; set; }
+    public int PeriodoAcademicoId { get; set; }
+    public int NumeroCiclo { get; set; }
+    public int CantidadParalelos { get; set; }
+    public decimal TotalEstudiantes { get; set; }
+
+    public ProyeccionEstudiantes? ProyeccionEstudiantes { get; set; }
+    public PeriodoAcademico? PeriodoAcademico { get; set; }
+}
+
+public sealed class ConfiguracionCargaDocente : EntidadBase
+{
+    public int ProyeccionEstudiantesId { get; set; }
+    public decimal HorasDocenciaEstandar { get; set; }
+    public decimal HorasTecnicoEstandar { get; set; }
+    public decimal ProporcionPhdPorcentaje { get; set; }
+    public decimal ProporcionMgsPorcentaje { get; set; }
+
+    public ProyeccionEstudiantes? ProyeccionEstudiantes { get; set; }
+    public ICollection<ProyeccionRequerimientoDocente> ProyeccionesRequerimientoDocente { get; set; } = new List<ProyeccionRequerimientoDocente>();
+}
+
+public sealed class ProyeccionRequerimientoDocente : EntidadBase
+{
+    public int ConfiguracionCargaDocenteId { get; set; }
+    public int PeriodoAcademicoId { get; set; }
+    public decimal TotalDocentes { get; set; }
+    public decimal DocentesPhd { get; set; }
+    public decimal DocentesMgs { get; set; }
+    public decimal DocentesParcial { get; set; }
+    public decimal DocentesTecnico { get; set; }
+
+    public ConfiguracionCargaDocente? ConfiguracionCargaDocente { get; set; }
+    public PeriodoAcademico? PeriodoAcademico { get; set; }
 }
