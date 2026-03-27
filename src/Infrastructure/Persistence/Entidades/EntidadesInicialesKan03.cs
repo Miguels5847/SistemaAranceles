@@ -85,6 +85,7 @@ public sealed class Carrera : EntidadBase
     public int TotalCiclos { get; set; }
 
     public ICollection<EscenarioProyeccion> EscenariosProyeccion { get; set; } = new List<EscenarioProyeccion>();
+    public ICollection<CargoFacultad> CargosFacultad { get; set; } = new List<CargoFacultad>();
 }
 
 public sealed class PeriodoAcademico : EntidadBase
@@ -226,5 +227,51 @@ public sealed class ProyeccionRequerimientoDocente : EntidadBase
     public decimal DocentesTecnico { get; set; }
 
     public ConfiguracionCargaDocente? ConfiguracionCargaDocente { get; set; }
+    public PeriodoAcademico? PeriodoAcademico { get; set; }
+}
+
+public sealed class CargoFacultad : EntidadBase
+{
+    public int CarreraId { get; set; }
+    public string NombreCargo { get; set; } = string.Empty;
+    public string TipoCargo { get; set; } = string.Empty;
+    public decimal SueldoBaseMensual { get; set; }
+    public bool EsCargoDocente { get; set; }
+
+    public Carrera? Carrera { get; set; }
+    public ICollection<ProyeccionCargoFacultad> ProyeccionesCargoFacultad { get; set; } = new List<ProyeccionCargoFacultad>();
+}
+
+public sealed class ProyeccionCargoFacultad : EntidadBase
+{
+    public int CargoFacultadId { get; set; }
+    public int PeriodoAcademicoId { get; set; }
+    public decimal CantidadPersonas { get; set; }
+    public decimal FactorPonderacion { get; set; }
+    public decimal FactorInflacion { get; set; }
+    public decimal CostoTotalSemestre { get; set; }
+
+    public CargoFacultad? CargoFacultad { get; set; }
+    public PeriodoAcademico? PeriodoAcademico { get; set; }
+}
+
+public sealed class CargoPlantaCentral : EntidadBase
+{
+    public string NombreCargo { get; set; } = string.Empty;
+    public decimal SueldoMensualTotal { get; set; }
+
+    public ICollection<ProyeccionCargoPlantaCentral> ProyeccionesCargoPlantaCentral { get; set; } = new List<ProyeccionCargoPlantaCentral>();
+}
+
+public sealed class ProyeccionCargoPlantaCentral : EntidadBase
+{
+    public int CargoPlantaCentralId { get; set; }
+    public int CarreraId { get; set; }
+    public int PeriodoAcademicoId { get; set; }
+    public decimal ProporcionAsignacion { get; set; }
+    public decimal CostoTotalSemestre { get; set; }
+
+    public CargoPlantaCentral? CargoPlantaCentral { get; set; }
+    public Carrera? Carrera { get; set; }
     public PeriodoAcademico? PeriodoAcademico { get; set; }
 }

@@ -25,6 +25,10 @@ public sealed class ContextoAplicacion(DbContextOptions<ContextoAplicacion> opti
     public DbSet<DetalleProyeccionEstudiantes> DetallesProyeccionEstudiantes => Set<DetalleProyeccionEstudiantes>();
     public DbSet<ConfiguracionCargaDocente> ConfiguracionesCargaDocente => Set<ConfiguracionCargaDocente>();
     public DbSet<ProyeccionRequerimientoDocente> ProyeccionesRequerimientoDocente => Set<ProyeccionRequerimientoDocente>();
+    public DbSet<CargoFacultad> CargosFacultad => Set<CargoFacultad>();
+    public DbSet<ProyeccionCargoFacultad> ProyeccionesCargoFacultad => Set<ProyeccionCargoFacultad>();
+    public DbSet<CargoPlantaCentral> CargosPlantaCentral => Set<CargoPlantaCentral>();
+    public DbSet<ProyeccionCargoPlantaCentral> ProyeccionesCargoPlantaCentral => Set<ProyeccionCargoPlantaCentral>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

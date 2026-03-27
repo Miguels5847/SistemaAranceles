@@ -622,3 +622,147 @@ internal sealed class ProyeccionRequerimientoDocenteConfiguracion : IEntityTypeC
         builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
     }
 }
+
+internal sealed class CargoFacultadConfiguracion : IEntityTypeConfiguration<CargoFacultad>
+{
+    public void Configure(EntityTypeBuilder<CargoFacultad> builder)
+    {
+        builder.ToTable("cargo_facultad");
+        ConfigurarCamposAuditoria(builder);
+
+        builder.Property(x => x.CarreraId).HasColumnName("carrera_id").IsRequired();
+        builder.Property(x => x.NombreCargo).HasColumnName("nombre_cargo").HasMaxLength(120).IsRequired();
+        builder.Property(x => x.TipoCargo).HasColumnName("tipo_cargo").HasMaxLength(60).IsRequired();
+        builder.Property(x => x.SueldoBaseMensual).HasColumnName("sueldo_base_mensual").HasColumnType("decimal(18,2)").IsRequired();
+        builder.Property(x => x.EsCargoDocente).HasColumnName("es_cargo_docente").IsRequired();
+
+        builder.HasOne(x => x.Carrera)
+            .WithMany(x => x.CargosFacultad)
+            .HasForeignKey(x => x.CarreraId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(x => new { x.CarreraId, x.NombreCargo }).IsUnique();
+    }
+
+    private static void ConfigurarCamposAuditoria(EntityTypeBuilder<CargoFacultad> builder)
+    {
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+        builder.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
+        builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
+        builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
+        builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
+        builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+    }
+}
+
+internal sealed class ProyeccionCargoFacultadConfiguracion : IEntityTypeConfiguration<ProyeccionCargoFacultad>
+{
+    public void Configure(EntityTypeBuilder<ProyeccionCargoFacultad> builder)
+    {
+        builder.ToTable("proyeccion_cargo_facultad");
+        ConfigurarCamposAuditoria(builder);
+
+        builder.Property(x => x.CargoFacultadId).HasColumnName("cargo_facultad_id").IsRequired();
+        builder.Property(x => x.PeriodoAcademicoId).HasColumnName("periodo_academico_id").IsRequired();
+        builder.Property(x => x.CantidadPersonas).HasColumnName("cantidad_personas").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.FactorPonderacion).HasColumnName("factor_ponderacion").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.FactorInflacion).HasColumnName("factor_inflacion").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.CostoTotalSemestre).HasColumnName("costo_total_semestre").HasColumnType("decimal(18,2)").IsRequired();
+
+        builder.HasOne(x => x.CargoFacultad)
+            .WithMany(x => x.ProyeccionesCargoFacultad)
+            .HasForeignKey(x => x.CargoFacultadId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.PeriodoAcademico)
+            .WithMany()
+            .HasForeignKey(x => x.PeriodoAcademicoId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(x => new { x.CargoFacultadId, x.PeriodoAcademicoId }).IsUnique();
+    }
+
+    private static void ConfigurarCamposAuditoria(EntityTypeBuilder<ProyeccionCargoFacultad> builder)
+    {
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+        builder.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
+        builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
+        builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
+        builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
+        builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+    }
+}
+
+internal sealed class CargoPlantaCentralConfiguracion : IEntityTypeConfiguration<CargoPlantaCentral>
+{
+    public void Configure(EntityTypeBuilder<CargoPlantaCentral> builder)
+    {
+        builder.ToTable("cargo_planta_central");
+        ConfigurarCamposAuditoria(builder);
+
+        builder.Property(x => x.NombreCargo).HasColumnName("nombre_cargo").HasMaxLength(120).IsRequired();
+        builder.Property(x => x.SueldoMensualTotal).HasColumnName("sueldo_mensual_total").HasColumnType("decimal(18,2)").IsRequired();
+
+        builder.HasIndex(x => x.NombreCargo).IsUnique();
+    }
+
+    private static void ConfigurarCamposAuditoria(EntityTypeBuilder<CargoPlantaCentral> builder)
+    {
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+        builder.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
+        builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
+        builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
+        builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
+        builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+    }
+}
+
+internal sealed class ProyeccionCargoPlantaCentralConfiguracion : IEntityTypeConfiguration<ProyeccionCargoPlantaCentral>
+{
+    public void Configure(EntityTypeBuilder<ProyeccionCargoPlantaCentral> builder)
+    {
+        builder.ToTable("proyeccion_cargo_planta_central");
+        ConfigurarCamposAuditoria(builder);
+
+        builder.Property(x => x.CargoPlantaCentralId).HasColumnName("cargo_planta_central_id").IsRequired();
+        builder.Property(x => x.CarreraId).HasColumnName("carrera_id").IsRequired();
+        builder.Property(x => x.PeriodoAcademicoId).HasColumnName("periodo_academico_id").IsRequired();
+        builder.Property(x => x.ProporcionAsignacion).HasColumnName("proporcion_asignacion").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.CostoTotalSemestre).HasColumnName("costo_total_semestre").HasColumnType("decimal(18,2)").IsRequired();
+
+        builder.HasOne(x => x.CargoPlantaCentral)
+            .WithMany(x => x.ProyeccionesCargoPlantaCentral)
+            .HasForeignKey(x => x.CargoPlantaCentralId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.Carrera)
+            .WithMany()
+            .HasForeignKey(x => x.CarreraId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.PeriodoAcademico)
+            .WithMany()
+            .HasForeignKey(x => x.PeriodoAcademicoId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(x => new { x.CargoPlantaCentralId, x.CarreraId, x.PeriodoAcademicoId }).IsUnique();
+    }
+
+    private static void ConfigurarCamposAuditoria(EntityTypeBuilder<ProyeccionCargoPlantaCentral> builder)
+    {
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+        builder.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
+        builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
+        builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
+        builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
+        builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+    }
+}
