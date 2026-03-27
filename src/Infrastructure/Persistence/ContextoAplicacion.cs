@@ -15,6 +15,12 @@ public sealed class ContextoAplicacion(DbContextOptions<ContextoAplicacion> opti
     public DbSet<Carrera> Carreras => Set<Carrera>();
     public DbSet<PeriodoAcademico> PeriodosAcademicos => Set<PeriodoAcademico>();
     public DbSet<EscenarioProyeccion> EscenariosProyeccion => Set<EscenarioProyeccion>();
+    public DbSet<InflacionAnual> InflacionesAnuales => Set<InflacionAnual>();
+    public DbSet<InflacionProyectada> InflacionesProyectadas => Set<InflacionProyectada>();
+    public DbSet<ConfiguracionRetencion> ConfiguracionesRetencion => Set<ConfiguracionRetencion>();
+    public DbSet<CriterioReferenciaRetencion> CriteriosReferenciaRetencion => Set<CriterioReferenciaRetencion>();
+    public DbSet<SimulacionRetencion> SimulacionesRetencion => Set<SimulacionRetencion>();
+    public DbSet<DetalleSimulacionRetencion> DetallesSimulacionRetencion => Set<DetalleSimulacionRetencion>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

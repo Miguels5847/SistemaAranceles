@@ -268,3 +268,207 @@ internal sealed class EscenarioProyeccionConfiguracion : IEntityTypeConfiguratio
         builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
     }
 }
+
+internal sealed class InflacionAnualConfiguracion : IEntityTypeConfiguration<InflacionAnual>
+{
+    public void Configure(EntityTypeBuilder<InflacionAnual> builder)
+    {
+        builder.ToTable("inflacion_anual");
+        ConfigurarCamposAuditoria(builder);
+
+        builder.Property(x => x.Anio).HasColumnName("anio").IsRequired();
+        builder.Property(x => x.PorcentajeInflacion).HasColumnName("porcentaje_inflacion").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.FuenteNombre).HasColumnName("fuente_nombre").HasMaxLength(100).IsRequired();
+        builder.Property(x => x.TipoFuente).HasColumnName("tipo_fuente").HasMaxLength(60).IsRequired();
+
+        builder.HasIndex(x => x.Anio).IsUnique();
+    }
+
+    private static void ConfigurarCamposAuditoria(EntityTypeBuilder<InflacionAnual> builder)
+    {
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+        builder.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
+        builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
+        builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
+        builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
+        builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+    }
+}
+
+internal sealed class InflacionProyectadaConfiguracion : IEntityTypeConfiguration<InflacionProyectada>
+{
+    public void Configure(EntityTypeBuilder<InflacionProyectada> builder)
+    {
+        builder.ToTable("inflacion_proyectada");
+        ConfigurarCamposAuditoria(builder);
+
+        builder.Property(x => x.EscenarioProyeccionId).HasColumnName("escenario_proyeccion_id").IsRequired();
+        builder.Property(x => x.Anio).HasColumnName("anio").IsRequired();
+        builder.Property(x => x.PorcentajeInflacion).HasColumnName("porcentaje_inflacion").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.MetodoProyeccion).HasColumnName("metodo_proyeccion").HasMaxLength(80).IsRequired();
+        builder.Property(x => x.EsAjusteManual).HasColumnName("es_ajuste_manual").IsRequired();
+
+        builder.HasOne(x => x.EscenarioProyeccion)
+            .WithMany(x => x.InflacionesProyectadas)
+            .HasForeignKey(x => x.EscenarioProyeccionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(x => new { x.EscenarioProyeccionId, x.Anio }).IsUnique();
+    }
+
+    private static void ConfigurarCamposAuditoria(EntityTypeBuilder<InflacionProyectada> builder)
+    {
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+        builder.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
+        builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
+        builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
+        builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
+        builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+    }
+}
+
+internal sealed class ConfiguracionRetencionConfiguracion : IEntityTypeConfiguration<ConfiguracionRetencion>
+{
+    public void Configure(EntityTypeBuilder<ConfiguracionRetencion> builder)
+    {
+        builder.ToTable("configuracion_retencion");
+        ConfigurarCamposAuditoria(builder);
+
+        builder.Property(x => x.CarreraId).HasColumnName("carrera_id").IsRequired();
+        builder.Property(x => x.EscenarioProyeccionId).HasColumnName("escenario_proyeccion_id").IsRequired();
+        builder.Property(x => x.TotalCiclos).HasColumnName("total_ciclos").IsRequired();
+        builder.Property(x => x.TasaRetencionPorcentaje).HasColumnName("tasa_retencion_porcentaje").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.TasaGraduacionPorcentaje).HasColumnName("tasa_graduacion_porcentaje").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.EstudiantesPeriodo1).HasColumnName("estudiantes_periodo_1").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.EstudiantesPeriodo2).HasColumnName("estudiantes_periodo_2").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.ParalelosPeriodo1).HasColumnName("paralelos_periodo_1").IsRequired();
+        builder.Property(x => x.ParalelosPeriodo2).HasColumnName("paralelos_periodo_2").IsRequired();
+
+        builder.HasOne(x => x.Carrera)
+            .WithMany()
+            .HasForeignKey(x => x.CarreraId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.EscenarioProyeccion)
+            .WithMany(x => x.ConfiguracionesRetencion)
+            .HasForeignKey(x => x.EscenarioProyeccionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(x => new { x.CarreraId, x.EscenarioProyeccionId }).IsUnique();
+    }
+
+    private static void ConfigurarCamposAuditoria(EntityTypeBuilder<ConfiguracionRetencion> builder)
+    {
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+        builder.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
+        builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
+        builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
+        builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
+        builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+    }
+}
+
+internal sealed class CriterioReferenciaRetencionConfiguracion : IEntityTypeConfiguration<CriterioReferenciaRetencion>
+{
+    public void Configure(EntityTypeBuilder<CriterioReferenciaRetencion> builder)
+    {
+        builder.ToTable("criterio_referencia_retencion");
+        ConfigurarCamposAuditoria(builder);
+
+        builder.Property(x => x.ConfiguracionRetencionId).HasColumnName("configuracion_retencion_id").IsRequired();
+        builder.Property(x => x.MetaRetencionPorcentaje).HasColumnName("meta_retencion_porcentaje").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.MetaGraduacionPorcentaje).HasColumnName("meta_graduacion_porcentaje").HasColumnType("decimal(9,4)").IsRequired();
+
+        builder.HasOne(x => x.ConfiguracionRetencion)
+            .WithOne(x => x.CriterioReferenciaRetencion)
+            .HasForeignKey<CriterioReferenciaRetencion>(x => x.ConfiguracionRetencionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(x => x.ConfiguracionRetencionId).IsUnique();
+    }
+
+    private static void ConfigurarCamposAuditoria(EntityTypeBuilder<CriterioReferenciaRetencion> builder)
+    {
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+        builder.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
+        builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
+        builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
+        builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
+        builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+    }
+}
+
+internal sealed class SimulacionRetencionConfiguracion : IEntityTypeConfiguration<SimulacionRetencion>
+{
+    public void Configure(EntityTypeBuilder<SimulacionRetencion> builder)
+    {
+        builder.ToTable("simulacion_retencion");
+        ConfigurarCamposAuditoria(builder);
+
+        builder.Property(x => x.ConfiguracionRetencionId).HasColumnName("configuracion_retencion_id").IsRequired();
+        builder.Property(x => x.EjecutadoEn).HasColumnName("ejecutado_en").IsRequired();
+        builder.Property(x => x.Notas).HasColumnName("notas").HasMaxLength(500);
+
+        builder.HasOne(x => x.ConfiguracionRetencion)
+            .WithMany(x => x.SimulacionesRetencion)
+            .HasForeignKey(x => x.ConfiguracionRetencionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(x => new { x.ConfiguracionRetencionId, x.EjecutadoEn });
+    }
+
+    private static void ConfigurarCamposAuditoria(EntityTypeBuilder<SimulacionRetencion> builder)
+    {
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+        builder.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
+        builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
+        builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
+        builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
+        builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+    }
+}
+
+internal sealed class DetalleSimulacionRetencionConfiguracion : IEntityTypeConfiguration<DetalleSimulacionRetencion>
+{
+    public void Configure(EntityTypeBuilder<DetalleSimulacionRetencion> builder)
+    {
+        builder.ToTable("detalle_simulacion_retencion");
+        ConfigurarCamposAuditoria(builder);
+
+        builder.Property(x => x.SimulacionRetencionId).HasColumnName("simulacion_retencion_id").IsRequired();
+        builder.Property(x => x.NumeroCiclo).HasColumnName("numero_ciclo").IsRequired();
+        builder.Property(x => x.NumeroPeriodo).HasColumnName("numero_periodo").IsRequired();
+        builder.Property(x => x.ValorEstudiantes).HasColumnName("valor_estudiantes").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.TasaAplicadaPorcentaje).HasColumnName("tasa_aplicada_porcentaje").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.TipoZona).HasColumnName("tipo_zona").HasMaxLength(30).IsRequired();
+
+        builder.HasOne(x => x.SimulacionRetencion)
+            .WithMany(x => x.DetallesSimulacionRetencion)
+            .HasForeignKey(x => x.SimulacionRetencionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(x => new { x.SimulacionRetencionId, x.NumeroCiclo, x.NumeroPeriodo }).IsUnique();
+    }
+
+    private static void ConfigurarCamposAuditoria(EntityTypeBuilder<DetalleSimulacionRetencion> builder)
+    {
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+        builder.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
+        builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
+        builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
+        builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
+        builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+    }
+}
