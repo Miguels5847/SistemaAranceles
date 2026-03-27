@@ -86,6 +86,8 @@ public sealed class Carrera : EntidadBase
 
     public ICollection<EscenarioProyeccion> EscenariosProyeccion { get; set; } = new List<EscenarioProyeccion>();
     public ICollection<CargoFacultad> CargosFacultad { get; set; } = new List<CargoFacultad>();
+    public ICollection<ConfiguracionArancel> ConfiguracionesArancel { get; set; } = new List<ConfiguracionArancel>();
+    public ICollection<ItemMaterialInsumo> ItemsMaterialInsumo { get; set; } = new List<ItemMaterialInsumo>();
 }
 
 public sealed class PeriodoAcademico : EntidadBase
@@ -95,6 +97,8 @@ public sealed class PeriodoAcademico : EntidadBase
     public string EtiquetaPeriodo { get; set; } = string.Empty;
     public DateOnly? FechaInicio { get; set; }
     public DateOnly? FechaFin { get; set; }
+
+    public ICollection<ProyeccionMaterialInsumo> ProyeccionesMaterialInsumo { get; set; } = new List<ProyeccionMaterialInsumo>();
 }
 
 public sealed class EscenarioProyeccion : EntidadBase
@@ -109,6 +113,7 @@ public sealed class EscenarioProyeccion : EntidadBase
     public ICollection<InflacionProyectada> InflacionesProyectadas { get; set; } = new List<InflacionProyectada>();
     public ICollection<ConfiguracionRetencion> ConfiguracionesRetencion { get; set; } = new List<ConfiguracionRetencion>();
     public ICollection<ProyeccionEstudiantes> ProyeccionesEstudiantes { get; set; } = new List<ProyeccionEstudiantes>();
+    public ICollection<ConfiguracionArancel> ConfiguracionesArancel { get; set; } = new List<ConfiguracionArancel>();
 }
 
 public sealed class InflacionAnual : EntidadBase
@@ -273,5 +278,50 @@ public sealed class ProyeccionCargoPlantaCentral : EntidadBase
 
     public CargoPlantaCentral? CargoPlantaCentral { get; set; }
     public Carrera? Carrera { get; set; }
+    public PeriodoAcademico? PeriodoAcademico { get; set; }
+}
+
+public sealed class ConfiguracionArancel : EntidadBase
+{
+    public int CarreraId { get; set; }
+    public int EscenarioProyeccionId { get; set; }
+    public decimal ValorArancel { get; set; }
+    public decimal ValorMatricula { get; set; }
+    public string TipoOrigen { get; set; } = string.Empty;
+
+    public Carrera? Carrera { get; set; }
+    public EscenarioProyeccion? EscenarioProyeccion { get; set; }
+}
+
+public sealed class PresupuestoInstitucional : EntidadBase
+{
+    public string TipoPresupuesto { get; set; } = string.Empty;
+    public decimal ValorAnualBase { get; set; }
+    public bool AjustablePorInflacion { get; set; }
+}
+
+public sealed class ItemMaterialInsumo : EntidadBase
+{
+    public int CarreraId { get; set; }
+    public string NombreItem { get; set; } = string.Empty;
+    public string CategoriaNombre { get; set; } = string.Empty;
+    public string UnidadNombre { get; set; } = string.Empty;
+    public decimal CantidadBase { get; set; }
+    public decimal PrecioUnitario { get; set; }
+    public bool EsCantidadFija { get; set; }
+
+    public Carrera? Carrera { get; set; }
+    public ICollection<ProyeccionMaterialInsumo> ProyeccionesMaterialInsumo { get; set; } = new List<ProyeccionMaterialInsumo>();
+}
+
+public sealed class ProyeccionMaterialInsumo : EntidadBase
+{
+    public int ItemMaterialInsumoId { get; set; }
+    public int PeriodoAcademicoId { get; set; }
+    public decimal CantidadProyectada { get; set; }
+    public decimal FactorInflacion { get; set; }
+    public decimal CostoTotalProyectado { get; set; }
+
+    public ItemMaterialInsumo? ItemMaterialInsumo { get; set; }
     public PeriodoAcademico? PeriodoAcademico { get; set; }
 }

@@ -766,3 +766,144 @@ internal sealed class ProyeccionCargoPlantaCentralConfiguracion : IEntityTypeCon
         builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
     }
 }
+
+internal sealed class ConfiguracionArancelConfiguracion : IEntityTypeConfiguration<ConfiguracionArancel>
+{
+    public void Configure(EntityTypeBuilder<ConfiguracionArancel> builder)
+    {
+        builder.ToTable("configuracion_arancel");
+        ConfigurarCamposAuditoria(builder);
+
+        builder.Property(x => x.CarreraId).HasColumnName("carrera_id").IsRequired();
+        builder.Property(x => x.EscenarioProyeccionId).HasColumnName("escenario_proyeccion_id").IsRequired();
+        builder.Property(x => x.ValorArancel).HasColumnName("valor_arancel").HasColumnType("decimal(18,2)").IsRequired();
+        builder.Property(x => x.ValorMatricula).HasColumnName("valor_matricula").HasColumnType("decimal(18,2)").IsRequired();
+        builder.Property(x => x.TipoOrigen).HasColumnName("tipo_origen").HasMaxLength(60).IsRequired();
+
+        builder.HasOne(x => x.Carrera)
+            .WithMany(x => x.ConfiguracionesArancel)
+            .HasForeignKey(x => x.CarreraId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.EscenarioProyeccion)
+            .WithMany(x => x.ConfiguracionesArancel)
+            .HasForeignKey(x => x.EscenarioProyeccionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(x => new { x.CarreraId, x.EscenarioProyeccionId }).IsUnique();
+    }
+
+    private static void ConfigurarCamposAuditoria(EntityTypeBuilder<ConfiguracionArancel> builder)
+    {
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+        builder.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
+        builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
+        builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
+        builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
+        builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+    }
+}
+
+internal sealed class PresupuestoInstitucionalConfiguracion : IEntityTypeConfiguration<PresupuestoInstitucional>
+{
+    public void Configure(EntityTypeBuilder<PresupuestoInstitucional> builder)
+    {
+        builder.ToTable("presupuesto_institucional");
+        ConfigurarCamposAuditoria(builder);
+
+        builder.Property(x => x.TipoPresupuesto).HasColumnName("tipo_presupuesto").HasMaxLength(80).IsRequired();
+        builder.Property(x => x.ValorAnualBase).HasColumnName("valor_anual_base").HasColumnType("decimal(18,2)").IsRequired();
+        builder.Property(x => x.AjustablePorInflacion).HasColumnName("ajustable_por_inflacion").IsRequired();
+
+        builder.HasIndex(x => x.TipoPresupuesto).IsUnique();
+    }
+
+    private static void ConfigurarCamposAuditoria(EntityTypeBuilder<PresupuestoInstitucional> builder)
+    {
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+        builder.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
+        builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
+        builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
+        builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
+        builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+    }
+}
+
+internal sealed class ItemMaterialInsumoConfiguracion : IEntityTypeConfiguration<ItemMaterialInsumo>
+{
+    public void Configure(EntityTypeBuilder<ItemMaterialInsumo> builder)
+    {
+        builder.ToTable("item_material_insumo");
+        ConfigurarCamposAuditoria(builder);
+
+        builder.Property(x => x.CarreraId).HasColumnName("carrera_id").IsRequired();
+        builder.Property(x => x.NombreItem).HasColumnName("nombre_item").HasMaxLength(140).IsRequired();
+        builder.Property(x => x.CategoriaNombre).HasColumnName("categoria_nombre").HasMaxLength(100).IsRequired();
+        builder.Property(x => x.UnidadNombre).HasColumnName("unidad_nombre").HasMaxLength(60).IsRequired();
+        builder.Property(x => x.CantidadBase).HasColumnName("cantidad_base").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.PrecioUnitario).HasColumnName("precio_unitario").HasColumnType("decimal(18,2)").IsRequired();
+        builder.Property(x => x.EsCantidadFija).HasColumnName("es_cantidad_fija").IsRequired();
+
+        builder.HasOne(x => x.Carrera)
+            .WithMany(x => x.ItemsMaterialInsumo)
+            .HasForeignKey(x => x.CarreraId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(x => new { x.CarreraId, x.NombreItem }).IsUnique();
+    }
+
+    private static void ConfigurarCamposAuditoria(EntityTypeBuilder<ItemMaterialInsumo> builder)
+    {
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+        builder.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
+        builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
+        builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
+        builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
+        builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+    }
+}
+
+internal sealed class ProyeccionMaterialInsumoConfiguracion : IEntityTypeConfiguration<ProyeccionMaterialInsumo>
+{
+    public void Configure(EntityTypeBuilder<ProyeccionMaterialInsumo> builder)
+    {
+        builder.ToTable("proyeccion_material_insumo");
+        ConfigurarCamposAuditoria(builder);
+
+        builder.Property(x => x.ItemMaterialInsumoId).HasColumnName("item_material_insumo_id").IsRequired();
+        builder.Property(x => x.PeriodoAcademicoId).HasColumnName("periodo_academico_id").IsRequired();
+        builder.Property(x => x.CantidadProyectada).HasColumnName("cantidad_proyectada").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.FactorInflacion).HasColumnName("factor_inflacion").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.CostoTotalProyectado).HasColumnName("costo_total_proyectado").HasColumnType("decimal(18,2)").IsRequired();
+
+        builder.HasOne(x => x.ItemMaterialInsumo)
+            .WithMany(x => x.ProyeccionesMaterialInsumo)
+            .HasForeignKey(x => x.ItemMaterialInsumoId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.PeriodoAcademico)
+            .WithMany(x => x.ProyeccionesMaterialInsumo)
+            .HasForeignKey(x => x.PeriodoAcademicoId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(x => new { x.ItemMaterialInsumoId, x.PeriodoAcademicoId }).IsUnique();
+    }
+
+    private static void ConfigurarCamposAuditoria(EntityTypeBuilder<ProyeccionMaterialInsumo> builder)
+    {
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+        builder.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
+        builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
+        builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
+        builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
+        builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+    }
+}
