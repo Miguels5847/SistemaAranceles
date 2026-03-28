@@ -1,3 +1,5 @@
+using SistemaAranceles.Domain.Common;
+
 namespace SistemaAranceles.Domain.Entities;
 
 public sealed class Rol : EntidadDominioBase
@@ -17,21 +19,11 @@ public sealed class Rol : EntidadDominioBase
 
     public void Renombrar(string nombre)
     {
-        if (string.IsNullOrWhiteSpace(nombre))
-        {
-            throw new ArgumentException("El nombre del rol es obligatorio.", nameof(nombre));
-        }
-
-        Nombre = nombre.Trim();
+        Nombre = GuardiaDominio.Requerido(nombre, "Nombre de rol", 100);
     }
 
     public void Describir(string descripcion)
     {
-        if (string.IsNullOrWhiteSpace(descripcion))
-        {
-            throw new ArgumentException("La descripcion del rol es obligatoria.", nameof(descripcion));
-        }
-
-        Descripcion = descripcion.Trim();
+        Descripcion = GuardiaDominio.Requerido(descripcion, "Descripcion de rol", 300);
     }
 }

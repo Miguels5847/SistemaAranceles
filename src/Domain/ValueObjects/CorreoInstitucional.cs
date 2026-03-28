@@ -1,15 +1,12 @@
+using SistemaAranceles.Domain.Common;
+
 namespace SistemaAranceles.Domain.ValueObjects;
 
 public readonly record struct CorreoInstitucional
 {
     public CorreoInstitucional(string valor)
     {
-        if (string.IsNullOrWhiteSpace(valor) || !valor.Contains('@'))
-        {
-            throw new ArgumentException("El correo institucional no es valido.", nameof(valor));
-        }
-
-        Valor = valor.Trim().ToLowerInvariant();
+        Valor = GuardiaDominio.CorreoValido(valor, 150);
     }
 
     public string Valor { get; }

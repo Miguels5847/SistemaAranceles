@@ -1,3 +1,5 @@
+using SistemaAranceles.Domain.Common;
+
 namespace SistemaAranceles.Domain.Entities;
 
 public sealed class InflacionAnual : EntidadDominioBase
@@ -22,7 +24,7 @@ public sealed class InflacionAnual : EntidadDominioBase
     {
         if (anio < 2000 || anio > 2100)
         {
-            throw new ArgumentOutOfRangeException(nameof(anio), "El anio esta fuera de rango permitido.");
+            throw new DominioException("Anio de inflacion fuera del rango permitido.");
         }
 
         Anio = anio;
@@ -32,7 +34,7 @@ public sealed class InflacionAnual : EntidadDominioBase
     {
         if (porcentajeInflacion < -100 || porcentajeInflacion > 100)
         {
-            throw new ArgumentOutOfRangeException(nameof(porcentajeInflacion), "La inflacion debe estar en un rango valido.");
+            throw new DominioException("Inflacion fuera del rango valido (-100 a 100).");
         }
 
         PorcentajeInflacion = decimal.Round(porcentajeInflacion, 4);
@@ -40,17 +42,7 @@ public sealed class InflacionAnual : EntidadDominioBase
 
     public void CambiarFuente(string fuenteNombre, string tipoFuente)
     {
-        if (string.IsNullOrWhiteSpace(fuenteNombre))
-        {
-            throw new ArgumentException("La fuente es obligatoria.", nameof(fuenteNombre));
-        }
-
-        if (string.IsNullOrWhiteSpace(tipoFuente))
-        {
-            throw new ArgumentException("El tipo de fuente es obligatorio.", nameof(tipoFuente));
-        }
-
-        FuenteNombre = fuenteNombre.Trim();
-        TipoFuente = tipoFuente.Trim();
+        FuenteNombre = GuardiaDominio.Requerido(fuenteNombre, "Fuente de inflacion", 100);
+        TipoFuente = GuardiaDominio.Requerido(tipoFuente, "Tipo de fuente", 60);
     }
 }

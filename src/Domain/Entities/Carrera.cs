@@ -1,3 +1,5 @@
+using SistemaAranceles.Domain.Common;
+
 namespace SistemaAranceles.Domain.Entities;
 
 public sealed class Carrera : EntidadDominioBase
@@ -21,41 +23,21 @@ public sealed class Carrera : EntidadDominioBase
 
     public void CambiarCodigo(string codigo)
     {
-        if (string.IsNullOrWhiteSpace(codigo))
-        {
-            throw new ArgumentException("El codigo de carrera es obligatorio.", nameof(codigo));
-        }
-
-        Codigo = codigo.Trim().ToUpperInvariant();
+        Codigo = GuardiaDominio.Requerido(codigo, "Codigo de carrera", 40).ToUpperInvariant();
     }
 
     public void CambiarNombre(string nombre)
     {
-        if (string.IsNullOrWhiteSpace(nombre))
-        {
-            throw new ArgumentException("El nombre de carrera es obligatorio.", nameof(nombre));
-        }
-
-        Nombre = nombre.Trim();
+        Nombre = GuardiaDominio.Requerido(nombre, "Nombre de carrera", 180);
     }
 
     public void CambiarFacultad(string facultadNombre)
     {
-        if (string.IsNullOrWhiteSpace(facultadNombre))
-        {
-            throw new ArgumentException("La facultad es obligatoria.", nameof(facultadNombre));
-        }
-
-        FacultadNombre = facultadNombre.Trim();
+        FacultadNombre = GuardiaDominio.Requerido(facultadNombre, "Facultad", 180);
     }
 
     public void CambiarTotalCiclos(int totalCiclos)
     {
-        if (totalCiclos <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(totalCiclos), "El total de ciclos debe ser mayor a cero.");
-        }
-
-        TotalCiclos = totalCiclos;
+        TotalCiclos = GuardiaDominio.EnteroPositivo(totalCiclos, "Total de ciclos");
     }
 }

@@ -1,3 +1,4 @@
+using SistemaAranceles.Domain.Common;
 using SistemaAranceles.Domain.Enums;
 using SistemaAranceles.Domain.ValueObjects;
 
@@ -28,22 +29,17 @@ public sealed class Usuario : EntidadDominioBase
 
     public void CambiarNombre(string nombreCompleto)
     {
-        if (string.IsNullOrWhiteSpace(nombreCompleto))
-        {
-            throw new ArgumentException("El nombre completo es obligatorio.", nameof(nombreCompleto));
-        }
+        NombreCompleto = GuardiaDominio.Requerido(nombreCompleto, "Nombre completo", 150);
+    }
 
-        NombreCompleto = nombreCompleto.Trim();
+    public void CambiarCorreo(CorreoInstitucional correoInstitucional)
+    {
+        CorreoInstitucional = correoInstitucional;
     }
 
     public void CambiarHashContrasena(string hashContrasena)
     {
-        if (string.IsNullOrWhiteSpace(hashContrasena))
-        {
-            throw new ArgumentException("El hash de contrasena es obligatorio.", nameof(hashContrasena));
-        }
-
-        HashContrasena = hashContrasena.Trim();
+        HashContrasena = GuardiaDominio.Requerido(hashContrasena, "Hash de contrasena", 200);
     }
 
     public void RegistrarAcceso(DateTime fechaAcceso)
@@ -59,6 +55,11 @@ public sealed class Usuario : EntidadDominioBase
 
     public void AsignarRol(Rol rol)
     {
+        if (rol is null)
+        {
+            throw new DominioException("El rol a asignar no puede ser nulo.");
+        }
+
         if (_roles.Any(x => x.Nombre.Equals(rol.Nombre, StringComparison.OrdinalIgnoreCase)))
         {
             return;
