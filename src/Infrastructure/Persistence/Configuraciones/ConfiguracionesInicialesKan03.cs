@@ -907,3 +907,52 @@ internal sealed class ProyeccionMaterialInsumoConfiguracion : IEntityTypeConfigu
         builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
     }
 }
+
+internal sealed class ResumenProyeccionFinancieraConfiguracion : IEntityTypeConfiguration<ResumenProyeccionFinanciera>
+{
+    public void Configure(EntityTypeBuilder<ResumenProyeccionFinanciera> builder)
+    {
+        builder.ToTable("resumen_proyeccion_financiera");
+        ConfigurarCamposAuditoria(builder);
+
+        builder.Property(x => x.CarreraId).HasColumnName("carrera_id").IsRequired();
+        builder.Property(x => x.EscenarioProyeccionId).HasColumnName("escenario_proyeccion_id").IsRequired();
+        builder.Property(x => x.PeriodoAcademicoId).HasColumnName("periodo_academico_id").IsRequired();
+        builder.Property(x => x.IngresoTotal).HasColumnName("ingreso_total").HasColumnType("decimal(18,2)").IsRequired();
+        builder.Property(x => x.CostoServiciosTotal).HasColumnName("costo_servicios_total").HasColumnType("decimal(18,2)").IsRequired();
+        builder.Property(x => x.GastoAdministrativoTotal).HasColumnName("gasto_administrativo_total").HasColumnType("decimal(18,2)").IsRequired();
+        builder.Property(x => x.GastoVentasTotal).HasColumnName("gasto_ventas_total").HasColumnType("decimal(18,2)").IsRequired();
+        builder.Property(x => x.OtrosGastosTotal).HasColumnName("otros_gastos_total").HasColumnType("decimal(18,2)").IsRequired();
+        builder.Property(x => x.GastoFinancieroTotal).HasColumnName("gasto_financiero_total").HasColumnType("decimal(18,2)").IsRequired();
+        builder.Property(x => x.ResultadoNetoTotal).HasColumnName("resultado_neto_total").HasColumnType("decimal(18,2)").IsRequired();
+
+        builder.HasOne(x => x.Carrera)
+            .WithMany(x => x.ResumenesProyeccionFinanciera)
+            .HasForeignKey(x => x.CarreraId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.EscenarioProyeccion)
+            .WithMany(x => x.ResumenesProyeccionFinanciera)
+            .HasForeignKey(x => x.EscenarioProyeccionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(x => x.PeriodoAcademico)
+            .WithMany(x => x.ResumenesProyeccionFinanciera)
+            .HasForeignKey(x => x.PeriodoAcademicoId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(x => new { x.CarreraId, x.EscenarioProyeccionId, x.PeriodoAcademicoId }).IsUnique();
+    }
+
+    private static void ConfigurarCamposAuditoria(EntityTypeBuilder<ResumenProyeccionFinanciera> builder)
+    {
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+        builder.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
+        builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
+        builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
+        builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
+        builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+    }
+}

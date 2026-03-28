@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SistemaAranceles.Infrastructure.Persistence;
 
@@ -10,9 +11,11 @@ using SistemaAranceles.Infrastructure.Persistence;
 namespace SistemaAranceles.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ContextoAplicacion))]
-    partial class ContextoAplicacionModelSnapshot : ModelSnapshot
+    [Migration("20260328225159_KAN03_ResumenFinanciero")]
+    partial class KAN03_ResumenFinanciero
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");

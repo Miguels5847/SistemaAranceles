@@ -88,6 +88,7 @@ public sealed class Carrera : EntidadBase
     public ICollection<CargoFacultad> CargosFacultad { get; set; } = new List<CargoFacultad>();
     public ICollection<ConfiguracionArancel> ConfiguracionesArancel { get; set; } = new List<ConfiguracionArancel>();
     public ICollection<ItemMaterialInsumo> ItemsMaterialInsumo { get; set; } = new List<ItemMaterialInsumo>();
+    public ICollection<ResumenProyeccionFinanciera> ResumenesProyeccionFinanciera { get; set; } = new List<ResumenProyeccionFinanciera>();
 }
 
 public sealed class PeriodoAcademico : EntidadBase
@@ -99,6 +100,7 @@ public sealed class PeriodoAcademico : EntidadBase
     public DateOnly? FechaFin { get; set; }
 
     public ICollection<ProyeccionMaterialInsumo> ProyeccionesMaterialInsumo { get; set; } = new List<ProyeccionMaterialInsumo>();
+    public ICollection<ResumenProyeccionFinanciera> ResumenesProyeccionFinanciera { get; set; } = new List<ResumenProyeccionFinanciera>();
 }
 
 public sealed class EscenarioProyeccion : EntidadBase
@@ -114,6 +116,7 @@ public sealed class EscenarioProyeccion : EntidadBase
     public ICollection<ConfiguracionRetencion> ConfiguracionesRetencion { get; set; } = new List<ConfiguracionRetencion>();
     public ICollection<ProyeccionEstudiantes> ProyeccionesEstudiantes { get; set; } = new List<ProyeccionEstudiantes>();
     public ICollection<ConfiguracionArancel> ConfiguracionesArancel { get; set; } = new List<ConfiguracionArancel>();
+    public ICollection<ResumenProyeccionFinanciera> ResumenesProyeccionFinanciera { get; set; } = new List<ResumenProyeccionFinanciera>();
 }
 
 public sealed class InflacionAnual : EntidadBase
@@ -323,5 +326,23 @@ public sealed class ProyeccionMaterialInsumo : EntidadBase
     public decimal CostoTotalProyectado { get; set; }
 
     public ItemMaterialInsumo? ItemMaterialInsumo { get; set; }
+    public PeriodoAcademico? PeriodoAcademico { get; set; }
+}
+
+public sealed class ResumenProyeccionFinanciera : EntidadBase
+{
+    public int CarreraId { get; set; }
+    public int EscenarioProyeccionId { get; set; }
+    public int PeriodoAcademicoId { get; set; }
+    public decimal IngresoTotal { get; set; }
+    public decimal CostoServiciosTotal { get; set; }
+    public decimal GastoAdministrativoTotal { get; set; }
+    public decimal GastoVentasTotal { get; set; }
+    public decimal OtrosGastosTotal { get; set; }
+    public decimal GastoFinancieroTotal { get; set; }
+    public decimal ResultadoNetoTotal { get; set; }
+
+    public Carrera? Carrera { get; set; }
+    public EscenarioProyeccion? EscenarioProyeccion { get; set; }
     public PeriodoAcademico? PeriodoAcademico { get; set; }
 }
