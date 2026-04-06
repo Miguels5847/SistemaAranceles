@@ -1,0 +1,52 @@
+@startuml CU-US-03
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Administrador" as admin
+actor "Usuario" as user
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Gestionar roles,\npermisos y acceso" as UC03
+    usecase "Crear rol" as UC03a
+    usecase "Consultar roles" as UC03b
+    usecase "Editar rol" as UC03c
+    usecase "Activar/Desactivar\nrol" as UC03d
+    usecase "Verificar permisos\nen cada solicitud" as UC03e
+    usecase "Validar nombre\nno duplicado" as UC03f
+    usecase "Registrar auditoría\n(CU-US-04)" as UC04
+    usecase "Adaptar menú\nsegún rol" as UC03g
+
+    admin --> UC03
+    user --> UC03e
+
+    UC03 ..> UC03a : <<include>>
+    UC03 ..> UC03b : <<include>>
+    UC03 ..> UC03c : <<include>>
+    UC03 ..> UC03d : <<include>>
+
+    UC03a ..> UC03f : <<include>>
+    UC03a ..> UC04 : <<include>>
+    UC03c ..> UC03f : <<include>>
+    UC03c ..> UC04 : <<include>>
+    UC03d ..> UC04 : <<include>>
+
+    UC03e ..> UC03g : <<include>>
+}
+
+note right of UC03
+    RF-US-03: Gestionar roles
+    y permisos, restringir
+    acceso por módulo y acción.
+end note
+
+@enduml

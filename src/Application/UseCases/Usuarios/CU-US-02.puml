@@ -1,0 +1,43 @@
+@startuml CU-US-02
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Usuario" as user
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Autenticar usuario\ny gestionar sesiones" as UC02
+    usecase "Iniciar sesión" as UC02a
+    usecase "Cerrar sesión\nvoluntaria" as UC02b
+    usecase "Expiración automática\npor inactividad" as UC02c
+    usecase "Validar credenciales" as UC02d
+    usecase "Verificar estado\nde cuenta" as UC02e
+    usecase "Cargar menú\nsegún rol" as UC02f
+
+    user --> UC02
+
+    UC02 ..> UC02a : <<include>>
+    UC02 ..> UC02b : <<include>>
+    UC02 ..> UC02c : <<include>>
+
+    UC02a ..> UC02d : <<include>>
+    UC02a ..> UC02e : <<include>>
+    UC02a ..> UC02f : <<include>>
+}
+
+note right of UC02
+    RF-US-02: Autenticar usuarios
+    y gestionar sesiones con
+    expiración por inactividad.
+end note
+
+@enduml
