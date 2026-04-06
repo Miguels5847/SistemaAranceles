@@ -1,0 +1,48 @@
+@startuml CU-US-01
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Administrador" as admin
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Gestionar cuentas\nde usuario" as UC01
+    usecase "Crear usuario" as UC01a
+    usecase "Consultar usuarios" as UC01b
+    usecase "Editar usuario" as UC01c
+    usecase "Suspender/Reactivar\nusuario" as UC01d
+    usecase "Validar correo\nno duplicado" as UC01e
+    usecase "Cifrar contraseña" as UC01f
+    usecase "Registrar auditoría\n(CU-US-04)" as UC04
+
+    admin --> UC01
+
+    UC01 ..> UC01a : <<include>>
+    UC01 ..> UC01b : <<include>>
+    UC01 ..> UC01c : <<include>>
+    UC01 ..> UC01d : <<include>>
+
+    UC01a ..> UC01e : <<include>>
+    UC01a ..> UC01f : <<include>>
+    UC01a ..> UC04 : <<include>>
+    UC01c ..> UC01e : <<include>>
+    UC01c ..> UC04 : <<include>>
+    UC01d ..> UC04 : <<include>>
+}
+
+note right of UC01
+    RF-US-01: Crear, consultar,
+    editar y suspender cuentas
+    de usuario.
+end note
+
+@enduml
