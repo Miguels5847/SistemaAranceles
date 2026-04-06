@@ -67,6 +67,35 @@ public sealed class RepositorioUsuario(
         existente.HashContrasena = usuario.HashContrasena;
         existente.Estado = usuario.Estado.ToString();
         existente.UltimoAccesoEn = usuario.UltimoAccesoEn;
+        existente.ActualizadoEn = DateTime.UtcNow;
+    }
+
+    public async Task EliminarAsync(int id, int eliminadoPorUsuarioId, CancellationToken cancellationToken = default)
+    {
+        var existente = await contextoAplicacion.Usuarios
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (existente is null)
+        {
+            throw new KeyNotFoundException($"No se encontro el usuario con Id {id}.");
+        }
+
+        existente.EstaActivo = false;
+        existente.EliminadoEn = DateTime.UtcNow;
+        existente.EliminadoPorUsuarioId = eliminadoPorUsuarioId;
+        existente.Estado = EstadoUsuario.Inactivo.ToString();
+    }
+
+    public async Task<IReadOnlyList<string>> ObtenerRolesDelUsuarioAsync(
+        int id,
+        CancellationToken cancellationToken = default)
+    {
+        return await contextoAplicacion.UsuariosRoles
+            .AsNoTracking()
+            .Where(ur => ur.UsuarioId == id)
+            .Include(ur => ur.Rol)
+            .Select(ur => ur.Rol!.Nombre)
+            .ToListAsync(cancellationToken);
     }
 
     private static UsuarioDominio MapearADominio(UsuarioPersistencia entidad)

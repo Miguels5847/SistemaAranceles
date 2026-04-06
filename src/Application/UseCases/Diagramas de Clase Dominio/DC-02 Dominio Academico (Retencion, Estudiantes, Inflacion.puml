@@ -1,0 +1,301 @@
+@startuml
+top to bottom direction
+scale 0.88
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+skinparam arrowColor Black
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 16
+skinparam ranksep 24
+
+title DC-02: Dominio Académico - Retención, Estudiantes, Inflación
+
+package "Domain" #EFF6FF {
+    class Carrera {
+        +int Id
+        +string Codigo
+        +string Nombre
+        +string FacultadNombre
+        +int TotalCiclos
+        +bool EstaActivo
+    }
+    class EscenarioProyeccion {
+        +int Id
+        +int CarreraId
+        +string Nombre
+        +string Descripcion
+        +bool EsPredeterminado
+        +bool EstaActivo
+    }
+    class PeriodoAcademico {
+        +int Id
+        +int Anio
+        +int NumeroPeriodo
+        +string EtiquetaPeriodo
+        +DateTime FechaInicio
+        +DateTime FechaFin
+    }
+    class InflacionAnual {
+        +int Id
+        +int Anio
+        +decimal PorcentajeInflacion
+        +string FuenteNombre
+        +string TipoFuente
+    }
+    class InflacionProyectada {
+        +int Id
+        +int EscenarioProyeccionId
+        +int Anio
+        +decimal PorcentajeInflacion
+        +string MetodoProyeccion
+        +bool EsAjusteManual
+    }
+    class ConfiguracionRetencion {
+        +int Id
+        +int CarreraId
+        +int EscenarioProyeccionId
+        +int TotalCiclos
+        +decimal TasaRetencionPorcentaje
+        +decimal TasaGraduacionPorcentaje
+        +decimal EstudiantesPeriodo1
+        +decimal EstudiantesPeriodo2
+        +int ParalelosPeriodo1
+        +int ParalelosPeriodo2
+    }
+    class CriterioReferenciaRetencion {
+        +int Id
+        +int ConfiguracionRetencionId
+        +decimal MetaRetencionPorcentaje
+        +decimal MetaGraduacionPorcentaje
+    }
+    class SimulacionRetencion {
+        +int Id
+        +int ConfiguracionRetencionId
+        +DateTime EjecutadoEn
+        +string Notas
+    }
+    class DetalleSimulacionRetencion {
+        +int Id
+        +int SimulacionRetencionId
+        +int NumeroCiclo
+        +int NumeroPeriodo
+        +decimal ValorEstudiantes
+        +decimal TasaAplicadaPorcentaje
+        +string TipoZona
+    }
+    class ProyeccionEstudiantes {
+        +int Id
+        +int CarreraId
+        +int EscenarioProyeccionId
+        +int AnioBase
+        +int SemanasPorSemestre
+    }
+    class DetalleProyeccionEstudiantes {
+        +int Id
+        +int ProyeccionEstudiantesId
+        +int PeriodoAcademicoId
+        +int NumeroCiclo
+        +int CantidadParalelos
+        +decimal TotalEstudiantes
+    }
+    class ConfiguracionCargaDocente {
+        +int Id
+        +int ProyeccionEstudiantesId
+        +decimal HorasDocenciaEstandar
+        +decimal HorasTecnicoEstandar
+        +decimal ProporcionPhd
+        +decimal ProporcionMgs
+    }
+    class ProyeccionRequerimientoDocente {
+        +int Id
+        +int ConfiguracionCargaDocenteId
+        +int PeriodoAcademicoId
+        +decimal TotalDocentes
+        +decimal DocentesPhd
+        +decimal DocentesMgs
+        +decimal DocentesParcial
+        +decimal DocentesTecnico
+    }
+
+    Carrera -[hidden]-> EscenarioProyeccion
+    EscenarioProyeccion -[hidden]-> PeriodoAcademico
+    PeriodoAcademico -[hidden]-> InflacionAnual
+    InflacionAnual -[hidden]-> InflacionProyectada
+    InflacionProyectada -[hidden]-> ConfiguracionRetencion
+    ConfiguracionRetencion -[hidden]-> CriterioReferenciaRetencion
+    CriterioReferenciaRetencion -[hidden]-> SimulacionRetencion
+    SimulacionRetencion -[hidden]-> DetalleSimulacionRetencion
+    DetalleSimulacionRetencion -[hidden]-> ProyeccionEstudiantes
+    ProyeccionEstudiantes -[hidden]-> DetalleProyeccionEstudiantes
+    DetalleProyeccionEstudiantes -[hidden]-> ConfiguracionCargaDocente
+    ConfiguracionCargaDocente -[hidden]-> ProyeccionRequerimientoDocente
+}
+
+package "Application" #F0FDF4 {
+    interface ICarreraRepository <<Interface>> {
+        +ObtenerPorId(id: int) : Carrera
+        +Listar() : List~Carrera~
+        +Guardar(carrera: Carrera) : void
+    }
+    interface IEscenarioRepository <<Interface>> {
+        +ObtenerPorCarrera(carreraId: int) : List~EscenarioProyeccion~
+        +Guardar(escenario: EscenarioProyeccion) : void
+    }
+    interface IInflacionRepository <<Interface>> {
+        +ObtenerHistorico() : List~InflacionAnual~
+        +ObtenerProyectada(escenarioId: int) : List~InflacionProyectada~
+        +GuardarProyectada(inflacion: InflacionProyectada) : void
+    }
+    interface IRetencionRepository <<Interface>> {
+        +ObtenerConfiguracion(carreraId: int, escenarioId: int) : ConfiguracionRetencion
+        +Guardar(config: ConfiguracionRetencion) : void
+    }
+    interface ISimulacionRetencionRepository <<Interface>> {
+        +CrearSimulacion(configuracionId: int) : SimulacionRetencion
+        +GuardarDetalle(detalle: DetalleSimulacionRetencion) : void
+    }
+    interface IProyeccionEstudiantesRepository <<Interface>> {
+        +Crear(proyeccion: ProyeccionEstudiantes) : int
+        +GuardarDetalle(detalle: DetalleProyeccionEstudiantes) : void
+        +ObtenerPorEscenario(escenarioId: int) : ProyeccionEstudiantes
+    }
+    interface IRequerimientoDocenteRepository <<Interface>> {
+        +Guardar(requerimiento: ProyeccionRequerimientoDocente) : void
+        +ObtenerPorEscenario(escenarioId: int) : List~ProyeccionRequerimientoDocente~
+    }
+
+    class ProyectarInflacionUseCase <<UseCase>> {
+        -IInflacionRepository _inflacionRepo
+        +Ejecutar(escenarioId: int, aniosAProyectar: int) : void
+        +AjustarManual(escenarioId: int, anio: int, valor: decimal) : void
+    }
+    class SimularRetencionUseCase <<UseCase>> {
+        -IRetencionRepository _retencionRepo
+        -ISimulacionRetencionRepository _simRepo
+        +Ejecutar(configuracionRetencionId: int) : SimulacionDto
+    }
+    class ProyectarEstudiantesUseCase <<UseCase>> {
+        -IRetencionRepository _retencionRepo
+        -IProyeccionEstudiantesRepository _proyeccionRepo
+        -IRequerimientoDocenteRepository _docenteRepo
+        +Ejecutar(carreraId: int, escenarioId: int) : ProyeccionDto
+    }
+
+    ICarreraRepository -[hidden]-> IEscenarioRepository
+    IEscenarioRepository -[hidden]-> IInflacionRepository
+    IInflacionRepository -[hidden]-> IRetencionRepository
+    IRetencionRepository -[hidden]-> ISimulacionRetencionRepository
+    ISimulacionRetencionRepository -[hidden]-> IProyeccionEstudiantesRepository
+    IProyeccionEstudiantesRepository -[hidden]-> IRequerimientoDocenteRepository
+    IRequerimientoDocenteRepository -[hidden]-> ProyectarInflacionUseCase
+    ProyectarInflacionUseCase -[hidden]-> SimularRetencionUseCase
+    SimularRetencionUseCase -[hidden]-> ProyectarEstudiantesUseCase
+}
+
+package "Infrastructure" #FFF7ED {
+    class CarreraRepository <<Repository>> {
+        -AppDbContext _context
+        +ObtenerPorId(id: int) : Carrera
+        +Listar() : List~Carrera~
+        +Guardar(carrera: Carrera) : void
+    }
+    class InflacionRepository <<Repository>> {
+        -AppDbContext _context
+        +ObtenerHistorico() : List~InflacionAnual~
+        +ObtenerProyectada(escenarioId: int) : List~InflacionProyectada~
+        +GuardarProyectada(inflacion: InflacionProyectada) : void
+    }
+    class RetencionRepository <<Repository>> {
+        -AppDbContext _context
+        +ObtenerConfiguracion(carreraId: int, escenarioId: int) : ConfiguracionRetencion
+        +Guardar(config: ConfiguracionRetencion) : void
+    }
+    class SimulacionRetencionRepository <<Repository>> {
+        -AppDbContext _context
+        +CrearSimulacion(configuracionId: int) : SimulacionRetencion
+        +GuardarDetalle(detalle: DetalleSimulacionRetencion) : void
+    }
+    class ProyeccionEstudiantesRepository <<Repository>> {
+        -AppDbContext _context
+        +Crear(proyeccion: ProyeccionEstudiantes) : int
+        +GuardarDetalle(detalle: DetalleProyeccionEstudiantes) : void
+        +ObtenerPorEscenario(escenarioId: int) : ProyeccionEstudiantes
+    }
+    class RequerimientoDocenteRepository <<Repository>> {
+        -AppDbContext _context
+        +Guardar(requerimiento: ProyeccionRequerimientoDocente) : void
+        +ObtenerPorEscenario(escenarioId: int) : List~ProyeccionRequerimientoDocente~
+    }
+
+    CarreraRepository -[hidden]-> InflacionRepository
+    InflacionRepository -[hidden]-> RetencionRepository
+    RetencionRepository -[hidden]-> SimulacionRetencionRepository
+    SimulacionRetencionRepository -[hidden]-> ProyeccionEstudiantesRepository
+    ProyeccionEstudiantesRepository -[hidden]-> RequerimientoDocenteRepository
+}
+
+package "Presentation" #FDF4FF {
+    class InflacionViewModel <<ViewModel>> {
+        +ICommand ProyectarCommand
+        +ICommand AjustarManualCommand
+        +CargarHistorico() : void
+    }
+    class RetencionViewModel <<ViewModel>> {
+        +ICommand SimularCommand
+        +ICommand GuardarConfigCommand
+        +CargarConfiguracion() : void
+    }
+    class EstudiantesViewModel <<ViewModel>> {
+        +ICommand GenerarProyeccionCommand
+        +ICommand ExportarCommand
+        +CargarProyeccion() : void
+    }
+
+    InflacionViewModel -[hidden]-> RetencionViewModel
+    RetencionViewModel -[hidden]-> EstudiantesViewModel
+}
+
+Domain -[hidden]-> Application
+Application -[hidden]-> Infrastructure
+Infrastructure -[hidden]-> Presentation
+
+' Relaciones de dominio
+Carrera "1" --> "0..*" EscenarioProyeccion : tiene
+EscenarioProyeccion "1" --> "0..*" InflacionProyectada : genera
+EscenarioProyeccion "1" --> "0..*" ConfiguracionRetencion : tiene
+EscenarioProyeccion "1" --> "0..*" ProyeccionEstudiantes : tiene
+ConfiguracionRetencion "1" --> "0..*" CriterioReferenciaRetencion : define
+ConfiguracionRetencion "1" --> "0..*" SimulacionRetencion : origina
+SimulacionRetencion "1" --> "0..*" DetalleSimulacionRetencion : contiene
+ProyeccionEstudiantes "1" --> "0..*" DetalleProyeccionEstudiantes : contiene
+ProyeccionEstudiantes "1" --> "1" ConfiguracionCargaDocente : tiene
+ConfiguracionCargaDocente "1" --> "0..*" ProyeccionRequerimientoDocente : genera
+PeriodoAcademico "1" --> "0..*" DetalleProyeccionEstudiantes : agrupa
+PeriodoAcademico "1" --> "0..*" ProyeccionRequerimientoDocente : agrupa
+
+' Implementaciones
+CarreraRepository ..|> ICarreraRepository : implementa
+InflacionRepository ..|> IInflacionRepository : implementa
+RetencionRepository ..|> IRetencionRepository : implementa
+SimulacionRetencionRepository ..|> ISimulacionRetencionRepository : implementa
+ProyeccionEstudiantesRepository ..|> IProyeccionEstudiantesRepository : implementa
+RequerimientoDocenteRepository ..|> IRequerimientoDocenteRepository : implementa
+
+' Dependencias de casos de uso
+ProyectarInflacionUseCase --> IInflacionRepository : usa
+SimularRetencionUseCase --> IRetencionRepository : usa
+SimularRetencionUseCase --> ISimulacionRetencionRepository : usa
+ProyectarEstudiantesUseCase --> IRetencionRepository : usa
+ProyectarEstudiantesUseCase --> IProyeccionEstudiantesRepository : usa
+ProyectarEstudiantesUseCase --> IRequerimientoDocenteRepository : usa
+
+' Dependencias de presentación
+InflacionViewModel --> ProyectarInflacionUseCase : invoca
+RetencionViewModel --> SimularRetencionUseCase : invoca
+EstudiantesViewModel --> ProyectarEstudiantesUseCase : invoca
+@enduml

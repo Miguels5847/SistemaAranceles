@@ -1,0 +1,41 @@
+@startuml CU-SP-02
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+skinparam actor {
+    BorderColor Black
+}
+left to right direction
+
+actor "Planificador\nAcadémico" as pa
+actor "Consultor" as consultor
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Calcular sueldos\nsemestrales de la facultad" as UC02a
+    usecase "Aplicar peso proporcional\npor período" as UC02b
+    usecase "Aplicar inflación\ncon protección deflación" as UC02c
+    usecase "Leer inflación desde\nmódulo Inflación" as UC02d
+    usecase "Leer docentes/estudiantes\ndesde módulo Estudiantes" as UC02e
+    usecase "Registrar auditoría\n(CU-US-04)" as UCAUD
+
+    pa --> UC02a
+    consultor --> UC02a
+
+    UC02a ..> UC02b : <<include>>
+    UC02a ..> UC02c : <<include>>
+    UC02a ..> UC02d : <<include>>
+    UC02a ..> UC02e : <<include>>
+    UC02a ..> UCAUD : <<include>>
+}
+
+note bottom of UC02a
+    RF-SP-02: Calcular costo
+    semestral por cargo con peso
+    proporcional e inflación
+    acumulada (anti-deflación).
+end note
+
+@enduml

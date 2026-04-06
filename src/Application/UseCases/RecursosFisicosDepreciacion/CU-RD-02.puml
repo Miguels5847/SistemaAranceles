@@ -1,0 +1,39 @@
+@startuml CU-RD-02
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+skinparam actor {
+    BorderColor Black
+}
+left to right direction
+
+actor "Planificador\nAcadémico" as pa
+actor "Consultor" as consultor
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Calcular costos monetarios\ncon inflación acumulada" as UC02a
+    usecase "Leer factor inflación\ndesde módulo Inflación" as UC02b
+    usecase "Calcular subtotales\nde inversiones necesarias" as UC02c
+    usecase "Exponer resultados a\nFlujo de Fondos / C y G" as UC02d
+    usecase "Registrar auditoría\n(CU-US-04)" as UCAUD
+
+    pa --> UC02a
+    consultor --> UC02a
+
+    UC02a ..> UC02b : <<include>>
+    UC02a ..> UC02c : <<include>>
+    UC02a ..> UC02d : <<include>>
+    UC02a ..> UCAUD : <<include>>
+}
+
+note bottom of UC02a
+    RF-RD-02: Calcular costo
+    monetario de activos futuros
+    aplicando inflación acumulada
+    por período.
+end note
+
+@enduml

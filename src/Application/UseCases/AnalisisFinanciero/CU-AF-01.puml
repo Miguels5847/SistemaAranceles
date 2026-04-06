@@ -1,0 +1,36 @@
+@startuml CU-AF-01
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Planificador\nAcadémico" as planif
+actor "Consultor" as consul
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Generar Pérdidas\ny Ganancias" as UC01a
+    usecase "Calcular utilidad\nbruta" as UC01b
+    usecase "Calcular utilidad\ndel ejercicio" as UC01c
+
+    planif --> UC01a
+    consul --> UC01a
+
+    UC01a ..> UC01b : <<include>>
+    UC01a ..> UC01c : <<include>>
+}
+
+note bottom of UC01a
+    RF-AF-01: Estado de Pérdidas
+    y Ganancias proyectado
+    por período.
+end note
+
+@enduml

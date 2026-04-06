@@ -1,0 +1,87 @@
+@startuml
+title <b><size:20>Diagrama de Secuencia - Cálculo de TIR, VAN y dashboard financiero</size></b>
+
+skinparam participant {
+    FontSize 12
+    FontStyle normal
+}
+skinparam actor {
+    FontSize 12
+    FontStyle normal
+}
+skinparam note {
+    FontSize 12
+}
+
+actor "Planificador"
+participant "DashboardFinancieroViewModel"
+participant "CalcularIndicadoresUseCase"
+participant "ConfigTmrRepository"
+participant "CostoGastoRepository"
+participant "InversionRepository"
+participant "ResultadoAnalisisRepository"
+participant "Base de Datos"
+
+note over "Planificador","Base de Datos"
+Flujo Principal - Cálculo de indicadores financieros
+end note
+
+"Planificador" -> "DashboardFinancieroViewModel": Abre dashboard financiero
+"DashboardFinancieroViewModel" -> "CalcularIndicadoresUseCase": Ejecutar(escenarioId)
+
+"CalcularIndicadoresUseCase" -> "ConfigTmrRepository": ObtenerTmr(escenarioId)
+"ConfigTmrRepository" -> "Base de Datos": SELECT configuracion_tmr
+"Base de Datos" --> "ConfigTmrRepository": Componentes TMR
+"ConfigTmrRepository" --> "CalcularIndicadoresUseCase": TmrDto
+
+"CalcularIndicadoresUseCase" -> "CalcularIndicadoresUseCase": CalcularTMR(tasaBancaria, inflacion, premioRiesgo)
+
+"CalcularIndicadoresUseCase" -> "InversionRepository": ObtenerInversionInicial(escenarioId)
+"InversionRepository" -> "Base de Datos": SELECT configuracion_capital_trabajo y activo_fijo
+"Base de Datos" --> "InversionRepository": Inversión inicial
+"InversionRepository" --> "CalcularIndicadoresUseCase": InversionInicialDto
+
+"CalcularIndicadoresUseCase" -> "CostoGastoRepository": ObtenerFlujosAnuales(escenarioId)
+"CostoGastoRepository" -> "Base de Datos": SELECT costo_gasto_periodo agrupado por año
+"Base de Datos" --> "CostoGastoRepository": Ingresos y costos por año
+"CostoGastoRepository" --> "CalcularIndicadoresUseCase": FlujosDto
+
+"CalcularIndicadoresUseCase" -> "CalcularIndicadoresUseCase": ConstruirFlujoDeFondosNeto(inversionInicial, flujosAnuales)
+
+note over "CalcularIndicadoresUseCase"
+Año 0 = -InversionInicial. Años siguientes = Utilidad + Dep + AmortDif - PagoCredito
+end note
+
+"CalcularIndicadoresUseCase" -> "CalcularIndicadoresUseCase": CalcularVAN(flujos, tmr)
+
+note over "CalcularIndicadoresUseCase"
+VAN = Σ FlujoNeto_t / (1+TMR)^t, t=0..N
+end note
+
+"CalcularIndicadoresUseCase" -> "CalcularIndicadoresUseCase": CalcularTIR(flujos)
+
+note over "CalcularIndicadoresUseCase"
+TIR = tasa donde VAN=0 por aproximación iterativa
+end note
+
+"CalcularIndicadoresUseCase" -> "CalcularIndicadoresUseCase": CalcularPuntoEquilibrio(costosFijos, costoVariable, precioUnitario)
+
+note over "CalcularIndicadoresUseCase"
+PE = CostosFijos / (Precio - CostoVariable)
+end note
+
+"CalcularIndicadoresUseCase" -> "CalcularIndicadoresUseCase": CalcularPeriodoRecuperacion(flujosCumulativos, inversionInicial)
+
+note over "CalcularIndicadoresUseCase"
+Años + (saldoPendiente / flujoSiguiente) convertido a años/meses/días
+end note
+
+"CalcularIndicadoresUseCase" -> "CalcularIndicadoresUseCase": EvaluarViabilidad(tir, tmr, van)
+
+"CalcularIndicadoresUseCase" -> "ResultadoAnalisisRepository": GuardarResultado(escenarioId, tir, van, pe, periodoRecup, esViable)
+"ResultadoAnalisisRepository" -> "Base de Datos": INSERT OR UPDATE resultado_analisis_financiero
+
+"CalcularIndicadoresUseCase" --> "DashboardFinancieroViewModel": IndicadoresDto (tir, van, pe, periodoRecup, esViable, arancelOptimo)
+"DashboardFinancieroViewModel" --> "Planificador": Muestra dashboard con semáforo verde/rojo por indicador
+
+@enduml

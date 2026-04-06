@@ -1,0 +1,36 @@
+@startuml CU-FB-01
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Administrador" as admin
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Configurar\nfinanciamiento" as UC01a
+    usecase "Generar tabla\namortización francesa" as UC01b
+    usecase "Calcular totales\nsemestrales" as UC01c
+    usecase "Registrar auditoría\n(CU-US-04)" as UC04
+
+    admin --> UC01a
+
+    UC01a ..> UC01b : <<extend>>
+    UC01b ..> UC01c : <<include>>
+    UC01a ..> UC04 : <<include>>
+}
+
+note bottom of UC01a
+    RF-FB-01: Financiamiento
+    con amortización francesa
+    si hay crédito.
+end note
+
+@enduml

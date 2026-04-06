@@ -1,0 +1,34 @@
+@startuml
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Planificador\nAcadémico" as planif
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Registrar presupuestos\ninstitucionales" as UC03a
+    usecase "Calcular distribución\nproporcional" as UC03b
+    usecase "Aplicar inflación\nanual" as UC03c
+    usecase "Registrar auditoría\n(CU-US-04)" as UC04
+
+    planif --> UC03a
+
+    UC03a ..> UC03b : <<include>>
+    UC03a ..> UC03c : <<include>>
+    UC03a ..> UC04 : <<include>>
+}
+
+note bottom of UC03a
+    RF-DI-03: Distribuir presupuestos
+    de capacitación, internacionalización
+    y marketing a la carrera.
+end note
+@enduml
