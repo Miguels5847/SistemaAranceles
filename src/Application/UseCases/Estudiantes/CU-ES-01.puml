@@ -1,0 +1,41 @@
+@startuml
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Planificador\nAcadémico" as pa
+actor "Consultor" as consultor
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Generar proyección de\nestudiantes por ciclo/período" as UC01a
+    usecase "Leer datos desde\nTasa de Retención" as UC01b
+    usecase "Calcular paralelos\nacumulados" as UC01c
+    usecase "Proyectar estudiantes\npor ciclo y período" as UC01d
+    usecase "Mostrar tabla\nde proyección" as UC01e
+    usecase "Registrar auditoría\n(CU-US-04)" as UCAUD
+
+    pa --> UC01a
+    consultor --> UC01e
+
+    UC01a ..> UC01b : <<include>>
+    UC01a ..> UC01c : <<include>>
+    UC01a ..> UC01d : <<include>>
+    UC01a ..> UC01e : <<include>>
+    UC01a ..> UCAUD : <<include>>
+}
+
+note bottom of UC01a
+    RF-ES-01: Calcular paralelos
+    acumulados y proyectar
+    estudiantes por ciclo, año
+    y período desde TR.
+end note
+@enduml

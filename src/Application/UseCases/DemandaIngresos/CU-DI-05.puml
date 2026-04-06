@@ -1,0 +1,38 @@
+@startuml CU-DI-05
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Planificador\nAcadémico" as planif
+actor "Consultor" as consul
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Consolidar demanda\nproyectada" as UC05a
+    usecase "Reunir datos de\nestudiantes y docentes" as UC05b
+    usecase "Reunir ingresos,\nseguro y becas" as UC05c
+    usecase "Reunir presupuestos\ny materiales" as UC05d
+
+    planif --> UC05a
+    consul --> UC05a
+
+    UC05a ..> UC05b : <<include>>
+    UC05a ..> UC05c : <<include>>
+    UC05a ..> UC05d : <<include>>
+}
+
+note bottom of UC05a
+    RF-DI-05: Vista consolidada
+    de toda la demanda
+    proyectada de la carrera.
+end note
+
+@enduml

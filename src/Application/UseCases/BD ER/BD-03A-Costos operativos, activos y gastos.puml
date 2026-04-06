@@ -1,0 +1,120 @@
+erDiagram
+    carrera {
+        int id PK
+        text codigo
+        text nombre
+        int total_ciclos
+    }
+    escenario_proyeccion {
+        int id PK
+        int carrera_id FK
+        text nombre
+    }
+    periodo_academico {
+        int id PK
+        int anio
+        int numero_periodo
+    }
+
+    cargo_facultad {
+        int id PK
+        int carrera_id FK
+        text nombre_cargo
+        numeric sueldo_base_mensual
+    }
+    proyeccion_cargo_facultad {
+        int id PK
+        int cargo_facultad_id FK
+        int periodo_academico_id FK
+        numeric factor_inflacion
+        numeric costo_total_semestre
+    }
+
+    cargo_planta_central {
+        int id PK
+        text nombre_cargo
+        numeric sueldo_mensual_total
+    }
+    proyeccion_cargo_planta_central {
+        int id PK
+        int cargo_planta_central_id FK
+        int carrera_id FK
+        int periodo_academico_id FK
+        numeric costo_total_semestre
+    }
+
+    categoria_activo {
+        int id PK
+        text nombre
+        int vida_util_anios
+        numeric valor_residual_porcentaje
+    }
+    activo_fijo {
+        int id PK
+        int escenario_proyeccion_id FK
+        int categoria_activo_id FK
+        text tipo_origen
+        numeric cantidad
+        numeric valor_unitario
+        int periodo_academico_id FK
+    }
+    activo_diferido {
+        int id PK
+        int escenario_proyeccion_id FK
+        text nombre_rubro
+        numeric valor
+        numeric tasa_amortizacion_anual
+    }
+
+    item_material_insumo {
+        int id PK
+        int carrera_id FK
+        text nombre_item
+        numeric cantidad_base
+        numeric precio_unitario
+    }
+    proyeccion_material_insumo {
+        int id PK
+        int item_material_insumo_id FK
+        int periodo_academico_id FK
+        numeric cantidad_proyectada
+        numeric costo_total_proyectado
+    }
+
+    configuracion_capital_trabajo {
+        int id PK
+        int escenario_proyeccion_id FK
+        int meses_capital_trabajo
+        numeric porcentaje_imprevistos
+        int total_estudiantes_universidad
+    }
+
+    costo_gasto_periodo {
+        int id PK
+        int escenario_proyeccion_id FK
+        int periodo_academico_id FK
+        numeric total_sueldos_facultad
+        numeric total_depreciacion
+        numeric total_con_imprevistos
+        numeric arancel_propuesto
+    }
+
+    carrera ||--o{ cargo_facultad : ""
+    carrera ||--o{ item_material_insumo : ""
+    carrera ||--o{ proyeccion_cargo_planta_central : ""
+
+    cargo_facultad ||--o{ proyeccion_cargo_facultad : ""
+    cargo_planta_central ||--o{ proyeccion_cargo_planta_central : ""
+
+    categoria_activo ||--o{ activo_fijo : ""
+    item_material_insumo ||--o{ proyeccion_material_insumo : ""
+
+    escenario_proyeccion ||--o{ activo_fijo : ""
+    escenario_proyeccion ||--o{ activo_diferido : ""
+    escenario_proyeccion ||--o{ configuracion_capital_trabajo : ""
+    escenario_proyeccion ||--o{ costo_gasto_periodo : ""
+
+    periodo_academico ||--o{ proyeccion_cargo_facultad : ""
+    periodo_academico ||--o{ proyeccion_cargo_planta_central : ""
+    periodo_academico ||--o{ proyeccion_material_insumo : ""
+    periodo_academico ||--o{ costo_gasto_periodo : ""

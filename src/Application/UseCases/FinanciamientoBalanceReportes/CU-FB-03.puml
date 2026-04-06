@@ -1,0 +1,39 @@
+@startuml CU-FB-03
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Administrador" as admin
+actor "Planificador\nAcadémico" as planif
+actor "Consultor" as consul
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Generar informe\nCES / INF CES" as UC03a
+    usecase "Generar reporte\npor dirección" as UC03b
+    usecase "Consolidar datos\nde todos los módulos" as UC03c
+    usecase "Exportar reporte\n(CU-FB-04)" as UC03d
+
+    admin --> UC03a
+    planif --> UC03b
+    consul --> UC03b
+
+    UC03a ..> UC03c : <<include>>
+    UC03b ..> UC03d : <<extend>>
+}
+
+note bottom of UC03a
+    RF-FB-03: Informe CES
+    referencial + reportes
+    por dirección institucional.
+end note
+
+@enduml

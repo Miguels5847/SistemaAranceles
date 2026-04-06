@@ -1,0 +1,85 @@
+erDiagram
+    carrera {
+        int id PK
+        text codigo
+        text nombre
+        int total_ciclos
+    }
+
+    escenario_proyeccion {
+        int id PK
+        int carrera_id FK
+        text nombre
+    }
+
+    periodo_academico {
+        int id PK
+        int anio
+        int numero_periodo
+    }
+
+    configuracion_tmr {
+        int id PK
+        int escenario_proyeccion_id FK
+        numeric tasa_bancaria_porcentaje
+        numeric premio_riesgo_porcentaje
+        numeric tmr_calculada_porcentaje
+    }
+
+    configuracion_financiamiento {
+        int id PK
+        int escenario_proyeccion_id FK
+        numeric porcentaje_recursos_propios
+        numeric monto_credito
+        numeric tasa_interes_anual
+        int plazo_anios
+    }
+
+    amortizacion_cuota {
+        int id PK
+        int configuracion_financiamiento_id FK
+        int numero_cuota
+        numeric saldo_capital
+        numeric interes_cuota
+        numeric cuota_total
+    }
+
+    resultado_analisis_financiero {
+        int id PK
+        int escenario_proyeccion_id FK
+        numeric tir_porcentaje
+        numeric van_valor
+        numeric punto_equilibrio_estudiantes
+        numeric periodo_recuperacion_anios
+        int es_viable
+    }
+
+    balance_proyectado {
+        int id PK
+        int escenario_proyeccion_id FK
+        int anio
+        numeric total_activo
+        numeric total_pasivo
+        numeric total_patrimonio
+        int cuadra_balance
+    }
+
+    resumen_proyeccion_financiera {
+        int id PK
+        int carrera_id FK
+        int escenario_proyeccion_id FK
+        int periodo_academico_id FK
+        numeric ingreso_total
+        numeric resultado_neto_total
+    }
+
+    escenario_proyeccion ||--o{ configuracion_tmr : ""
+    escenario_proyeccion ||--o{ configuracion_financiamiento : ""
+    escenario_proyeccion ||--o{ resultado_analisis_financiero : ""
+    escenario_proyeccion ||--o{ balance_proyectado : ""
+    escenario_proyeccion ||--o{ resumen_proyeccion_financiera : ""
+
+    configuracion_financiamiento ||--o{ amortizacion_cuota : ""
+
+    carrera ||--o{ resumen_proyeccion_financiera : ""
+    periodo_academico ||--o{ resumen_proyeccion_financiera : ""

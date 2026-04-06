@@ -1,0 +1,201 @@
+@startuml DC-01 Dominio Transversal
+
+top to bottom direction
+scale 0.88
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+skinparam arrowColor Black
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 16
+skinparam ranksep 24
+
+title DC-01: Dominio Transversal - Seguridad y Auditoría
+
+package "Domain" #EFF6FF {
+    class Usuario {
+        +int Id
+        +string NombreCompleto
+        +string CorreoInstitucional
+        +string HashContrasena
+        +string Estado
+        +DateTime UltimoAccesoEn
+        +bool EstaActivo
+    }
+
+    class Rol {
+        +int Id
+        +string Nombre
+        +string Descripcion
+        +bool EstaActivo
+    }
+
+    class Permiso {
+        +int Id
+        +string Codigo
+        +string ModuloNombre
+        +string AccionNombre
+        +string Descripcion
+        +bool EstaActivo
+    }
+
+    class UsuarioRol {
+        +int UsuarioId
+        +int RolId
+    }
+
+    class RolPermiso {
+        +int RolId
+        +int PermisoId
+    }
+
+    class SesionUsuario {
+        +int Id
+        +int UsuarioId
+        +string TokenSesion
+        +DateTime EmitidoEn
+        +DateTime ExpiraEn
+        +DateTime RevocadoEn
+    }
+
+    class AuditoriaLog {
+        +int Id
+        +string EventoEn
+        +string ModuloNombre
+        +string EntidadNombre
+        +string EntidadId
+        +string AccionNombre
+        +string ResumenTexto
+        +int EjecutadoPorUsuarioId
+    }
+
+    Usuario -[hidden]-> Rol
+    Rol -[hidden]-> Permiso
+    Permiso -[hidden]-> UsuarioRol
+    UsuarioRol -[hidden]-> RolPermiso
+    RolPermiso -[hidden]-> SesionUsuario
+    SesionUsuario -[hidden]-> AuditoriaLog
+}
+
+package "Application" #F0FDF4 {
+    interface IUsuarioRepository <<Interface>> {
+        +ObtenerPorCorreo(correo: string) : Usuario
+        +ObtenerPorId(id: int) : Usuario
+        +Guardar(usuario: Usuario) : void
+        +ActualizarEstado(id: int, estado: string) : void
+    }
+
+    interface ISesionRepository <<Interface>> {
+        +CrearSesion(usuarioId: int, expiraEn: DateTime) : SesionUsuario
+        +ObtenerPorToken(token: string) : SesionUsuario
+        +RevocarSesion(token: string) : void
+    }
+
+    interface IAuditoriaRepository <<Interface>> {
+        +RegistrarEvento(log: AuditoriaLog) : void
+        +ObtenerPorFiltros(usuarioId: int, modulo: string) : List~AuditoriaLog~
+    }
+
+    class AutenticarUsuarioUseCase <<UseCase>> {
+        -IUsuarioRepository _usuarioRepo
+        -ISesionRepository _sesionRepo
+        -IAuditoriaRepository _auditoriaRepo
+        +Ejecutar(correo: string, contrasena: string) : SesionDto
+        +CerrarSesion(token: string) : void
+    }
+
+    class GestionUsuarioUseCase <<UseCase>> {
+        -IUsuarioRepository _usuarioRepo
+        -IAuditoriaRepository _auditoriaRepo
+        +CrearUsuario(dto: CrearUsuarioDto) : UsuarioDto
+        +SuspenderUsuario(id: int) : void
+        +AsignarRol(usuarioId: int, rolId: int) : void
+    }
+
+    class VerificarPermisoUseCase <<UseCase>> {
+        -IUsuarioRepository _usuarioRepo
+        +TienePermiso(token: string, permiso: string) : bool
+    }
+
+    IUsuarioRepository -[hidden]-> ISesionRepository
+    ISesionRepository -[hidden]-> IAuditoriaRepository
+    IAuditoriaRepository -[hidden]-> AutenticarUsuarioUseCase
+    AutenticarUsuarioUseCase -[hidden]-> GestionUsuarioUseCase
+    GestionUsuarioUseCase -[hidden]-> VerificarPermisoUseCase
+}
+
+package "Infrastructure" #FFF7ED {
+    class UsuarioRepository <<Repository>> {
+        -AppDbContext _context
+        +ObtenerPorCorreo(correo: string) : Usuario
+        +ObtenerPorId(id: int) : Usuario
+        +Guardar(usuario: Usuario) : void
+        +ActualizarEstado(id: int, estado: string) : void
+    }
+
+    class SesionRepository <<Repository>> {
+        -AppDbContext _context
+        +CrearSesion(usuarioId: int, expiraEn: DateTime) : SesionUsuario
+        +ObtenerPorToken(token: string) : SesionUsuario
+        +RevocarSesion(token: string) : void
+    }
+
+    class AuditoriaRepository <<Repository>> {
+        -AppDbContext _context
+        +RegistrarEvento(log: AuditoriaLog) : void
+        +ObtenerPorFiltros(usuarioId: int, modulo: string) : List~AuditoriaLog~
+    }
+
+    UsuarioRepository -[hidden]-> SesionRepository
+    SesionRepository -[hidden]-> AuditoriaRepository
+}
+
+package "Presentation" #FDF4FF {
+    class LoginViewModel <<ViewModel>> {
+        +string Correo
+        +string Contrasena
+        +ICommand LoginCommand
+        +ICommand LogoutCommand
+        +EjecutarLogin() : void
+    }
+
+    class UsuarioViewModel <<ViewModel>> {
+        +ICommand CrearUsuarioCommand
+        +ICommand SuspenderCommand
+        +CargarUsuarios() : void
+    }
+
+    LoginViewModel -[hidden]-> UsuarioViewModel
+}
+
+Domain -[hidden]-> Application
+Application -[hidden]-> Infrastructure
+Infrastructure -[hidden]-> Presentation
+
+Usuario "1" --> "0..*" UsuarioRol : tiene
+Rol "1" --> "0..*" UsuarioRol : tiene
+Rol "1" --> "0..*" RolPermiso : tiene
+Permiso "1" --> "0..*" RolPermiso : tiene
+Usuario "1" --> "0..*" SesionUsuario : tiene
+Usuario "1" --> "0..*" AuditoriaLog : genera
+
+UsuarioRepository ..|> IUsuarioRepository : implementa
+SesionRepository ..|> ISesionRepository : implementa
+AuditoriaRepository ..|> IAuditoriaRepository : implementa
+
+AutenticarUsuarioUseCase --> IUsuarioRepository : usa
+AutenticarUsuarioUseCase --> ISesionRepository : usa
+AutenticarUsuarioUseCase --> IAuditoriaRepository : usa
+GestionUsuarioUseCase --> IUsuarioRepository : usa
+GestionUsuarioUseCase --> IAuditoriaRepository : usa
+VerificarPermisoUseCase --> IUsuarioRepository : usa
+
+LoginViewModel --> AutenticarUsuarioUseCase : invoca
+UsuarioViewModel --> GestionUsuarioUseCase : invoca
+UsuarioViewModel --> VerificarPermisoUseCase : invoca
+
+@enduml
