@@ -46,18 +46,25 @@ public sealed class CrearUsuarioUseCase(
         await repositorioUsuario.AgregarAsync(usuario, cancellationToken);
         await unidadTrabajo.GuardarCambiosAsync(cancellationToken);
 
-        await repositorioRol.AsignarRolAUsuarioAsync(usuario.Id, rolEncontrado.Value.Id, cancellationToken);
+        var usuarioPersistido = await repositorioUsuario.ObtenerPorCorreoInstitucionalAsync(
+            correo.ToString(),
+            cancellationToken);
+
+        if (usuarioPersistido is null)
+            throw new InvalidOperationException("No se pudo recuperar el usuario recién creado.");
+
+        await repositorioRol.AsignarRolAUsuarioAsync(usuarioPersistido.Id, rolEncontrado.Value.Id, cancellationToken);
         await unidadTrabajo.GuardarCambiosAsync(cancellationToken);
 
         await auditoriaServicio.RegistrarAsync(
             moduloNombre: "Usuarios",
             entidadNombre: "Usuario",
-            entidadId: usuario.Id.ToString(),
+            entidadId: usuarioPersistido.Id.ToString(),
             accionNombre: "CREAR",
             resumenTexto: $"Usuario '{dto.NombreCompleto}' creado con rol '{rolEncontrado.Value.Nombre}'.",
             ejecutadoPorUsuarioId: creadoPorUsuarioId,
             cancellationToken: cancellationToken);
 
-        return usuario.Id;
+        return usuarioPersistido.Id;
     }
 }
