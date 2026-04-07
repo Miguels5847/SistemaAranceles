@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.HttpOverrides;
+﻿using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using SistemaAranceles.Application.DTOs.Usuarios;
 using SistemaAranceles.Application.Interfaces.Persistencia;
@@ -50,30 +50,35 @@ builder.Services.AddHealthChecks();
 var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("No se encontró ConnectionStrings:DefaultConnection.");
 
-// Workaround: Render DNS only resolves Supabase direct endpoint to IPv6.
-// Replace with Supabase's pooler endpoint that has better IPv4 support.
-// Pooler requires user to be in format: postgres.{project_ref}
+// Workaround: Render DNS resolves Supabase to IPv6. Use pooler with correct username format.
 if (defaultConnection.Contains("db.zpdkdbonmsjqljozaczp.supabase.co", StringComparison.OrdinalIgnoreCase))
 {
-    // Extract project ref from hostname
     const string projectRef = "zpdkdbonmsjqljozaczp";
+    var connParts = defaultConnection.Split(';', StringSplitOptions.RemoveEmptyEntries);
+    var rebuiltConn = new System.Text.StringBuilder();
     
-    defaultConnection = defaultConnection.Replace(
-        "Host=db.zpdkdbonmsjqljozaczp.supabase.co;Port=5432",
-        "Host=aws-0-us-east-1.pooler.supabase.com;Port=6543",
-        StringComparison.OrdinalIgnoreCase);
+    foreach (var part in connParts)
+    {
+        var trimmed = part.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed)) continue;
+        
+        if (trimmed.IndexOf("Host=", StringComparison.OrdinalIgnoreCase) == 0)
+            rebuiltConn.Append("Host=aws-0-us-east-1.pooler.supabase.com;");
+        else if (trimmed.IndexOf("Port=", StringComparison.OrdinalIgnoreCase) == 0)
+            rebuiltConn.Append("Port=6543;");
+        else if (trimmed.IndexOf("Username=", StringComparison.OrdinalIgnoreCase) == 0)
+            rebuiltConn.Append($"Username=postgres.{projectRef};");
+        else
+            rebuiltConn.Append(trimmed + ";");
+    }
     
-    defaultConnection = defaultConnection.Replace(
-        "Username=postgres;",
-        $"Username=postgres.{projectRef};",
-        StringComparison.OrdinalIgnoreCase);
+    defaultConnection = rebuiltConn.ToString().TrimEnd(';');
 }
 
-// Add resilience parameters
+// Add resilience
 if (!defaultConnection.Contains("Timeout", StringComparison.OrdinalIgnoreCase))
 {
-    if (!defaultConnection.EndsWith(";"))
-        defaultConnection += ";";
+    if (!defaultConnection.EndsWith(";")) defaultConnection += ";";
     defaultConnection += "Timeout=15;CommandTimeout=30;";
 }
 
@@ -86,165 +91,69 @@ builder.Services.AddScoped<ActualizarUsuarioUseCase>();
 builder.Services.AddScoped<EliminarUsuarioUseCase>();
 
 var app = builder.Build();
-
 app.UseForwardedHeaders();
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
+if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
 app.UseCors("DefaultCors");
 
-app.MapGet("/", () => Results.Ok(new
-{
-    service = "SistemaAranceles.Api",
-    status = "running"
-}));
-
+app.MapGet("/", () => Results.Ok(new { service = "SistemaAranceles.Api", status = "running" }));
 app.MapHealthChecks("/healthz");
 
 var authGroup = app.MapGroup("/api/auth").WithTags("Auth");
-authGroup.MapPost("/login", async (
-    LoginRequest request,
-    LoginUseCase useCase,
-    CancellationToken cancellationToken) =>
+authGroup.MapPost("/login", async (LoginRequest request, LoginUseCase useCase, CancellationToken cancellationToken) =>
 {
-    try
-    {
-        var sesion = await useCase.EjecutarAsync(request.Correo, request.Contrasena, cancellationToken);
-        return Results.Ok(sesion);
-    }
-    catch (UnauthorizedAccessException)
-    {
-        return Results.Unauthorized();
-    }
-    catch (ArgumentException ex)
-    {
-        return Results.BadRequest(new { error = ex.Message });
-    }
-    catch (TimeoutException)
-    {
-        return Results.StatusCode(StatusCodes.Status504GatewayTimeout);
-    }
+    try { var sesion = await useCase.EjecutarAsync(request.Correo, request.Contrasena, cancellationToken); return Results.Ok(sesion); }
+    catch (UnauthorizedAccessException) { return Results.Unauthorized(); }
+    catch (ArgumentException ex) { return Results.BadRequest(new { error = ex.Message }); }
+    catch (TimeoutException) { return Results.StatusCode(StatusCodes.Status504GatewayTimeout); }
 });
 
-authGroup.MapPost("/logout", async (
-    LogoutRequest request,
-    CerrarSesionUseCase useCase,
-    CancellationToken cancellationToken) =>
+authGroup.MapPost("/logout", async (LogoutRequest request, CerrarSesionUseCase useCase, CancellationToken cancellationToken) =>
 {
-    if (string.IsNullOrWhiteSpace(request.TokenSesion))
-        return Results.BadRequest(new { error = "TokenSesion es obligatorio." });
-
+    if (string.IsNullOrWhiteSpace(request.TokenSesion)) return Results.BadRequest(new { error = "TokenSesion obligatorio." });
     await useCase.EjecutarAsync(request.UsuarioId, request.TokenSesion, cancellationToken);
     return Results.NoContent();
 });
 
 var usuariosGroup = app.MapGroup("/api/usuarios").WithTags("Usuarios");
-usuariosGroup.MapGet("", async (
-    ListarUsuariosUseCase useCase,
-    CancellationToken cancellationToken) =>
+usuariosGroup.MapGet("", async (ListarUsuariosUseCase useCase, CancellationToken cancellationToken) =>
 {
     var usuarios = await useCase.EjecutarAsync(cancellationToken);
     return Results.Ok(usuarios);
 });
 
-usuariosGroup.MapPost("", async (
-    CrearUsuarioDto request,
-    CrearUsuarioUseCase useCase,
-    CancellationToken cancellationToken) =>
+usuariosGroup.MapPost("", async (CrearUsuarioDto request, CrearUsuarioUseCase useCase, CancellationToken cancellationToken) =>
 {
-    try
-    {
-        var nuevoId = await useCase.EjecutarAsync(request, null, cancellationToken);
-        return Results.Created($"/api/usuarios/{nuevoId}", new { id = nuevoId });
-    }
-    catch (ArgumentException ex)
-    {
-        return Results.BadRequest(new { error = ex.Message });
-    }
-    catch (InvalidOperationException ex)
-    {
-        return Results.Conflict(new { error = ex.Message });
-    }
+    try { var nuevoId = await useCase.EjecutarAsync(request, null, cancellationToken); return Results.Created($"/api/usuarios/{nuevoId}", new { id = nuevoId }); }
+    catch (ArgumentException ex) { return Results.BadRequest(new { error = ex.Message }); }
+    catch (InvalidOperationException ex) { return Results.Conflict(new { error = ex.Message }); }
 });
 
-usuariosGroup.MapPut("/{id:int}", async (
-    int id,
-    ActualizarUsuarioDto request,
-    ActualizarUsuarioUseCase useCase,
-    CancellationToken cancellationToken) =>
+usuariosGroup.MapPut("/{id:int}", async (int id, ActualizarUsuarioDto request, ActualizarUsuarioUseCase useCase, CancellationToken cancellationToken) =>
 {
-    if (id != request.Id)
-        return Results.BadRequest(new { error = "El id de la ruta no coincide con el id del cuerpo." });
-
-    try
-    {
-        await useCase.EjecutarAsync(request, null, cancellationToken);
-        return Results.NoContent();
-    }
-    catch (KeyNotFoundException ex)
-    {
-        return Results.NotFound(new { error = ex.Message });
-    }
-    catch (ArgumentException ex)
-    {
-        return Results.BadRequest(new { error = ex.Message });
-    }
-    catch (InvalidOperationException ex)
-    {
-        return Results.Conflict(new { error = ex.Message });
-    }
+    if (id != request.Id) return Results.BadRequest(new { error = "Id mismatch." });
+    try { await useCase.EjecutarAsync(request, null, cancellationToken); return Results.NoContent(); }
+    catch (KeyNotFoundException ex) { return Results.NotFound(new { error = ex.Message }); }
+    catch (ArgumentException ex) { return Results.BadRequest(new { error = ex.Message }); }
+    catch (InvalidOperationException ex) { return Results.Conflict(new { error = ex.Message }); }
 });
 
-usuariosGroup.MapDelete("/{id:int}", async (
-    int id,
-    [FromBody] EliminarUsuarioRequest request,
-    EliminarUsuarioUseCase useCase,
-    CancellationToken cancellationToken) =>
+usuariosGroup.MapDelete("/{id:int}", async (int id, [FromBody] EliminarUsuarioRequest request, EliminarUsuarioUseCase useCase, CancellationToken cancellationToken) =>
 {
-    try
-    {
-        await useCase.EjecutarAsync(id, request.EliminadoPorUsuarioId, cancellationToken);
-        return Results.NoContent();
-    }
-    catch (KeyNotFoundException ex)
-    {
-        return Results.NotFound(new { error = ex.Message });
-    }
-    catch (InvalidOperationException ex)
-    {
-        return Results.Conflict(new { error = ex.Message });
-    }
+    try { await useCase.EjecutarAsync(id, request.EliminadoPorUsuarioId, cancellationToken); return Results.NoContent(); }
+    catch (KeyNotFoundException ex) { return Results.NotFound(new { error = ex.Message }); }
+    catch (InvalidOperationException ex) { return Results.Conflict(new { error = ex.Message }); }
 });
 
 var rolesGroup = app.MapGroup("/api/roles").WithTags("Roles");
-rolesGroup.MapGet("", async (
-    IRepositorioRol repositorioRol,
-    CancellationToken cancellationToken) =>
+rolesGroup.MapGet("", async (IRepositorioRol repositorioRol, CancellationToken cancellationToken) =>
 {
     try
     {
         var roles = await repositorioRol.ListarAsync(cancellationToken);
-        var resultado = roles.Select(r => new
-        {
-            id = r.Id,
-            nombre = r.Nombre,
-            descripcion = r.Descripcion
-        });
-
-        return Results.Ok(resultado);
+        return Results.Ok(roles.Select(r => new { id = r.Id, nombre = r.Nombre, descripcion = r.Descripcion }));
     }
-    catch (TimeoutException)
-    {
-        return Results.StatusCode(StatusCodes.Status504GatewayTimeout);
-    }
-    catch (Exception ex)
-    {
-        return Results.Json(new { error = ex.Message, type = ex.GetType().Name }, statusCode: StatusCodes.Status500InternalServerError);
-    }
+    catch (TimeoutException) { return Results.StatusCode(StatusCodes.Status504GatewayTimeout); }
+    catch (Exception ex) { return Results.Json(new { error = ex.Message, type = ex.GetType().Name }, statusCode: StatusCodes.Status500InternalServerError); }
 });
 
 app.Run();
