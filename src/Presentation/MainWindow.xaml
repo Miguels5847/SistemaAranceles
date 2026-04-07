@@ -5,7 +5,8 @@
         xmlns:vmU="clr-namespace:SistemaAranceles.Presentation.ViewModels.Usuarios"
         xmlns:vU="clr-namespace:SistemaAranceles.Presentation.Views.Usuarios"
         Title="Sistema de Aranceles Universitarios"
-        Height="680" Width="1100"
+        Height="680"
+        Width="1100"
         WindowStartupLocation="CenterScreen"
         Background="#F4F6FB">
 
@@ -25,7 +26,8 @@
         </Grid.ColumnDefinitions>
 
         <!-- Sidebar -->
-        <Border Grid.Column="0" Background="#1A237E">
+        <Border Grid.Column="0"
+                Background="#1A237E">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -34,22 +36,38 @@
                 </Grid.RowDefinitions>
 
                 <!-- Header sidebar -->
-                <StackPanel Grid.Row="0" Margin="16,20,16,16">
-                    <TextBlock Text="🎓 Aranceles" FontSize="18" FontWeight="Bold"
-                               Foreground="White" Margin="0,0,0,4"/>
-                    <TextBlock Text="{Binding NombreUsuario}" FontSize="11"
-                               Foreground="#9FA8DA" TextWrapping="Wrap"/>
-                    <Border Background="#283593" CornerRadius="4" Padding="6,2" Margin="0,4,0,0"
+                <StackPanel Grid.Row="0"
+                        Margin="16,20,16,16">
+                    <TextBlock Text="🎓 Aranceles"
+                            FontSize="18"
+                            FontWeight="Bold"
+                               Foreground="White"
+                            Margin="0,0,0,4"/>
+                    <TextBlock Text="{Binding NombreUsuario}"
+                            FontSize="11"
+                               Foreground="#9FA8DA"
+                            TextWrapping="Wrap"/>
+                    <Border Background="#283593"
+                            CornerRadius="4"
+                            Padding="6,2"
+                            Margin="0,4,0,0"
                             HorizontalAlignment="Left">
-                        <TextBlock Text="{Binding RolUsuario}" FontSize="10"
-                                   Foreground="#90CAF9" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding RolUsuario}"
+                                FontSize="10"
+                                   Foreground="#90CAF9"
+                                FontWeight="SemiBold"/>
                     </Border>
                 </StackPanel>
 
-                <Separator Grid.Row="0" VerticalAlignment="Bottom" Background="#283593" Margin="0"/>
+                <Separator Grid.Row="0"
+                        VerticalAlignment="Bottom"
+                        Background="#283593"
+                        Margin="0"/>
 
                 <!-- Menú -->
-                <ItemsControl Grid.Row="1" ItemsSource="{Binding MenuItems}" Margin="0,8,0,0">
+                <ItemsControl Grid.Row="1"
+                        ItemsSource="{Binding MenuItems}"
+                        Margin="0,8,0,0">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Button Content="{Binding Titulo}"
@@ -73,8 +91,10 @@
                                                                           VerticalAlignment="Center"/>
                                                     </Border>
                                                     <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="Background" Value="#283593"/>
+                                                        <Trigger Property="IsMouseOver"
+                                                                Value="True">
+                                                            <Setter Property="Background"
+                                                                    Value="#283593"/>
                                                         </Trigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
@@ -88,9 +108,12 @@
                 </ItemsControl>
 
                 <!-- Footer sidebar -->
-                <TextBlock Grid.Row="2" Text="{Binding Bienvenida}"
-                           Foreground="#7986CB" FontSize="10"
-                           TextWrapping="Wrap" Margin="16,8,16,16"/>
+                <TextBlock Grid.Row="2"
+                        Text="{Binding Bienvenida}"
+                           Foreground="#7986CB"
+                        FontSize="10"
+                           TextWrapping="Wrap"
+                        Margin="16,8,16,16"/>
             </Grid>
         </Border>
 
@@ -102,14 +125,52 @@
             </Grid.RowDefinitions>
 
             <!-- Mensaje de página placeholder -->
-            <TextBlock Grid.Row="0" Text="{Binding MensajePagina}"
-                       FontSize="14" Foreground="#5C6BC0"
-                       HorizontalAlignment="Center" VerticalAlignment="Center"
+            <TextBlock Grid.Row="0"
+                    Text="{Binding MensajePagina}"
+                       FontSize="14"
+                    Foreground="#5C6BC0"
+                       HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
                        Margin="20,12"
                        Visibility="{Binding MensajePagina, Converter={StaticResource StringToVisibilityConverter}}"/>
 
             <!-- Contenido dinámico -->
-            <ContentControl Grid.Row="1" Content="{Binding PaginaActual}"/>
+            <ContentControl Grid.Row="1"
+                    Content="{Binding PaginaActual}"/>
         </Grid>
+
+        <!-- Overlay de bloqueo durante cierre de sesión -->
+        <Border Grid.ColumnSpan="2"
+                Background="#66000000"
+                Visibility="{Binding EstaCerrandoSesion, Converter={StaticResource BoolToVisibilityConverter}}"
+                Panel.ZIndex="999">
+            <Grid>
+                <Border Width="320"
+                        Padding="20"
+                        CornerRadius="10"
+                        Background="White"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                    <StackPanel>
+                        <TextBlock Text="{Binding MensajeCierreSesion}"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="#1A237E"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,12"/>
+
+                        <ProgressBar IsIndeterminate="True"
+                                     Height="8"
+                                     Margin="0,0,0,8"
+                                     Foreground="#3949AB"/>
+
+                        <TextBlock Text="Espere un momento..."
+                                   FontSize="12"
+                                   Foreground="#5C6BC0"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
     </Grid>
 </Window>

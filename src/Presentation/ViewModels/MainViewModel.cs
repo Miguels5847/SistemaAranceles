@@ -50,6 +50,8 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _bienvenida = string.Empty;
     [ObservableProperty] private ObservableObject? _paginaActual;
     [ObservableProperty] private string _mensajePagina = string.Empty;
+    [ObservableProperty] private bool _estaCerrandoSesion;
+    [ObservableProperty] private string _mensajeCierreSesion = "Cerrando sesión...";
 
     public ObservableCollection<ItemMenu> MenuItems { get; } = [];
 
@@ -131,6 +133,7 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
+        EstaCerrandoSesion = true;
         Trace.WriteLine($"[{DateTime.UtcNow:O}] MainViewModel: inicio CerrarSesionAsync.");
         try
         {
@@ -148,6 +151,7 @@ public sealed partial class MainViewModel : ObservableObject
             WeakReferenceMessenger.Default.UnregisterAll(this);
             WeakReferenceMessenger.Default.Send(new CerrarSesionMensaje());
             Trace.WriteLine($"[{DateTime.UtcNow:O}] MainViewModel: fin CerrarSesionAsync.");
+            EstaCerrandoSesion = false;
             Interlocked.Exchange(ref _cerrandoSesion, 0);
         }
     }
