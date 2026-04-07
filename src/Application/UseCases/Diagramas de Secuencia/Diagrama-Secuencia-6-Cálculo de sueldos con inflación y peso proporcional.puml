@@ -1,0 +1,70 @@
+@startuml
+title <b><size:20>Diagrama de Secuencia - Cálculo de sueldos con inflación y peso proporcional</size></b>
+
+skinparam participant {
+    FontSize 12
+    FontStyle normal
+}
+skinparam actor {
+    FontSize 12
+    FontStyle normal
+}
+skinparam note {
+    FontSize 12
+}
+
+actor "Planificador"
+participant "SueldosViewModel"
+participant "ProyectarSueldosUseCase"
+participant "CargoFacultadRepository"
+participant "InflacionRepository"
+participant "ProyeccionCargoRepository"
+participant "ProyeccionPlantaCentralRepository"
+participant "Base de Datos"
+
+note over "Planificador","Base de Datos"
+Flujo Principal - Proyección de sueldos con inflación
+end note
+
+"Planificador" -> "SueldosViewModel": Solicita proyección de sueldos
+"SueldosViewModel" -> "ProyectarSueldosUseCase": Ejecutar(carreraId, escenarioId)
+
+"ProyectarSueldosUseCase" -> "CargoFacultadRepository": ObtenerCargos(carreraId)
+"CargoFacultadRepository" -> "Base de Datos": SELECT cargo_facultad WHERE carrera_id
+"Base de Datos" --> "CargoFacultadRepository": Lista de cargos con sueldos base
+"CargoFacultadRepository" --> "ProyectarSueldosUseCase": Cargos
+
+"ProyectarSueldosUseCase" -> "InflacionRepository": ObtenerInflacionProyectada(escenarioId)
+"InflacionRepository" -> "Base de Datos": SELECT inflacion_proyectada WHERE escenario_id
+"Base de Datos" --> "InflacionRepository": Inflación por año
+"InflacionRepository" --> "ProyectarSueldosUseCase": Factores de inflación
+
+loop Por cada cargo y período
+    "ProyectarSueldosUseCase" -> "ProyectarSueldosUseCase": CalcularFactorInflacionAcumulado(anio)
+    "ProyectarSueldosUseCase" -> "ProyectarSueldosUseCase": CalcularBeneficiosSociales(sueldoBase)
+
+    note over "ProyectarSueldosUseCase"
+    Décimo3=1mes, Décimo4=fijo, FondoReserva=8.33%
+    end note
+
+    "ProyectarSueldosUseCase" -> "ProyectarSueldosUseCase": AplicarPesoProporcion(cargo, totalDocentes)
+
+    note over "ProyectarSueldosUseCase"
+    Si inflacion negativa se usa 0 para proteger sueldo
+    end note
+
+    "ProyectarSueldosUseCase" -> "ProyeccionCargoRepository": GuardarProyeccion(cargoId, periodoId, costo)
+    "ProyeccionCargoRepository" -> "Base de Datos": INSERT proyeccion_cargo_facultad
+end
+
+"ProyectarSueldosUseCase" -> "ProyeccionPlantaCentralRepository": ProyectarPlantaCentral(carreraId, escenarioId)
+
+note over "ProyectarSueldosUseCase","ProyeccionPlantaCentralRepository"
+Costo = SueldoTotal * (EstCarrera/EstUniversidad)
+end note
+
+"ProyeccionPlantaCentralRepository" -> "Base de Datos": INSERT proyeccion_cargo_planta_central
+
+"ProyectarSueldosUseCase" --> "SueldosViewModel": ProyeccionSueldosDto
+"SueldosViewModel" --> "Planificador": Muestra tabla de costos por cargo y período
+@enduml

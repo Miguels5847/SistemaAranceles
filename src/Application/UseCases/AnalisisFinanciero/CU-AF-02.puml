@@ -1,0 +1,36 @@
+@startuml CU-AF-02
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Planificador\nAcadémico" as planif
+actor "Consultor" as consul
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Generar Flujo de\nFondos Neto" as UC02a
+    usecase "Establecer inversión\ninicial (Año 0)" as UC02b
+    usecase "Calcular flujo\npor período" as UC02c
+
+    planif --> UC02a
+    consul --> UC02a
+
+    UC02a ..> UC02b : <<include>>
+    UC02a ..> UC02c : <<include>>
+}
+
+note bottom of UC02a
+    RF-AF-02: Flujo de fondos
+    neto proyectado con
+    año 0 de inversión.
+end note
+
+@enduml

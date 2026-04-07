@@ -1,0 +1,77 @@
+@startuml
+title <b><size:20>Diagrama de Secuencia - Autenticación y gestión de sesión</size></b>
+
+' Ajuste de tamaños para que los nombres se vean más pequeños (similar a Mermaid)
+skinparam participant {
+    FontSize 12
+    FontStyle normal
+}
+skinparam actor {
+    FontSize 12
+    FontStyle normal
+}
+skinparam note {
+    FontSize 12
+}
+
+actor "Usuario"
+participant "LoginViewModel"
+participant "AutenticarUsuarioUseCase"
+participant "UsuarioRepository"
+participant "SesionRepository"
+participant "AuditoriaRepository"
+participant "Base de Datos"
+
+note over "Usuario","Base de Datos"
+Flujo Principal - Autenticación
+end note
+
+"Usuario" -> "LoginViewModel": Ingresa correo y contraseña
+"LoginViewModel" -> "LoginViewModel": Valida campos no vacíos
+"LoginViewModel" -> "AutenticarUsuarioUseCase": Ejecutar(correo, contraseña)
+
+"AutenticarUsuarioUseCase" -> "UsuarioRepository": ObtenerPorCorreo(correo)
+"UsuarioRepository" -> "Base de Datos": SELECT usuario WHERE correo
+"Base de Datos" --> "UsuarioRepository": Usuario o null
+"UsuarioRepository" --> "AutenticarUsuarioUseCase": Usuario o null
+
+alt Usuario no existe
+    "AutenticarUsuarioUseCase" --> "LoginViewModel": Error credenciales
+    "LoginViewModel" --> "Usuario": Muestra mensaje de error
+else Usuario suspendido
+    "AutenticarUsuarioUseCase" --> "LoginViewModel": Error cuenta suspendida
+    "LoginViewModel" --> "Usuario": Muestra mensaje de error
+else Credenciales válidas
+    "AutenticarUsuarioUseCase" -> "AutenticarUsuarioUseCase": VerificarHash(contraseña, hash)
+    "AutenticarUsuarioUseCase" -> "SesionRepository": CrearSesion(usuarioId, expiraEn)
+    "SesionRepository" -> "Base de Datos": INSERT sesion_usuario
+    "Base de Datos" --> "SesionRepository": Sesión creada
+
+    "AutenticarUsuarioUseCase" -> "AuditoriaRepository": RegistrarEvento(login, usuarioId)
+    "AuditoriaRepository" -> "Base de Datos": INSERT auditoria_log
+
+    "AutenticarUsuarioUseCase" --> "LoginViewModel": SesionDto (token, rol)
+    "LoginViewModel" --> "Usuario": Redirige según rol
+end
+
+note over "LoginViewModel","Base de Datos"
+Expiración por inactividad
+end note
+
+"LoginViewModel" -> "SesionRepository": ValidarSesionActiva(token)
+"SesionRepository" -> "Base de Datos": SELECT sesion WHERE token
+"Base de Datos" --> "SesionRepository": Sesión
+
+alt Sesión expirada
+    "SesionRepository" --> "LoginViewModel": Sesión inválida
+    "LoginViewModel" --> "Usuario": Redirige al login
+end
+
+"Usuario" -> "LoginViewModel": Cierra sesión manualmente
+"LoginViewModel" -> "AutenticarUsuarioUseCase": CerrarSesion(token)
+"AutenticarUsuarioUseCase" -> "SesionRepository": RevocarSesion(token)
+"SesionRepository" -> "Base de Datos": UPDATE sesion SET revocado_en
+"AutenticarUsuarioUseCase" -> "AuditoriaRepository": RegistrarEvento(logout, usuarioId)
+"AuditoriaRepository" -> "Base de Datos": INSERT auditoria_log
+"LoginViewModel" --> "Usuario": Redirige al login
+@enduml

@@ -1,0 +1,139 @@
+@startuml
+top to bottom direction
+scale 0.88
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+skinparam arrowColor Black
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 16
+skinparam ranksep 24
+
+title DC-04.1: Costos y Arancel
+
+package "Domain" #EFF6FF {
+    class EscenarioProyeccion {
+        +int Id
+        +int CarreraId
+        +string Nombre
+        +bool EsPredeterminado
+        +bool EstaActivo
+    }
+    class ConfiguracionArancel {
+        +int Id
+        +int CarreraId
+        +int EscenarioProyeccionId
+        +decimal ValorArancel
+        +decimal ValorMatricula
+        +string TipoOrigen
+        +decimal ArancelOptimo
+        +bool CalculadoAutomaticamente
+        +decimal MargenTolerancia
+        +DateTime FechaCalculo
+    }
+    class CostoGastoPeriodo {
+        +int Id
+        +int EscenarioProyeccionId
+        +int PeriodoAcademicoId
+        +decimal TotalSueldosFacultad
+        +decimal TotalSueldosPlantaCentral
+        +decimal TotalServiciosMantenimiento
+        +decimal TotalDepreciacion
+        +decimal TotalMateriales
+        +decimal TotalPresupuestosInst
+        +decimal SubtotalAntesImprevistos
+        +decimal FactorImprevistos
+        +decimal TotalConImprevistos
+        +decimal CostoPorEstudiante
+        +decimal ArancelPropuesto
+    }
+
+    EscenarioProyeccion -[hidden]-> ConfiguracionArancel
+    ConfiguracionArancel -[hidden]-> CostoGastoPeriodo
+}
+
+package "Application" #F0FDF4 {
+    interface IConfiguracionArancelRepository <<Interface>> {
+        +ObtenerPorEscenario(escenarioId: int) : ConfiguracionArancel
+        +Guardar(config: ConfiguracionArancel) : void
+        +ActualizarArancelOptimo(escenarioId: int, valor: decimal) : void
+    }
+    interface ICostoGastoRepository <<Interface>> {
+        +ObtenerPorEscenario(escenarioId: int) : List~CostoGastoPeriodo~
+        +GuardarConsolidado(costo: CostoGastoPeriodo) : void
+        +ObtenerFlujosAnuales(escenarioId: int) : List~CostoGastoPeriodo~
+    }
+    class ConsolidarCostosUseCase <<UseCase>> {
+        -ICostoGastoRepository _costoRepo
+        +Ejecutar(escenarioId: int) : CostoGastoDto
+    }
+    class AjustarArancelAutomaticoUseCase <<UseCase>> {
+        -IConfiguracionTmrRepository _tmrRepo
+        -ICostoGastoRepository _costoRepo
+        -IConfiguracionArancelRepository _arancelRepo
+        -IResultadoAnalisisRepository _resultadoRepo
+        +Ejecutar(escenarioId: int) : ResultadoAjusteDto
+    }
+
+    IConfiguracionArancelRepository -[hidden]-> ICostoGastoRepository
+    ICostoGastoRepository -[hidden]-> ConsolidarCostosUseCase
+    ConsolidarCostosUseCase -[hidden]-> AjustarArancelAutomaticoUseCase
+}
+
+package "Infrastructure" #FFF7ED {
+    class ConfiguracionArancelRepository <<Repository>> {
+        -AppDbContext _context
+        +ObtenerPorEscenario(escenarioId: int) : ConfiguracionArancel
+        +Guardar(config: ConfiguracionArancel) : void
+        +ActualizarArancelOptimo(escenarioId: int, valor: decimal) : void
+    }
+    class CostoGastoRepository <<Repository>> {
+        -AppDbContext _context
+        +ObtenerPorEscenario(escenarioId: int) : List~CostoGastoPeriodo~
+        +GuardarConsolidado(costo: CostoGastoPeriodo) : void
+        +ObtenerFlujosAnuales(escenarioId: int) : List~CostoGastoPeriodo~
+    }
+
+    ConfiguracionArancelRepository -[hidden]-> CostoGastoRepository
+}
+
+package "Presentation" #FDF4FF {
+    class CostosGastosViewModel <<ViewModel>> {
+        +ICommand ConsolidarCommand
+        +ICommand ExportarCommand
+        +CargarCostos() : void
+    }
+    class AnalisisFinancieroViewModel <<ViewModel>> {
+        +ICommand AjustarArancelCommand
+        +ICommand CalcularIndicadoresCommand
+        +CargarDashboard() : void
+    }
+
+    CostosGastosViewModel -[hidden]-> AnalisisFinancieroViewModel
+}
+
+Domain -[hidden]-> Application
+Application -[hidden]-> Infrastructure
+Infrastructure -[hidden]-> Presentation
+
+' Relaciones de dominio
+EscenarioProyeccion "1" --> "1" ConfiguracionArancel : tiene
+EscenarioProyeccion "1" --> "0..*" CostoGastoPeriodo : consolida
+
+' Implementaciones
+ConfiguracionArancelRepository ..|> IConfiguracionArancelRepository : implementa
+CostoGastoRepository ..|> ICostoGastoRepository : implementa
+
+' Dependencias de casos de uso
+ConsolidarCostosUseCase --> ICostoGastoRepository : usa
+AjustarArancelAutomaticoUseCase --> ICostoGastoRepository : usa
+AjustarArancelAutomaticoUseCase --> IConfiguracionArancelRepository : usa
+
+' Dependencias de presentación
+CostosGastosViewModel --> ConsolidarCostosUseCase : invoca
+AnalisisFinancieroViewModel --> AjustarArancelAutomaticoUseCase : invoca
+@enduml

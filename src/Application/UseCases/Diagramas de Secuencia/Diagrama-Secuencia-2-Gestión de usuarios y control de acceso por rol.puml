@@ -1,0 +1,75 @@
+@startuml
+title <b><size:20>Diagrama de Secuencia - Gestión de usuarios y control de acceso por rol</size></b>
+
+skinparam participant {
+    FontSize 12
+    FontStyle normal
+}
+skinparam actor {
+    FontSize 12
+    FontStyle normal
+}
+skinparam note {
+    FontSize 12
+}
+
+actor "Admin"
+participant "UsuarioViewModel"
+participant "GestionUsuarioUseCase"
+participant "VerificarPermisoUseCase"
+participant "UsuarioRepository"
+participant "RolRepository"
+participant "AuditoriaRepository"
+participant "Base de Datos"
+
+note over "Admin","Base de Datos"
+Flujo Principal - Gestión de usuarios
+end note
+
+"Admin" -> "UsuarioViewModel": Solicita crear usuario
+"UsuarioViewModel" -> "VerificarPermisoUseCase": TienePermiso(token, USUARIOS.ESCRIBIR)
+"VerificarPermisoUseCase" -> "Base de Datos": SELECT rol_permiso WHERE usuario
+"Base de Datos" --> "VerificarPermisoUseCase": Permisos del rol
+
+alt Sin permiso
+    "VerificarPermisoUseCase" --> "UsuarioViewModel": Acceso denegado
+    "UsuarioViewModel" --> "Admin": Muestra error de autorización
+else Con permiso
+    "UsuarioViewModel" -> "GestionUsuarioUseCase": CrearUsuario(dto)
+    "GestionUsuarioUseCase" -> "UsuarioRepository": ExisteCorreo(correo)
+    "UsuarioRepository" -> "Base de Datos": SELECT usuario WHERE correo
+    "Base de Datos" --> "UsuarioRepository": Resultado
+
+    alt Correo duplicado
+        "GestionUsuarioUseCase" --> "UsuarioViewModel": Error correo ya registrado
+    else Correo disponible
+        "GestionUsuarioUseCase" -> "GestionUsuarioUseCase": GenerarHash(contraseña)
+        "GestionUsuarioUseCase" -> "UsuarioRepository": Guardar(usuario)
+        "UsuarioRepository" -> "Base de Datos": INSERT usuario
+
+        "GestionUsuarioUseCase" -> "RolRepository": AsignarRol(usuarioId, rolId)
+        "RolRepository" -> "Base de Datos": INSERT usuario_rol
+
+        "GestionUsuarioUseCase" -> "AuditoriaRepository": RegistrarEvento(crear_usuario)
+        "AuditoriaRepository" -> "Base de Datos": INSERT auditoria_log
+
+        "GestionUsuarioUseCase" --> "UsuarioViewModel": UsuarioDto creado
+        "UsuarioViewModel" --> "Admin": Muestra confirmación
+    end
+end
+
+"Admin" -> "UsuarioViewModel": Suspende usuario
+"UsuarioViewModel" -> "VerificarPermisoUseCase": TienePermiso(token, USUARIOS.ESCRIBIR)
+"VerificarPermisoUseCase" -> "Base de Datos": SELECT rol_permiso WHERE usuario
+"Base de Datos" --> "VerificarPermisoUseCase": Permisos
+
+"UsuarioViewModel" -> "GestionUsuarioUseCase": SuspenderUsuario(usuarioId)
+"GestionUsuarioUseCase" -> "UsuarioRepository": ActualizarEstado(usuarioId, Suspendido)
+"UsuarioRepository" -> "Base de Datos": UPDATE usuario SET estado
+
+"GestionUsuarioUseCase" -> "AuditoriaRepository": RegistrarEvento(suspender_usuario)
+"AuditoriaRepository" -> "Base de Datos": INSERT auditoria_log
+
+"GestionUsuarioUseCase" --> "UsuarioViewModel": Confirmación
+"UsuarioViewModel" --> "Admin": Usuario suspendido
+@enduml

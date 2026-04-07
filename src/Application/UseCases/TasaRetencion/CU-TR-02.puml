@@ -1,0 +1,41 @@
+@startuml CU-TR-02
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+top to bottom direction
+
+actor "Planificador\nAcadémico" as pa
+actor "Consultor" as consultor
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Generar simulación\npor ciclo (cohorte)" as UC02a
+    usecase "Calcular indicadores\nRet.% y Titu.%" as UC02b
+    usecase "Comparar con criterios\nde referencia" as UC02c
+    usecase "Mostrar tabla\nde simulación" as UC02d
+    usecase "Registrar auditoría\n(CU-US-04)" as UCAUD
+
+    pa --> UC02a
+    consultor --> UC02d
+
+    UC02a ..> UC02b : <<include>>
+    UC02a ..> UC02c : <<include>>
+    UC02a ..> UC02d : <<include>>
+    UC02a ..> UCAUD : <<include>>
+}
+
+note bottom of UC02a
+    RF-TR-02: Simular cohorte ciclo
+    a ciclo aplicando tasas de
+    retención y graduación con
+    cálculo de indicadores.
+end note
+
+@enduml

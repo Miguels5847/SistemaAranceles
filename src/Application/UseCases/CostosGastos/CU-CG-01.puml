@@ -1,0 +1,36 @@
+@startuml CU-CG-01
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Administrador" as admin
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Consolidar costos\ny gastos" as UC01a
+    usecase "Configurar factor\nde imprevistos" as UC01b
+    usecase "Calcular\nponderaciones" as UC01c
+    usecase "Registrar auditoría\n(CU-US-04)" as UC04
+
+    admin --> UC01b
+
+    UC01a ..> UC01c : <<include>>
+    UC01b ..> UC01a : <<include>>
+    UC01b ..> UC04 : <<include>>
+}
+
+note bottom of UC01a
+    RF-CG-01: Consolidar 5
+    categorías de costos con
+    imprevistos y ponderaciones.
+end note
+
+@enduml

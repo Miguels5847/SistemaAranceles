@@ -1,0 +1,49 @@
+@startuml CU-ES-02
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Planificador\nAcadémico" as pa
+actor "Administrador" as admin
+actor "Consultor" as consultor
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Ingresar horas semestrales\npor período" as UC02a
+    usecase "Calcular horas por semana\ny por paralelos" as UC02b
+    usecase "Calcular horas\nacumuladas" as UC02c
+    usecase "Configurar semanas\npor semestre" as UC02d
+    usecase "Mostrar filas de\nhoras y totales" as UC02e
+    usecase "Registrar auditoría\n(CU-US-04)" as UCAUD
+
+    pa --> UC02a
+    admin --> UC02d
+    consultor --> UC02e
+
+    UC02a ..> UC02b : <<include>>
+    UC02b ..> UC02c : <<include>>
+    UC02a ..> UC02e : <<include>>
+    UC02a ..> UCAUD : <<include>>
+    UC02d ..> UC02b : <<extend>>
+    UC02d ..> UCAUD : <<include>>
+}
+
+' Fuerza a Consultor a quedar a la derecha y no encima del recuadro
+UC02e -[hidden]right-> consultor
+
+note bottom of UC02a
+    RF-ES-02: Configurar horas
+    semestrales y calcular horas
+    por semana, acumuladas y
+    totales por período.
+end note
+
+@enduml

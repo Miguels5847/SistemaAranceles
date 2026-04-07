@@ -1,0 +1,38 @@
+@startuml CU-AF-07
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Administrador" as admin
+actor "Planificador\nAcadémico" as planif
+actor "Consultor" as consul
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Mostrar dashboard\nfinanciero" as UC07a
+    usecase "Navegar a reportes\ndetallados" as UC07b
+    usecase "Exportar dashboard\n(CU-FB-04)" as UC07c
+
+    admin --> UC07a
+    planif --> UC07a
+    consul --> UC07a
+
+    UC07a ..> UC07b : <<include>>
+    UC07a ..> UC07c : <<extend>>
+}
+
+note bottom of UC07a
+    RF-AF-07: Dashboard con
+    TIR, VAN, PE, Recuperación
+    y ajuste de arancel.
+end note
+
+@enduml
