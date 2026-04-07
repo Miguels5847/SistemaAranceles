@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Mvc;
 using SistemaAranceles.Application.DTOs.Usuarios;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.Autenticacion;
@@ -173,7 +174,7 @@ usuariosGroup.MapPut("/{id:int}", async (
 
 usuariosGroup.MapDelete("/{id:int}", async (
     int id,
-    EliminarUsuarioRequest request,
+    [FromBody] EliminarUsuarioRequest request,
     EliminarUsuarioUseCase useCase,
     CancellationToken cancellationToken) =>
 {
