@@ -1,0 +1,41 @@
+@startuml CU-SP-01
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+skinparam actor {
+    BorderColor Black
+}
+left to right direction
+
+actor "Planificador\nAcadémico" as pa
+actor "Administrador" as admin
+actor "Consultor" as consultor
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Registrar cargos y\nsueldos de la facultad" as UC01a
+    usecase "Calcular beneficios\nsociales por cargo" as UC01b
+    usecase "Calcular peso\nproporcional por cargo" as UC01c
+    usecase "Configurar valor\nDécimo Cuarto" as UC01d
+    usecase "Leer docentes desde\nmódulo Estudiantes" as UC01e
+    usecase "Registrar auditoría\n(CU-US-04)" as UCAUD
+
+    pa --> UC01a
+    admin --> UC01d
+    consultor --> UC01a
+
+    UC01a ..> UC01b : <<include>>
+    UC01a ..> UC01c : <<include>>
+    UC01a ..> UC01e : <<include>>
+    UC01a ..> UCAUD : <<include>>
+    UC01d ..> UCAUD : <<include>>
+}
+
+note bottom of UC01a
+    RF-SP-01: Configurar cargos,
+    sueldos y beneficios sociales
+    de la facultad con peso
+    proporcional por cargo.
+end note
+@enduml

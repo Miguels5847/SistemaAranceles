@@ -1,0 +1,95 @@
+@startuml
+title <b><size:20>Diagrama de Secuencia - Ajuste automático de arancel (Bisección VAN=0)</size></b>
+
+skinparam participant {
+    FontSize 12
+    FontStyle normal
+}
+skinparam actor {
+    FontSize 12
+    FontStyle normal
+}
+skinparam note {
+    FontSize 12
+}
+
+actor "Admin"
+participant "AnalisisFinancieroViewModel"
+participant "AjustarArancelAutomaticoUseCase"
+participant "ConfigTmrRepository"
+participant "CostoGastoRepository"
+participant "ArancelRepository"
+participant "ResultadoAnalisisRepository"
+participant "AuditoriaRepository"
+participant "Base de Datos"
+
+note over "Admin","Base de Datos"
+Flujo Principal - Ajuste automático de arancel
+end note
+
+"Admin" -> "AnalisisFinancieroViewModel": Ejecuta ajuste automático de arancel
+"AnalisisFinancieroViewModel" -> "AjustarArancelAutomaticoUseCase": Ejecutar(escenarioId)
+
+"AjustarArancelAutomaticoUseCase" -> "ConfigTmrRepository": ObtenerTmr(escenarioId)
+"ConfigTmrRepository" -> "Base de Datos": SELECT configuracion_tmr
+"Base de Datos" --> "ConfigTmrRepository": TMR configurada
+"ConfigTmrRepository" --> "AjustarArancelAutomaticoUseCase": TmrDto
+
+"AjustarArancelAutomaticoUseCase" -> "CostoGastoRepository": ObtenerCostosPorPeriodo(escenarioId)
+"CostoGastoRepository" -> "Base de Datos": SELECT costo_gasto_periodo
+"Base de Datos" --> "CostoGastoRepository": Costos consolidados
+"CostoGastoRepository" --> "AjustarArancelAutomaticoUseCase": CostosDto
+
+"AjustarArancelAutomaticoUseCase" -> "AjustarArancelAutomaticoUseCase": DefinirRangoBiseccion(arancelMin=500, arancelMax=5000)
+
+loop Hasta que VAN esté dentro de tolerancia ±1
+    "AjustarArancelAutomaticoUseCase" -> "AjustarArancelAutomaticoUseCase": ArancelMedio = (arancelMin + arancelMax) / 2
+    "AjustarArancelAutomaticoUseCase" -> "AjustarArancelAutomaticoUseCase": RecalcularIngresos(arancelMedio, estudiantes)
+    "AjustarArancelAutomaticoUseCase" -> "AjustarArancelAutomaticoUseCase": RecalcularPyG(ingresos, costos)
+    "AjustarArancelAutomaticoUseCase" -> "AjustarArancelAutomaticoUseCase": RecalcularFlujoDeFondos(pyg, depreciacion, inversion)
+    "AjustarArancelAutomaticoUseCase" -> "AjustarArancelAutomaticoUseCase": CalcularVAN(flujos, tmr)
+
+    note over "AjustarArancelAutomaticoUseCase"
+    VAN = Σ FlujoNeto_t / (1 + TMR)^t
+    end note
+
+    alt VAN > tolerancia
+        "AjustarArancelAutomaticoUseCase" -> "AjustarArancelAutomaticoUseCase": arancelMax = arancelMedio
+    else VAN < -tolerancia
+        "AjustarArancelAutomaticoUseCase" -> "AjustarArancelAutomaticoUseCase": arancelMin = arancelMedio
+    else VAN dentro de ±1
+        "AjustarArancelAutomaticoUseCase" -> "AjustarArancelAutomaticoUseCase": ArancelOptimo encontrado
+    end
+end
+
+"AjustarArancelAutomaticoUseCase" -> "AjustarArancelAutomaticoUseCase": CalcularTIR(flujos)
+"AjustarArancelAutomaticoUseCase" -> "AjustarArancelAutomaticoUseCase": VerificarViabilidad(tir, tmr)
+
+"AjustarArancelAutomaticoUseCase" -> "ArancelRepository": GuardarArancelOptimo(escenarioId, arancelOptimo, calculadoAuto=true)
+"ArancelRepository" -> "Base de Datos": UPDATE configuracion_arancel SET arancel_optimo, calculado_automaticamente, fecha_calculo
+"Base de Datos" --> "ArancelRepository": OK
+
+"AjustarArancelAutomaticoUseCase" -> "ResultadoAnalisisRepository": GuardarResultado(escenarioId, tir, van, esViable, fechaCalculo)
+"ResultadoAnalisisRepository" -> "Base de Datos": INSERT OR UPDATE resultado_analisis_financiero
+"Base de Datos" --> "ResultadoAnalisisRepository": OK
+
+"AjustarArancelAutomaticoUseCase" -> "CostoGastoRepository": PropagararArancelOptimo(escenarioId, arancelOptimo)
+"CostoGastoRepository" -> "Base de Datos": UPDATE costo_gasto_periodo SET arancel_propuesto
+
+"AjustarArancelAutomaticoUseCase" -> "AuditoriaRepository": RegistrarEvento(ajuste_arancel_automatico, escenarioId, arancelOptimo)
+"AuditoriaRepository" -> "Base de Datos": INSERT auditoria_log
+
+"AjustarArancelAutomaticoUseCase" --> "AnalisisFinancieroViewModel": ResultadoAjusteDto (arancelOptimo, tir, van, esViable)
+"AnalisisFinancieroViewModel" --> "Admin": Muestra arancel óptimo con indicadores TIR y VAN
+
+"Admin" -> "AnalisisFinancieroViewModel": Acepta o rechaza el arancel propuesto
+
+alt Admin acepta
+    "AnalisisFinancieroViewModel" -> "ArancelRepository": ConfirmarArancel(escenarioId)
+    "ArancelRepository" -> "Base de Datos": UPDATE configuracion_arancel SET valor_arancel = arancel_optimo
+    "AnalisisFinancieroViewModel" --> "Admin": Arancel confirmado y aplicado
+else Admin rechaza
+    "AnalisisFinancieroViewModel" --> "Admin": Arancel óptimo descartado, valor anterior se mantiene
+end
+
+@enduml

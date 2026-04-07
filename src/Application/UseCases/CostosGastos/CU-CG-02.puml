@@ -1,0 +1,36 @@
+@startuml CU-CG-02
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Planificador\nAcadémico" as planif
+actor "Consultor" as consul
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Calcular costo\npor estudiante" as UC02a
+    usecase "Calcular arancel\npropuesto" as UC02b
+    usecase "Calcular matrícula\n(10% arancel)" as UC02c
+
+    planif --> UC02a
+    consul --> UC02a
+
+    UC02a ..> UC02b : <<include>>
+    UC02b ..> UC02c : <<include>>
+}
+
+note bottom of UC02a
+    RF-CG-02: Costo de la
+    carrera y arancel propuesto
+    por semestre.
+end note
+
+@enduml

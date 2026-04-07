@@ -1,0 +1,42 @@
+@startuml CU-MI-04.puml
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+skinparam actor {
+    BorderColor Black
+}
+left to right direction
+
+actor "Planificador\nAcadémico" as pa
+actor "Administrador" as admin
+actor "Consultor" as consultor
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Registrar activos\ndiferidos por rubro" as UC04a
+    usecase "Calcular amortización\nsemestral por período" as UC04b
+    usecase "Controlar fin de\namortización" as UC04c
+    usecase "Configurar tasa\nde amortización" as UC04d
+    usecase "Exponer a Inversión\nInicial y Flujo de Fondos" as UC04e
+    usecase "Registrar auditoría\n(CU-US-04)" as UCAUD
+
+    pa --> UC04a
+    admin --> UC04d
+    consultor --> UC04a
+
+    UC04a ..> UC04b : <<include>>
+    UC04b ..> UC04c : <<include>>
+    UC04a ..> UC04e : <<include>>
+    UC04a ..> UCAUD : <<include>>
+    UC04d ..> UC04b : <<extend>>
+    UC04d ..> UCAUD : <<include>>
+}
+
+note bottom of UC04a
+    RF-MI-04: Registrar activos
+    diferidos y calcular tabla de
+    amortización semestral hasta
+    completar el valor total.
+end note
+@enduml

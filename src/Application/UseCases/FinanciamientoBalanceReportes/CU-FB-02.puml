@@ -1,0 +1,36 @@
+@startuml CU-FB-02
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Planificador\nAcadémico" as planif
+actor "Consultor" as consul
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Generar Balance\nProyectado" as UC02a
+    usecase "Calcular Activos,\nPasivos, Patrimonio" as UC02b
+    usecase "Verificar ecuación\ncontable" as UC02c
+
+    planif --> UC02a
+    consul --> UC02a
+
+    UC02a ..> UC02b : <<include>>
+    UC02a ..> UC02c : <<include>>
+}
+
+note bottom of UC02a
+    RF-FB-02: Balance proyectado
+    con verificación Activo =
+    Pasivo + Patrimonio.
+end note
+
+@enduml

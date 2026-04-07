@@ -1,0 +1,44 @@
+@startuml CU-RD-01
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+skinparam actor {
+    BorderColor Black
+}
+left to right direction
+
+actor "Planificador\nAcadémico" as pa
+actor "Administrador" as admin
+actor "Consultor" as consultor
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Registrar activos de\ninversión inicial (año 0)" as UC01a
+    usecase "Calcular valor total\npor artículo y subtotales" as UC01b
+    usecase "Registrar necesidades\nfuturas por período" as UC01c
+    usecase "Vincular cantidades\ncon proyección estudiantes" as UC01d
+    usecase "Configurar vida útil\ny valor residual" as UC01e
+    usecase "Registrar auditoría\n(CU-US-04)" as UCAUD
+
+    pa --> UC01a
+    pa --> UC01c
+    admin --> UC01e
+    consultor --> UC01a
+
+    UC01a ..> UC01b : <<include>>
+    UC01a ..> UCAUD : <<include>>
+    UC01c ..> UC01d : <<extend>>
+    UC01c ..> UCAUD : <<include>>
+    UC01e ..> UCAUD : <<include>>
+}
+
+note bottom of UC01a
+    RF-RD-01: Registrar activos
+    fijos por categoría y proyectar
+    necesidades futuras en unidades
+    por período.
+end note
+
+@enduml

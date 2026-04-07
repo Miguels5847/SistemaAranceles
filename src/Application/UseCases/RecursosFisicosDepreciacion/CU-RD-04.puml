@@ -1,0 +1,42 @@
+@startuml CU-RD-04
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+skinparam actor {
+    BorderColor Black
+}
+left to right direction
+
+actor "Consultor" as consultor
+actor "Planificador\nAcadémico" as pa
+consultor -[hidden]down- pa
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Calcular depreciación\nacumulada por período" as UC04a
+    usecase "Aplicar suma\nprogresiva por categoría" as UC04b
+    usecase "Controlar activos con\nvida útil completada" as UC04c
+    usecase "Exponer a Costos y Gastos\ny módulo Balance" as UC04d
+    usecase "Recalcular ante cambios\nen activos/depreciaciones" as UC04e
+    usecase "Registrar auditoría\n(CU-US-04)" as UCAUD
+
+    pa --> UC04a
+    consultor --> UC04a
+
+    UC04a ..> UC04b : <<include>>
+    UC04a ..> UC04c : <<include>>
+    UC04a ..> UC04d : <<include>>
+    UC04a ..> UCAUD : <<include>>
+    UC04e ..> UC04a : <<extend>>
+}
+
+note top of UC04a
+    RF-RD-04: Calcular depreciación
+    acumulada progresiva incluyendo
+    activos futuros y control de
+    fin de vida útil.
+end note
+
+@enduml

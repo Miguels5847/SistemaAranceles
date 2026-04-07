@@ -1,0 +1,40 @@
+@startuml CU-TR-01
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Planificador\nAcadémico" as pa
+actor "Administrador" as admin
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Registrar configuración\nde tasas por carrera" as UC01a
+    usecase "Validar tasas y\nparámetros de carrera" as UC01b
+    usecase "Configurar criterios\nde referencia" as UC01c
+    usecase "Mostrar nota\ninformativa" as UC01d
+    usecase "Registrar auditoría\n(CU-US-04)" as UCAUD
+
+    pa --> UC01a
+    admin --> UC01c
+
+    UC01a ..> UC01b : <<include>>
+    UC01a ..> UCAUD : <<include>>
+    UC01b ..> UC01d : <<extend>>
+    UC01c ..> UCAUD : <<include>>
+}
+
+note bottom of UC01a
+    RF-TR-01: Configurar, registrar
+    y validar tasas de retención
+    y graduación por carrera.
+end note
+
+@enduml

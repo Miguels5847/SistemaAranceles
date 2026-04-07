@@ -1,0 +1,137 @@
+@startuml
+top to bottom direction
+scale 0.88
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+skinparam arrowColor Black
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 20
+skinparam ranksep 30
+
+title DC-03 Vista General: Dominio Operativo-Financiero - Personal, Activos, Materiales
+
+package "Domain" #EFF6FF {
+    class CargoFacultad
+    class ProyeccionCargoFacultad
+    class CargoPlantaCentral
+    class ProyeccionCargoPlantaCentral
+    class CategoriaActivo
+    class ActivoFijo
+    class ActivoDiferido
+    class ServicioBasicoMantenimiento
+    class ConfiguracionCapitalTrabajo
+    class ItemMaterialInsumo
+    class ProyeccionMaterialInsumo
+    class PresupuestoInstitucional
+
+    CargoFacultad -[hidden]-> ProyeccionCargoFacultad
+    ProyeccionCargoFacultad -[hidden]-> CargoPlantaCentral
+    CargoPlantaCentral -[hidden]-> ProyeccionCargoPlantaCentral
+    ProyeccionCargoPlantaCentral -[hidden]-> CategoriaActivo
+    CategoriaActivo -[hidden]-> ActivoFijo
+    ActivoFijo -[hidden]-> ActivoDiferido
+    ActivoDiferido -[hidden]-> ServicioBasicoMantenimiento
+    ServicioBasicoMantenimiento -[hidden]-> ConfiguracionCapitalTrabajo
+    ConfiguracionCapitalTrabajo -[hidden]-> ItemMaterialInsumo
+    ItemMaterialInsumo -[hidden]-> ProyeccionMaterialInsumo
+    ProyeccionMaterialInsumo -[hidden]-> PresupuestoInstitucional
+}
+
+package "Application" #F0FDF4 {
+    interface ICargoFacultadRepository <<Interface>>
+    interface ICargoPlantaCentralRepository <<Interface>>
+    interface ICategoriaActivoRepository <<Interface>>
+    interface IActivoFijoRepository <<Interface>>
+    interface IActivoDiferidoRepository <<Interface>>
+    interface IServicioMantenimientoRepository <<Interface>>
+    interface ICapitalTrabajoRepository <<Interface>>
+    interface IMaterialInsumoRepository <<Interface>>
+    class ProyectarSueldosUseCase <<UseCase>>
+    class GestionActivosUseCase <<UseCase>>
+    class GestionCapitalTrabajoUseCase <<UseCase>>
+    class GestionMaterialesUseCase <<UseCase>>
+
+    ICargoFacultadRepository -[hidden]-> ICargoPlantaCentralRepository
+    ICargoPlantaCentralRepository -[hidden]-> ICategoriaActivoRepository
+    ICategoriaActivoRepository -[hidden]-> IActivoFijoRepository
+    IActivoFijoRepository -[hidden]-> IActivoDiferidoRepository
+    IActivoDiferidoRepository -[hidden]-> IServicioMantenimientoRepository
+    IServicioMantenimientoRepository -[hidden]-> ICapitalTrabajoRepository
+    ICapitalTrabajoRepository -[hidden]-> IMaterialInsumoRepository
+    IMaterialInsumoRepository -[hidden]-> ProyectarSueldosUseCase
+    ProyectarSueldosUseCase -[hidden]-> GestionActivosUseCase
+    GestionActivosUseCase -[hidden]-> GestionCapitalTrabajoUseCase
+    GestionCapitalTrabajoUseCase -[hidden]-> GestionMaterialesUseCase
+}
+
+package "Infrastructure" #FFF7ED {
+    class CargoFacultadRepository <<Repository>>
+    class CargoPlantaCentralRepository <<Repository>>
+    class CategoriaActivoRepository <<Repository>>
+    class ActivoFijoRepository <<Repository>>
+    class ActivoDiferidoRepository <<Repository>>
+    class ServicioMantenimientoRepository <<Repository>>
+    class CapitalTrabajoRepository <<Repository>>
+    class MaterialInsumoRepository <<Repository>>
+
+    CargoFacultadRepository -[hidden]-> CargoPlantaCentralRepository
+    CargoPlantaCentralRepository -[hidden]-> CategoriaActivoRepository
+    CategoriaActivoRepository -[hidden]-> ActivoFijoRepository
+    ActivoFijoRepository -[hidden]-> ActivoDiferidoRepository
+    ActivoDiferidoRepository -[hidden]-> ServicioMantenimientoRepository
+    ServicioMantenimientoRepository -[hidden]-> CapitalTrabajoRepository
+    CapitalTrabajoRepository -[hidden]-> MaterialInsumoRepository
+}
+
+package "Presentation" #FDF4FF {
+    class SueldosViewModel <<ViewModel>>
+    class RecursosFisicosViewModel <<ViewModel>>
+    class MantenimientoViewModel <<ViewModel>>
+    class MaterialesViewModel <<ViewModel>>
+
+    SueldosViewModel -[hidden]-> RecursosFisicosViewModel
+    RecursosFisicosViewModel -[hidden]-> MantenimientoViewModel
+    MantenimientoViewModel -[hidden]-> MaterialesViewModel
+}
+
+Domain -[hidden]-> Application
+Application -[hidden]-> Infrastructure
+Infrastructure -[hidden]-> Presentation
+
+' Relaciones de dominio
+CargoFacultad "1" --> "0..*" ProyeccionCargoFacultad : proyecta
+CargoPlantaCentral "1" --> "0..*" ProyeccionCargoPlantaCentral : proyecta
+CategoriaActivo "1" --> "0..*" ActivoFijo : clasifica
+ItemMaterialInsumo "1" --> "0..*" ProyeccionMaterialInsumo : proyecta
+
+' Implementaciones
+CargoFacultadRepository ..|> ICargoFacultadRepository : implementa
+CargoPlantaCentralRepository ..|> ICargoPlantaCentralRepository : implementa
+CategoriaActivoRepository ..|> ICategoriaActivoRepository : implementa
+ActivoFijoRepository ..|> IActivoFijoRepository : implementa
+ActivoDiferidoRepository ..|> IActivoDiferidoRepository : implementa
+ServicioMantenimientoRepository ..|> IServicioMantenimientoRepository : implementa
+CapitalTrabajoRepository ..|> ICapitalTrabajoRepository : implementa
+MaterialInsumoRepository ..|> IMaterialInsumoRepository : implementa
+
+' Dependencias de casos de uso
+ProyectarSueldosUseCase --> ICargoFacultadRepository : usa
+ProyectarSueldosUseCase --> ICargoPlantaCentralRepository : usa
+GestionActivosUseCase --> ICategoriaActivoRepository : usa
+GestionActivosUseCase --> IActivoFijoRepository : usa
+GestionCapitalTrabajoUseCase --> ICapitalTrabajoRepository : usa
+GestionCapitalTrabajoUseCase --> IActivoDiferidoRepository : usa
+GestionCapitalTrabajoUseCase --> IServicioMantenimientoRepository : usa
+GestionMaterialesUseCase --> IMaterialInsumoRepository : usa
+
+' Dependencias de presentación
+SueldosViewModel --> ProyectarSueldosUseCase : invoca
+RecursosFisicosViewModel --> GestionActivosUseCase : invoca
+MantenimientoViewModel --> GestionCapitalTrabajoUseCase : invoca
+MaterialesViewModel --> GestionMaterialesUseCase : invoca
+@enduml

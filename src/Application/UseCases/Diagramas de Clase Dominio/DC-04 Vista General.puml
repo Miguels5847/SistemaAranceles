@@ -1,0 +1,140 @@
+@startuml
+top to bottom direction
+scale 0.85
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+skinparam arrowColor Black
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+' Más espacio entre elementos
+skinparam nodesep 28
+skinparam ranksep 42
+skinparam padding 5
+
+title DC-04 Vista General: Dominio Financiero-Estratégico - Análisis, Financiamiento, Balance
+
+package "Domain" #EFF6FF {
+    class EscenarioProyeccion
+    class ConfiguracionArancel
+    class CostoGastoPeriodo
+    class ConfiguracionTmr
+    class ResultadoAnalisisFinanciero
+    class ConfiguracionFinanciamiento
+    class AmortizacionCuota
+    class BalanceProyectado
+    class ResumenProyeccionFinanciera
+
+    EscenarioProyeccion -[hidden]-> ConfiguracionArancel
+    ConfiguracionArancel -[hidden]-> CostoGastoPeriodo
+    CostoGastoPeriodo -[hidden]-> ConfiguracionTmr
+    ConfiguracionTmr -[hidden]-> ResultadoAnalisisFinanciero
+    ResultadoAnalisisFinanciero -[hidden]-> ConfiguracionFinanciamiento
+    ConfiguracionFinanciamiento -[hidden]-> AmortizacionCuota
+    AmortizacionCuota -[hidden]-> BalanceProyectado
+    BalanceProyectado -[hidden]-> ResumenProyeccionFinanciera
+}
+
+package "Application" #F0FDF4 {
+    interface IConfiguracionArancelRepository <<Interface>>
+    interface ICostoGastoRepository <<Interface>>
+    interface IConfiguracionTmrRepository <<Interface>>
+    interface IResultadoAnalisisRepository <<Interface>>
+    interface IFinanciamientoRepository <<Interface>>
+    interface IBalanceRepository <<Interface>>
+    interface IResumenFinancieroRepository <<Interface>>
+    class ConsolidarCostosUseCase <<UseCase>>
+    class AjustarArancelAutomaticoUseCase <<UseCase>>
+    class CalcularIndicadoresUseCase <<UseCase>>
+    class GenerarBalanceUseCase <<UseCase>>
+    class GenerarReporteCESUseCase <<UseCase>>
+
+    IConfiguracionArancelRepository -[hidden]-> ICostoGastoRepository
+    ICostoGastoRepository -[hidden]-> IConfiguracionTmrRepository
+    IConfiguracionTmrRepository -[hidden]-> IResultadoAnalisisRepository
+    IResultadoAnalisisRepository -[hidden]-> IFinanciamientoRepository
+    IFinanciamientoRepository -[hidden]-> IBalanceRepository
+    IBalanceRepository -[hidden]-> IResumenFinancieroRepository
+    IResumenFinancieroRepository -[hidden]-> ConsolidarCostosUseCase
+    ConsolidarCostosUseCase -[hidden]-> AjustarArancelAutomaticoUseCase
+    AjustarArancelAutomaticoUseCase -[hidden]-> CalcularIndicadoresUseCase
+    CalcularIndicadoresUseCase -[hidden]-> GenerarBalanceUseCase
+    GenerarBalanceUseCase -[hidden]-> GenerarReporteCESUseCase
+}
+
+package "Infrastructure" #FFF7ED {
+    class ConfiguracionArancelRepository <<Repository>>
+    class CostoGastoRepository <<Repository>>
+    class ConfiguracionTmrRepository <<Repository>>
+    class ResultadoAnalisisRepository <<Repository>>
+    class FinanciamientoRepository <<Repository>>
+    class BalanceRepository <<Repository>>
+    class ResumenFinancieroRepository <<Repository>>
+
+    ConfiguracionArancelRepository -[hidden]-> CostoGastoRepository
+    CostoGastoRepository -[hidden]-> ConfiguracionTmrRepository
+    ConfiguracionTmrRepository -[hidden]-> ResultadoAnalisisRepository
+    ResultadoAnalisisRepository -[hidden]-> FinanciamientoRepository
+    FinanciamientoRepository -[hidden]-> BalanceRepository
+    BalanceRepository -[hidden]-> ResumenFinancieroRepository
+}
+
+package "Presentation" #FDF4FF {
+    class CostosGastosViewModel <<ViewModel>>
+    class AnalisisFinancieroViewModel <<ViewModel>>
+    class BalanceViewModel <<ViewModel>>
+    class ReporteCESViewModel <<ViewModel>>
+
+    CostosGastosViewModel -[hidden]-> AnalisisFinancieroViewModel
+    AnalisisFinancieroViewModel -[hidden]-> BalanceViewModel
+    BalanceViewModel -[hidden]-> ReporteCESViewModel
+}
+
+Domain -[hidden]-> Application
+Application -[hidden]-> Infrastructure
+Infrastructure -[hidden]-> Presentation
+
+' Relaciones de dominio
+EscenarioProyeccion "1" --> "1" ConfiguracionArancel : tiene
+EscenarioProyeccion "1" --> "1" ConfiguracionTmr : tiene
+EscenarioProyeccion "1" --> "1" ResultadoAnalisisFinanciero : genera
+EscenarioProyeccion "1" --> "1" ConfiguracionFinanciamiento : tiene
+EscenarioProyeccion "1" --> "0..*" CostoGastoPeriodo : consolida
+EscenarioProyeccion "1" --> "0..*" BalanceProyectado : proyecta
+EscenarioProyeccion "1" --> "0..*" ResumenProyeccionFinanciera : resume
+ConfiguracionFinanciamiento "1" --> "0..*" AmortizacionCuota : genera
+
+' Implementaciones
+ConfiguracionArancelRepository ..|> IConfiguracionArancelRepository : implementa
+CostoGastoRepository ..|> ICostoGastoRepository : implementa
+ConfiguracionTmrRepository ..|> IConfiguracionTmrRepository : implementa
+ResultadoAnalisisRepository ..|> IResultadoAnalisisRepository : implementa
+FinanciamientoRepository ..|> IFinanciamientoRepository : implementa
+BalanceRepository ..|> IBalanceRepository : implementa
+ResumenFinancieroRepository ..|> IResumenFinancieroRepository : implementa
+
+' Dependencias de casos de uso
+ConsolidarCostosUseCase --> ICostoGastoRepository : usa
+AjustarArancelAutomaticoUseCase --> IConfiguracionTmrRepository : usa
+AjustarArancelAutomaticoUseCase --> ICostoGastoRepository : usa
+AjustarArancelAutomaticoUseCase --> IConfiguracionArancelRepository : usa
+AjustarArancelAutomaticoUseCase --> IResultadoAnalisisRepository : usa
+CalcularIndicadoresUseCase --> IConfiguracionTmrRepository : usa
+CalcularIndicadoresUseCase --> ICostoGastoRepository : usa
+CalcularIndicadoresUseCase --> IResultadoAnalisisRepository : usa
+GenerarBalanceUseCase --> IFinanciamientoRepository : usa
+GenerarBalanceUseCase --> IBalanceRepository : usa
+GenerarBalanceUseCase --> IResumenFinancieroRepository : usa
+GenerarReporteCESUseCase --> IResumenFinancieroRepository : usa
+
+' Dependencias de presentación
+CostosGastosViewModel --> ConsolidarCostosUseCase : invoca
+AnalisisFinancieroViewModel --> AjustarArancelAutomaticoUseCase : invoca
+AnalisisFinancieroViewModel --> CalcularIndicadoresUseCase : invoca
+BalanceViewModel --> GenerarBalanceUseCase : invoca
+ReporteCESViewModel --> GenerarReporteCESUseCase : invoca
+@enduml

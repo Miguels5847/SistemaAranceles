@@ -1,0 +1,39 @@
+@startuml
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Planificador\nAcadémico" as planif
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Configurar arancel\nmanualmente" as UC01a
+    usecase "Recibir arancel desde\nAnálisis Financiero" as UC01b
+    usecase "Calcular matrícula\n(10% arancel)" as UC01c
+    usecase "Recalcular ingresos\ny becas" as UC01d
+    usecase "Registrar auditoría\n(CU-US-04)" as UC04
+
+    planif --> UC01a
+    planif --> UC01b
+
+    UC01a ..> UC01c : <<include>>
+    UC01a ..> UC01d : <<include>>
+    UC01a ..> UC04 : <<include>>
+
+    UC01b ..> UC01c : <<include>>
+    UC01b ..> UC01d : <<include>>
+    UC01b ..> UC04 : <<include>>
+}
+
+note bottom of UC01a
+    RF-DI-01: Configurar arancel
+    y matrícula por estudiante.
+end note
+@enduml
