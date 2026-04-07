@@ -15,7 +15,14 @@ public static class InfrastructureExtensions
         string cadenaConexion)
     {
         services.AddDbContext<ContextoAplicacion>(
-            options => options.UseNpgsql(cadenaConexion),
+            options => options
+                .UseNpgsql(
+                    cadenaConexion,
+                    npgsqlOptions => npgsqlOptions
+                        .MaxBatchSize(100)
+                        .CommandTimeout(30)
+                        .EnableRetryOnFailure(2))
+                .EnableSensitiveDataLogging(false),
             contextLifetime: ServiceLifetime.Transient,
             optionsLifetime: ServiceLifetime.Singleton);
 

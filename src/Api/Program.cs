@@ -50,6 +50,14 @@ builder.Services.AddHealthChecks();
 var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("No se encontró ConnectionStrings:DefaultConnection.");
 
+// Add resilience parameters for Supabase/PostgreSQL on Render
+if (!defaultConnection.Contains("Timeout", StringComparison.OrdinalIgnoreCase))
+{
+    if (!defaultConnection.EndsWith(";"))
+        defaultConnection += ";";
+    defaultConnection += "Timeout=15;CommandTimeout=30;";
+}
+
 builder.Services.AddInfrastructure(defaultConnection);
 builder.Services.AddScoped<LoginUseCase>();
 builder.Services.AddScoped<CerrarSesionUseCase>();
