@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using System.Diagnostics;
 using SistemaAranceles.Application.UseCases.Autenticacion;
 using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.State;
@@ -33,12 +34,15 @@ public sealed partial class LoginViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(PuedeLogin))]
     private async Task LoginAsync()
     {
+        Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginViewModel.LoginAsync iniciado para correo '{Correo}'.");
         MensajeError = string.Empty;
         EstaCargando = true;
 
         try
         {
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginViewModel: invocando LoginUseCase.");
             var sesion = await _loginUseCase.EjecutarAsync(Correo, Contrasena);
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginViewModel: LoginUseCase exitoso. UsuarioId={sesion.UsuarioId}, Rol={sesion.RolNombre}.");
             _sesionActual.IniciarSesion(
                 sesion.UsuarioId,
                 sesion.NombreCompleto,
@@ -48,18 +52,22 @@ public sealed partial class LoginViewModel : ObservableObject
 
             WeakReferenceMessenger.Default.Send(
                 new LoginExitosoMensaje(sesion.UsuarioId, sesion.NombreCompleto, sesion.RolNombre));
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginViewModel: mensaje LoginExitoso enviado.");
         }
         catch (UnauthorizedAccessException ex)
         {
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginViewModel: UnauthorizedAccessException -> {ex.Message}");
             MensajeError = ex.Message;
         }
         catch (Exception ex)
         {
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginViewModel: Exception -> {ex}");
             MensajeError = $"Error inesperado: {ex.Message}";
         }
         finally
         {
             EstaCargando = false;
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginViewModel.LoginAsync finalizado.");
         }
     }
 

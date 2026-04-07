@@ -1,4 +1,5 @@
 using System.IO;
+using System.Diagnostics;
 using System.Windows;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Configuration;
@@ -7,6 +8,7 @@ using SistemaAranceles.Application.UseCases.Autenticacion;
 using SistemaAranceles.Application.UseCases.Usuarios;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Infrastructure.DI;
+using SistemaAranceles.Infrastructure.Persistence;
 using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.ViewModels;
@@ -18,10 +20,15 @@ namespace SistemaAranceles.Presentation;
 public partial class App
 {
     private ServiceProvider? _proveedor;
+    private TextWriterTraceListener? _traceListener;
 
     private void OnStartup(object sender, StartupEventArgs e)
     {
+        ConfigurarTrazas();
+        Trace.WriteLine($"[{DateTime.UtcNow:O}] App startup iniciado.");
+
         var cadenaConexion = ObtenerCadenaConexion();
+        Trace.WriteLine($"[{DateTime.UtcNow:O}] Cadena de conexión cargada. Origen={(Environment.GetEnvironmentVariable("SUPABASE_DB_CONNECTION") is null ? "appsettings" : "env")}");
 
         var servicios = new ServiceCollection();
         ConfigurarServicios(servicios, cadenaConexion);
@@ -31,6 +38,22 @@ public partial class App
 
         var loginView = _proveedor.GetRequiredService<LoginView>();
         loginView.Show();
+        Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginView mostrada.");
+    }
+
+    private void ConfigurarTrazas()
+    {
+        var logDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "SistemaAranceles",
+            "logs");
+
+        Directory.CreateDirectory(logDir);
+        var logPath = Path.Combine(logDir, $"app-{DateTime.Now:yyyyMMdd}.log");
+
+        _traceListener = new TextWriterTraceListener(logPath);
+        Trace.Listeners.Add(_traceListener);
+        Trace.AutoFlush = true;
     }
 
     private static void ConfigurarServicios(IServiceCollection servicios, string cadenaConexion)
@@ -104,11 +127,15 @@ public partial class App
             throw new InvalidOperationException(
                 "No se encontró cadena de conexión. Configure SUPABASE_DB_CONNECTION o appsettings.Local.json.");
 
-        return conexion;
+        return SupabaseConnectionStringHelper.Normalizar(conexion);
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
+        Trace.WriteLine($"[{DateTime.UtcNow:O}] App exit.");
+        _traceListener?.Flush();
+        _traceListener?.Close();
+
         _proveedor?.Dispose();
         base.OnExit(e);
     }
