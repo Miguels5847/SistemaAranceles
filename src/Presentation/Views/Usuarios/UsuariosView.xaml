@@ -12,25 +12,39 @@
         </Grid.RowDefinitions>
 
         <!-- Título + acciones -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
-            <TextBlock Text="Gestión de Usuarios" FontSize="20" FontWeight="Bold"
-                       Foreground="#1A237E" VerticalAlignment="Center"/>
+        <StackPanel Grid.Row="0"
+                Orientation="Horizontal"
+                Margin="0,0,0,12">
+            <TextBlock Text="Gestión de Usuarios"
+                    FontSize="20"
+                    FontWeight="Bold"
+                       Foreground="#1A237E"
+                    VerticalAlignment="Center"/>
             <Button Content="+ Nuevo Usuario"
-                    Margin="20,0,0,0" Padding="12,6"
-                    Background="#3949AB" Foreground="White"
-                    BorderThickness="0" Cursor="Hand"
+                    Margin="20,0,0,0"
+                    Padding="12,6"
+                    Background="#3949AB"
+                    Foreground="White"
+                    BorderThickness="0"
+                    Cursor="Hand"
                     Visibility="{Binding PuedeGestionar, Converter={StaticResource BoolToVisibilityConverter}}"
                     Command="{Binding DataContext.MostrarNuevoUsuarioCommand,
                               RelativeSource={RelativeSource AncestorType=Window}}"/>
         </StackPanel>
 
         <!-- Mensajes -->
-        <TextBlock Grid.Row="1" Text="{Binding MensajeError}"
-                   Foreground="#C62828" FontSize="12" TextWrapping="Wrap"
+        <TextBlock Grid.Row="1"
+                Text="{Binding MensajeError}"
+                   Foreground="#C62828"
+                FontSize="12"
+                TextWrapping="Wrap"
                    Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"
                    Margin="0,0,0,8"/>
-        <TextBlock Grid.Row="2" Text="{Binding MensajeExito}"
-                   Foreground="#2E7D32" FontSize="12" TextWrapping="Wrap"
+        <TextBlock Grid.Row="2"
+                Text="{Binding MensajeExito}"
+                   Foreground="#2E7D32"
+                FontSize="12"
+                TextWrapping="Wrap"
                    Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"
                    Margin="0,0,0,8"/>
 
@@ -48,23 +62,48 @@
                   AlternatingRowBackground="#F8F9FF">
 
             <DataGrid.Columns>
-                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50"/>
-                <DataGridTextColumn Header="Nombre Completo" Binding="{Binding NombreCompleto}" Width="*"/>
-                <DataGridTextColumn Header="Correo" Binding="{Binding CorreoInstitucional}" Width="2*"/>
-                <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="90"/>
-                <DataGridTextColumn Header="Rol" Binding="{Binding Roles[0]}" Width="120"/>
-                <DataGridTextColumn Header="Último Acceso" Binding="{Binding UltimoAccesoEn, StringFormat=\{0:dd/MM/yyyy HH:mm\}}" Width="150"/>
+                <DataGridTextColumn Header="ID"
+                        Binding="{Binding Id}"
+                        Width="50"/>
+                <DataGridTextColumn Header="Nombre Completo"
+                        Binding="{Binding NombreCompleto}"
+                        Width="*"/>
+                <DataGridTextColumn Header="Correo"
+                        Binding="{Binding CorreoInstitucional}"
+                        Width="2*"/>
+                <DataGridTextColumn Header="Estado"
+                        Binding="{Binding Estado}"
+                        Width="90"/>
+                <DataGridTextColumn Header="Rol"
+                        Binding="{Binding Roles[0]}"
+                        Width="120"/>
+                <DataGridTextColumn Header="Último Acceso"
+                        Binding="{Binding UltimoAccesoEn, StringFormat=\{0:dd/MM/yyyy HH:mm\}}"
+                        Width="150"/>
             </DataGrid.Columns>
         </DataGrid>
 
         <!-- Acciones fila -->
-        <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,10,0,0"
+        <StackPanel Grid.Row="4"
+                Orientation="Horizontal"
+                Margin="0,10,0,0"
                     Visibility="{Binding PuedeGestionar, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Button Content="Editar"
+                    Command="{Binding EditarCommand}"
+                    Padding="12,6"
+                    Margin="0,0,8,0"
+                    Background="#0277BD"
+                    Foreground="White"
+                    BorderThickness="0"
+                    Cursor="Hand"/>
             <Button Content="Eliminar (baja lógica)"
                     Command="{Binding EliminarCommand}"
-                    Padding="12,6" Margin="0,0,8,0"
-                    Background="#B71C1C" Foreground="White"
-                    BorderThickness="0" Cursor="Hand"/>
+                    Padding="12,6"
+                    Margin="0,0,8,0"
+                    Background="#B71C1C"
+                    Foreground="White"
+                    BorderThickness="0"
+                    Cursor="Hand"/>
         </StackPanel>
     </Grid>
 </UserControl>

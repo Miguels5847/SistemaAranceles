@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using SistemaAranceles.Application.DTOs.Usuarios;
 using SistemaAranceles.Application.UseCases.Usuarios;
+using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.State;
 
 namespace SistemaAranceles.Presentation.ViewModels.Usuarios;
@@ -61,6 +63,15 @@ public sealed partial class UsuariosViewModel : ObservableObject
     }
 
     [RelayCommand(CanExecute = nameof(HayUsuarioSeleccionado))]
+    private void Editar()
+    {
+        if (UsuarioSeleccionado is null || !PuedeGestionar)
+            return;
+
+        WeakReferenceMessenger.Default.Send(new EditarUsuarioMensaje(UsuarioSeleccionado));
+    }
+
+    [RelayCommand(CanExecute = nameof(HayUsuarioSeleccionado))]
     private async Task EliminarAsync()
     {
         if (UsuarioSeleccionado is null) return;
@@ -93,6 +104,9 @@ public sealed partial class UsuariosViewModel : ObservableObject
 
     private bool HayUsuarioSeleccionado() => UsuarioSeleccionado is not null && PuedeGestionar;
 
-    partial void OnUsuarioSeleccionadoChanged(UsuarioDto? value) =>
+    partial void OnUsuarioSeleccionadoChanged(UsuarioDto? value)
+    {
+        EditarCommand.NotifyCanExecuteChanged();
         EliminarCommand.NotifyCanExecuteChanged();
+    }
 }

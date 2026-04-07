@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using SistemaAranceles.Application.DTOs.Usuarios;
 using SistemaAranceles.Application.UseCases.Autenticacion;
 using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.State;
@@ -41,6 +42,11 @@ public sealed partial class MainViewModel : ObservableObject
         {
             if (msg.DestinoPagina == "Usuarios")
                 _ = MostrarUsuariosAsync();
+        });
+
+        WeakReferenceMessenger.Default.Register<EditarUsuarioMensaje>(this, (_, msg) =>
+        {
+            _ = MostrarEditarUsuarioAsync(msg.Usuario);
         });
 
         ConstruirMenu();
@@ -123,6 +129,14 @@ public sealed partial class MainViewModel : ObservableObject
         var vm = _editarUsuarioViewModelFactory();
         await vm.InicializarAsync();
         PaginaActual = vm;
+    }
+
+    private async Task MostrarEditarUsuarioAsync(UsuarioDto usuario)
+    {
+        var vm = _editarUsuarioViewModelFactory();
+        await vm.InicializarAsync(usuario);
+        PaginaActual = vm;
+        MensajePagina = string.Empty;
     }
 
     private async Task CerrarSesionAsync()
