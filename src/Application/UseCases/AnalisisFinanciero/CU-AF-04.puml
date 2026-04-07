@@ -1,0 +1,38 @@
+@startuml CU-AF-04
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Administrador" as admin
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Ajustar arancel\nautomáticamente" as UC04a
+    usecase "Ejecutar algoritmo\nde bisección" as UC04b
+    usecase "Recalcular ingresos,\nP&G, Flujo y VAN" as UC04c
+    usecase "Enviar arancel a\nDemanda y Costos" as UC04d
+    usecase "Registrar auditoría\n(CU-US-04)" as UC04
+
+    admin --> UC04a
+
+    UC04a ..> UC04b : <<include>>
+    UC04b ..> UC04c : <<include>>
+    UC04a ..> UC04d : <<include>>
+    UC04a ..> UC04 : <<include>>
+}
+
+note bottom of UC04a
+    RF-AF-04: Requisito más
+    crítico. Bisección para
+    VAN=0 y TIR=TMR.
+end note
+
+@enduml

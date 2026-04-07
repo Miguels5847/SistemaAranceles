@@ -1,0 +1,41 @@
+@startuml CU-MI-02
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+skinparam actor {
+    BorderColor Black
+}
+left to right direction
+
+actor "Administrador" as admin
+actor "Planificador\nAcadémico" as pa
+actor "Consultor" as consultor
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Configurar meses de\ncapital de trabajo" as UC02a
+    usecase "Consolidar costo mensual\ntotal operación P1" as UC02b
+    usecase "Calcular capital\nde trabajo" as UC02c
+    usecase "Leer costos desde\nmódulos fuente" as UC02d
+    usecase "Registrar auditoría\n(CU-US-04)" as UCAUD
+
+    admin --> UC02a
+    pa --> UC02c
+    consultor --> UC02c
+
+    UC02a ..> UC02b : <<include>>
+    UC02b ..> UC02d : <<include>>
+    UC02b ..> UC02c : <<include>>
+    UC02a ..> UCAUD : <<include>>
+}
+
+note bottom of UC02a
+    RF-MI-02: Configurar meses
+    sin ingresos y calcular el
+    capital de trabajo necesario
+    para arrancar la carrera.
+end note
+
+@enduml

@@ -1,0 +1,82 @@
+@startuml
+title <b><size:20>Diagrama de Secuencia - Registro de activos y cálculo de depreciación semestral</size></b>
+
+skinparam participant {
+    FontSize 12
+    FontStyle normal
+}
+skinparam actor {
+    FontSize 12
+    FontStyle normal
+}
+skinparam note {
+    FontSize 12
+}
+
+actor "Planificador"
+participant "RecursosFisicosViewModel"
+participant "GestionActivosUseCase"
+participant "CategoriaActivoRepository"
+participant "ActivoFijoRepository"
+participant "InflacionRepository"
+participant "Base de Datos"
+
+note over "Planificador","Base de Datos"
+Flujo Principal - Registro de activos y depreciación
+end note
+
+"Planificador" -> "RecursosFisicosViewModel": Registra activo fijo
+"RecursosFisicosViewModel" -> "GestionActivosUseCase": RegistrarActivo(escenarioId, categoriaId, descripcion, cantidad, valorUnitario, tipoOrigen)
+
+"GestionActivosUseCase" -> "CategoriaActivoRepository": ObtenerCategoria(categoriaId)
+"CategoriaActivoRepository" -> "Base de Datos": SELECT categoria_activo
+"Base de Datos" --> "CategoriaActivoRepository": VidaUtil, ValorResidualPorcentaje
+"CategoriaActivoRepository" --> "GestionActivosUseCase": CategoriaDto
+
+"GestionActivosUseCase" -> "ActivoFijoRepository": Guardar(activoFijo)
+"ActivoFijoRepository" -> "Base de Datos": INSERT activo_fijo
+"Base de Datos" --> "ActivoFijoRepository": activoId
+"GestionActivosUseCase" --> "RecursosFisicosViewModel": Activo registrado
+
+"Planificador" -> "RecursosFisicosViewModel": Solicita calcular depreciación
+"RecursosFisicosViewModel" -> "GestionActivosUseCase": CalcularDepreciacion(escenarioId)
+
+"GestionActivosUseCase" -> "ActivoFijoRepository": ObtenerActivos(escenarioId)
+"ActivoFijoRepository" -> "Base de Datos": SELECT activo_fijo WHERE escenario_id
+"Base de Datos" --> "ActivoFijoRepository": Lista de activos
+"ActivoFijoRepository" --> "GestionActivosUseCase": Activos
+
+"GestionActivosUseCase" -> "InflacionRepository": ObtenerInflacion(escenarioId)
+"InflacionRepository" -> "Base de Datos": SELECT inflacion_proyectada
+"Base de Datos" --> "InflacionRepository": Factores
+"InflacionRepository" --> "GestionActivosUseCase": Factores de inflación
+
+loop Por cada activo
+    "GestionActivosUseCase" -> "GestionActivosUseCase": CalcularValorConInflacion(cantidad, valorUnitario, factor)
+
+    note over "GestionActivosUseCase"
+    ValorTotal = cantidad * valorUnitario * factorInflacion
+    end note
+
+    "GestionActivosUseCase" -> "GestionActivosUseCase": CalcularValorResidual(valorTotal, porcentajeResidual)
+
+    note over "GestionActivosUseCase"
+    Residual = ValorTotal * (valorResidualPorcentaje/100)
+    end note
+
+    "GestionActivosUseCase" -> "GestionActivosUseCase": CalcularDepSemestral(valorTotal, residual, vidaUtil)
+
+    note over "GestionActivosUseCase"
+    DepSemestral = (ValorTotal - Residual) / (VidaUtil * 2)
+    end note
+
+    "GestionActivosUseCase" -> "GestionActivosUseCase": AcumularDepreciacion(periodos)
+
+    note over "GestionActivosUseCase"
+    DepAcum = suma progresiva desde período de adquisición
+    end note
+end
+
+"GestionActivosUseCase" --> "RecursosFisicosViewModel": DepreciacionDto (semestral y acumulada por categoría)
+"RecursosFisicosViewModel" --> "Planificador": Muestra tabla de depreciación por período
+@enduml

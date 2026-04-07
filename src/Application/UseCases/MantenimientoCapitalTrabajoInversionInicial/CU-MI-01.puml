@@ -1,0 +1,41 @@
+@startuml CU-MI-01
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+skinparam actor {
+    BorderColor Black
+}
+left to right direction
+
+actor "Administrador" as admin
+actor "Planificador\nAcadémico" as pa
+actor "Consultor" as consultor
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Registrar costos anuales\nservicios básicos y mantenimiento" as UC01a
+    usecase "Calcular costo mensual\npor alumno" as UC01b
+    usecase "Distribuir costo\na la carrera con inflación" as UC01c
+    usecase "Leer estudiantes e\ninflación desde módulos" as UC01d
+    usecase "Registrar auditoría\n(CU-US-04)" as UCAUD
+
+    admin --> UC01a
+    pa --> UC01a
+    consultor --> UC01a
+
+    UC01a ..> UC01b : <<include>>
+    UC01b ..> UC01c : <<include>>
+    UC01a ..> UC01d : <<include>>
+    UC01a ..> UCAUD : <<include>>
+}
+
+note bottom of UC01a
+    RF-MI-01: Registrar costos
+    anuales y distribuir servicios
+    básicos y mantenimiento a la
+    carrera por período con inflación.
+end note
+
+@enduml

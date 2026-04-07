@@ -1,0 +1,74 @@
+@startuml
+title <b><size:20>Diagrama de Secuencia - Proyección de estudiantes y docentes requeridos</size></b>
+
+skinparam participant {
+    FontSize 12
+    FontStyle normal
+}
+skinparam actor {
+    FontSize 12
+    FontStyle normal
+}
+skinparam note {
+    FontSize 12
+}
+
+actor "Planificador"
+participant "EstudiantesViewModel"
+participant "ProyectarEstudiantesUseCase"
+participant "ConfigRetencionRepository"
+participant "ProyeccionEstudiantesRepository"
+participant "DetalleEstudiantesRepository"
+participant "ConfigCargaDocenteRepository"
+participant "RequerimientoDocenteRepository"
+participant "Base de Datos"
+
+note over "Planificador","Base de Datos"
+Flujo Principal - Proyección de estudiantes y docentes
+end note
+
+"Planificador" -> "EstudiantesViewModel": Genera proyección de estudiantes
+"EstudiantesViewModel" -> "ProyectarEstudiantesUseCase": Ejecutar(carreraId, escenarioId)
+
+"ProyectarEstudiantesUseCase" -> "ConfigRetencionRepository": ObtenerConfiguracion(carreraId, escenarioId)
+"ConfigRetencionRepository" -> "Base de Datos": SELECT configuracion_retencion
+"Base de Datos" --> "ConfigRetencionRepository": Tasas y paralelos por período
+"ConfigRetencionRepository" --> "ProyectarEstudiantesUseCase": ConfiguracionRetencionDto
+
+"ProyectarEstudiantesUseCase" -> "ProyeccionEstudiantesRepository": CrearProyeccion(carreraId, escenarioId, anioBase)
+"ProyeccionEstudiantesRepository" -> "Base de Datos": INSERT proyeccion_estudiantes
+"Base de Datos" --> "ProyeccionEstudiantesRepository": proyeccionId
+
+loop Por cada período académico
+    "ProyectarEstudiantesUseCase" -> "ProyectarEstudiantesUseCase": CalcularParalelosPorPeriodo(numeroPeriodo)
+    "ProyectarEstudiantesUseCase" -> "ProyectarEstudiantesUseCase": AplicarTasaAcumulada(ciclo, paralelos, tasaRetencion)
+
+    note over "ProyectarEstudiantesUseCase"
+    TotalEst = EstInicial * Paralelos * TasaAcumulada
+    end note
+
+    "ProyectarEstudiantesUseCase" -> "DetalleEstudiantesRepository": GuardarDetalle(proyeccionId, periodoId, ciclo, paralelos, totalEst)
+    "DetalleEstudiantesRepository" -> "Base de Datos": INSERT detalle_proyeccion_estudiantes
+end
+
+"ProyectarEstudiantesUseCase" -> "ConfigCargaDocenteRepository": ObtenerConfigCarga(proyeccionId)
+"ConfigCargaDocenteRepository" -> "Base de Datos": SELECT configuracion_carga_docente
+"Base de Datos" --> "ConfigCargaDocenteRepository": Horas y proporciones
+"ConfigCargaDocenteRepository" --> "ProyectarEstudiantesUseCase": ConfigCargaDto
+
+loop Por cada período académico
+    "ProyectarEstudiantesUseCase" -> "ProyectarEstudiantesUseCase": CalcularHorasSemanales(totalEst, paralelos)
+    "ProyectarEstudiantesUseCase" -> "ProyectarEstudiantesUseCase": CalcularDocentesPorTipo(horasTotal, proporciones)
+
+    note over "ProyectarEstudiantesUseCase"
+    PhD=40%, Mgs=60%, Parcial, Técnico
+    end note
+
+    "ProyectarEstudiantesUseCase" -> "RequerimientoDocenteRepository": GuardarRequerimiento(periodoId, docentes)
+    "RequerimientoDocenteRepository" -> "Base de Datos": INSERT proyeccion_requerimiento_docente
+end
+
+"ProyectarEstudiantesUseCase" --> "EstudiantesViewModel": ProyeccionDto completa
+"EstudiantesViewModel" --> "Planificador": Muestra tabla estudiantes y docentes por período
+
+@enduml

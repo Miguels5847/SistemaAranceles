@@ -16,15 +16,51 @@ public sealed class RepositorioUsuario(
     {
         var usuarios = await contextoAplicacion.Usuarios
             .AsNoTracking()
+            .Select(x => new
+            {
+                x.Id,
+                x.NombreCompleto,
+                x.CorreoInstitucional,
+                x.HashContrasena,
+                x.Estado
+            })
             .ToListAsync(cancellationToken);
 
-        return usuarios.Select(MapearADominio).ToList();
+        return usuarios
+            .Select(x => MapearADominio(
+                x.Id,
+                x.NombreCompleto,
+                x.CorreoInstitucional,
+                x.HashContrasena,
+                x.Estado,
+                null))
+            .ToList();
     }
 
     public async Task<UsuarioDominio?> ObtenerPorIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        var usuario = await repositorioGenerico.ObtenerPorLlaveAsync([id], cancellationToken);
-        return usuario is null ? null : MapearADominio(usuario);
+        var usuario = await contextoAplicacion.Usuarios
+            .AsNoTracking()
+            .Where(x => x.Id == id)
+            .Select(x => new
+            {
+                x.Id,
+                x.NombreCompleto,
+                x.CorreoInstitucional,
+                x.HashContrasena,
+                x.Estado
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return usuario is null
+            ? null
+            : MapearADominio(
+                usuario.Id,
+                usuario.NombreCompleto,
+                usuario.CorreoInstitucional,
+                usuario.HashContrasena,
+                usuario.Estado,
+                null);
     }
 
     public async Task<UsuarioDominio?> ObtenerPorCorreoInstitucionalAsync(string correoInstitucional, CancellationToken cancellationToken = default)
@@ -33,9 +69,27 @@ public sealed class RepositorioUsuario(
 
         var usuario = await contextoAplicacion.Usuarios
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.CorreoInstitucional == correo, cancellationToken);
+            .Where(x => x.CorreoInstitucional == correo)
+            .Select(x => new
+            {
+                x.Id,
+                x.NombreCompleto,
+                x.CorreoInstitucional,
+                x.HashContrasena,
+                x.Estado,
+                x.UltimoAccesoEn
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
-        return usuario is null ? null : MapearADominio(usuario);
+        return usuario is null
+            ? null
+            : MapearADominio(
+                usuario.Id,
+                usuario.NombreCompleto,
+                usuario.CorreoInstitucional,
+                usuario.HashContrasena,
+                usuario.Estado,
+                usuario.UltimoAccesoEn);
     }
 
     public async Task<bool> ExisteCorreoInstitucionalAsync(string correoInstitucional, CancellationToken cancellationToken = default)
@@ -54,36 +108,37 @@ public sealed class RepositorioUsuario(
     {
         ArgumentNullException.ThrowIfNull(usuario);
 
-        var existente = await contextoAplicacion.Usuarios
-            .FirstOrDefaultAsync(x => x.Id == usuario.Id, cancellationToken);
+        var existe = await contextoAplicacion.Usuarios
+            .AnyAsync(x => x.Id == usuario.Id, cancellationToken);
 
-        if (existente is null)
+        if (!existe)
         {
             throw new KeyNotFoundException("No se encontro el usuario a actualizar.");
         }
 
-        existente.NombreCompleto = usuario.NombreCompleto;
-        existente.CorreoInstitucional = usuario.CorreoInstitucional.ToString();
-        existente.HashContrasena = usuario.HashContrasena;
-        existente.Estado = usuario.Estado.ToString();
-        existente.UltimoAccesoEn = usuario.UltimoAccesoEn;
-        existente.ActualizadoEn = DateTime.UtcNow;
+        await contextoAplicacion.Usuarios
+            .Where(x => x.Id == usuario.Id)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(x => x.NombreCompleto, usuario.NombreCompleto)
+                .SetProperty(x => x.CorreoInstitucional, usuario.CorreoInstitucional.ToString())
+                .SetProperty(x => x.HashContrasena, usuario.HashContrasena)
+                .SetProperty(x => x.Estado, usuario.Estado.ToString())
+                .SetProperty(x => x.UltimoAccesoEn, usuario.UltimoAccesoEn), cancellationToken);
     }
 
     public async Task EliminarAsync(int id, int eliminadoPorUsuarioId, CancellationToken cancellationToken = default)
     {
-        var existente = await contextoAplicacion.Usuarios
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var filas = await contextoAplicacion.Usuarios
+            .Where(x => x.Id == id)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(x => x.EstaActivo, false)
+                .SetProperty(x => x.EliminadoPorUsuarioId, eliminadoPorUsuarioId)
+                .SetProperty(x => x.Estado, EstadoUsuario.Inactivo.ToString()), cancellationToken);
 
-        if (existente is null)
+        if (filas == 0)
         {
             throw new KeyNotFoundException($"No se encontro el usuario con Id {id}.");
         }
-
-        existente.EstaActivo = false;
-        existente.EliminadoEn = DateTime.UtcNow;
-        existente.EliminadoPorUsuarioId = eliminadoPorUsuarioId;
-        existente.Estado = EstadoUsuario.Inactivo.ToString();
     }
 
     public async Task<IReadOnlyList<string>> ObtenerRolesDelUsuarioAsync(
@@ -98,16 +153,22 @@ public sealed class RepositorioUsuario(
             .ToListAsync(cancellationToken);
     }
 
-    private static UsuarioDominio MapearADominio(UsuarioPersistencia entidad)
+    private static UsuarioDominio MapearADominio(
+        int id,
+        string nombreCompleto,
+        string correoInstitucional,
+        string hashContrasena,
+        string estadoPersistencia,
+        DateTime? ultimoAccesoEn)
     {
         var usuario = new UsuarioDominio(
-            entidad.NombreCompleto,
-            new CorreoInstitucional(entidad.CorreoInstitucional),
-            entidad.HashContrasena);
+            nombreCompleto,
+            new CorreoInstitucional(correoInstitucional),
+            hashContrasena);
 
-        usuario.RehidratarId(entidad.Id);
+        usuario.RehidratarId(id);
 
-        if (Enum.TryParse<EstadoUsuario>(entidad.Estado, true, out var estado))
+        if (Enum.TryParse<EstadoUsuario>(estadoPersistencia, true, out var estado))
         {
             switch (estado)
             {
@@ -123,9 +184,9 @@ public sealed class RepositorioUsuario(
             }
         }
 
-        if (entidad.UltimoAccesoEn.HasValue)
+        if (ultimoAccesoEn.HasValue)
         {
-            usuario.RegistrarAcceso(entidad.UltimoAccesoEn.Value);
+            usuario.RegistrarAcceso(ultimoAccesoEn.Value);
         }
 
         return usuario;

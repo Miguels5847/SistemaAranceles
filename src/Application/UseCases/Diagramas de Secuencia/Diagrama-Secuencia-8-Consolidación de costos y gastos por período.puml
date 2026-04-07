@@ -1,0 +1,75 @@
+@startuml
+title <b><size:20>Diagrama de Secuencia - Consolidación de costos y gastos por período</size></b>
+
+skinparam participant {
+    FontSize 12
+    FontStyle normal
+}
+skinparam actor {
+    FontSize 12
+    FontStyle normal
+}
+skinparam note {
+    FontSize 12
+}
+
+actor "Planificador"
+participant "CostosGastosViewModel"
+participant "ConsolidarCostosUseCase"
+participant "SueldosRepository"
+participant "MantenimientoRepository"
+participant "DepreciacionRepository"
+participant "MaterialesRepository"
+participant "PresupuestoRepository"
+participant "CostoGastoPeriodoRepository"
+participant "Base de Datos"
+
+note over "Planificador","Base de Datos"
+Flujo Principal - Consolidación de costos y gastos
+end note
+
+"Planificador" -> "CostosGastosViewModel": Solicita consolidar costos del escenario
+"CostosGastosViewModel" -> "ConsolidarCostosUseCase": Ejecutar(escenarioId)
+
+"ConsolidarCostosUseCase" -> "SueldosRepository": ObtenerTotalSueldosFacultad(escenarioId, periodoId)
+"SueldosRepository" -> "Base de Datos": SELECT SUM proyeccion_cargo_facultad
+"Base de Datos" --> "SueldosRepository": TotalSueldosFacultad
+
+"ConsolidarCostosUseCase" -> "SueldosRepository": ObtenerTotalPlantaCentral(escenarioId, periodoId)
+"SueldosRepository" -> "Base de Datos": SELECT SUM proyeccion_cargo_planta_central
+"Base de Datos" --> "SueldosRepository": TotalPlantaCentral
+
+"ConsolidarCostosUseCase" -> "MantenimientoRepository": ObtenerTotalMantenimiento(escenarioId, periodoId)
+"MantenimientoRepository" -> "Base de Datos": Calcula desde servicio_basico_mantenimiento
+"Base de Datos" --> "MantenimientoRepository": TotalMantenimiento
+
+"ConsolidarCostosUseCase" -> "DepreciacionRepository": ObtenerDepreciacionPeriodo(escenarioId, periodoId)
+"DepreciacionRepository" -> "Base de Datos": Calcula desde activo_fijo y categoria_activo
+"Base de Datos" --> "DepreciacionRepository": TotalDepreciacion
+
+"ConsolidarCostosUseCase" -> "MaterialesRepository": ObtenerTotalMateriales(escenarioId, periodoId)
+"MaterialesRepository" -> "Base de Datos": SELECT SUM proyeccion_material_insumo
+"Base de Datos" --> "MaterialesRepository": TotalMateriales
+
+"ConsolidarCostosUseCase" -> "PresupuestoRepository": ObtenerTotalPresupuestos(periodoId)
+"PresupuestoRepository" -> "Base de Datos": SELECT presupuesto_institucional con inflación
+"Base de Datos" --> "PresupuestoRepository": TotalPresupuestos
+
+"ConsolidarCostosUseCase" -> "ConsolidarCostosUseCase": CalcularSubtotal(sueldos, planta, mant, dep, mat, presup)
+"ConsolidarCostosUseCase" -> "ConsolidarCostosUseCase": AplicarImprevistos(subtotal, factorImprevistos)
+
+note over "ConsolidarCostosUseCase"
+TotalConImprevistos = Subtotal * (1 + factorImprevistos)
+end note
+
+"ConsolidarCostosUseCase" -> "ConsolidarCostosUseCase": CalcularCostoPorEstudiante(total, numEstudiantes)
+"ConsolidarCostosUseCase" -> "ConsolidarCostosUseCase": CalcularArancelPropuesto(costoPorEstudiante)
+
+"ConsolidarCostosUseCase" -> "CostoGastoPeriodoRepository": GuardarConsolidado(escenarioId, periodoId, totales)
+"CostoGastoPeriodoRepository" -> "Base de Datos": INSERT OR UPDATE costo_gasto_periodo
+"Base de Datos" --> "CostoGastoPeriodoRepository": OK
+
+"ConsolidarCostosUseCase" --> "CostosGastosViewModel": CostoGastoDto
+"CostosGastosViewModel" --> "Planificador": Muestra resumen consolidado por período
+
+@enduml

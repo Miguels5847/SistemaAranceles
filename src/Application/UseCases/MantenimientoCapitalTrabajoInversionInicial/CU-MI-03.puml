@@ -1,0 +1,45 @@
+@startuml CU-MI-03.puml
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+skinparam actor {
+    BorderColor Black
+}
+left to right direction
+
+together {
+    actor "Administrador" as admin
+    actor "Planificador\nAcadémico" as pa
+    actor "Consultor" as consultor
+    admin -[hidden]right- pa
+    pa -[hidden]right- consultor
+}
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Calcular inversión\ninicial total" as UC03a
+    usecase "Consolidar activos diferidos,\nfijos, capital y contingencias" as UC03b
+    usecase "Configurar porcentaje\nde imprevistos" as UC03c
+    usecase "Exponer total a Flujo\nde Fondos y Financiamiento" as UC03d
+    usecase "Recalcular ante cambios\nen componentes" as UC03e
+    usecase "Registrar auditoría\n(CU-US-04)" as UCAUD
+
+    admin --> UC03c
+    pa --> UC03a
+    consultor --> UC03a
+
+    UC03a ..> UC03b : <<include>>
+    UC03a ..> UC03d : <<include>>
+    UC03a ..> UCAUD : <<include>>
+    UC03c ..> UC03a : <<extend>>
+    UC03e ..> UC03a : <<extend>>
+}
+
+note bottom of UC03a
+    RF-MI-03: Consolidar inversión
+    inicial total: diferidos + fijos
+    + capital de trabajo +
+    imprevistos configurables.
+end note
+@enduml

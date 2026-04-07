@@ -1,0 +1,61 @@
+@startuml
+title <b><size:20>Diagrama de Secuencia - Proyección de inflación</size></b>
+
+skinparam participant {
+    FontSize 12
+    FontStyle normal
+}
+skinparam actor {
+    FontSize 12
+    FontStyle normal
+}
+skinparam note {
+    FontSize 12
+}
+
+actor "Planificador"
+participant "InflacionViewModel"
+participant "ProyectarInflacionUseCase"
+participant "InflacionAnualRepository"
+participant "InflacionProyectadaRepository"
+participant "Base de Datos"
+
+note over "Planificador","Base de Datos"
+Flujo Principal - Proyección de inflación
+end note
+
+"Planificador" -> "InflacionViewModel": Solicita proyectar inflación para escenario
+"InflacionViewModel" -> "ProyectarInflacionUseCase": Ejecutar(escenarioId, aniosAProyectar)
+
+"ProyectarInflacionUseCase" -> "InflacionAnualRepository": ObtenerHistorico()
+"InflacionAnualRepository" -> "Base de Datos": SELECT inflacion_anual ORDER BY anio
+"Base de Datos" --> "InflacionAnualRepository": Lista de inflaciones históricas
+"InflacionAnualRepository" --> "ProyectarInflacionUseCase": Datos históricos
+
+"ProyectarInflacionUseCase" -> "ProyectarInflacionUseCase": EjecutarRegresionLineal(datos)
+
+note over "ProyectarInflacionUseCase"
+y = a + b*x donde x=año, y=inflación
+end note
+
+"ProyectarInflacionUseCase" -> "ProyectarInflacionUseCase": CalcularPendienteEIntercepcion()
+"ProyectarInflacionUseCase" -> "ProyectarInflacionUseCase": GenerarProyeccionPorAnio()
+
+loop Por cada año proyectado
+    "ProyectarInflacionUseCase" -> "InflacionProyectadaRepository": GuardarOActualizar(escenarioId, anio, porcentaje, metodo)
+    "InflacionProyectadaRepository" -> "Base de Datos": INSERT OR UPDATE inflacion_proyectada
+end
+
+"ProyectarInflacionUseCase" --> "InflacionViewModel": Lista inflaciones proyectadas
+"InflacionViewModel" --> "Planificador": Muestra tabla de proyección
+
+alt Planificador ajusta manualmente un año
+    "Planificador" -> "InflacionViewModel": Edita valor de inflación de un año
+    "InflacionViewModel" -> "ProyectarInflacionUseCase": AjustarManual(escenarioId, anio, nuevoValor)
+    "ProyectarInflacionUseCase" -> "InflacionProyectadaRepository": Actualizar(escenarioId, anio, nuevoValor, esAjusteManual=true)
+    "InflacionProyectadaRepository" -> "Base de Datos": UPDATE inflacion_proyectada SET porcentaje, es_ajuste_manual=1
+    "Base de Datos" --> "InflacionProyectadaRepository": OK
+    "ProyectarInflacionUseCase" --> "InflacionViewModel": Inflación actualizada
+    "InflacionViewModel" --> "Planificador": Muestra valor ajustado con indicador manual
+end
+@enduml
