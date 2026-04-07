@@ -6,6 +6,7 @@ using SistemaAranceles.Application.UseCases.Autenticacion;
 using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.ViewModels.Usuarios;
+using System.Diagnostics;
 
 namespace SistemaAranceles.Presentation.ViewModels;
 
@@ -23,6 +24,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly CerrarSesionUseCase _cerrarSesionUseCase;
     private readonly UsuariosViewModel _usuariosViewModel;
     private readonly Func<EditarUsuarioViewModel> _editarUsuarioViewModelFactory;
+    private int _cerrandoSesion;
 
     public MainViewModel(
         SesionActual sesionActual,
@@ -100,7 +102,7 @@ public sealed partial class MainViewModel : ObservableObject
         {
             Titulo = "Cerrar Sesión",
             Icono = "🚪",
-            Comando = new AsyncRelayCommand(CerrarSesionAsync)
+            Comando = new RelayCommand(() => _ = CerrarSesionAsync())
         });
 
         Bienvenida = $"Bienvenido, {_sesionActual.NombreCompleto}  |  Rol: {_sesionActual.RolNombre}";
@@ -123,17 +125,30 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task CerrarSesionAsync()
     {
+        if (Interlocked.Exchange(ref _cerrandoSesion, 1) == 1)
+        {
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] MainViewModel: CerrarSesionAsync ignorado por ejecución en curso.");
+            return;
+        }
+
+        Trace.WriteLine($"[{DateTime.UtcNow:O}] MainViewModel: inicio CerrarSesionAsync.");
         try
         {
             await _cerrarSesionUseCase.EjecutarAsync(
                 _sesionActual.UsuarioId,
                 _sesionActual.TokenSesion);
         }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] MainViewModel: error en CerrarSesionAsync -> {ex.Message}.");
+        }
         finally
         {
             _sesionActual.CerrarSesion();
             WeakReferenceMessenger.Default.UnregisterAll(this);
             WeakReferenceMessenger.Default.Send(new CerrarSesionMensaje());
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] MainViewModel: fin CerrarSesionAsync.");
+            Interlocked.Exchange(ref _cerrandoSesion, 0);
         }
     }
 }

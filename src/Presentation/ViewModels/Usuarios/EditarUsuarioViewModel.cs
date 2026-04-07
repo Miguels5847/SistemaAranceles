@@ -8,6 +8,7 @@ using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.Usuarios;
 using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.State;
+using System.Diagnostics;
 
 namespace SistemaAranceles.Presentation.ViewModels.Usuarios;
 
@@ -48,10 +49,7 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
 
     public async Task InicializarAsync(UsuarioDto? usuarioExistente = null)
     {
-        var roles = await _repositorioRol.ListarAsync();
-        Roles.Clear();
-        foreach (var r in roles)
-            Roles.Add(new RolDto { Id = r.Id, Nombre = r.Nombre, Descripcion = r.Descripcion });
+        await CargarRolesAsync();
 
         if (usuarioExistente is not null)
         {
@@ -68,6 +66,27 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
             EsNuevo = true;
             Titulo = "Nuevo Usuario";
             RolSeleccionado = Roles.FirstOrDefault()?.Nombre ?? string.Empty;
+        }
+    }
+
+    private async Task CargarRolesAsync()
+    {
+        Roles.Clear();
+
+        try
+        {
+            using var ctsRoles = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+            var roles = await _repositorioRol.ListarAsync(ctsRoles.Token);
+
+            foreach (var r in roles)
+                Roles.Add(new RolDto { Id = r.Id, Nombre = r.Nombre, Descripcion = r.Descripcion });
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] EditarUsuarioViewModel: no se pudieron cargar roles desde BD -> {ex.Message}. Se usará catálogo local.");
+            Roles.Add(new RolDto { Id = 1, Nombre = "Administrador", Descripcion = "Acceso total al sistema" });
+            Roles.Add(new RolDto { Id = 2, Nombre = "Analista", Descripcion = "Acceso a módulos financieros" });
+            Roles.Add(new RolDto { Id = 3, Nombre = "Visualizador", Descripcion = "Acceso de solo lectura" });
         }
     }
 
