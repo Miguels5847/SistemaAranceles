@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using SistemaAranceles.Application.DTOs.Usuarios;
 using SistemaAranceles.Application.Interfaces.Persistencia;
@@ -48,7 +48,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
 
 var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("No se encontró ConnectionStrings:DefaultConnection.");
+    ?? throw new InvalidOperationException("No se encontr� ConnectionStrings:DefaultConnection.");
 
 // Workaround: Render DNS resolves Supabase to IPv6. Use pooler with correct username format.
 if (defaultConnection.Contains("db.zpdkdbonmsjqljozaczp.supabase.co", StringComparison.OrdinalIgnoreCase))
@@ -63,7 +63,7 @@ if (defaultConnection.Contains("db.zpdkdbonmsjqljozaczp.supabase.co", StringComp
         if (string.IsNullOrWhiteSpace(trimmed)) continue;
         
         if (trimmed.IndexOf("Host=", StringComparison.OrdinalIgnoreCase) == 0)
-            rebuiltConn.Append("Host=aws-0-us-east-1.pooler.supabase.com;");
+            rebuiltConn.Append("Host=aws-1-us-east-1.pooler.supabase.com;");
         else if (trimmed.IndexOf("Port=", StringComparison.OrdinalIgnoreCase) == 0)
             rebuiltConn.Append("Port=6543;");
         else if (trimmed.IndexOf("Username=", StringComparison.OrdinalIgnoreCase) == 0)
