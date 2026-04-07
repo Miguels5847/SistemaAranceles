@@ -14,17 +14,42 @@ public sealed class RepositorioSesionUsuario(ContextoAplicacion contextoAplicaci
         DateTime expiraEn,
         CancellationToken cancellationToken = default)
     {
-        var sesion = new SesionUsuario
-        {
-            UsuarioId = usuarioId,
-            TokenSesion = tokenSesion,
-            EmitidoEn = DateTime.UtcNow,
-            ExpiraEn = expiraEn
-        };
+        const string sql = """
+            INSERT INTO sesion_usuario (usuario_id, token_sesion, emitido_en, expira_en)
+            VALUES (@usuario_id, @token_sesion, @emitido_en, @expira_en)
+            RETURNING id
+            """;
 
-        await contextoAplicacion.SesionesUsuario.AddAsync(sesion, cancellationToken);
-        await contextoAplicacion.SaveChangesAsync(cancellationToken);
-        return sesion.Id;
+        var connection = (NpgsqlConnection)contextoAplicacion.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.CommandTimeout = 8;
+
+        var pUsuarioId = command.CreateParameter();
+        pUsuarioId.ParameterName = "@usuario_id";
+        pUsuarioId.Value = usuarioId;
+        command.Parameters.Add(pUsuarioId);
+
+        var pToken = command.CreateParameter();
+        pToken.ParameterName = "@token_sesion";
+        pToken.Value = tokenSesion;
+        command.Parameters.Add(pToken);
+
+        var pEmitido = command.CreateParameter();
+        pEmitido.ParameterName = "@emitido_en";
+        pEmitido.Value = DateTime.UtcNow;
+        command.Parameters.Add(pEmitido);
+
+        var pExpira = command.CreateParameter();
+        pExpira.ParameterName = "@expira_en";
+        pExpira.Value = expiraEn;
+        command.Parameters.Add(pExpira);
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return result is null || result == DBNull.Value ? 0 : Convert.ToInt32(result);
     }
 
     public async Task RevocarAsync(string tokenSesion, CancellationToken cancellationToken = default)

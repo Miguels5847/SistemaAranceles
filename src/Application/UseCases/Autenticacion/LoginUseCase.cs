@@ -105,6 +105,10 @@ public sealed class LoginUseCase(
                 {
                     Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: timeout transitorio leyendo roles (intento 1). Reintentando.");
                 }
+                catch (Exception ex) when (intento == 1 && EsErrorTransitorio(ex))
+                {
+                    Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: error transitorio leyendo roles (intento 1) -> {ex.Message}. Reintentando.");
+                }
             }
 
             rolNombre = roles.FirstOrDefault() ?? InferirRolDeRespaldo(usuario.Id, usuario.CorreoInstitucional.ToString());
@@ -178,6 +182,16 @@ public sealed class LoginUseCase(
         if (usuarioId == 1 || correo.Equals("admin@ucacue.edu.ec", StringComparison.OrdinalIgnoreCase))
             return "Administrador";
 
-        return "Sin rol";
+        return "Analista";
+    }
+
+    private static bool EsErrorTransitorio(Exception ex)
+    {
+        if (ex is TimeoutException || ex is OperationCanceledException)
+            return true;
+
+        return ex.Message.Contains("stream", StringComparison.OrdinalIgnoreCase)
+            || ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase)
+            || ex.Message.Contains("transient", StringComparison.OrdinalIgnoreCase);
     }
 }

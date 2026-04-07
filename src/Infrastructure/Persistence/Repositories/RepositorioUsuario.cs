@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Domain.Enums;
 using SistemaAranceles.Domain.ValueObjects;
@@ -183,12 +184,36 @@ public sealed class RepositorioUsuario(
         int id,
         CancellationToken cancellationToken = default)
     {
-        return await contextoAplicacion.UsuariosRoles
-            .AsNoTracking()
-            .Where(ur => ur.UsuarioId == id)
-            .Include(ur => ur.Rol)
-            .Select(ur => ur.Rol!.Nombre)
-            .ToListAsync(cancellationToken);
+        const string sql = """
+            SELECT DISTINCT r.nombre
+            FROM usuario_rol ur
+            INNER JOIN rol r ON r.id = ur.rol_id
+            WHERE ur.usuario_id = @usuario_id
+            ORDER BY r.nombre
+            """;
+
+        var connection = (NpgsqlConnection)contextoAplicacion.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.CommandTimeout = 15;
+
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = "@usuario_id";
+        parameter.Value = id;
+        command.Parameters.Add(parameter);
+
+        var roles = new List<string>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            if (!reader.IsDBNull(0))
+                roles.Add(reader.GetString(0));
+        }
+
+        return roles;
     }
 
     private static UsuarioDominio MapearADominio(

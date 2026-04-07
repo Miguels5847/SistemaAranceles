@@ -22,13 +22,17 @@ public sealed class ListarUsuariosUseCase(IRepositorioUsuario repositorioUsuario
                     try
                     {
                         using var ctsRoles = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                        ctsRoles.CancelAfter(TimeSpan.FromSeconds(20));
+                        ctsRoles.CancelAfter(TimeSpan.FromSeconds(3));
                         roles = await repositorioUsuario.ObtenerRolesDelUsuarioAsync(u.Id, ctsRoles.Token);
                         break;
                     }
                     catch (OperationCanceledException) when (intento == 1)
                     {
                         Trace.WriteLine($"[{DateTime.UtcNow:O}] ListarUsuariosUseCase: timeout transitorio en roles para usuario Id={u.Id} (intento 1). Reintentando.");
+                    }
+                    catch (Exception ex) when (intento == 1 && EsErrorTransitorio(ex))
+                    {
+                        Trace.WriteLine($"[{DateTime.UtcNow:O}] ListarUsuariosUseCase: error transitorio en roles para usuario Id={u.Id} (intento 1) -> {ex.Message}. Reintentando.");
                     }
                 }
             }
@@ -50,5 +54,15 @@ public sealed class ListarUsuariosUseCase(IRepositorioUsuario repositorioUsuario
         }
 
         return dtos;
+    }
+
+    private static bool EsErrorTransitorio(Exception ex)
+    {
+        if (ex is TimeoutException || ex is OperationCanceledException)
+            return true;
+
+        return ex.Message.Contains("stream", StringComparison.OrdinalIgnoreCase)
+            || ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase)
+            || ex.Message.Contains("transient", StringComparison.OrdinalIgnoreCase);
     }
 }
