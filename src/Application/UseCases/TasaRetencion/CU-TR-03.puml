@@ -1,0 +1,43 @@
+@startuml CU-TR-03
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Planificador\nAcadémico" as pa
+actor "Consultor" as consultor
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Consultar configuración\nguardada por carrera" as UC03a
+    usecase "Editar configuración\nde tasas" as UC03b
+    usecase "Recalcular simulación\ne indicadores" as UC03c
+    usecase "Registrar trazabilidad\nusuario-fecha-hora" as UC03d
+    usecase "Mostrar nota\ninformativa" as UC03e
+    usecase "Registrar auditoría\n(CU-US-04)" as UCAUD
+
+    pa --> UC03a
+    pa --> UC03b
+    consultor --> UC03a
+
+    UC03b ..> UC03c : <<include>>
+    UC03b ..> UC03d : <<include>>
+    UC03b ..> UCAUD : <<include>>
+    UC03c ..> UC03e : <<extend>>
+}
+
+note bottom of UC03b
+    RF-TR-03: Consultar y editar
+    configuración guardada con
+    trazabilidad de cambios y
+    recálculo automático.
+end note
+
+@enduml

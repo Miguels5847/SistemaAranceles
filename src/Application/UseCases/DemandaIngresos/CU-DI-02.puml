@@ -1,0 +1,40 @@
+@startuml CU-DI-02
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Administrador" as admin
+actor "Sistema" as sistema
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Calcular ingresos\nproyectados" as UC02a
+    usecase "Calcular seguro\nestudiantil" as UC02b
+    usecase "Calcular becas\ninstitucionales" as UC02c
+    usecase "Configurar presupuesto\nseguro y % becas" as UC02d
+    usecase "Registrar auditoría\n(CU-US-04)" as UC04
+
+    sistema --> UC02a
+    admin --> UC02d
+
+    UC02a ..> UC02b : <<include>>
+    UC02a ..> UC02c : <<include>>
+
+    UC02d ..> UC04 : <<include>>
+}
+
+note bottom of UC02a
+    RF-DI-02: Ingresos, becas
+    y seguro estudiantil
+    calculados automáticamente.
+end note
+
+@enduml

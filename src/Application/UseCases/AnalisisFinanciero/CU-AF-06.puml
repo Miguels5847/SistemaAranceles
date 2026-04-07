@@ -1,0 +1,36 @@
+@startuml CU-AF-06
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Planificador\nAcadémico" as planif
+actor "Consultor" as consul
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Calcular Período\nde Recuperación" as UC06a
+    usecase "Acumular flujos\nnetos" as UC06b
+    usecase "Convertir a años,\nmeses y días" as UC06c
+
+    planif --> UC06a
+    consul --> UC06a
+
+    UC06a ..> UC06b : <<include>>
+    UC06a ..> UC06c : <<include>>
+}
+
+note bottom of UC06a
+    RF-AF-06: Período de
+    recuperación de la
+    inversión inicial.
+end note
+
+@enduml

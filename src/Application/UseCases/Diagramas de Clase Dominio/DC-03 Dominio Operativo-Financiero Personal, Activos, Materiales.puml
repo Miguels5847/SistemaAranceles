@@ -1,0 +1,311 @@
+@startuml
+top to bottom direction
+scale 0.96
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+skinparam arrowColor Black
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 20
+skinparam ranksep 30
+
+title DC-03: Dominio Operativo-Financiero - Personal, Activos, Materiales
+
+package "Domain" #EFF6FF {
+    class CargoFacultad {
+        +int Id
+        +int CarreraId
+        +string NombreCargo
+        +string TipoCargo
+        +decimal SueldoBaseMensual
+        +bool EsCargoDocente
+        +bool EstaActivo
+    }
+    class ProyeccionCargoFacultad {
+        +int Id
+        +int CargoFacultadId
+        +int PeriodoAcademicoId
+        +decimal CantidadPersonas
+        +decimal FactorPonderacion
+        +decimal FactorInflacion
+        +decimal CostoTotalSemestre
+    }
+    class CargoPlantaCentral {
+        +int Id
+        +string NombreCargo
+        +decimal SueldoMensualTotal
+        +bool EstaActivo
+    }
+    class ProyeccionCargoPlantaCentral {
+        +int Id
+        +int CargoPlantaCentralId
+        +int CarreraId
+        +int PeriodoAcademicoId
+        +decimal ProporcionAsignacion
+        +decimal CostoTotalSemestre
+    }
+    class CategoriaActivo {
+        +int Id
+        +string Nombre
+        +int VidaUtilAnios
+        +decimal ValorResidualPorcentaje
+        +string Descripcion
+    }
+    class ActivoFijo {
+        +int Id
+        +int EscenarioProyeccionId
+        +int CategoriaActivoId
+        +string TipoOrigen
+        +string Descripcion
+        +decimal Cantidad
+        +decimal ValorUnitario
+        +int PeriodoAcademicoId
+    }
+    class ActivoDiferido {
+        +int Id
+        +int EscenarioProyeccionId
+        +string NombreRubro
+        +decimal Valor
+        +decimal TasaAmortizacionAnual
+    }
+    class ServicioBasicoMantenimiento {
+        +int Id
+        +string TipoRubro
+        +string NombreRubro
+        +decimal CostoAnualUniversidad
+    }
+    class ConfiguracionCapitalTrabajo {
+        +int Id
+        +int EscenarioProyeccionId
+        +int MesesCapitalTrabajo
+        +decimal PorcentajeImprevistos
+        +int TotalEstudiantesUniversidad
+    }
+    class ItemMaterialInsumo {
+        +int Id
+        +int CarreraId
+        +string NombreItem
+        +string CategoriaNombre
+        +string UnidadNombre
+        +decimal CantidadBase
+        +decimal PrecioUnitario
+        +bool EsCantidadFija
+    }
+    class ProyeccionMaterialInsumo {
+        +int Id
+        +int ItemMaterialInsumoId
+        +int PeriodoAcademicoId
+        +decimal CantidadProyectada
+        +decimal FactorInflacion
+        +decimal CostoTotalProyectado
+    }
+    class PresupuestoInstitucional {
+        +int Id
+        +string TipoPresupuesto
+        +decimal ValorAnualBase
+        +bool AjustablePorInflacion
+    }
+
+    CargoFacultad -[hidden]-> ProyeccionCargoFacultad
+    ProyeccionCargoFacultad -[hidden]-> CargoPlantaCentral
+    CargoPlantaCentral -[hidden]-> ProyeccionCargoPlantaCentral
+    ProyeccionCargoPlantaCentral -[hidden]-> CategoriaActivo
+    CategoriaActivo -[hidden]-> ActivoFijo
+    ActivoFijo -[hidden]-> ActivoDiferido
+    ActivoDiferido -[hidden]-> ServicioBasicoMantenimiento
+    ServicioBasicoMantenimiento -[hidden]-> ConfiguracionCapitalTrabajo
+    ConfiguracionCapitalTrabajo -[hidden]-> ItemMaterialInsumo
+    ItemMaterialInsumo -[hidden]-> ProyeccionMaterialInsumo
+    ProyeccionMaterialInsumo -[hidden]-> PresupuestoInstitucional
+}
+
+package "Application" #F0FDF4 {
+    interface ICargoFacultadRepository <<Interface>> {
+        +ObtenerPorCarrera(carreraId: int) : List~CargoFacultad~
+        +Guardar(cargo: CargoFacultad) : void
+    }
+    interface ICargoPlantaCentralRepository <<Interface>> {
+        +ObtenerTodos() : List~CargoPlantaCentral~
+        +Guardar(cargo: CargoPlantaCentral) : void
+    }
+    interface ICategoriaActivoRepository <<Interface>> {
+        +ObtenerTodos() : List~CategoriaActivo~
+        +ObtenerPorId(id: int) : CategoriaActivo
+    }
+    interface IActivoFijoRepository <<Interface>> {
+        +ObtenerPorEscenario(escenarioId: int) : List~ActivoFijo~
+        +Guardar(activo: ActivoFijo) : void
+    }
+    interface IActivoDiferidoRepository <<Interface>> {
+        +ObtenerPorEscenario(escenarioId: int) : List~ActivoDiferido~
+        +Guardar(activo: ActivoDiferido) : void
+    }
+    interface IServicioMantenimientoRepository <<Interface>> {
+        +ObtenerTodos() : List~ServicioBasicoMantenimiento~
+        +Guardar(servicio: ServicioBasicoMantenimiento) : void
+    }
+    interface ICapitalTrabajoRepository <<Interface>> {
+        +ObtenerPorEscenario(escenarioId: int) : ConfiguracionCapitalTrabajo
+        +Guardar(config: ConfiguracionCapitalTrabajo) : void
+    }
+    interface IMaterialInsumoRepository <<Interface>> {
+        +ObtenerPorCarrera(carreraId: int) : List~ItemMaterialInsumo~
+        +Guardar(item: ItemMaterialInsumo) : void
+        +GuardarProyeccion(proy: ProyeccionMaterialInsumo) : void
+    }
+
+    class ProyectarSueldosUseCase <<UseCase>> {
+        -ICargoFacultadRepository _cargoRepo
+        -ICargoPlantaCentralRepository _plantaRepo
+        +Ejecutar(carreraId: int, escenarioId: int) : void
+    }
+    class GestionActivosUseCase <<UseCase>> {
+        -ICategoriaActivoRepository _catRepo
+        -IActivoFijoRepository _activoRepo
+        +RegistrarActivo(dto: ActivoFijoDto) : void
+        +CalcularDepreciacion(escenarioId: int) : DepreciacionDto
+    }
+    class GestionCapitalTrabajoUseCase <<UseCase>> {
+        -ICapitalTrabajoRepository _capitalRepo
+        -IActivoDiferidoRepository _diferidoRepo
+        -IServicioMantenimientoRepository _servicioRepo
+        +CalcularInversionInicial(escenarioId: int) : InversionInicialDto
+    }
+    class GestionMaterialesUseCase <<UseCase>> {
+        -IMaterialInsumoRepository _materialRepo
+        +RegistrarMaterial(dto: ItemMaterialInsumoDto) : void
+        +ProyectarCostos(carreraId: int, escenarioId: int) : void
+    }
+
+    ICargoFacultadRepository -[hidden]-> ICargoPlantaCentralRepository
+    ICargoPlantaCentralRepository -[hidden]-> ICategoriaActivoRepository
+    ICategoriaActivoRepository -[hidden]-> IActivoFijoRepository
+    IActivoFijoRepository -[hidden]-> IActivoDiferidoRepository
+    IActivoDiferidoRepository -[hidden]-> IServicioMantenimientoRepository
+    IServicioMantenimientoRepository -[hidden]-> ICapitalTrabajoRepository
+    ICapitalTrabajoRepository -[hidden]-> IMaterialInsumoRepository
+    IMaterialInsumoRepository -[hidden]-> ProyectarSueldosUseCase
+    ProyectarSueldosUseCase -[hidden]-> GestionActivosUseCase
+    GestionActivosUseCase -[hidden]-> GestionCapitalTrabajoUseCase
+    GestionCapitalTrabajoUseCase -[hidden]-> GestionMaterialesUseCase
+}
+
+package "Infrastructure" #FFF7ED {
+    class CargoFacultadRepository <<Repository>> {
+        -AppDbContext _context
+        +ObtenerPorCarrera(carreraId: int) : List~CargoFacultad~
+        +Guardar(cargo: CargoFacultad) : void
+    }
+    class CargoPlantaCentralRepository <<Repository>> {
+        -AppDbContext _context
+        +ObtenerTodos() : List~CargoPlantaCentral~
+        +Guardar(cargo: CargoPlantaCentral) : void
+    }
+    class CategoriaActivoRepository <<Repository>> {
+        -AppDbContext _context
+        +ObtenerTodos() : List~CategoriaActivo~
+        +ObtenerPorId(id: int) : CategoriaActivo
+    }
+    class ActivoFijoRepository <<Repository>> {
+        -AppDbContext _context
+        +ObtenerPorEscenario(escenarioId: int) : List~ActivoFijo~
+        +Guardar(activo: ActivoFijo) : void
+    }
+    class ActivoDiferidoRepository <<Repository>> {
+        -AppDbContext _context
+        +ObtenerPorEscenario(escenarioId: int) : List~ActivoDiferido~
+        +Guardar(activo: ActivoDiferido) : void
+    }
+    class ServicioMantenimientoRepository <<Repository>> {
+        -AppDbContext _context
+        +ObtenerTodos() : List~ServicioBasicoMantenimiento~
+        +Guardar(servicio: ServicioBasicoMantenimiento) : void
+    }
+    class CapitalTrabajoRepository <<Repository>> {
+        -AppDbContext _context
+        +ObtenerPorEscenario(escenarioId: int) : ConfiguracionCapitalTrabajo
+        +Guardar(config: ConfiguracionCapitalTrabajo) : void
+    }
+    class MaterialInsumoRepository <<Repository>> {
+        -AppDbContext _context
+        +ObtenerPorCarrera(carreraId: int) : List~ItemMaterialInsumo~
+        +Guardar(item: ItemMaterialInsumo) : void
+        +GuardarProyeccion(proy: ProyeccionMaterialInsumo) : void
+    }
+
+    CargoFacultadRepository -[hidden]-> CargoPlantaCentralRepository
+    CargoPlantaCentralRepository -[hidden]-> CategoriaActivoRepository
+    CategoriaActivoRepository -[hidden]-> ActivoFijoRepository
+    ActivoFijoRepository -[hidden]-> ActivoDiferidoRepository
+    ActivoDiferidoRepository -[hidden]-> ServicioMantenimientoRepository
+    ServicioMantenimientoRepository -[hidden]-> CapitalTrabajoRepository
+    CapitalTrabajoRepository -[hidden]-> MaterialInsumoRepository
+}
+
+package "Presentation" #FDF4FF {
+    class SueldosViewModel <<ViewModel>> {
+        +ICommand ProyectarSueldosCommand
+        +ICommand GuardarCargoCommand
+        +CargarCargos() : void
+    }
+    class RecursosFisicosViewModel <<ViewModel>> {
+        +ICommand RegistrarActivoCommand
+        +ICommand CalcularDepreciacionCommand
+        +CargarActivos() : void
+    }
+    class MantenimientoViewModel <<ViewModel>> {
+        +ICommand CalcularInversionCommand
+        +ICommand GuardarServicioCommand
+        +CargarServicios() : void
+    }
+    class MaterialesViewModel <<ViewModel>> {
+        +ICommand RegistrarMaterialCommand
+        +ICommand ProyectarCostosCommand
+        +CargarMateriales() : void
+    }
+
+    SueldosViewModel -[hidden]-> RecursosFisicosViewModel
+    RecursosFisicosViewModel -[hidden]-> MantenimientoViewModel
+    MantenimientoViewModel -[hidden]-> MaterialesViewModel
+}
+
+Domain -[hidden]-> Application
+Application -[hidden]-> Infrastructure
+Infrastructure -[hidden]-> Presentation
+
+' Relaciones de dominio
+CargoFacultad "1" --> "0..*" ProyeccionCargoFacultad : proyecta
+CargoPlantaCentral "1" --> "0..*" ProyeccionCargoPlantaCentral : proyecta
+CategoriaActivo "1" --> "0..*" ActivoFijo : clasifica
+ItemMaterialInsumo "1" --> "0..*" ProyeccionMaterialInsumo : proyecta
+
+' Implementaciones
+CargoFacultadRepository ..|> ICargoFacultadRepository : implementa
+CargoPlantaCentralRepository ..|> ICargoPlantaCentralRepository : implementa
+CategoriaActivoRepository ..|> ICategoriaActivoRepository : implementa
+ActivoFijoRepository ..|> IActivoFijoRepository : implementa
+ActivoDiferidoRepository ..|> IActivoDiferidoRepository : implementa
+ServicioMantenimientoRepository ..|> IServicioMantenimientoRepository : implementa
+CapitalTrabajoRepository ..|> ICapitalTrabajoRepository : implementa
+MaterialInsumoRepository ..|> IMaterialInsumoRepository : implementa
+
+' Dependencias de casos de uso
+ProyectarSueldosUseCase --> ICargoFacultadRepository : usa
+ProyectarSueldosUseCase --> ICargoPlantaCentralRepository : usa
+GestionActivosUseCase --> ICategoriaActivoRepository : usa
+GestionActivosUseCase --> IActivoFijoRepository : usa
+GestionCapitalTrabajoUseCase --> ICapitalTrabajoRepository : usa
+GestionCapitalTrabajoUseCase --> IActivoDiferidoRepository : usa
+GestionCapitalTrabajoUseCase --> IServicioMantenimientoRepository : usa
+GestionMaterialesUseCase --> IMaterialInsumoRepository : usa
+
+' Dependencias de presentación
+SueldosViewModel --> ProyectarSueldosUseCase : invoca
+RecursosFisicosViewModel --> GestionActivosUseCase : invoca
+MantenimientoViewModel --> GestionCapitalTrabajoUseCase : invoca
+MaterialesViewModel --> GestionMaterialesUseCase : invoca
+@enduml

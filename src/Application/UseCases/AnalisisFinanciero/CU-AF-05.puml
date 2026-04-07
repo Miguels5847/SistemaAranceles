@@ -1,0 +1,36 @@
+@startuml CU-AF-05
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Planificador\nAcadémico" as planif
+actor "Consultor" as consul
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Calcular Punto\nde Equilibrio" as UC05a
+    usecase "Calcular margen\nde contribución" as UC05b
+    usecase "Calcular PE por ciclo\n(con y sin deserción)" as UC05c
+
+    planif --> UC05a
+    consul --> UC05a
+
+    UC05a ..> UC05b : <<include>>
+    UC05a ..> UC05c : <<include>>
+}
+
+note bottom of UC05a
+    RF-AF-05: Nº mínimo de
+    estudiantes para no
+    operar en pérdida.
+end note
+
+@enduml

@@ -1,0 +1,40 @@
+@startuml CU-IN-02
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Administrador" as admin
+actor "Planificador\nAcadémico" as planif
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Editar dato\nde inflación" as UC02a
+    usecase "Validar rango\n(−10% a +20%)" as UC02b
+    usecase "Actualizar fuente\na 'Ajuste manual'" as UC02c
+    usecase "Registrar\ntrazabilidad" as UC02d
+    usecase "Registrar auditoría\n(CU-US-04)" as UC04
+
+    admin --> UC02a
+    planif --> UC02a
+
+    UC02a ..> UC02b : <<include>>
+    UC02a ..> UC02d : <<include>>
+    UC02a ..> UC04 : <<include>>
+    UC02a ..> UC02c : <<extend>>
+}
+
+note bottom of UC02a
+    RF-IN-02: Editar datos
+    de inflación registrados
+    con trazabilidad completa.
+end note
+
+@enduml

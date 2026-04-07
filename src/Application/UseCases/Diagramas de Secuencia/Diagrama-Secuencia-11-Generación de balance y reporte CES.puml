@@ -1,0 +1,92 @@
+@startuml
+title <b><size:20>Diagrama de Secuencia - Generación de balance y reporte CES</size></b>
+
+skinparam participant {
+    FontSize 12
+    FontStyle normal
+}
+skinparam actor {
+    FontSize 12
+    FontStyle normal
+}
+skinparam note {
+    FontSize 12
+}
+
+actor "Admin"
+participant "BalanceReporteViewModel"
+participant "GenerarBalanceUseCase"
+participant "GenerarReporteCESUseCase"
+participant "FinanciamientoRepository"
+participant "ActivoFijoRepository"
+participant "ResumenFinancieroRepository"
+participant "BalanceRepository"
+participant "ExportadorService"
+participant "Base de Datos"
+
+note over "Admin","Base de Datos"
+Flujo Principal - Balance proyectado e informe CES
+end note
+
+"Admin" -> "BalanceReporteViewModel": Solicita generar balance proyectado
+"BalanceReporteViewModel" -> "GenerarBalanceUseCase": Ejecutar(escenarioId)
+
+"GenerarBalanceUseCase" -> "FinanciamientoRepository": ObtenerFinanciamiento(escenarioId)
+"FinanciamientoRepository" -> "Base de Datos": SELECT configuracion_financiamiento y amortizacion_cuota
+"Base de Datos" --> "FinanciamientoRepository": Financiamiento y cuotas
+"FinanciamientoRepository" --> "GenerarBalanceUseCase": FinanciamientoDto
+
+"GenerarBalanceUseCase" -> "ActivoFijoRepository": ObtenerActivosFijos(escenarioId)
+"ActivoFijoRepository" -> "Base de Datos": SELECT activo_fijo con depreciacion acumulada
+"Base de Datos" --> "ActivoFijoRepository": Activos y depreciaciones
+"ActivoFijoRepository" --> "GenerarBalanceUseCase": ActivosDto
+
+"GenerarBalanceUseCase" -> "ResumenFinancieroRepository": ObtenerResumenPorAnio(escenarioId)
+"ResumenFinancieroRepository" -> "Base de Datos": SELECT resumen_proyeccion_financiera agrupado por anio
+"Base de Datos" --> "ResumenFinancieroRepository": Ingresos, costos y utilidades por año
+"ResumenFinancieroRepository" --> "GenerarBalanceUseCase": ResumenAnualDto
+
+loop Por cada año del horizonte
+    "GenerarBalanceUseCase" -> "GenerarBalanceUseCase": CalcularActivo(cajaBancos, inventario, activosFijosNetos)
+    "GenerarBalanceUseCase" -> "GenerarBalanceUseCase": CalcularPasivo(prestamoPorPagar, interesesPorPagar)
+    "GenerarBalanceUseCase" -> "GenerarBalanceUseCase": CalcularPatrimonio(capitalPropio, utilidadAcumulada)
+    "GenerarBalanceUseCase" -> "GenerarBalanceUseCase": VerificarEcuacion(totalActivo, totalPasivo, totalPatrimonio)
+
+    note over "GenerarBalanceUseCase"
+    cuadraBalance = (Activo == Pasivo + Patrimonio)
+    end note
+
+    "GenerarBalanceUseCase" -> "BalanceRepository": GuardarBalance(escenarioId, anio, activo, pasivo, patrimonio, cuadra)
+    "BalanceRepository" -> "Base de Datos": INSERT OR UPDATE balance_proyectado
+end
+
+"GenerarBalanceUseCase" --> "BalanceReporteViewModel": BalanceDto por año con flag cuadraBalance
+"BalanceReporteViewModel" --> "Admin": Muestra balance proyectado con verificación por año
+
+"Admin" -> "BalanceReporteViewModel": Solicita generar informe CES
+"BalanceReporteViewModel" -> "GenerarReporteCESUseCase": Ejecutar(escenarioId)
+
+"GenerarReporteCESUseCase" -> "Base de Datos": SELECT datos de todos los módulos para el escenario
+
+note over "GenerarReporteCESUseCase","Base de Datos"
+Consolida: estudiantes, docentes, costos, arancel, TIR, VAN, balance
+end note
+
+"Base de Datos" --> "GenerarReporteCESUseCase": Datos consolidados
+
+"GenerarReporteCESUseCase" -> "GenerarReporteCESUseCase": EstructurarInformeCES(datos)
+
+note over "GenerarReporteCESUseCase"
+Formato requerido por CES: desglose por categoría y destino de fondos
+end note
+
+"GenerarReporteCESUseCase" --> "BalanceReporteViewModel": InformeCESDto
+"BalanceReporteViewModel" --> "Admin": Muestra informe CES en pantalla
+
+"Admin" -> "BalanceReporteViewModel": Exporta informe (XLSX o PDF)
+"BalanceReporteViewModel" -> "ExportadorService": Exportar(informeCESDto, formato)
+"ExportadorService" -> "ExportadorService": GenerarArchivo(datos, plantilla)
+"ExportadorService" --> "BalanceReporteViewModel": Archivo generado
+"BalanceReporteViewModel" --> "Admin": Descarga disponible
+
+@enduml

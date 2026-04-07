@@ -1,0 +1,43 @@
+@startuml CU-IN-01
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Administrador" as admin
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Registrar dato\nde inflación" as UC01a
+    usecase "Importar datos\ndesde archivo" as UC01b
+    usecase "Validar año\nno duplicado" as UC01c
+    usecase "Validar rango\n(−10% a +20%)" as UC01d
+    usecase "Registrar auditoría\n(CU-US-04)" as UC04
+    usecase "Mostrar vista previa\nde importación" as UC01e
+
+    admin --> UC01a
+    admin --> UC01b
+
+    UC01a ..> UC01c : <<include>>
+    UC01a ..> UC01d : <<include>>
+    UC01a ..> UC04 : <<include>>
+
+    UC01b ..> UC01e : <<include>>
+    UC01b ..> UC01c : <<include>>
+    UC01b ..> UC04 : <<include>>
+}
+
+note bottom of UC01a
+    RF-IN-01: Registrar datos
+    históricos de inflación
+    anual del Ecuador.
+end note
+
+@enduml

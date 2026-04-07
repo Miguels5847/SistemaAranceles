@@ -1,0 +1,46 @@
+@startuml CU-RD-03
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+skinparam actor {
+    BorderColor Black
+}
+left to right direction
+
+together {
+    actor "Administrador" as admin
+    actor "Planificador\nAcadémico" as pa
+    actor "Consultor" as consultor
+    admin -[hidden]right- pa
+    pa -[hidden]right- consultor
+}
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Calcular depreciación\nsemestral por activo" as UC03a
+    usecase "Aplicar método\nlínea recta" as UC03b
+    usecase "Controlar inicio/fin\nde vida útil por activo" as UC03c
+    usecase "Configurar vida útil\ny valor residual" as UC03d
+    usecase "Registrar auditoría\n(CU-US-04)" as UCAUD
+
+    admin --> UC03d
+    pa --> UC03a
+    consultor --> UC03a
+
+    UC03a ..> UC03b : <<include>>
+    UC03a ..> UC03c : <<include>>
+    UC03a ..> UCAUD : <<include>>
+    UC03d ..> UC03a : <<extend>>
+    UC03d ..> UCAUD : <<include>>
+}
+
+note bottom of UC03a
+    RF-RD-03: Calcular depreciación
+    semestral por activo usando
+    línea recta con control de
+    inicio y fin de vida útil.
+end note
+
+@enduml

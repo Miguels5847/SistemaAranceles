@@ -1,0 +1,43 @@
+@startuml
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+skinparam actor {
+    BorderColor Black
+}
+
+skinparam nodesep 60
+skinparam ranksep 70
+left to right direction
+
+actor "Planificador\nAcadémico" as pa
+actor "Consultor" as consultor
+consultor -[hidden]up- pa
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Consolidar costos\ntotales de personal" as UC04a
+    usecase "Desglozar por destino\ncontable (servicios/admin)" as UC04b
+    usecase "Exponer resultados a\nCostos y Gastos / Cap. Trabajo" as UC04c
+    usecase "Recalcular ante\ncambios en módulos fuente" as UC04d
+    usecase "Registrar auditoría\n(CU-US-04)" as UCAUD
+
+    UC04a ..> UC04b : <<include>>
+    UC04a ..> UC04c : <<include>>
+    UC04a ..> UCAUD : <<include>>
+    UC04d ..> UC04a : <<extend>>
+}
+
+pa --> UC04a
+consultor --> UC04a
+
+note as N1
+    RF-SP-04: Consolidar sueldos
+    facultad + planta central con
+    desglose por destino contable
+    para Costos y Gastos.
+end note
+
+UC04a .. N1
+@enduml
