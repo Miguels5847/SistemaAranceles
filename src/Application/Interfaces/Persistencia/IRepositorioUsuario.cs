@@ -14,6 +14,11 @@ public interface IRepositorioUsuario
 
     Task AgregarAsync(Usuario usuario, CancellationToken cancellationToken = default);
 
+    Task<int> AgregarConRolAsync(
+        Usuario usuario,
+        int rolId,
+        CancellationToken cancellationToken = default);
+
     Task ActualizarAsync(Usuario usuario, CancellationToken cancellationToken = default);
 
     Task EliminarAsync(int id, int eliminadoPorUsuarioId, CancellationToken cancellationToken = default);

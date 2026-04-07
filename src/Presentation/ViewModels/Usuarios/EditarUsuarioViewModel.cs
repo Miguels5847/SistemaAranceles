@@ -42,6 +42,7 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
     [ObservableProperty] private bool _estaCargando;
+    [ObservableProperty] private bool _estaGuardando;
     [ObservableProperty] private bool _esNuevo = true;
 
     public ObservableCollection<RolDto> Roles { get; } = [];
@@ -49,23 +50,31 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
 
     public async Task InicializarAsync(UsuarioDto? usuarioExistente = null)
     {
-        await CargarRolesAsync();
+        EstaCargando = true;
+        try
+        {
+            await CargarRolesAsync();
 
-        if (usuarioExistente is not null)
-        {
-            _usuarioId = usuarioExistente.Id;
-            EsNuevo = false;
-            Titulo = "Editar Usuario";
-            NombreCompleto = usuarioExistente.NombreCompleto;
-            CorreoInstitucional = usuarioExistente.CorreoInstitucional;
-            EstadoSeleccionado = usuarioExistente.Estado;
-            RolSeleccionado = usuarioExistente.Roles.FirstOrDefault() ?? string.Empty;
+            if (usuarioExistente is not null)
+            {
+                _usuarioId = usuarioExistente.Id;
+                EsNuevo = false;
+                Titulo = "Editar Usuario";
+                NombreCompleto = usuarioExistente.NombreCompleto;
+                CorreoInstitucional = usuarioExistente.CorreoInstitucional;
+                EstadoSeleccionado = usuarioExistente.Estado;
+                RolSeleccionado = usuarioExistente.Roles.FirstOrDefault() ?? string.Empty;
+            }
+            else
+            {
+                EsNuevo = true;
+                Titulo = "Nuevo Usuario";
+                RolSeleccionado = Roles.FirstOrDefault()?.Nombre ?? string.Empty;
+            }
         }
-        else
+        finally
         {
-            EsNuevo = true;
-            Titulo = "Nuevo Usuario";
-            RolSeleccionado = Roles.FirstOrDefault()?.Nombre ?? string.Empty;
+            EstaCargando = false;
         }
     }
 
@@ -75,8 +84,16 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
 
         try
         {
-            using var ctsRoles = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-            var roles = await _repositorioRol.ListarAsync(ctsRoles.Token);
+            var listarRolesTask = _repositorioRol.ListarAsync();
+            var timeoutTask = Task.Delay(TimeSpan.FromSeconds(12));
+            var completed = await Task.WhenAny(listarRolesTask, timeoutTask);
+
+            if (completed != listarRolesTask)
+            {
+                throw new TimeoutException("Timeout al cargar catálogo de roles.");
+            }
+
+            var roles = await listarRolesTask;
 
             foreach (var r in roles)
                 Roles.Add(new RolDto { Id = r.Id, Nombre = r.Nombre, Descripcion = r.Descripcion });
@@ -102,9 +119,11 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
             return;
         }
 
-        EstaCargando = true;
+        EstaGuardando = true;
         try
         {
+            using var ctsGuardar = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+
             if (EsNuevo)
             {
                 if (string.IsNullOrWhiteSpace(Contrasena) || Contrasena.Length < 8)
@@ -118,10 +137,12 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
                     NombreCompleto = NombreCompleto,
                     CorreoInstitucional = CorreoInstitucional,
                     Contrasena = Contrasena,
+                    RolId = ObtenerRolIdSeleccionado(),
                     RolNombre = RolSeleccionado
-                }, _sesionActual.UsuarioId);
+                }, _sesionActual.UsuarioId, ctsGuardar.Token);
 
                 MensajeExito = "Usuario creado correctamente.";
+                WeakReferenceMessenger.Default.Send(new NavegarAMensaje("Usuarios", MensajeExito));
             }
             else
             {
@@ -133,20 +154,30 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
                     NuevaContrasena = string.IsNullOrWhiteSpace(Contrasena) ? null : Contrasena,
                     RolNombre = RolSeleccionado,
                     Estado = EstadoSeleccionado
-                }, _sesionActual.UsuarioId);
+                }, _sesionActual.UsuarioId, ctsGuardar.Token);
 
                 MensajeExito = "Usuario actualizado correctamente.";
+                WeakReferenceMessenger.Default.Send(new NavegarAMensaje("Usuarios", MensajeExito));
             }
-
-            WeakReferenceMessenger.Default.Send(new NavegarAMensaje("Usuarios"));
+        }
+        catch (OperationCanceledException)
+        {
+            MensajeError = "La operación tardó demasiado. Verifique conexión a Supabase e intente nuevamente.";
         }
         catch (Exception ex)
         {
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] EditarUsuarioViewModel: error en GuardarAsync -> {ex}");
             MensajeError = ex.Message;
         }
         finally
         {
-            EstaCargando = false;
+            EstaGuardando = false;
         }
+    }
+
+    private int ObtenerRolIdSeleccionado()
+    {
+        var rol = Roles.FirstOrDefault(r => string.Equals(r.Nombre, RolSeleccionado, StringComparison.OrdinalIgnoreCase));
+        return rol?.Id ?? 0;
     }
 }

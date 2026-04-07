@@ -59,6 +59,16 @@ public sealed partial class LoginViewModel : ObservableObject
             Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginViewModel: UnauthorizedAccessException -> {ex.Message}");
             MensajeError = ex.Message;
         }
+        catch (TimeoutException ex)
+        {
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginViewModel: TimeoutException -> {ex.Message}");
+            MensajeError = "La conexión con Supabase está lenta. Intente nuevamente en unos segundos.";
+        }
+        catch (OperationCanceledException ex)
+        {
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginViewModel: OperationCanceledException -> {ex.Message}");
+            MensajeError = "La operación fue cancelada por demora en la conexión. Intente nuevamente.";
+        }
         catch (Exception ex)
         {
             Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginViewModel: Exception -> {ex}");

@@ -14,21 +14,23 @@ public static class InfrastructureExtensions
         this IServiceCollection services,
         string cadenaConexion)
     {
-        services.AddDbContext<ContextoAplicacion>(options =>
-            options.UseNpgsql(cadenaConexion));
+        services.AddDbContext<ContextoAplicacion>(
+            options => options.UseNpgsql(cadenaConexion),
+            contextLifetime: ServiceLifetime.Transient,
+            optionsLifetime: ServiceLifetime.Singleton);
 
         // Repositorios
-        services.AddScoped(typeof(IRepositorioGenerico<>), typeof(RepositorioGenerico<>));
-        services.AddScoped<IRepositorioUsuario, RepositorioUsuario>();
-        services.AddScoped<IRepositorioCarrera, RepositorioCarrera>();
-        services.AddScoped<IRepositorioRol, RepositorioRol>();
-        services.AddScoped<IRepositorioSesionUsuario, RepositorioSesionUsuario>();
-        services.AddScoped<IRepositorioAuditoriaLog, RepositorioAuditoriaLog>();
-        services.AddScoped<IUnidadTrabajo, UnidadTrabajo>();
+        services.AddTransient(typeof(IRepositorioGenerico<>), typeof(RepositorioGenerico<>));
+        services.AddTransient<IRepositorioUsuario, RepositorioUsuario>();
+        services.AddTransient<IRepositorioCarrera, RepositorioCarrera>();
+        services.AddTransient<IRepositorioRol, RepositorioRol>();
+        services.AddTransient<IRepositorioSesionUsuario, RepositorioSesionUsuario>();
+        services.AddTransient<IRepositorioAuditoriaLog, RepositorioAuditoriaLog>();
+        services.AddTransient<IUnidadTrabajo, UnidadTrabajo>();
 
         // Servicios
-        services.AddScoped<IServicioHash, ServicioHash>();
-        services.AddScoped<IAuditoriaServicio, ServicioAuditoria>();
+        services.AddTransient<IServicioHash, ServicioHash>();
+        services.AddTransient<IAuditoriaServicio, ServicioAuditoria>();
 
         return services;
     }

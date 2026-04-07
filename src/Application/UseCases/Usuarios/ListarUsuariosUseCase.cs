@@ -1,5 +1,6 @@
 using SistemaAranceles.Application.DTOs.Usuarios;
 using SistemaAranceles.Application.Interfaces.Persistencia;
+using System.Diagnostics;
 
 namespace SistemaAranceles.Application.UseCases.Usuarios;
 
@@ -12,7 +13,31 @@ public sealed class ListarUsuariosUseCase(IRepositorioUsuario repositorioUsuario
         var dtos = new List<UsuarioDto>();
         foreach (var u in usuarios)
         {
-            var roles = await repositorioUsuario.ObtenerRolesDelUsuarioAsync(u.Id, cancellationToken);
+            IReadOnlyList<string> roles;
+            try
+            {
+                roles = [];
+                for (var intento = 1; intento <= 2; intento++)
+                {
+                    try
+                    {
+                        using var ctsRoles = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                        ctsRoles.CancelAfter(TimeSpan.FromSeconds(20));
+                        roles = await repositorioUsuario.ObtenerRolesDelUsuarioAsync(u.Id, ctsRoles.Token);
+                        break;
+                    }
+                    catch (OperationCanceledException) when (intento == 1)
+                    {
+                        Trace.WriteLine($"[{DateTime.UtcNow:O}] ListarUsuariosUseCase: timeout transitorio en roles para usuario Id={u.Id} (intento 1). Reintentando.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"[{DateTime.UtcNow:O}] ListarUsuariosUseCase: error obteniendo roles para usuario Id={u.Id} -> {ex.Message}. Se continuará con roles vacíos.");
+                roles = [];
+            }
+
             dtos.Add(new UsuarioDto
             {
                 Id = u.Id,

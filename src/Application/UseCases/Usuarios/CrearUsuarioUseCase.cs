@@ -3,6 +3,7 @@ using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.Interfaces.Servicios;
 using SistemaAranceles.Domain.Entities;
 using SistemaAranceles.Domain.ValueObjects;
+using System.Diagnostics;
 
 namespace SistemaAranceles.Application.UseCases.Usuarios;
 
@@ -10,14 +11,16 @@ public sealed class CrearUsuarioUseCase(
     IRepositorioUsuario repositorioUsuario,
     IRepositorioRol repositorioRol,
     IServicioHash servicioHash,
-    IAuditoriaServicio auditoriaServicio,
-    IUnidadTrabajo unidadTrabajo)
+    IAuditoriaServicio auditoriaServicio)
 {
     public async Task<int> EjecutarAsync(
         CrearUsuarioDto dto,
         int? creadoPorUsuarioId = null,
         CancellationToken cancellationToken = default)
     {
+        var swTotal = Stopwatch.StartNew();
+        Trace.WriteLine($"[{DateTime.UtcNow:O}] CrearUsuarioUseCase: inicio para correo '{dto.CorreoInstitucional}'.");
+
         if (string.IsNullOrWhiteSpace(dto.NombreCompleto))
             throw new ArgumentException("El nombre completo es obligatorio.");
 
@@ -30,41 +33,58 @@ public sealed class CrearUsuarioUseCase(
         if (string.IsNullOrWhiteSpace(dto.RolNombre))
             throw new ArgumentException("Debe asignar un rol al usuario.");
 
+        var swExiste = Stopwatch.StartNew();
         var existeCorreo = await repositorioUsuario.ExisteCorreoInstitucionalAsync(
             dto.CorreoInstitucional, cancellationToken);
+        Trace.WriteLine($"[{DateTime.UtcNow:O}] CrearUsuarioUseCase.Metric: existe_correo_ms={swExiste.ElapsedMilliseconds}.");
         if (existeCorreo)
             throw new InvalidOperationException($"Ya existe un usuario con el correo '{dto.CorreoInstitucional}'.");
 
-        var rolEncontrado = await repositorioRol.ObtenerPorNombreAsync(dto.RolNombre, cancellationToken);
-        if (!rolEncontrado.HasValue)
-            throw new InvalidOperationException($"El rol '{dto.RolNombre}' no existe.");
+        (int Id, string Nombre)? rolEncontrado;
+        if (dto.RolId > 0)
+        {
+            rolEncontrado = (dto.RolId, dto.RolNombre);
+        }
+        else
+        {
+            rolEncontrado = await repositorioRol.ObtenerPorNombreAsync(dto.RolNombre, cancellationToken);
+            if (!rolEncontrado.HasValue)
+                throw new InvalidOperationException($"El rol '{dto.RolNombre}' no existe.");
+        }
 
         var hash = servicioHash.Hashear(dto.Contrasena);
         var correo = new CorreoInstitucional(dto.CorreoInstitucional);
         var usuario = new Usuario(dto.NombreCompleto, correo, hash);
 
-        await repositorioUsuario.AgregarAsync(usuario, cancellationToken);
-        await unidadTrabajo.GuardarCambiosAsync(cancellationToken);
-
-        var usuarioPersistido = await repositorioUsuario.ObtenerPorCorreoInstitucionalAsync(
-            correo.ToString(),
+        var swInsert = Stopwatch.StartNew();
+        var usuarioId = await repositorioUsuario.AgregarConRolAsync(
+            usuario,
+            rolEncontrado.Value.Id,
             cancellationToken);
+        swInsert.Stop();
+        Trace.WriteLine($"[{DateTime.UtcNow:O}] CrearUsuarioUseCase.Metric: insert_usuario_rol_ms={swInsert.ElapsedMilliseconds}.");
 
-        if (usuarioPersistido is null)
-            throw new InvalidOperationException("No se pudo recuperar el usuario recién creado.");
+        var swAudit = Stopwatch.StartNew();
+        try
+        {
+            using var ctsAuditoria = new CancellationTokenSource(TimeSpan.FromSeconds(4));
+            await auditoriaServicio.RegistrarAsync(
+                moduloNombre: "Usuarios",
+                entidadNombre: "Usuario",
+                entidadId: usuarioId.ToString(),
+                accionNombre: "CREAR",
+                resumenTexto: $"Usuario '{dto.NombreCompleto}' creado con rol '{rolEncontrado.Value.Nombre}'.",
+                ejecutadoPorUsuarioId: creadoPorUsuarioId,
+                cancellationToken: ctsAuditoria.Token);
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] CrearUsuarioUseCase: auditoría omitida por error/transitorio -> {ex.Message}.");
+        }
+        Trace.WriteLine($"[{DateTime.UtcNow:O}] CrearUsuarioUseCase.Metric: auditoria_ms={swAudit.ElapsedMilliseconds}.");
 
-        await repositorioRol.AsignarRolAUsuarioAsync(usuarioPersistido.Id, rolEncontrado.Value.Id, cancellationToken);
-        await unidadTrabajo.GuardarCambiosAsync(cancellationToken);
+        Trace.WriteLine($"[{DateTime.UtcNow:O}] CrearUsuarioUseCase: fin exitoso. usuario_id={usuarioId}. total_ms={swTotal.ElapsedMilliseconds}.");
 
-        await auditoriaServicio.RegistrarAsync(
-            moduloNombre: "Usuarios",
-            entidadNombre: "Usuario",
-            entidadId: usuarioPersistido.Id.ToString(),
-            accionNombre: "CREAR",
-            resumenTexto: $"Usuario '{dto.NombreCompleto}' creado con rol '{rolEncontrado.Value.Nombre}'.",
-            ejecutadoPorUsuarioId: creadoPorUsuarioId,
-            cancellationToken: cancellationToken);
-
-        return usuarioPersistido.Id;
+        return usuarioId;
     }
 }

@@ -45,6 +45,9 @@ public sealed partial class UsuariosViewModel : ObservableObject
     [RelayCommand]
     private async Task CargarAsync()
     {
+        if (EstaCargando)
+            return;
+
         MensajeError = string.Empty;
         EstaCargando = true;
         try

@@ -26,6 +26,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly UsuariosViewModel _usuariosViewModel;
     private readonly Func<EditarUsuarioViewModel> _editarUsuarioViewModelFactory;
     private int _cerrandoSesion;
+    private int _cargandoUsuarios;
 
     public MainViewModel(
         SesionActual sesionActual,
@@ -41,7 +42,7 @@ public sealed partial class MainViewModel : ObservableObject
         WeakReferenceMessenger.Default.Register<NavegarAMensaje>(this, (_, msg) =>
         {
             if (msg.DestinoPagina == "Usuarios")
-                _ = MostrarUsuariosAsync();
+                _ = MostrarUsuariosAsync(msg.MensajeExito);
         });
 
         WeakReferenceMessenger.Default.Register<EditarUsuarioMensaje>(this, (_, msg) =>
@@ -50,7 +51,15 @@ public sealed partial class MainViewModel : ObservableObject
         });
 
         ConstruirMenu();
-        PaginaActual = _usuariosViewModel;
+        if (_sesionActual.EsAdministrador)
+        {
+            PaginaActual = _usuariosViewModel;
+        }
+        else
+        {
+            PaginaActual = null;
+            MensajePagina = "Bienvenido. Tu perfil no tiene acceso a Gestión de Usuarios.";
+        }
     }
 
     [ObservableProperty] private string _bienvenida = string.Empty;
@@ -74,7 +83,7 @@ public sealed partial class MainViewModel : ObservableObject
             {
                 Titulo = "Usuarios",
                 Icono = "👤",
-                Comando = new AsyncRelayCommand(MostrarUsuariosAsync)
+                Comando = new AsyncRelayCommand(() => MostrarUsuariosAsync())
             });
         }
 
@@ -116,23 +125,69 @@ public sealed partial class MainViewModel : ObservableObject
         Bienvenida = $"Bienvenido, {_sesionActual.NombreCompleto}  |  Rol: {_sesionActual.RolNombre}";
     }
 
-    private async Task MostrarUsuariosAsync()
+    private async Task MostrarUsuariosAsync(string? mensajeExito = null)
     {
+        if (!_sesionActual.EsAdministrador)
+        {
+            MensajePagina = "Acceso denegado a Gestión de Usuarios.";
+            return;
+        }
+
+        if (Interlocked.Exchange(ref _cargandoUsuarios, 1) == 1)
+        {
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] MainViewModel: MostrarUsuariosAsync ignorado por carga en curso.");
+            return;
+        }
+
         MensajePagina = string.Empty;
-        PaginaActual = _usuariosViewModel;
-        await _usuariosViewModel.CargarCommand.ExecuteAsync(null);
+        try
+        {
+            PaginaActual = _usuariosViewModel;
+            await _usuariosViewModel.CargarCommand.ExecuteAsync(null);
+
+            if (!string.IsNullOrWhiteSpace(mensajeExito))
+            {
+                _usuariosViewModel.MensajeExito = mensajeExito;
+            }
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _cargandoUsuarios, 0);
+        }
     }
 
     [RelayCommand]
     private async Task MostrarNuevoUsuarioAsync()
     {
+        if (!_sesionActual.EsAdministrador)
+        {
+            MensajePagina = "Acceso denegado a Gestión de Usuarios.";
+            return;
+        }
+
         var vm = _editarUsuarioViewModelFactory();
-        await vm.InicializarAsync();
         PaginaActual = vm;
+        MensajePagina = string.Empty;
+
+        try
+        {
+            await vm.InicializarAsync();
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] MainViewModel: error al inicializar nuevo usuario -> {ex.Message}.");
+            vm.MensajeError = "No se pudo inicializar el formulario de usuario. Intente nuevamente.";
+        }
     }
 
     private async Task MostrarEditarUsuarioAsync(UsuarioDto usuario)
     {
+        if (!_sesionActual.EsAdministrador)
+        {
+            MensajePagina = "Acceso denegado a Gestión de Usuarios.";
+            return;
+        }
+
         var vm = _editarUsuarioViewModelFactory();
         await vm.InicializarAsync(usuario);
         PaginaActual = vm;
