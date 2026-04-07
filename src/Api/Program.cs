@@ -198,15 +198,26 @@ rolesGroup.MapGet("", async (
     IRepositorioRol repositorioRol,
     CancellationToken cancellationToken) =>
 {
-    var roles = await repositorioRol.ListarAsync(cancellationToken);
-    var resultado = roles.Select(r => new
+    try
     {
-        id = r.Id,
-        nombre = r.Nombre,
-        descripcion = r.Descripcion
-    });
+        var roles = await repositorioRol.ListarAsync(cancellationToken);
+        var resultado = roles.Select(r => new
+        {
+            id = r.Id,
+            nombre = r.Nombre,
+            descripcion = r.Descripcion
+        });
 
-    return Results.Ok(resultado);
+        return Results.Ok(resultado);
+    }
+    catch (TimeoutException)
+    {
+        return Results.StatusCode(StatusCodes.Status504GatewayTimeout);
+    }
+    catch (Exception ex)
+    {
+        return Results.StatusCode(StatusCodes.Status500InternalServerError, new { error = ex.Message });
+    }
 });
 
 app.Run();
