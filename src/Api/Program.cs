@@ -216,7 +216,7 @@ rolesGroup.MapGet("", async (
     }
     catch (Exception ex)
     {
-        return Results.StatusCode(StatusCodes.Status500InternalServerError, new { error = ex.Message });
+        return Results.Json(new { error = ex.Message, type = ex.GetType().Name }, statusCode: StatusCodes.Status500InternalServerError);
     }
 });
 
