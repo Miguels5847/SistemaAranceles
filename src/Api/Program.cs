@@ -50,7 +50,17 @@ builder.Services.AddHealthChecks();
 var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("No se encontró ConnectionStrings:DefaultConnection.");
 
-// Add resilience parameters for Supabase/PostgreSQL on Render
+// Workaround: Render DNS only resolves Supabase direct endpoint to IPv6.
+// Replace with Supabase's pooler endpoint that has better IPv4 support.
+if (defaultConnection.Contains("db.zpdkdbonmsjqljozaczp.supabase.co", StringComparison.OrdinalIgnoreCase))
+{
+    defaultConnection = defaultConnection.Replace(
+        "Host=db.zpdkdbonmsjqljozaczp.supabase.co;Port=5432",
+        "Host=aws-0-us-east-1.pooler.supabase.com;Port=6543",
+        StringComparison.OrdinalIgnoreCase);
+}
+
+// Add resilience parameters
 if (!defaultConnection.Contains("Timeout", StringComparison.OrdinalIgnoreCase))
 {
     if (!defaultConnection.EndsWith(";"))
