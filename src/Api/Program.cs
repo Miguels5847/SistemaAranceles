@@ -52,11 +52,20 @@ var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnec
 
 // Workaround: Render DNS only resolves Supabase direct endpoint to IPv6.
 // Replace with Supabase's pooler endpoint that has better IPv4 support.
+// Pooler requires user to be in format: postgres.{project_ref}
 if (defaultConnection.Contains("db.zpdkdbonmsjqljozaczp.supabase.co", StringComparison.OrdinalIgnoreCase))
 {
+    // Extract project ref from hostname
+    const string projectRef = "zpdkdbonmsjqljozaczp";
+    
     defaultConnection = defaultConnection.Replace(
         "Host=db.zpdkdbonmsjqljozaczp.supabase.co;Port=5432",
         "Host=aws-0-us-east-1.pooler.supabase.com;Port=6543",
+        StringComparison.OrdinalIgnoreCase);
+    
+    defaultConnection = defaultConnection.Replace(
+        "Username=postgres;",
+        $"Username=postgres.{projectRef};",
         StringComparison.OrdinalIgnoreCase);
 }
 
