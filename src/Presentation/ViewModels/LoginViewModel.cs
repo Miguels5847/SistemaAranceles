@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.UseCases.Autenticacion;
 using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.State;
@@ -10,12 +11,12 @@ namespace SistemaAranceles.Presentation.ViewModels;
 
 public sealed partial class LoginViewModel : ObservableObject
 {
-    private readonly LoginUseCase _loginUseCase;
+    private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
 
-    public LoginViewModel(LoginUseCase loginUseCase, SesionActual sesionActual)
+    public LoginViewModel(IServiceProvider serviceProvider, SesionActual sesionActual)
     {
-        _loginUseCase = loginUseCase;
+        _serviceProvider = serviceProvider;
         _sesionActual = sesionActual;
     }
 
@@ -40,8 +41,10 @@ public sealed partial class LoginViewModel : ObservableObject
 
         try
         {
+            using var scope = _serviceProvider.CreateScope();
+            var loginUseCase = scope.ServiceProvider.GetRequiredService<LoginUseCase>();
             Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginViewModel: invocando LoginUseCase.");
-            var sesion = await _loginUseCase.EjecutarAsync(Correo, Contrasena);
+            var sesion = await loginUseCase.EjecutarAsync(Correo, Contrasena);
             Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginViewModel: LoginUseCase exitoso. UsuarioId={sesion.UsuarioId}, Rol={sesion.RolNombre}.");
             _sesionActual.IniciarSesion(
                 sesion.UsuarioId,

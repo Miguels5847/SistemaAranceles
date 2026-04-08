@@ -16,7 +16,7 @@ public static class InfrastructureExtensions
     {
         services.AddDbContext<ContextoAplicacion>(
             options => options.UseNpgsql(cadenaConexion),
-            contextLifetime: ServiceLifetime.Transient,
+            contextLifetime: ServiceLifetime.Scoped,
             optionsLifetime: ServiceLifetime.Singleton);
 
         // Repositorios

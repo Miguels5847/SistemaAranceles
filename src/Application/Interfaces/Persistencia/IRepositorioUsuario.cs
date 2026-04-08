@@ -24,4 +24,8 @@ public interface IRepositorioUsuario
     Task EliminarAsync(int id, int eliminadoPorUsuarioId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<string>> ObtenerRolesDelUsuarioAsync(int id, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyDictionary<int, IReadOnlyList<string>>> ObtenerRolesPorUsuariosAsync(
+        IEnumerable<int> usuarioIds,
+        CancellationToken cancellationToken = default);
 }

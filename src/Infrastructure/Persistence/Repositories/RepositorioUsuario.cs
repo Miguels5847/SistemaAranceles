@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Domain.Enums;
@@ -115,18 +116,41 @@ public sealed class RepositorioUsuario(
         await using var transaction = await contextoAplicacion.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            var entidadUsuario = MapearAPersistencia(usuario);
-            await contextoAplicacion.Usuarios.AddAsync(entidadUsuario, cancellationToken);
-            await contextoAplicacion.SaveChangesAsync(cancellationToken);
+            // INSERT directo con RETURNING para: (a) evitar mismatch bool→integer en esta_activo,
+            // (b) obtener el id real generado por la BD (EF no rehidrata la entidad tras SaveChanges).
+            var connection = (NpgsqlConnection)contextoAplicacion.Database.GetDbConnection();
+            var dbTx = (NpgsqlTransaction)contextoAplicacion.Database.CurrentTransaction!.GetDbTransaction();
+
+            int usuarioId;
+            await using (var cmd = connection.CreateCommand())
+            {
+                cmd.Transaction = dbTx;
+                cmd.CommandTimeout = 15;
+                cmd.CommandText = """
+                    INSERT INTO usuario
+                        (nombre_completo, correo_institucional, hash_contrasena, estado, creado_en, esta_activo)
+                    VALUES
+                        (@nombre, @correo, @hash, @estado, @creadoEn, TRUE)
+                    RETURNING id
+                    """;
+                cmd.Parameters.AddWithValue("@nombre", usuario.NombreCompleto);
+                cmd.Parameters.AddWithValue("@correo", usuario.CorreoInstitucional.ToString());
+                cmd.Parameters.AddWithValue("@hash", usuario.HashContrasena);
+                cmd.Parameters.AddWithValue("@estado", usuario.Estado.ToString());
+                cmd.Parameters.AddWithValue("@creadoEn", DateTime.UtcNow);
+
+                var scalar = await cmd.ExecuteScalarAsync(cancellationToken);
+                usuarioId = Convert.ToInt32(scalar);
+            }
 
             var existeRol = await contextoAplicacion.UsuariosRoles
-                .AnyAsync(x => x.UsuarioId == entidadUsuario.Id && x.RolId == rolId, cancellationToken);
+                .AnyAsync(x => x.UsuarioId == usuarioId && x.RolId == rolId, cancellationToken);
 
             if (!existeRol)
             {
                 await contextoAplicacion.UsuariosRoles.AddAsync(new Infrastructure.Persistence.Entidades.UsuarioRol
                 {
-                    UsuarioId = entidadUsuario.Id,
+                    UsuarioId = usuarioId,
                     RolId = rolId
                 }, cancellationToken);
 
@@ -134,7 +158,7 @@ public sealed class RepositorioUsuario(
             }
 
             await transaction.CommitAsync(cancellationToken);
-            return entidadUsuario.Id;
+            return usuarioId;
         }
         catch
         {
@@ -184,12 +208,28 @@ public sealed class RepositorioUsuario(
         int id,
         CancellationToken cancellationToken = default)
     {
+        var rolesPorUsuario = await ObtenerRolesPorUsuariosAsync([id], cancellationToken);
+        return rolesPorUsuario.TryGetValue(id, out var roles) ? roles : [];
+    }
+
+    public async Task<IReadOnlyDictionary<int, IReadOnlyList<string>>> ObtenerRolesPorUsuariosAsync(
+        IEnumerable<int> usuarioIds,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = usuarioIds
+            .Distinct()
+            .Where(x => x > 0)
+            .ToArray();
+
+        if (ids.Length == 0)
+            return new Dictionary<int, IReadOnlyList<string>>();
+
         const string sql = """
-            SELECT DISTINCT r.nombre
+            SELECT ur.usuario_id, r.nombre
             FROM usuario_rol ur
             INNER JOIN rol r ON r.id = ur.rol_id
-            WHERE ur.usuario_id = @usuario_id
-            ORDER BY r.nombre
+            WHERE ur.usuario_id = ANY(@usuario_ids)
+            ORDER BY ur.usuario_id, r.nombre
             """;
 
         var connection = (NpgsqlConnection)contextoAplicacion.Database.GetDbConnection();
@@ -198,22 +238,36 @@ public sealed class RepositorioUsuario(
 
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
-        command.CommandTimeout = 15;
+        command.CommandTimeout = 8;
 
         var parameter = command.CreateParameter();
-        parameter.ParameterName = "@usuario_id";
-        parameter.Value = id;
+        parameter.ParameterName = "@usuario_ids";
+        parameter.Value = ids;
         command.Parameters.Add(parameter);
 
-        var roles = new List<string>();
+        var rolesPorUsuario = new Dictionary<int, List<string>>();
+
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
         {
-            if (!reader.IsDBNull(0))
-                roles.Add(reader.GetString(0));
+            if (reader.IsDBNull(0) || reader.IsDBNull(1))
+                continue;
+
+            var usuarioId = reader.GetInt32(0);
+            var rol = reader.GetString(1);
+
+            if (!rolesPorUsuario.TryGetValue(usuarioId, out var lista))
+            {
+                lista = [];
+                rolesPorUsuario[usuarioId] = lista;
+            }
+
+            lista.Add(rol);
         }
 
-        return roles;
+        return rolesPorUsuario.ToDictionary(
+            kvp => kvp.Key,
+            kvp => (IReadOnlyList<string>)kvp.Value);
     }
 
     private static UsuarioDominio MapearADominio(

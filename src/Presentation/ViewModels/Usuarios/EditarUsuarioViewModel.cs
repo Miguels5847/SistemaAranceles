@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.DTOs.Roles;
 using SistemaAranceles.Application.DTOs.Usuarios;
 using SistemaAranceles.Application.Interfaces.Persistencia;
@@ -14,21 +15,18 @@ namespace SistemaAranceles.Presentation.ViewModels.Usuarios;
 
 public sealed partial class EditarUsuarioViewModel : ObservableObject
 {
-    private readonly CrearUsuarioUseCase _crearUseCase;
-    private readonly ActualizarUsuarioUseCase _actualizarUseCase;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IRepositorioRol _repositorioRol;
     private readonly SesionActual _sesionActual;
 
     private int _usuarioId;
 
     public EditarUsuarioViewModel(
-        CrearUsuarioUseCase crearUseCase,
-        ActualizarUsuarioUseCase actualizarUseCase,
+        IServiceProvider serviceProvider,
         IRepositorioRol repositorioRol,
         SesionActual sesionActual)
     {
-        _crearUseCase = crearUseCase;
-        _actualizarUseCase = actualizarUseCase;
+        _serviceProvider = serviceProvider;
         _repositorioRol = repositorioRol;
         _sesionActual = sesionActual;
     }
@@ -123,6 +121,7 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
         try
         {
             using var ctsGuardar = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            using var scope = _serviceProvider.CreateScope();
 
             if (EsNuevo)
             {
@@ -132,7 +131,8 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
                     return;
                 }
 
-                await _crearUseCase.EjecutarAsync(new CrearUsuarioDto
+                var crearUseCase = scope.ServiceProvider.GetRequiredService<CrearUsuarioUseCase>();
+                await crearUseCase.EjecutarAsync(new CrearUsuarioDto
                 {
                     NombreCompleto = NombreCompleto,
                     CorreoInstitucional = CorreoInstitucional,
@@ -146,7 +146,8 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
             }
             else
             {
-                await _actualizarUseCase.EjecutarAsync(new ActualizarUsuarioDto
+                var actualizarUseCase = scope.ServiceProvider.GetRequiredService<ActualizarUsuarioUseCase>();
+                await actualizarUseCase.EjecutarAsync(new ActualizarUsuarioDto
                 {
                     Id = _usuarioId,
                     NombreCompleto = NombreCompleto,

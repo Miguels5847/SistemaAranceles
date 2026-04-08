@@ -10,48 +10,29 @@ public sealed class ListarUsuariosUseCase(IRepositorioUsuario repositorioUsuario
     {
         var usuarios = await repositorioUsuario.ListarAsync(cancellationToken);
 
-        var dtos = new List<UsuarioDto>();
-        foreach (var u in usuarios)
+        IReadOnlyDictionary<int, IReadOnlyList<string>> rolesPorUsuario = new Dictionary<int, IReadOnlyList<string>>();
+        try
         {
-            IReadOnlyList<string> roles;
-            try
-            {
-                roles = [];
-                for (var intento = 1; intento <= 2; intento++)
-                {
-                    try
-                    {
-                        using var ctsRoles = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                        ctsRoles.CancelAfter(TimeSpan.FromSeconds(3));
-                        roles = await repositorioUsuario.ObtenerRolesDelUsuarioAsync(u.Id, ctsRoles.Token);
-                        break;
-                    }
-                    catch (OperationCanceledException) when (intento == 1)
-                    {
-                        Trace.WriteLine($"[{DateTime.UtcNow:O}] ListarUsuariosUseCase: timeout transitorio en roles para usuario Id={u.Id} (intento 1). Reintentando.");
-                    }
-                    catch (Exception ex) when (intento == 1 && EsErrorTransitorio(ex))
-                    {
-                        Trace.WriteLine($"[{DateTime.UtcNow:O}] ListarUsuariosUseCase: error transitorio en roles para usuario Id={u.Id} (intento 1) -> {ex.Message}. Reintentando.");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine($"[{DateTime.UtcNow:O}] ListarUsuariosUseCase: error obteniendo roles para usuario Id={u.Id} -> {ex.Message}. Se continuará con roles vacíos.");
-                roles = [];
-            }
-
-            dtos.Add(new UsuarioDto
-            {
-                Id = u.Id,
-                NombreCompleto = u.NombreCompleto,
-                CorreoInstitucional = u.CorreoInstitucional.ToString(),
-                Estado = u.Estado.ToString(),
-                UltimoAccesoEn = u.UltimoAccesoEn,
-                Roles = roles
-            });
+            using var ctsRoles = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            ctsRoles.CancelAfter(TimeSpan.FromSeconds(15));
+            rolesPorUsuario = await repositorioUsuario.ObtenerRolesPorUsuariosAsync(
+                usuarios.Select(x => x.Id),
+                ctsRoles.Token);
         }
+        catch (Exception ex) when (EsErrorTransitorio(ex))
+        {
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] ListarUsuariosUseCase: carga masiva de roles falló transitoriamente -> {ex.Message}. Se continuará con roles vacíos.");
+        }
+
+        var dtos = usuarios.Select(u => new UsuarioDto
+        {
+            Id = u.Id,
+            NombreCompleto = u.NombreCompleto,
+            CorreoInstitucional = u.CorreoInstitucional.ToString(),
+            Estado = u.Estado.ToString(),
+            UltimoAccesoEn = u.UltimoAccesoEn,
+            Roles = rolesPorUsuario.TryGetValue(u.Id, out var roles) ? roles : []
+        }).ToList();
 
         return dtos;
     }

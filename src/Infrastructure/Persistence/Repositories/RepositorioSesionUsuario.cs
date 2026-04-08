@@ -54,14 +54,9 @@ public sealed class RepositorioSesionUsuario(ContextoAplicacion contextoAplicaci
 
     public async Task RevocarAsync(string tokenSesion, CancellationToken cancellationToken = default)
     {
-        var cadenaConexion = contextoAplicacion.Database.GetConnectionString();
-        if (string.IsNullOrWhiteSpace(cadenaConexion))
-            throw new InvalidOperationException("No se encontró la cadena de conexión para revocar sesión.");
-
-        cadenaConexion = SupabaseConnectionStringHelper.Normalizar(cadenaConexion);
-
-        await using var connection = new NpgsqlConnection(cadenaConexion);
-        await connection.OpenAsync(cancellationToken);
+        var connection = (NpgsqlConnection)contextoAplicacion.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = """
@@ -70,7 +65,7 @@ public sealed class RepositorioSesionUsuario(ContextoAplicacion contextoAplicaci
             WHERE token_sesion = @token_sesion
               AND revocado_en IS NULL
             """;
-        command.CommandTimeout = 2;
+        command.CommandTimeout = 8;
 
         var parameter = command.CreateParameter();
         parameter.ParameterName = "@token_sesion";

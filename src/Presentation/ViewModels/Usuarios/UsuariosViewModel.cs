@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.DTOs.Usuarios;
 using SistemaAranceles.Application.UseCases.Usuarios;
 using SistemaAranceles.Presentation.Mensajes;
@@ -11,17 +12,14 @@ namespace SistemaAranceles.Presentation.ViewModels.Usuarios;
 
 public sealed partial class UsuariosViewModel : ObservableObject
 {
-    private readonly ListarUsuariosUseCase _listarUseCase;
-    private readonly EliminarUsuarioUseCase _eliminarUseCase;
+    private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
 
     public UsuariosViewModel(
-        ListarUsuariosUseCase listarUseCase,
-        EliminarUsuarioUseCase eliminarUseCase,
+        IServiceProvider serviceProvider,
         SesionActual sesionActual)
     {
-        _listarUseCase = listarUseCase;
-        _eliminarUseCase = eliminarUseCase;
+        _serviceProvider = serviceProvider;
         _sesionActual = sesionActual;
     }
 
@@ -52,7 +50,9 @@ public sealed partial class UsuariosViewModel : ObservableObject
         EstaCargando = true;
         try
         {
-            var lista = await _listarUseCase.EjecutarAsync();
+            using var scope = _serviceProvider.CreateScope();
+            var listarUseCase = scope.ServiceProvider.GetRequiredService<ListarUsuariosUseCase>();
+            var lista = await listarUseCase.EjecutarAsync();
             Usuarios = new ObservableCollection<UsuarioDto>(lista);
         }
         catch (Exception ex)
@@ -91,7 +91,9 @@ public sealed partial class UsuariosViewModel : ObservableObject
 
         try
         {
-            await _eliminarUseCase.EjecutarAsync(UsuarioSeleccionado.Id, _sesionActual.UsuarioId);
+            using var scope = _serviceProvider.CreateScope();
+            var eliminarUseCase = scope.ServiceProvider.GetRequiredService<EliminarUsuarioUseCase>();
+            await eliminarUseCase.EjecutarAsync(UsuarioSeleccionado.Id, _sesionActual.UsuarioId);
             MensajeExito = $"Usuario '{UsuarioSeleccionado.NombreCompleto}' eliminado correctamente.";
             await CargarAsync();
         }

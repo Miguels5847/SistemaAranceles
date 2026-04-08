@@ -2,108 +2,127 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <Grid Margin="16">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+        <Grid Margin="16">
+                <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-        <!-- Título + acciones -->
-        <StackPanel Grid.Row="0"
-                Orientation="Horizontal"
-                Margin="0,0,0,12">
-            <TextBlock Text="Gestión de Usuarios"
-                    FontSize="20"
-                    FontWeight="Bold"
-                       Foreground="#1A237E"
-                    VerticalAlignment="Center"/>
-            <Button Content="+ Nuevo Usuario"
-                    Margin="20,0,0,0"
-                    Padding="12,6"
-                    Background="#3949AB"
-                    Foreground="White"
-                    BorderThickness="0"
-                    Cursor="Hand"
-                    Visibility="{Binding PuedeGestionar, Converter={StaticResource BoolToVisibilityConverter}}"
-                    Command="{Binding DataContext.MostrarNuevoUsuarioCommand,
+                <!-- Título + acciones -->
+                <StackPanel Grid.Row="0"
+                            Orientation="Horizontal"
+                            Margin="0,0,0,12">
+                        <TextBlock Text="Gestión de Usuarios"
+                                   FontSize="20"
+                                   FontWeight="Bold"
+                                   Foreground="#1A237E"
+                                   VerticalAlignment="Center"/>
+                        <Button Content="+ Nuevo Usuario"
+                                Margin="20,0,0,0"
+                                Padding="12,6"
+                                Background="#3949AB"
+                                Foreground="White"
+                                BorderThickness="0"
+                                Cursor="Hand"
+                                Visibility="{Binding PuedeGestionar, Converter={StaticResource BoolToVisibilityConverter}}"
+                                Command="{Binding DataContext.MostrarNuevoUsuarioCommand,
                               RelativeSource={RelativeSource AncestorType=Window}}"/>
-        </StackPanel>
+                </StackPanel>
 
-        <!-- Mensajes -->
-        <TextBlock Grid.Row="1"
-                Text="{Binding MensajeError}"
-                   Foreground="#C62828"
-                FontSize="12"
-                TextWrapping="Wrap"
-                   Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"
-                   Margin="0,0,0,8"/>
-        <TextBlock Grid.Row="2"
-                Text="{Binding MensajeExito}"
-                   Foreground="#2E7D32"
-                FontSize="12"
-                TextWrapping="Wrap"
-                   Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"
-                   Margin="0,0,0,8"/>
+                <!-- Mensajes -->
+                <TextBlock Grid.Row="1"
+                           Text="{Binding MensajeError}"
+                           Foreground="#C62828"
+                           FontSize="12"
+                           TextWrapping="Wrap"
+                           Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"
+                           Margin="0,0,0,8"/>
+                <TextBlock Grid.Row="2"
+                           Text="{Binding MensajeExito}"
+                           Foreground="#2E7D32"
+                           FontSize="12"
+                           TextWrapping="Wrap"
+                           Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"
+                           Margin="0,0,0,8"/>
 
-        <!-- Tabla -->
-        <DataGrid Grid.Row="3"
-                  ItemsSource="{Binding Usuarios}"
-                  SelectedItem="{Binding UsuarioSeleccionado}"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="True"
-                  CanUserAddRows="False"
-                  SelectionMode="Single"
-                  GridLinesVisibility="Horizontal"
-                  HeadersVisibility="Column"
-                  BorderBrush="#C5CAE9"
-                  AlternatingRowBackground="#F8F9FF">
+                <!-- Tabla -->
+                <DataGrid Grid.Row="3"
+                          ItemsSource="{Binding Usuarios}"
+                          SelectedItem="{Binding UsuarioSeleccionado}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          CanUserAddRows="False"
+                          SelectionMode="Single"
+                          GridLinesVisibility="Horizontal"
+                          HeadersVisibility="Column"
+                          BorderBrush="#C5CAE9"
+                          AlternatingRowBackground="#F8F9FF">
 
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="ID"
-                        Binding="{Binding Id}"
-                        Width="50"/>
-                <DataGridTextColumn Header="Nombre Completo"
-                        Binding="{Binding NombreCompleto}"
-                        Width="*"/>
-                <DataGridTextColumn Header="Correo"
-                        Binding="{Binding CorreoInstitucional}"
-                        Width="2*"/>
-                <DataGridTextColumn Header="Estado"
-                        Binding="{Binding Estado}"
-                        Width="90"/>
-                <DataGridTextColumn Header="Rol"
-                        Binding="{Binding Roles[0]}"
-                        Width="120"/>
-                <DataGridTextColumn Header="Último Acceso"
-                        Binding="{Binding UltimoAccesoEn, StringFormat=\{0:dd/MM/yyyy HH:mm\}}"
-                        Width="150"/>
-            </DataGrid.Columns>
-        </DataGrid>
+                        <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID"
+                                                    Binding="{Binding Id}"
+                                                    Width="50"/>
+                                <DataGridTextColumn Header="Nombre Completo"
+                                                    Binding="{Binding NombreCompleto}"
+                                                    Width="*"/>
+                                <DataGridTextColumn Header="Correo"
+                                                    Binding="{Binding CorreoInstitucional}"
+                                                    Width="2*"/>
+                                <DataGridTextColumn Header="Estado"
+                                                    Binding="{Binding Estado}"
+                                                    Width="90"/>
+                                <DataGridTextColumn Header="Rol"
+                                                    Binding="{Binding Roles[0]}"
+                                                    Width="120"/>
+                                <DataGridTextColumn Header="Último Acceso"
+                                                    Binding="{Binding UltimoAccesoEn, StringFormat=\{0:dd/MM/yyyy HH:mm\}}"
+                                                    Width="150"/>
+                        </DataGrid.Columns>
+                </DataGrid>
 
-        <!-- Acciones fila -->
-        <StackPanel Grid.Row="4"
-                Orientation="Horizontal"
-                Margin="0,10,0,0"
-                    Visibility="{Binding PuedeGestionar, Converter={StaticResource BoolToVisibilityConverter}}">
-            <Button Content="Editar"
-                    Command="{Binding EditarCommand}"
-                    Padding="12,6"
-                    Margin="0,0,8,0"
-                    Background="#0277BD"
-                    Foreground="White"
-                    BorderThickness="0"
-                    Cursor="Hand"/>
-            <Button Content="Eliminar (baja lógica)"
-                    Command="{Binding EliminarCommand}"
-                    Padding="12,6"
-                    Margin="0,0,8,0"
-                    Background="#B71C1C"
-                    Foreground="White"
-                    BorderThickness="0"
-                    Cursor="Hand"/>
-        </StackPanel>
-    </Grid>
+                <!-- Loading Overlay -->
+                <Grid Grid.Row="3"
+                      Background="#00000080"
+                      Visibility="{Binding EstaCargando, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <StackPanel VerticalAlignment="Center"
+                                    HorizontalAlignment="Center">
+                                <TextBlock Text="⟳"
+                                           FontSize="48"
+                                           Foreground="White"
+                                           TextAlignment="Center"
+                                           Margin="0,0,0,12"/>
+                                <TextBlock Text="Cargando usuarios..."
+                                           FontSize="16"
+                                           Foreground="White"
+                                           TextAlignment="Center"
+                                           FontWeight="SemiBold"/>
+                        </StackPanel>
+                </Grid>
+
+                <!-- Acciones fila -->
+                <StackPanel Grid.Row="4"
+                            Orientation="Horizontal"
+                            Margin="0,10,0,0"
+                            Visibility="{Binding PuedeGestionar, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Button Content="Editar"
+                                Command="{Binding EditarCommand}"
+                                Padding="12,6"
+                                Margin="0,0,8,0"
+                                Background="#0277BD"
+                                Foreground="White"
+                                BorderThickness="0"
+                                Cursor="Hand"/>
+                        <Button Content="Eliminar (baja lógica)"
+                                Command="{Binding EliminarCommand}"
+                                Padding="12,6"
+                                Margin="0,0,8,0"
+                                Background="#B71C1C"
+                                Foreground="White"
+                                BorderThickness="0"
+                                Cursor="Hand"/>
+                </StackPanel>
+        </Grid>
 </UserControl>

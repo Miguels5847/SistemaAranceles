@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.DTOs.Usuarios;
 using SistemaAranceles.Application.UseCases.Autenticacion;
 using SistemaAranceles.Presentation.Mensajes;
@@ -21,21 +22,21 @@ public sealed class ItemMenu
 
 public sealed partial class MainViewModel : ObservableObject
 {
+    private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
-    private readonly CerrarSesionUseCase _cerrarSesionUseCase;
     private readonly UsuariosViewModel _usuariosViewModel;
     private readonly Func<EditarUsuarioViewModel> _editarUsuarioViewModelFactory;
     private int _cerrandoSesion;
     private int _cargandoUsuarios;
 
     public MainViewModel(
+        IServiceProvider serviceProvider,
         SesionActual sesionActual,
-        CerrarSesionUseCase cerrarSesionUseCase,
         UsuariosViewModel usuariosViewModel,
         Func<EditarUsuarioViewModel> editarUsuarioViewModelFactory)
     {
+        _serviceProvider = serviceProvider;
         _sesionActual = sesionActual;
-        _cerrarSesionUseCase = cerrarSesionUseCase;
         _usuariosViewModel = usuariosViewModel;
         _editarUsuarioViewModelFactory = editarUsuarioViewModelFactory;
 
@@ -54,6 +55,7 @@ public sealed partial class MainViewModel : ObservableObject
         if (_sesionActual.EsAdministrador)
         {
             PaginaActual = _usuariosViewModel;
+            _ = MostrarUsuariosAsync();
         }
         else
         {
@@ -206,7 +208,9 @@ public sealed partial class MainViewModel : ObservableObject
         Trace.WriteLine($"[{DateTime.UtcNow:O}] MainViewModel: inicio CerrarSesionAsync.");
         try
         {
-            await _cerrarSesionUseCase.EjecutarAsync(
+            using var scope = _serviceProvider.CreateScope();
+            var cerrarSesionUseCase = scope.ServiceProvider.GetRequiredService<CerrarSesionUseCase>();
+            await cerrarSesionUseCase.EjecutarAsync(
                 _sesionActual.UsuarioId,
                 _sesionActual.TokenSesion);
         }
