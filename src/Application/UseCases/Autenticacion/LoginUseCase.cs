@@ -30,29 +30,13 @@ public sealed class LoginUseCase(
         var timeoutPersistente = false;
         try
         {
-            for (var intento = 1; intento <= 2; intento++)
-            {
-                try
-                {
-                    using var ctsUsuario = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                    ctsUsuario.CancelAfter(TimeSpan.FromSeconds(12));
-
-                    usuario = await repositorioUsuario.ObtenerPorCorreoInstitucionalAsync(correo, ctsUsuario.Token);
-                    break;
-                }
-                catch (OperationCanceledException) when (intento == 1)
-                {
-                    Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: timeout transitorio en consulta de usuario (intento 1). Reintentando.");
-                }
-                catch (OperationCanceledException) when (intento == 2)
-                {
-                    timeoutPersistente = true;
-                }
-            }
+            using var ctsUsuario = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            ctsUsuario.CancelAfter(TimeSpan.FromSeconds(4));
+            usuario = await repositorioUsuario.ObtenerPorCorreoInstitucionalAsync(correo, ctsUsuario.Token);
         }
         catch (OperationCanceledException)
         {
-            throw new TimeoutException("La consulta de usuario tardó demasiado.");
+            timeoutPersistente = true;
         }
         finally
         {
@@ -92,24 +76,9 @@ public sealed class LoginUseCase(
         try
         {
             IReadOnlyList<string> roles = [];
-            for (var intento = 1; intento <= 2; intento++)
-            {
-                try
-                {
-                    using var ctsRoles = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                    ctsRoles.CancelAfter(TimeSpan.FromSeconds(25));
-                    roles = await repositorioUsuario.ObtenerRolesDelUsuarioAsync(usuario.Id, ctsRoles.Token);
-                    break;
-                }
-                catch (OperationCanceledException) when (intento == 1)
-                {
-                    Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: timeout transitorio leyendo roles (intento 1). Reintentando.");
-                }
-                catch (Exception ex) when (intento == 1 && EsErrorTransitorio(ex))
-                {
-                    Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: error transitorio leyendo roles (intento 1) -> {ex.Message}. Reintentando.");
-                }
-            }
+            using var ctsRoles = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            ctsRoles.CancelAfter(TimeSpan.FromSeconds(3));
+            roles = await repositorioUsuario.ObtenerRolesDelUsuarioAsync(usuario.Id, ctsRoles.Token);
 
             rolNombre = roles.FirstOrDefault() ?? InferirRolDeRespaldo(usuario.Id, usuario.CorreoInstitucional.ToString());
         }
@@ -132,28 +101,16 @@ public sealed class LoginUseCase(
         Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: creando sesión en base de datos.");
         var swSesion = Stopwatch.StartNew();
         var sesionPersistida = false;
-        for (var intento = 1; intento <= 2; intento++)
+        try
         {
-            try
-            {
-                using var ctsSesion = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                ctsSesion.CancelAfter(TimeSpan.FromSeconds(8));
-                await repositorioSesion.CrearAsync(usuario.Id, token, expira, ctsSesion.Token);
-                sesionPersistida = true;
-                break;
-            }
-            catch (OperationCanceledException) when (intento == 1)
-            {
-                Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: timeout transitorio creando sesión (intento 1). Reintentando.");
-            }
-            catch (Exception ex) when (intento == 1)
-            {
-                Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: error transitorio creando sesión (intento 1) -> {ex.Message}. Reintentando.");
-            }
-            catch (Exception ex) when (intento == 2)
-            {
-                Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: no se pudo persistir sesión tras reintentos -> {ex.Message}. Se continúa en modo resiliente.");
-            }
+            using var ctsSesion = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            ctsSesion.CancelAfter(TimeSpan.FromSeconds(3));
+            await repositorioSesion.CrearAsync(usuario.Id, token, expira, ctsSesion.Token);
+            sesionPersistida = true;
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: no se pudo persistir sesión -> {ex.Message}. Se continúa en modo resiliente.");
         }
         swSesion.Stop();
         Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase.Metric: sesion_ms={swSesion.ElapsedMilliseconds}.");
