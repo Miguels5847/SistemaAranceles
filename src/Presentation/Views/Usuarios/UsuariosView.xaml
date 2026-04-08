@@ -89,13 +89,8 @@
                       Visibility="{Binding EstaCargando, Converter={StaticResource BoolToVisibilityConverter}}">
                         <StackPanel VerticalAlignment="Center"
                                     HorizontalAlignment="Center">
-                                <TextBlock Text="⟳"
-                                           FontSize="48"
-                                           Foreground="White"
-                                           TextAlignment="Center"
-                                           Margin="0,0,0,12"/>
-                                <TextBlock Text="Cargando usuarios..."
-                                           FontSize="16"
+                                <TextBlock x:Name="LoadingSymbol"
+                                           Text="⟳"
                                            Foreground="White"
                                            TextAlignment="Center"
                                            FontWeight="SemiBold"/>
