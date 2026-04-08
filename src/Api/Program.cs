@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using SistemaAranceles.Application.DTOs.Usuarios;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.Autenticacion;
@@ -46,6 +47,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
+builder.Services.AddMemoryCache();
 
 var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("No se encontr� ConnectionStrings:DefaultConnection.");
@@ -79,7 +81,7 @@ if (defaultConnection.Contains("db.zpdkdbonmsjqljozaczp.supabase.co", StringComp
 if (!defaultConnection.Contains("Timeout", StringComparison.OrdinalIgnoreCase))
 {
     if (!defaultConnection.EndsWith(";")) defaultConnection += ";";
-    defaultConnection += "Timeout=15;CommandTimeout=30;";
+    defaultConnection += "Timeout=8;CommandTimeout=12;Keepalive=30;Pooling=true;Maximum Pool Size=20;";
 }
 
 builder.Services.AddInfrastructure(defaultConnection);
@@ -162,15 +164,51 @@ usuariosGroup.MapDelete("/{id:int}", async (int id, [FromBody] EliminarUsuarioRe
 });
 
 var rolesGroup = app.MapGroup("/api/roles").WithTags("Roles");
-rolesGroup.MapGet("", async (IRepositorioRol repositorioRol, CancellationToken cancellationToken) =>
+rolesGroup.MapGet("", async (IRepositorioRol repositorioRol, IMemoryCache cache, CancellationToken cancellationToken) =>
 {
+    const string cacheKey = "roles-list-v1";
+    if (cache.TryGetValue<IReadOnlyList<RolApiDto>>(cacheKey, out var rolesCache) && rolesCache is not null)
+        return Results.Ok(rolesCache);
+
     try
     {
-        var roles = await repositorioRol.ListarAsync(cancellationToken);
-        return Results.Ok(roles.Select(r => new { id = r.Id, nombre = r.Nombre, descripcion = r.Descripcion }));
+        IReadOnlyList<(int Id, string Nombre, string Descripcion)> roles = [];
+        for (var intento = 1; intento <= 2; intento++)
+        {
+            try
+            {
+                using var ctsRoles = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                ctsRoles.CancelAfter(TimeSpan.FromSeconds(3));
+                roles = await repositorioRol.ListarAsync(ctsRoles.Token);
+                break;
+            }
+            catch (Exception ex) when (
+                intento == 1 && (
+                    ex is TimeoutException
+                    || ex is OperationCanceledException
+                    || ex.Message.Contains("reading from stream", StringComparison.OrdinalIgnoreCase)
+                    || ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase)
+                    || ex.Message.Contains("transient", StringComparison.OrdinalIgnoreCase)))
+            {
+                await Task.Delay(120, cancellationToken);
+            }
+        }
+
+        var resultado = roles
+            .Select(r => new RolApiDto { id = r.Id, nombre = r.Nombre, descripcion = r.Descripcion })
+            .ToList();
+
+        cache.Set(cacheKey, resultado, TimeSpan.FromMinutes(5));
+        return Results.Ok(resultado);
     }
     catch (TimeoutException) { return Results.StatusCode(StatusCodes.Status504GatewayTimeout); }
-    catch (Exception ex) { return Results.Json(new { error = ex.Message, type = ex.GetType().Name }, statusCode: StatusCodes.Status500InternalServerError); }
+    catch (Exception ex)
+    {
+        if (cache.TryGetValue<IReadOnlyList<RolApiDto>>(cacheKey, out var staleRoles) && staleRoles is not null)
+            return Results.Ok(staleRoles);
+
+        return Results.Json(new { error = ex.Message, type = ex.GetType().Name }, statusCode: StatusCodes.Status500InternalServerError);
+    }
 });
 
 app.Run();
@@ -178,3 +216,9 @@ app.Run();
 public sealed record LoginRequest(string Correo, string Contrasena);
 public sealed record LogoutRequest(int UsuarioId, string TokenSesion);
 public sealed record EliminarUsuarioRequest(int EliminadoPorUsuarioId);
+public sealed class RolApiDto
+{
+    public int id { get; init; }
+    public string nombre { get; init; } = string.Empty;
+    public string descripcion { get; init; } = string.Empty;
+}
