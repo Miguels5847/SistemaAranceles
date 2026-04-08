@@ -193,6 +193,14 @@ usuariosGroup.MapPost("", async (CrearUsuarioDto request, CrearUsuarioUseCase us
         {
             await Task.Delay(180, cancellationToken);
         }
+        catch (Exception ex) when (
+            intento == 1 && (
+                ex.Message.Contains("reading from stream", StringComparison.OrdinalIgnoreCase)
+                || ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase)
+                || ex.Message.Contains("transient", StringComparison.OrdinalIgnoreCase)))
+        {
+            await Task.Delay(180, cancellationToken);
+        }
         catch (OperationCanceledException)
         {
             return Results.StatusCode(StatusCodes.Status504GatewayTimeout);
