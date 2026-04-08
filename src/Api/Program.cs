@@ -48,7 +48,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
 
 var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("No se encontró ConnectionStrings:DefaultConnection.");
+    ?? throw new InvalidOperationException("No se encontrï¿½ ConnectionStrings:DefaultConnection.");
 
 // Workaround: Render DNS resolves Supabase to IPv6. Use pooler with correct username format.
 if (defaultConnection.Contains("db.zpdkdbonmsjqljozaczp.supabase.co", StringComparison.OrdinalIgnoreCase))
@@ -56,12 +56,12 @@ if (defaultConnection.Contains("db.zpdkdbonmsjqljozaczp.supabase.co", StringComp
     const string projectRef = "zpdkdbonmsjqljozaczp";
     var connParts = defaultConnection.Split(';', StringSplitOptions.RemoveEmptyEntries);
     var rebuiltConn = new System.Text.StringBuilder();
-    
+
     foreach (var part in connParts)
     {
         var trimmed = part.Trim();
         if (string.IsNullOrWhiteSpace(trimmed)) continue;
-        
+
         if (trimmed.IndexOf("Host=", StringComparison.OrdinalIgnoreCase) == 0)
             rebuiltConn.Append("Host=aws-1-us-east-1.pooler.supabase.com;");
         else if (trimmed.IndexOf("Port=", StringComparison.OrdinalIgnoreCase) == 0)
@@ -71,7 +71,7 @@ if (defaultConnection.Contains("db.zpdkdbonmsjqljozaczp.supabase.co", StringComp
         else
             rebuiltConn.Append(trimmed + ";");
     }
-    
+
     defaultConnection = rebuiltConn.ToString().TrimEnd(';');
 }
 
@@ -117,8 +117,19 @@ authGroup.MapPost("/logout", async (LogoutRequest request, CerrarSesionUseCase u
 var usuariosGroup = app.MapGroup("/api/usuarios").WithTags("Usuarios");
 usuariosGroup.MapGet("", async (ListarUsuariosUseCase useCase, CancellationToken cancellationToken) =>
 {
-    var usuarios = await useCase.EjecutarAsync(cancellationToken);
-    return Results.Ok(usuarios);
+    try
+    {
+        var usuarios = await useCase.EjecutarAsync(cancellationToken);
+        return Results.Ok(usuarios);
+    }
+    catch (TimeoutException)
+    {
+        return Results.StatusCode(StatusCodes.Status504GatewayTimeout);
+    }
+    catch (Exception ex)
+    {
+        return Results.Json(new { error = ex.Message, type = ex.GetType().Name }, statusCode: StatusCodes.Status500InternalServerError);
+    }
 });
 
 usuariosGroup.MapPost("", async (CrearUsuarioDto request, CrearUsuarioUseCase useCase, CancellationToken cancellationToken) =>
@@ -126,6 +137,8 @@ usuariosGroup.MapPost("", async (CrearUsuarioDto request, CrearUsuarioUseCase us
     try { var nuevoId = await useCase.EjecutarAsync(request, null, cancellationToken); return Results.Created($"/api/usuarios/{nuevoId}", new { id = nuevoId }); }
     catch (ArgumentException ex) { return Results.BadRequest(new { error = ex.Message }); }
     catch (InvalidOperationException ex) { return Results.Conflict(new { error = ex.Message }); }
+    catch (TimeoutException) { return Results.StatusCode(StatusCodes.Status504GatewayTimeout); }
+    catch (Exception ex) { return Results.Json(new { error = ex.Message, type = ex.GetType().Name }, statusCode: StatusCodes.Status500InternalServerError); }
 });
 
 usuariosGroup.MapPut("/{id:int}", async (int id, ActualizarUsuarioDto request, ActualizarUsuarioUseCase useCase, CancellationToken cancellationToken) =>
@@ -135,6 +148,8 @@ usuariosGroup.MapPut("/{id:int}", async (int id, ActualizarUsuarioDto request, A
     catch (KeyNotFoundException ex) { return Results.NotFound(new { error = ex.Message }); }
     catch (ArgumentException ex) { return Results.BadRequest(new { error = ex.Message }); }
     catch (InvalidOperationException ex) { return Results.Conflict(new { error = ex.Message }); }
+    catch (TimeoutException) { return Results.StatusCode(StatusCodes.Status504GatewayTimeout); }
+    catch (Exception ex) { return Results.Json(new { error = ex.Message, type = ex.GetType().Name }, statusCode: StatusCodes.Status500InternalServerError); }
 });
 
 usuariosGroup.MapDelete("/{id:int}", async (int id, [FromBody] EliminarUsuarioRequest request, EliminarUsuarioUseCase useCase, CancellationToken cancellationToken) =>
@@ -142,6 +157,8 @@ usuariosGroup.MapDelete("/{id:int}", async (int id, [FromBody] EliminarUsuarioRe
     try { await useCase.EjecutarAsync(id, request.EliminadoPorUsuarioId, cancellationToken); return Results.NoContent(); }
     catch (KeyNotFoundException ex) { return Results.NotFound(new { error = ex.Message }); }
     catch (InvalidOperationException ex) { return Results.Conflict(new { error = ex.Message }); }
+    catch (TimeoutException) { return Results.StatusCode(StatusCodes.Status504GatewayTimeout); }
+    catch (Exception ex) { return Results.Json(new { error = ex.Message, type = ex.GetType().Name }, statusCode: StatusCodes.Status500InternalServerError); }
 });
 
 var rolesGroup = app.MapGroup("/api/roles").WithTags("Roles");
