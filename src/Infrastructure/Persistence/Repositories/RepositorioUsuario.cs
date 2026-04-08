@@ -192,9 +192,13 @@ public sealed class RepositorioUsuario(
             ORDER BY r.nombre
             """;
 
-        var connection = (NpgsqlConnection)contextoAplicacion.Database.GetDbConnection();
-        if (connection.State != System.Data.ConnectionState.Open)
-            await connection.OpenAsync(cancellationToken);
+        var cadenaConexion = contextoAplicacion.Database.GetConnectionString();
+        if (string.IsNullOrWhiteSpace(cadenaConexion))
+            throw new InvalidOperationException("No se encontró la cadena de conexión para obtener roles de usuario.");
+
+        cadenaConexion = SupabaseConnectionStringHelper.Normalizar(cadenaConexion);
+        await using var connection = new NpgsqlConnection(cadenaConexion);
+        await connection.OpenAsync(cancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = sql;

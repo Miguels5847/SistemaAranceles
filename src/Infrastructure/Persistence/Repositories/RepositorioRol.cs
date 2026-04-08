@@ -18,7 +18,7 @@ public sealed class RepositorioRol(ContextoAplicacion contextoAplicacion) : IRep
             ORDER BY r.nombre
             """;
 
-        var (connection, _) = await ObtenerConexionAsync(cancellationToken);
+        await using var connection = await ObtenerConexionAsync(cancellationToken);
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
         command.CommandTimeout = 10;
@@ -47,7 +47,7 @@ public sealed class RepositorioRol(ContextoAplicacion contextoAplicacion) : IRep
             LIMIT 1
             """;
 
-        var (connection, _) = await ObtenerConexionAsync(cancellationToken);
+        await using var connection = await ObtenerConexionAsync(cancellationToken);
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
         command.CommandTimeout = 10;
@@ -130,7 +130,7 @@ public sealed class RepositorioRol(ContextoAplicacion contextoAplicacion) : IRep
         {
             try
             {
-                var (connection, _) = await ObtenerConexionAsync(cancellationToken);
+                await using var connection = await ObtenerConexionAsync(cancellationToken);
                 await using var command = connection.CreateCommand();
                 command.CommandText = sql;
                 command.CommandTimeout = 25;
@@ -190,7 +190,7 @@ public sealed class RepositorioRol(ContextoAplicacion contextoAplicacion) : IRep
             WHERE ur.usuario_id = @usuario_id
             """;
 
-        var (connection, _) = await ObtenerConexionAsync(cancellationToken);
+        await using var connection = await ObtenerConexionAsync(cancellationToken);
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
         command.CommandTimeout = 15;
@@ -254,15 +254,17 @@ public sealed class RepositorioRol(ContextoAplicacion contextoAplicacion) : IRep
         return usuarioId;
     }
 
-    // Reutiliza la conexión que ya mantiene EF en su pool interno.
-    // Nunca llamar Dispose() sobre la conexión devuelta; EF la gestiona.
-    private async Task<(NpgsqlConnection Connection, bool FueAbiertaAqui)> ObtenerConexionAsync(
+    // Usa una conexión dedicada por operación para aislar fallos de stream intermitentes.
+    private async Task<NpgsqlConnection> ObtenerConexionAsync(
         CancellationToken cancellationToken)
     {
-        var connection = (NpgsqlConnection)contextoAplicacion.Database.GetDbConnection();
-        var fueAbiertaAqui = connection.State != System.Data.ConnectionState.Open;
-        if (fueAbiertaAqui)
-            await connection.OpenAsync(cancellationToken);
-        return (connection, fueAbiertaAqui);
+        var cadenaConexion = contextoAplicacion.Database.GetConnectionString();
+        if (string.IsNullOrWhiteSpace(cadenaConexion))
+            throw new InvalidOperationException("No se encontró la cadena de conexión para consultas de roles.");
+
+        cadenaConexion = SupabaseConnectionStringHelper.Normalizar(cadenaConexion);
+        var connection = new NpgsqlConnection(cadenaConexion);
+        await connection.OpenAsync(cancellationToken);
+        return connection;
     }
 }
