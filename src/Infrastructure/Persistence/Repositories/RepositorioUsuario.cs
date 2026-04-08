@@ -112,35 +112,40 @@ public sealed class RepositorioUsuario(
     {
         ArgumentNullException.ThrowIfNull(usuario);
 
-        await using var transaction = await contextoAplicacion.Database.BeginTransactionAsync(cancellationToken);
-        try
+        var strategy = contextoAplicacion.Database.CreateExecutionStrategy();
+
+        return await strategy.ExecuteAsync(async () =>
         {
-            var entidadUsuario = MapearAPersistencia(usuario);
-            await contextoAplicacion.Usuarios.AddAsync(entidadUsuario, cancellationToken);
-            await contextoAplicacion.SaveChangesAsync(cancellationToken);
-
-            var existeRol = await contextoAplicacion.UsuariosRoles
-                .AnyAsync(x => x.UsuarioId == entidadUsuario.Id && x.RolId == rolId, cancellationToken);
-
-            if (!existeRol)
+            await using var transaction = await contextoAplicacion.Database.BeginTransactionAsync(cancellationToken);
+            try
             {
-                await contextoAplicacion.UsuariosRoles.AddAsync(new Infrastructure.Persistence.Entidades.UsuarioRol
-                {
-                    UsuarioId = entidadUsuario.Id,
-                    RolId = rolId
-                }, cancellationToken);
-
+                var entidadUsuario = MapearAPersistencia(usuario);
+                await contextoAplicacion.Usuarios.AddAsync(entidadUsuario, cancellationToken);
                 await contextoAplicacion.SaveChangesAsync(cancellationToken);
-            }
 
-            await transaction.CommitAsync(cancellationToken);
-            return entidadUsuario.Id;
-        }
-        catch
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
+                var existeRol = await contextoAplicacion.UsuariosRoles
+                    .AnyAsync(x => x.UsuarioId == entidadUsuario.Id && x.RolId == rolId, cancellationToken);
+
+                if (!existeRol)
+                {
+                    await contextoAplicacion.UsuariosRoles.AddAsync(new Infrastructure.Persistence.Entidades.UsuarioRol
+                    {
+                        UsuarioId = entidadUsuario.Id,
+                        RolId = rolId
+                    }, cancellationToken);
+
+                    await contextoAplicacion.SaveChangesAsync(cancellationToken);
+                }
+
+                await transaction.CommitAsync(cancellationToken);
+                return entidadUsuario.Id;
+            }
+            catch
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
+        });
     }
 
     public async Task ActualizarAsync(UsuarioDominio usuario, CancellationToken cancellationToken = default)
