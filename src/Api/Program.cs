@@ -174,17 +174,40 @@ usuariosGroup.MapGet("", async (ListarUsuariosUseCase useCase, CancellationToken
 
 usuariosGroup.MapPost("", async (CrearUsuarioDto request, CrearUsuarioUseCase useCase, CancellationToken cancellationToken) =>
 {
-    try
+    for (var intento = 1; intento <= 2; intento++)
     {
-        using var ctsCrear = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        ctsCrear.CancelAfter(TimeSpan.FromSeconds(10));
-        var nuevoId = await useCase.EjecutarAsync(request, null, ctsCrear.Token);
-        return Results.Created($"/api/usuarios/{nuevoId}", new { id = nuevoId });
+        try
+        {
+            using var ctsCrear = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            ctsCrear.CancelAfter(TimeSpan.FromSeconds(16));
+            var nuevoId = await useCase.EjecutarAsync(request, null, ctsCrear.Token);
+            return Results.Created($"/api/usuarios/{nuevoId}", new { id = nuevoId });
+        }
+        catch (ArgumentException ex) { return Results.BadRequest(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return Results.Conflict(new { error = ex.Message }); }
+        catch (OperationCanceledException) when (intento == 1)
+        {
+            await Task.Delay(180, cancellationToken);
+        }
+        catch (TimeoutException) when (intento == 1)
+        {
+            await Task.Delay(180, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return Results.StatusCode(StatusCodes.Status504GatewayTimeout);
+        }
+        catch (TimeoutException)
+        {
+            return Results.StatusCode(StatusCodes.Status504GatewayTimeout);
+        }
+        catch (Exception ex)
+        {
+            return Results.Json(new { error = ex.Message, type = ex.GetType().Name }, statusCode: StatusCodes.Status500InternalServerError);
+        }
     }
-    catch (ArgumentException ex) { return Results.BadRequest(new { error = ex.Message }); }
-    catch (InvalidOperationException ex) { return Results.Conflict(new { error = ex.Message }); }
-    catch (TimeoutException) { return Results.StatusCode(StatusCodes.Status504GatewayTimeout); }
-    catch (Exception ex) { return Results.Json(new { error = ex.Message, type = ex.GetType().Name }, statusCode: StatusCodes.Status500InternalServerError); }
+
+    return Results.StatusCode(StatusCodes.Status504GatewayTimeout);
 });
 
 usuariosGroup.MapPut("/{id:int}", async (int id, ActualizarUsuarioDto request, ActualizarUsuarioUseCase useCase, CancellationToken cancellationToken) =>
