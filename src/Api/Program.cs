@@ -103,10 +103,46 @@ app.MapHealthChecks("/healthz");
 var authGroup = app.MapGroup("/api/auth").WithTags("Auth");
 authGroup.MapPost("/login", async (LoginRequest request, LoginUseCase useCase, CancellationToken cancellationToken) =>
 {
-    try { var sesion = await useCase.EjecutarAsync(request.Correo, request.Contrasena, cancellationToken); return Results.Ok(sesion); }
-    catch (UnauthorizedAccessException) { return Results.Unauthorized(); }
-    catch (ArgumentException ex) { return Results.BadRequest(new { error = ex.Message }); }
-    catch (TimeoutException) { return Results.StatusCode(StatusCodes.Status504GatewayTimeout); }
+    for (var intento = 1; intento <= 2; intento++)
+    {
+        try
+        {
+            using var ctsLogin = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            ctsLogin.CancelAfter(TimeSpan.FromSeconds(8));
+            var sesion = await useCase.EjecutarAsync(request.Correo, request.Contrasena, ctsLogin.Token);
+            return Results.Ok(sesion);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Results.Unauthorized();
+        }
+        catch (ArgumentException ex)
+        {
+            return Results.BadRequest(new { error = ex.Message });
+        }
+        catch (TimeoutException) when (intento == 1)
+        {
+            await Task.Delay(150, cancellationToken);
+        }
+        catch (Exception ex) when (
+            intento == 1 && (
+                ex.Message.Contains("reading from stream", StringComparison.OrdinalIgnoreCase)
+                || ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase)
+                || ex.Message.Contains("transient", StringComparison.OrdinalIgnoreCase)))
+        {
+            await Task.Delay(150, cancellationToken);
+        }
+        catch (TimeoutException)
+        {
+            return Results.StatusCode(StatusCodes.Status504GatewayTimeout);
+        }
+        catch (Exception ex)
+        {
+            return Results.Json(new { error = ex.Message, type = ex.GetType().Name }, statusCode: StatusCodes.Status503ServiceUnavailable);
+        }
+    }
+
+    return Results.StatusCode(StatusCodes.Status504GatewayTimeout);
 });
 
 authGroup.MapPost("/logout", async (LogoutRequest request, CerrarSesionUseCase useCase, CancellationToken cancellationToken) =>
@@ -121,7 +157,9 @@ usuariosGroup.MapGet("", async (ListarUsuariosUseCase useCase, CancellationToken
 {
     try
     {
-        var usuarios = await useCase.EjecutarAsync(cancellationToken);
+        using var ctsUsuarios = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        ctsUsuarios.CancelAfter(TimeSpan.FromSeconds(8));
+        var usuarios = await useCase.EjecutarAsync(ctsUsuarios.Token);
         return Results.Ok(usuarios);
     }
     catch (TimeoutException)
@@ -136,7 +174,13 @@ usuariosGroup.MapGet("", async (ListarUsuariosUseCase useCase, CancellationToken
 
 usuariosGroup.MapPost("", async (CrearUsuarioDto request, CrearUsuarioUseCase useCase, CancellationToken cancellationToken) =>
 {
-    try { var nuevoId = await useCase.EjecutarAsync(request, null, cancellationToken); return Results.Created($"/api/usuarios/{nuevoId}", new { id = nuevoId }); }
+    try
+    {
+        using var ctsCrear = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        ctsCrear.CancelAfter(TimeSpan.FromSeconds(10));
+        var nuevoId = await useCase.EjecutarAsync(request, null, ctsCrear.Token);
+        return Results.Created($"/api/usuarios/{nuevoId}", new { id = nuevoId });
+    }
     catch (ArgumentException ex) { return Results.BadRequest(new { error = ex.Message }); }
     catch (InvalidOperationException ex) { return Results.Conflict(new { error = ex.Message }); }
     catch (TimeoutException) { return Results.StatusCode(StatusCodes.Status504GatewayTimeout); }
@@ -146,7 +190,13 @@ usuariosGroup.MapPost("", async (CrearUsuarioDto request, CrearUsuarioUseCase us
 usuariosGroup.MapPut("/{id:int}", async (int id, ActualizarUsuarioDto request, ActualizarUsuarioUseCase useCase, CancellationToken cancellationToken) =>
 {
     if (id != request.Id) return Results.BadRequest(new { error = "Id mismatch." });
-    try { await useCase.EjecutarAsync(request, null, cancellationToken); return Results.NoContent(); }
+    try
+    {
+        using var ctsActualizar = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        ctsActualizar.CancelAfter(TimeSpan.FromSeconds(10));
+        await useCase.EjecutarAsync(request, null, ctsActualizar.Token);
+        return Results.NoContent();
+    }
     catch (KeyNotFoundException ex) { return Results.NotFound(new { error = ex.Message }); }
     catch (ArgumentException ex) { return Results.BadRequest(new { error = ex.Message }); }
     catch (InvalidOperationException ex) { return Results.Conflict(new { error = ex.Message }); }
