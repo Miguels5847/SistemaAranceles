@@ -83,18 +83,52 @@
                         </DataGrid.Columns>
                 </DataGrid>
 
-                <!-- Loading Overlay -->
+                <!-- Loading Overlay para carga de lista -->
+                <Grid Grid.Row="3"
+                      Background="#55000000"
+                      Visibility="{Binding EstaCargando, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Border Width="290"
+                                Padding="16"
+                                CornerRadius="8"
+                                Background="White"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center">
+                                <StackPanel>
+                                        <TextBlock Text="Cargando usuarios..."
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#1A237E"
+                                                   TextAlignment="Center"
+                                                   Margin="0,0,0,12"/>
+                                        <ProgressBar IsIndeterminate="True"
+                                                     Height="6"
+                                                     Foreground="#0277BD"/>
+                                </StackPanel>
+                        </Border>
+                </Grid>
+
+                <!-- Loading Overlay para eliminación -->
                 <Grid Grid.Row="3"
                       Background="#00000080"
-                      Visibility="{Binding EstaCargando, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <StackPanel VerticalAlignment="Center"
-                                    HorizontalAlignment="Center">
-                                <TextBlock x:Name="LoadingSymbol"
-                                           Text="⟳"
-                                           Foreground="White"
-                                           TextAlignment="Center"
-                                           FontWeight="SemiBold"/>
-                        </StackPanel>
+                      Visibility="{Binding IsEliminando, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Border Width="280"
+                                Padding="16"
+                                CornerRadius="8"
+                                Background="White"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center">
+                                <StackPanel>
+                                        <TextBlock Text="Eliminando usuario..."
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#B71C1C"
+                                                   TextAlignment="Center"
+                                                   Margin="0,0,0,12"/>
+                                        <ProgressBar IsIndeterminate="True"
+                                                     Height="6"
+                                                     Foreground="#B71C1C"/>
+                                </StackPanel>
+                        </Border>
                 </Grid>
 
                 <!-- Acciones fila -->
@@ -110,7 +144,7 @@
                                 Foreground="White"
                                 BorderThickness="0"
                                 Cursor="Hand"/>
-                        <Button Content="Eliminar (baja lógica)"
+                        <Button Content="{Binding TextoEliminarSeleccionado}"
                                 Command="{Binding EliminarCommand}"
                                 Padding="12,6"
                                 Margin="0,0,8,0"

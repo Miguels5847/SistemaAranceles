@@ -43,12 +43,12 @@ public sealed partial class MainViewModel : ObservableObject
         WeakReferenceMessenger.Default.Register<NavegarAMensaje>(this, (_, msg) =>
         {
             if (msg.DestinoPagina == "Usuarios")
-                _ = MostrarUsuariosAsync(msg.MensajeExito);
+                LanzarSinEsperar(MostrarUsuariosAsync(msg.MensajeExito));
         });
 
         WeakReferenceMessenger.Default.Register<EditarUsuarioMensaje>(this, (_, msg) =>
         {
-            _ = MostrarEditarUsuarioAsync(msg.Usuario);
+            LanzarSinEsperar(MostrarEditarUsuarioAsync(msg.Usuario));
         });
 
         ConstruirMenu();
@@ -137,7 +137,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         if (Interlocked.Exchange(ref _cargandoUsuarios, 1) == 1)
         {
-            Trace.WriteLine($"[{DateTime.UtcNow:O}] MainViewModel: MostrarUsuariosAsync ignorado por carga en curso.");
+            Trace.TraceInformation($"[{DateTime.UtcNow:O}] MainViewModel: MostrarUsuariosAsync ignorado por carga en curso.");
             return;
         }
 
@@ -177,7 +177,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Trace.WriteLine($"[{DateTime.UtcNow:O}] MainViewModel: error al inicializar nuevo usuario -> {ex.Message}.");
+            Trace.TraceError($"[{DateTime.UtcNow:O}] MainViewModel: error al inicializar nuevo usuario -> {ex.Message}.");
             vm.MensajeError = "No se pudo inicializar el formulario de usuario. Intente nuevamente.";
         }
     }
@@ -191,21 +191,31 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         var vm = _editarUsuarioViewModelFactory();
-        await vm.InicializarAsync(usuario);
         PaginaActual = vm;
         MensajePagina = string.Empty;
+
+        try
+        {
+            // Mostrar primero la vista para que el overlay "Cargando datos" sea visible durante la inicialización.
+            await vm.InicializarAsync(usuario);
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError($"[{DateTime.UtcNow:O}] MainViewModel: error al inicializar edición de usuario -> {ex.Message}.");
+            vm.MensajeError = "No se pudo cargar los datos del usuario. Intente nuevamente.";
+        }
     }
 
     private async Task CerrarSesionAsync()
     {
         if (Interlocked.Exchange(ref _cerrandoSesion, 1) == 1)
         {
-            Trace.WriteLine($"[{DateTime.UtcNow:O}] MainViewModel: CerrarSesionAsync ignorado por ejecución en curso.");
+            Trace.TraceInformation($"[{DateTime.UtcNow:O}] MainViewModel: CerrarSesionAsync ignorado por ejecución en curso.");
             return;
         }
 
         EstaCerrandoSesion = true;
-        Trace.WriteLine($"[{DateTime.UtcNow:O}] MainViewModel: inicio CerrarSesionAsync.");
+        Trace.TraceInformation($"[{DateTime.UtcNow:O}] MainViewModel: inicio CerrarSesionAsync.");
         try
         {
             using var scope = _serviceProvider.CreateScope();
@@ -216,16 +226,23 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Trace.WriteLine($"[{DateTime.UtcNow:O}] MainViewModel: error en CerrarSesionAsync -> {ex.Message}.");
+            Trace.TraceError($"[{DateTime.UtcNow:O}] MainViewModel: error en CerrarSesionAsync -> {ex.Message}.");
         }
         finally
         {
             _sesionActual.CerrarSesion();
             WeakReferenceMessenger.Default.UnregisterAll(this);
             WeakReferenceMessenger.Default.Send(new CerrarSesionMensaje());
-            Trace.WriteLine($"[{DateTime.UtcNow:O}] MainViewModel: fin CerrarSesionAsync.");
+            Trace.TraceInformation($"[{DateTime.UtcNow:O}] MainViewModel: fin CerrarSesionAsync.");
             EstaCerrandoSesion = false;
             Interlocked.Exchange(ref _cerrandoSesion, 0);
         }
+    }
+
+    private static void LanzarSinEsperar(Task tarea)
+    {
+        _ = tarea.ContinueWith(
+            antecedente => Trace.TraceError($"[{DateTime.UtcNow:O}] MainViewModel: tarea en segundo plano falló -> {antecedente.Exception?.GetBaseException().Message}"),
+            TaskContinuationOptions.OnlyOnFaulted);
     }
 }

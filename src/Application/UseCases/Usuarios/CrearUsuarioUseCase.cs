@@ -40,17 +40,9 @@ public sealed class CrearUsuarioUseCase(
         if (existeCorreo)
             throw new InvalidOperationException($"Ya existe un usuario con el correo '{dto.CorreoInstitucional}'.");
 
-        (int Id, string Nombre)? rolEncontrado;
-        if (dto.RolId > 0)
-        {
-            rolEncontrado = (dto.RolId, dto.RolNombre);
-        }
-        else
-        {
-            rolEncontrado = await repositorioRol.ObtenerPorNombreAsync(dto.RolNombre, cancellationToken);
-            if (!rolEncontrado.HasValue)
-                throw new InvalidOperationException($"El rol '{dto.RolNombre}' no existe.");
-        }
+        var rolEncontrado = await repositorioRol.ObtenerPorNombreAsync(dto.RolNombre, cancellationToken);
+        if (!rolEncontrado.HasValue)
+            throw new InvalidOperationException($"El rol '{dto.RolNombre}' no existe.");
 
         var hash = servicioHash.Hashear(dto.Contrasena);
         var correo = new CorreoInstitucional(dto.CorreoInstitucional);

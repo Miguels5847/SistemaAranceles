@@ -159,6 +159,17 @@ public sealed class LoginUseCase(
         Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase.Metric: sesion_ms={swSesion.ElapsedMilliseconds}.");
         Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase.Metric: sesion_persistida={(sesionPersistida ? 1 : 0)}.");
 
+        try
+        {
+            using var ctsAcceso = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            ctsAcceso.CancelAfter(TimeSpan.FromSeconds(4));
+            await repositorioUsuario.RegistrarUltimoAccesoAsync(usuario.Id, DateTime.UtcNow, ctsAcceso.Token);
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: no se pudo actualizar ultimo acceso -> {ex.Message}. Se continúa en modo resiliente.");
+        }
+
         // Temporalmente fuera de ruta crítica por latencia intermitente en BD.
         Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: update/auditoría de login omitidos (modo resiliente). ");
         Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase.Metric: update_ms=-1.");

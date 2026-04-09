@@ -38,7 +38,14 @@ public sealed partial class UsuariosViewModel : ObservableObject
     [ObservableProperty]
     private bool _estaCargando;
 
+    [ObservableProperty]
+    private bool _isEliminando;
+
     public bool PuedeGestionar => _sesionActual.EsAdministrador;
+
+    public string TextoEliminarSeleccionado => UsuarioSeleccionado is null
+        ? "Eliminar"
+        : ObtenerTextoEliminarSeleccionado();
 
     [RelayCommand]
     private async Task CargarAsync()
@@ -50,10 +57,28 @@ public sealed partial class UsuariosViewModel : ObservableObject
         EstaCargando = true;
         try
         {
-            using var scope = _serviceProvider.CreateScope();
-            var listarUseCase = scope.ServiceProvider.GetRequiredService<ListarUsuariosUseCase>();
-            var lista = await listarUseCase.EjecutarAsync();
-            Usuarios = new ObservableCollection<UsuarioDto>(lista);
+            // Reintentos silenciosos: hasta 3 intentos antes de mostrar error
+            Exception? ultimoError = null;
+            for (var intento = 1; intento <= 3; intento++)
+            {
+                try
+                {
+                    using var scope = _serviceProvider.CreateScope();
+                    var listarUseCase = scope.ServiceProvider.GetRequiredService<ListarUsuariosUseCase>();
+                    var lista = await listarUseCase.EjecutarAsync();
+                    Usuarios = new ObservableCollection<UsuarioDto>(lista);
+                    return; // Éxito, salir sin mostrar error
+                }
+                catch (Exception ex) when (intento < 3 && EsErrorTransitorio(ex))
+                {
+                    ultimoError = ex;
+                    await Task.Delay(250 * intento); // Backoff progresivo: 250ms, 500ms
+                }
+            }
+
+            // Si llegamos aquí, los 3 intentos fallaron
+            if (ultimoError != null)
+                MensajeError = $"Error al cargar usuarios: {ultimoError.Message}";
         }
         catch (Exception ex)
         {
@@ -65,19 +90,32 @@ public sealed partial class UsuariosViewModel : ObservableObject
         }
     }
 
-    [RelayCommand(CanExecute = nameof(HayUsuarioSeleccionado))]
+    [RelayCommand]
     private void Editar()
     {
-        if (UsuarioSeleccionado is null || !PuedeGestionar)
+        if (!PuedeGestionar)
             return;
+
+        if (UsuarioSeleccionado is null)
+        {
+            MensajeError = "Seleccione un usuario para editar.";
+            return;
+        }
 
         WeakReferenceMessenger.Default.Send(new EditarUsuarioMensaje(UsuarioSeleccionado));
     }
 
-    [RelayCommand(CanExecute = nameof(HayUsuarioSeleccionado))]
+    [RelayCommand]
     private async Task EliminarAsync()
     {
-        if (UsuarioSeleccionado is null) return;
+        if (!PuedeGestionar)
+            return;
+
+        if (UsuarioSeleccionado is null)
+        {
+            MensajeError = "Seleccione un usuario para eliminar.";
+            return;
+        }
 
         if (UsuarioSeleccionado.Id == _sesionActual.UsuarioId)
         {
@@ -87,15 +125,38 @@ public sealed partial class UsuariosViewModel : ObservableObject
 
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
-        EstaCargando = true;
+        IsEliminando = true;
 
         try
         {
-            using var scope = _serviceProvider.CreateScope();
-            var eliminarUseCase = scope.ServiceProvider.GetRequiredService<EliminarUsuarioUseCase>();
-            await eliminarUseCase.EjecutarAsync(UsuarioSeleccionado.Id, _sesionActual.UsuarioId);
-            MensajeExito = $"Usuario '{UsuarioSeleccionado.NombreCompleto}' eliminado correctamente.";
-            await CargarAsync();
+            var nombreUsuario = UsuarioSeleccionado.NombreCompleto;
+            var estadoUsuario = UsuarioSeleccionado.Estado;
+            var eliminadoExitoso = false;
+            for (var intento = 1; intento <= 2; intento++)
+            {
+                try
+                {
+                    using var scope = _serviceProvider.CreateScope();
+                    var eliminarUseCase = scope.ServiceProvider.GetRequiredService<EliminarUsuarioUseCase>();
+                    await eliminarUseCase.EjecutarAsync(UsuarioSeleccionado.Id, _sesionActual.UsuarioId);
+                    eliminadoExitoso = true;
+                    break;
+                }
+                catch (Exception ex) when (intento == 1 && EsErrorTransitorio(ex))
+                {
+                    await Task.Delay(350);
+                }
+            }
+
+            if (!eliminadoExitoso)
+            {
+                throw new InvalidOperationException("No se pudo eliminar por una falla transitoria de conexión. Intente nuevamente.");
+            }
+
+            MensajeExito = string.Equals(estadoUsuario, "Inactivo", StringComparison.OrdinalIgnoreCase)
+                ? $"Usuario '{nombreUsuario}' eliminado definitivamente correctamente."
+                : $"Usuario '{nombreUsuario}' desactivado correctamente.";
+            UsuarioSeleccionado = null;
         }
         catch (Exception ex)
         {
@@ -103,15 +164,55 @@ public sealed partial class UsuariosViewModel : ObservableObject
         }
         finally
         {
-            EstaCargando = false;
+            IsEliminando = false;
         }
-    }
 
-    private bool HayUsuarioSeleccionado() => UsuarioSeleccionado is not null && PuedeGestionar;
+        await CargarAsync();
+    }
 
     partial void OnUsuarioSeleccionadoChanged(UsuarioDto? value)
     {
-        EditarCommand.NotifyCanExecuteChanged();
-        EliminarCommand.NotifyCanExecuteChanged();
+        MensajeError = string.Empty;
+        OnPropertyChanged(nameof(TextoEliminarSeleccionado));
+    }
+
+    private string ObtenerTextoEliminarSeleccionado()
+    {
+        if (UsuarioSeleccionado is null)
+            return "Eliminar";
+
+        return string.Equals(UsuarioSeleccionado.Estado, "Inactivo", StringComparison.OrdinalIgnoreCase)
+            ? "Eliminar definitivamente"
+            : "Inactivar";
+    }
+
+    private static bool EsErrorTransitorio(Exception ex)
+    {
+        if (ex is TimeoutException || ex is OperationCanceledException)
+            return true;
+
+        // Revisar mensaje de la excepción actual
+        var mensaje = ex.Message.ToLowerInvariant();
+        if (mensaje.Contains("stream", StringComparison.OrdinalIgnoreCase)
+            || mensaje.Contains("timeout", StringComparison.OrdinalIgnoreCase)
+            || mensaje.Contains("transient", StringComparison.OrdinalIgnoreCase)
+            || mensaje.Contains("likely due to a transient failure", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        // Revisar InnerException (EF wrappea errors)
+        if (ex.InnerException != null)
+        {
+            var innerMensaje = ex.InnerException.Message.ToLowerInvariant();
+            if (innerMensaje.Contains("stream", StringComparison.OrdinalIgnoreCase)
+                || innerMensaje.Contains("timeout", StringComparison.OrdinalIgnoreCase)
+                || innerMensaje.Contains("transient", StringComparison.OrdinalIgnoreCase)
+                || innerMensaje.Contains("pooling", StringComparison.OrdinalIgnoreCase)
+                || innerMensaje.Contains("connection", StringComparison.OrdinalIgnoreCase)
+                || ex.InnerException is TimeoutException
+                || ex.InnerException is OperationCanceledException)
+                return true;
+        }
+
+        return false;
     }
 }

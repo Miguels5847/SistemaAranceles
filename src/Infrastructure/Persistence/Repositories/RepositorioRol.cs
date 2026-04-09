@@ -18,21 +18,33 @@ public sealed class RepositorioRol(ContextoAplicacion contextoAplicacion) : IRep
             ORDER BY r.nombre
             """;
 
-        var (connection, _) = await ObtenerConexionAsync(cancellationToken);
-        await using var command = connection.CreateCommand();
-        command.CommandText = sql;
-        command.CommandTimeout = 10;
-
-        var roles = new List<(int Id, string Nombre, string Descripcion)>();
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        while (await reader.ReadAsync(cancellationToken))
+        for (var intento = 1; intento <= 2; intento++)
         {
-            var descripcion = await reader.IsDBNullAsync(2, cancellationToken) ? string.Empty : reader.GetString(2);
-            roles.Add((reader.GetInt32(0), reader.GetString(1), descripcion));
+            try
+            {
+                var (connection, _) = await ObtenerConexionAsync(cancellationToken);
+                await using var command = connection.CreateCommand();
+                command.CommandText = sql;
+                command.CommandTimeout = 10;
+
+                var roles = new List<(int Id, string Nombre, string Descripcion)>();
+
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    var descripcion = await reader.IsDBNullAsync(2, cancellationToken) ? string.Empty : reader.GetString(2);
+                    roles.Add((reader.GetInt32(0), reader.GetString(1), descripcion));
+                }
+
+                return roles;
+            }
+            catch (Exception ex) when (EsTimeoutTransitorio(ex) && intento == 1)
+            {
+                Trace.WriteLine($"[{DateTime.UtcNow:O}] RepositorioRol: timeout transitorio en ListarAsync (intento {intento}). Reintentando.");
+            }
         }
 
-        return roles;
+        return [];
     }
 
     public async Task<(int Id, string Nombre)?> ObtenerPorNombreAsync(
@@ -47,19 +59,31 @@ public sealed class RepositorioRol(ContextoAplicacion contextoAplicacion) : IRep
             LIMIT 1
             """;
 
-        var (connection, _) = await ObtenerConexionAsync(cancellationToken);
-        await using var command = connection.CreateCommand();
-        command.CommandText = sql;
-        command.CommandTimeout = 10;
+        for (var intento = 1; intento <= 2; intento++)
+        {
+            try
+            {
+                var (connection, _) = await ObtenerConexionAsync(cancellationToken);
+                await using var command = connection.CreateCommand();
+                command.CommandText = sql;
+                command.CommandTimeout = 12;
 
-        var parameter = command.CreateParameter();
-        parameter.ParameterName = "@nombre";
-        parameter.Value = nombre;
-        command.Parameters.Add(parameter);
+                var parameter = command.CreateParameter();
+                parameter.ParameterName = "@nombre";
+                parameter.Value = nombre;
+                command.Parameters.Add(parameter);
 
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        if (await reader.ReadAsync(cancellationToken))
-            return (reader.GetInt32(0), reader.GetString(1));
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                if (await reader.ReadAsync(cancellationToken))
+                    return (reader.GetInt32(0), reader.GetString(1));
+
+                return null;
+            }
+            catch (Exception ex) when (EsTimeoutTransitorio(ex) && intento == 1)
+            {
+                Trace.WriteLine($"[{DateTime.UtcNow:O}] RepositorioRol: timeout transitorio en ObtenerPorNombreAsync (intento {intento}) para '{nombre}'. Reintentando.");
+            }
+        }
 
         return null;
     }
@@ -221,6 +245,9 @@ public sealed class RepositorioRol(ContextoAplicacion contextoAplicacion) : IRep
         if (ex is TimeoutException)
             return true;
 
+        if (ex is OperationCanceledException)
+            return true;
+
         if (ex is NpgsqlException npgsqlEx)
         {
             if (npgsqlEx.InnerException is TimeoutException)
@@ -228,9 +255,13 @@ public sealed class RepositorioRol(ContextoAplicacion contextoAplicacion) : IRep
 
             if (npgsqlEx.Message.Contains("Timeout", StringComparison.OrdinalIgnoreCase))
                 return true;
+
+            if (npgsqlEx.Message.Contains("stream", StringComparison.OrdinalIgnoreCase))
+                return true;
         }
 
-        return false;
+        return ex.Message.Contains("stream", StringComparison.OrdinalIgnoreCase)
+            || ex.Message.Contains("transient", StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task<int?> AsignarRolConFallbackEfAsync(

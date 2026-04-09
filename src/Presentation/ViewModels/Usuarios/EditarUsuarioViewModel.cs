@@ -16,18 +16,15 @@ namespace SistemaAranceles.Presentation.ViewModels.Usuarios;
 public sealed partial class EditarUsuarioViewModel : ObservableObject
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly IRepositorioRol _repositorioRol;
     private readonly SesionActual _sesionActual;
 
     private int _usuarioId;
 
     public EditarUsuarioViewModel(
         IServiceProvider serviceProvider,
-        IRepositorioRol repositorioRol,
         SesionActual sesionActual)
     {
         _serviceProvider = serviceProvider;
-        _repositorioRol = repositorioRol;
         _sesionActual = sesionActual;
     }
 
@@ -39,7 +36,7 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
     [ObservableProperty] private string _estadoSeleccionado = "Activo";
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
-    [ObservableProperty] private bool _estaCargando;
+    [ObservableProperty] private bool _isCargandoDatos; // "Cargando datos del usuario..."
     [ObservableProperty] private bool _estaGuardando;
     [ObservableProperty] private bool _esNuevo = true;
 
@@ -48,7 +45,7 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
 
     public async Task InicializarAsync(UsuarioDto? usuarioExistente = null)
     {
-        EstaCargando = true;
+        IsCargandoDatos = true;
         try
         {
             await CargarRolesAsync();
@@ -72,7 +69,7 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
         }
         finally
         {
-            EstaCargando = false;
+            IsCargandoDatos = false;
         }
     }
 
@@ -82,7 +79,10 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
 
         try
         {
-            var listarRolesTask = _repositorioRol.ListarAsync();
+            using var scope = _serviceProvider.CreateScope();
+            var repositorioRol = scope.ServiceProvider.GetRequiredService<IRepositorioRol>();
+
+            var listarRolesTask = repositorioRol.ListarAsync();
             var timeoutTask = Task.Delay(TimeSpan.FromSeconds(12));
             var completed = await Task.WhenAny(listarRolesTask, timeoutTask);
 
@@ -121,45 +121,66 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
         try
         {
             using var ctsGuardar = new CancellationTokenSource(TimeSpan.FromSeconds(60));
-            using var scope = _serviceProvider.CreateScope();
 
-            if (EsNuevo)
+            var guardadoExitoso = false;
+            for (var intento = 1; intento <= 3; intento++)
             {
-                if (string.IsNullOrWhiteSpace(Contrasena) || Contrasena.Length < 8)
+                try
                 {
-                    MensajeError = "La contraseña debe tener al menos 8 caracteres.";
-                    return;
+                    using var scope = _serviceProvider.CreateScope();
+
+                    if (EsNuevo)
+                    {
+                        if (string.IsNullOrWhiteSpace(Contrasena) || Contrasena.Length < 8)
+                        {
+                            MensajeError = "La contraseña debe tener al menos 8 caracteres.";
+                            return;
+                        }
+
+                        var crearUseCase = scope.ServiceProvider.GetRequiredService<CrearUsuarioUseCase>();
+                        await crearUseCase.EjecutarAsync(new CrearUsuarioDto
+                        {
+                            NombreCompleto = NombreCompleto,
+                            CorreoInstitucional = CorreoInstitucional,
+                            Contrasena = Contrasena,
+                            RolId = ObtenerRolIdSeleccionado(),
+                            RolNombre = RolSeleccionado
+                        }, _sesionActual.UsuarioId, ctsGuardar.Token);
+
+                        MensajeExito = "Usuario creado correctamente.";
+                    }
+                    else
+                    {
+                        var actualizarUseCase = scope.ServiceProvider.GetRequiredService<ActualizarUsuarioUseCase>();
+                        await actualizarUseCase.EjecutarAsync(new ActualizarUsuarioDto
+                        {
+                            Id = _usuarioId,
+                            NombreCompleto = NombreCompleto,
+                            CorreoInstitucional = CorreoInstitucional,
+                            NuevaContrasena = string.IsNullOrWhiteSpace(Contrasena) ? null : Contrasena,
+                            RolNombre = RolSeleccionado,
+                            Estado = EstadoSeleccionado
+                        }, _sesionActual.UsuarioId, ctsGuardar.Token);
+
+                        MensajeExito = "Usuario actualizado correctamente.";
+                    }
+
+                    guardadoExitoso = true;
+                    break;
                 }
-
-                var crearUseCase = scope.ServiceProvider.GetRequiredService<CrearUsuarioUseCase>();
-                await crearUseCase.EjecutarAsync(new CrearUsuarioDto
+                catch (Exception ex) when (intento < 3 && EsErrorTransitorio(ex))
                 {
-                    NombreCompleto = NombreCompleto,
-                    CorreoInstitucional = CorreoInstitucional,
-                    Contrasena = Contrasena,
-                    RolId = ObtenerRolIdSeleccionado(),
-                    RolNombre = RolSeleccionado
-                }, _sesionActual.UsuarioId, ctsGuardar.Token);
-
-                MensajeExito = "Usuario creado correctamente.";
-                WeakReferenceMessenger.Default.Send(new NavegarAMensaje("Usuarios", MensajeExito));
+                    Trace.WriteLine($"[{DateTime.UtcNow:O}] EditarUsuarioViewModel: error transitorio en GuardarAsync (intento {intento}) -> {ex.Message}. Reintentando.");
+                    await Task.Delay(400, ctsGuardar.Token);
+                }
             }
-            else
+
+            if (!guardadoExitoso)
             {
-                var actualizarUseCase = scope.ServiceProvider.GetRequiredService<ActualizarUsuarioUseCase>();
-                await actualizarUseCase.EjecutarAsync(new ActualizarUsuarioDto
-                {
-                    Id = _usuarioId,
-                    NombreCompleto = NombreCompleto,
-                    CorreoInstitucional = CorreoInstitucional,
-                    NuevaContrasena = string.IsNullOrWhiteSpace(Contrasena) ? null : Contrasena,
-                    RolNombre = RolSeleccionado,
-                    Estado = EstadoSeleccionado
-                }, _sesionActual.UsuarioId, ctsGuardar.Token);
-
-                MensajeExito = "Usuario actualizado correctamente.";
-                WeakReferenceMessenger.Default.Send(new NavegarAMensaje("Usuarios", MensajeExito));
+                throw new InvalidOperationException("No se pudo guardar por una falla transitoria de conexión. Intente nuevamente.");
             }
+
+            WeakReferenceMessenger.Default.Send(new NavegarAMensaje("Usuarios", MensajeExito));
         }
         catch (OperationCanceledException)
         {
@@ -180,5 +201,35 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
     {
         var rol = Roles.FirstOrDefault(r => string.Equals(r.Nombre, RolSeleccionado, StringComparison.OrdinalIgnoreCase));
         return rol?.Id ?? 0;
+    }
+
+    private static bool EsErrorTransitorio(Exception ex)
+    {
+        if (ex is TimeoutException || ex is OperationCanceledException)
+            return true;
+
+        // Revisar mensaje de la excepción actual
+        var mensaje = ex.Message.ToLowerInvariant();
+        if (mensaje.Contains("stream", StringComparison.OrdinalIgnoreCase)
+            || mensaje.Contains("timeout", StringComparison.OrdinalIgnoreCase)
+            || mensaje.Contains("transient", StringComparison.OrdinalIgnoreCase)
+            || mensaje.Contains("likely due to a transient failure", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        // Revisar InnerException (EF wrappea errors)
+        if (ex.InnerException != null)
+        {
+            var innerMensaje = ex.InnerException.Message.ToLowerInvariant();
+            if (innerMensaje.Contains("stream", StringComparison.OrdinalIgnoreCase)
+                || innerMensaje.Contains("timeout", StringComparison.OrdinalIgnoreCase)
+                || innerMensaje.Contains("transient", StringComparison.OrdinalIgnoreCase)
+                || innerMensaje.Contains("pooling", StringComparison.OrdinalIgnoreCase)
+                || innerMensaje.Contains("connection", StringComparison.OrdinalIgnoreCase)
+                || ex.InnerException is TimeoutException
+                || ex.InnerException is OperationCanceledException)
+                return true;
+        }
+
+        return false;
     }
 }

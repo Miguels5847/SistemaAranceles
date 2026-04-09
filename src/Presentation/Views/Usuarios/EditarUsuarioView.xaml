@@ -3,7 +3,31 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <Grid>
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Encabezado con botón Volver -->
+        <Grid Grid.Row="0"
+                Margin="24,16,24,0"
+                >
+            <Button Content="← Volver"
+                    Command="{Binding DataContext.MostrarUsuariosCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    Foreground="#0277BD"
+                    FontSize="12"
+                    FontWeight="SemiBold"
+                    BorderThickness="0"
+                    Cursor="Hand"
+                    Padding="0"/>
+        </Grid>
+
+        <!-- Contenido principal -->
+        <ScrollViewer Grid.Row="1"
+                VerticalScrollBarVisibility="Auto">
             <Grid Margin="24"
                   MaxWidth="560">
                 <Grid.RowDefinitions>
@@ -37,6 +61,7 @@
                          FontSize="13"
                          Padding="8,6"
                          BorderBrush="#9FA8DA"
+                         IsEnabled="{Binding IsCargandoDatos, Converter={StaticResource InverseBoolConverter}}"
                          Margin="0,0,0,14"/>
 
                 <!-- Correo -->
@@ -49,6 +74,7 @@
                          FontSize="13"
                          Padding="8,6"
                          BorderBrush="#9FA8DA"
+                         IsEnabled="{Binding IsCargandoDatos, Converter={StaticResource InverseBoolConverter}}"
                          Margin="0,0,0,14"/>
 
                 <!-- Contraseña -->
@@ -69,6 +95,7 @@
                              FontSize="13"
                              Padding="8,6"
                              BorderBrush="#9FA8DA"
+                             IsEnabled="{Binding IsCargandoDatos, Converter={StaticResource InverseBoolConverter}}"
                              PasswordChanged="PwdBox_PasswordChanged"
                              Margin="0,0,0,14"/>
 
@@ -84,6 +111,7 @@
                           SelectedValue="{Binding RolSeleccionado}"
                           FontSize="13"
                           Padding="8,6"
+                          IsEnabled="{Binding IsCargandoDatos, Converter={StaticResource InverseBoolConverter}}"
                           Margin="0,0,0,14"/>
 
                 <!-- Estado (solo edición) -->
@@ -109,6 +137,7 @@
                               SelectedItem="{Binding EstadoSeleccionado}"
                               FontSize="13"
                               Padding="8,6"
+                              IsEnabled="{Binding IsCargandoDatos, Converter={StaticResource InverseBoolConverter}}"
                               Margin="0,0,0,14"/>
                 </StackPanel>
 
@@ -126,44 +155,95 @@
                                TextWrapping="Wrap"
                                Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"
                                Margin="0,0,0,8"/>
-                    <Button Content="Guardar"
-                            Command="{Binding GuardarCommand}"
-                            FontSize="13"
-                            FontWeight="Bold"
-                            Background="#3949AB"
-                            Foreground="White"
-                            BorderThickness="0"
-                            Padding="20,8"
-                            HorizontalAlignment="Left"
-                            Cursor="Hand"/>
+                    <StackPanel Orientation="Horizontal"
+                            >
+                        <Button Content="Guardar"
+                                Command="{Binding GuardarCommand}"
+                                FontSize="13"
+                                FontWeight="Bold"
+                                Background="#3949AB"
+                                Foreground="White"
+                                BorderThickness="0"
+                                Padding="20,8"
+                                IsEnabled="{Binding IsCargandoDatos, Converter={StaticResource InverseBoolConverter}}"
+                                Cursor="Hand"/>
+                    </StackPanel>
                 </StackPanel>
             </Grid>
         </ScrollViewer>
 
-        <Border Background="#66000000"
-                Visibility="{Binding EstaGuardando, Converter={StaticResource BoolToVisibilityConverter}}"
-                Panel.ZIndex="50">
+        <!-- Loading Overlay: Cargando datos del usuario -->
+        <Border Grid.Row="0"
+                Grid.RowSpan="2"
+                Background="#88000000"
+                Visibility="{Binding IsCargandoDatos, Converter={StaticResource BoolToVisibilityConverter}}"
+                Panel.ZIndex="100">
             <Grid>
-                <Border Width="300"
-                        Padding="18"
-                        CornerRadius="10"
+                <Border Width="320"
+                        Padding="20"
+                        CornerRadius="12"
                         Background="White"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center">
                     <StackPanel>
-                        <TextBlock Text="Guardando usuario..."
-                                   FontSize="15"
-                                   FontWeight="SemiBold"
+                        <TextBlock Text="⟳"
+                                   FontSize="32"
+                                   Foreground="#0277BD"
+                                   TextAlignment="Center"
+                                   Margin="0,0,0,12"/>
+                        <TextBlock Text="Cargando datos del usuario..."
+                                   FontSize="16"
+                                   FontWeight="Bold"
                                    Foreground="#1A237E"
                                    HorizontalAlignment="Center"
-                                   Margin="0,0,0,10"/>
-
+                                   Margin="0,0,0,12"
+                                   TextAlignment="Center"/>
                         <ProgressBar IsIndeterminate="True"
-                                     Height="8"
-                                     Foreground="#3949AB"/>
+                                     Height="6"
+                                     Foreground="#0277BD"
+                                     Background="#E1F5FE"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Loading Overlay: Guardando usuario -->
+        <Border Grid.Row="0"
+                Grid.RowSpan="2"
+                Background="#88000000"
+                Visibility="{Binding EstaGuardando, Converter={StaticResource BoolToVisibilityConverter}}"
+                Panel.ZIndex="100">
+            <Grid>
+                <Border Width="320"
+                        Padding="20"
+                        CornerRadius="12"
+                        Background="White"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                    <StackPanel>
+                        <TextBlock Text="⟳"
+                                   FontSize="32"
+                                   Foreground="#3949AB"
+                                   TextAlignment="Center"
+                                   Margin="0,0,0,12"/>
+                        <TextBlock Text="Guardando usuario..."
+                                   FontSize="16"
+                                   FontWeight="Bold"
+                                   Foreground="#1A237E"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,12"
+                                   TextAlignment="Center"/>
+                        <ProgressBar IsIndeterminate="True"
+                                     Height="6"
+                                     Foreground="#3949AB"
+                                     Background="#E8EAF6"/>
                     </StackPanel>
                 </Border>
             </Grid>
         </Border>
     </Grid>
 </UserControl>
+
+
+
+
