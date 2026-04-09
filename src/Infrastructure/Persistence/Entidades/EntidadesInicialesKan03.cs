@@ -49,6 +49,18 @@ public sealed class UsuarioRol
     public Rol? Rol { get; set; }
 }
 
+public sealed class UsuarioPermisoOverride
+{
+    public int UsuarioId { get; set; }
+    public int PermisoId { get; set; }
+    public bool Concedido { get; set; }
+    public string CreadoEn { get; set; } = string.Empty;
+    public int? CreadoPorUsuarioId { get; set; }
+
+    public Usuario? Usuario { get; set; }
+    public Permiso? Permiso { get; set; }
+}
+
 public sealed class SesionUsuario
 {
     public int Id { get; set; }

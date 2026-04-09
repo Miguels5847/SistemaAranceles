@@ -3,15 +3,47 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
+using SistemaAranceles.Application.DTOs.Permisos;
 using SistemaAranceles.Application.DTOs.Roles;
 using SistemaAranceles.Application.DTOs.Usuarios;
 using SistemaAranceles.Application.Interfaces.Persistencia;
+using SistemaAranceles.Application.UseCases.Permisos;
 using SistemaAranceles.Application.UseCases.Usuarios;
 using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.State;
 using System.Diagnostics;
 
 namespace SistemaAranceles.Presentation.ViewModels.Usuarios;
+
+// ---------------------------------------------------------------------------
+// Clases auxiliares para la UI de permisos (dentro del mismo namespace)
+// ---------------------------------------------------------------------------
+
+/// <summary>Item de checkbox para un permiso individual en la UI.</summary>
+public sealed partial class PermisoCheckboxItem : ObservableObject
+{
+    public int PermisoId { get; init; }
+    public string AccionNombre { get; init; } = string.Empty;
+    public string Descripcion { get; init; } = string.Empty;
+
+    /// <summary>True si este permiso proviene del rol base del usuario (sin override).</summary>
+    public bool EsDeRolBase { get; init; }
+
+    /// <summary>Estado efectivo que el admin desea para este usuario.</summary>
+    [ObservableProperty]
+    private bool _tieneAcceso;
+}
+
+/// <summary>Agrupa los permisos de un módulo para el ItemsControl de la UI.</summary>
+public sealed class ModuloPermisosVm
+{
+    public string ModuloNombre { get; init; } = string.Empty;
+    public ObservableCollection<PermisoCheckboxItem> Permisos { get; } = [];
+}
+
+// ---------------------------------------------------------------------------
+// ViewModel principal
+// ---------------------------------------------------------------------------
 
 public sealed partial class EditarUsuarioViewModel : ObservableObject
 {
@@ -36,12 +68,16 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
     [ObservableProperty] private string _estadoSeleccionado = "Activo";
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
-    [ObservableProperty] private bool _isCargandoDatos; // "Cargando datos del usuario..."
+    [ObservableProperty] private bool _isCargandoDatos;
+    [ObservableProperty] private bool _isCargandoPermisos;
     [ObservableProperty] private bool _estaGuardando;
     [ObservableProperty] private bool _esNuevo = true;
 
     public ObservableCollection<RolDto> Roles { get; } = [];
     public ObservableCollection<string> Estados { get; } = ["Activo", "Suspendido", "Inactivo"];
+
+    /// <summary>Módulos con sus permisos en checkboxes. Visible solo al editar usuario existente.</summary>
+    public ObservableCollection<ModuloPermisosVm> ModulosPermisos { get; } = [];
 
     public async Task InicializarAsync(UsuarioDto? usuarioExistente = null)
     {
@@ -71,6 +107,10 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
         {
             IsCargandoDatos = false;
         }
+
+        // Carga de permisos separada del overlay principal (no bloquea el formulario)
+        if (!EsNuevo)
+            await CargarPermisosAsync(_usuarioId);
     }
 
     private async Task CargarRolesAsync()
@@ -82,17 +122,8 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
             using var scope = _serviceProvider.CreateScope();
             var repositorioRol = scope.ServiceProvider.GetRequiredService<IRepositorioRol>();
 
-            var listarRolesTask = repositorioRol.ListarAsync();
-            var timeoutTask = Task.Delay(TimeSpan.FromSeconds(12));
-            var completed = await Task.WhenAny(listarRolesTask, timeoutTask);
-
-            if (completed != listarRolesTask)
-            {
-                throw new TimeoutException("Timeout al cargar catálogo de roles.");
-            }
-
-            var roles = await listarRolesTask;
-
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+            var roles = await repositorioRol.ListarAsync(cts.Token);
             foreach (var r in roles)
                 Roles.Add(new RolDto { Id = r.Id, Nombre = r.Nombre, Descripcion = r.Descripcion });
         }
@@ -102,6 +133,51 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
             Roles.Add(new RolDto { Id = 1, Nombre = "Administrador", Descripcion = "Acceso total al sistema" });
             Roles.Add(new RolDto { Id = 2, Nombre = "Analista", Descripcion = "Acceso a módulos financieros" });
             Roles.Add(new RolDto { Id = 3, Nombre = "Visualizador", Descripcion = "Acceso de solo lectura" });
+        }
+    }
+
+    private async Task CargarPermisosAsync(int usuarioId)
+    {
+        ModulosPermisos.Clear();
+        IsCargandoPermisos = true;
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var useCase = scope.ServiceProvider.GetRequiredService<ObtenerPermisosEfectivosUsuarioUseCase>();
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(25));
+            var permisos = await useCase.EjecutarAsync(usuarioId, cts.Token);
+
+            if (permisos.Count == 0)
+                return;
+
+            var grupos = permisos.GroupBy(p => p.ModuloNombre);
+            foreach (var grupo in grupos.OrderBy(g => g.Key))
+            {
+                var modulo = new ModuloPermisosVm { ModuloNombre = grupo.Key };
+                foreach (var p in grupo.OrderBy(x => x.AccionNombre))
+                {
+                    modulo.Permisos.Add(new PermisoCheckboxItem
+                    {
+                        PermisoId = p.Id,
+                        AccionNombre = p.AccionNombre,
+                        Descripcion = p.Descripcion,
+                        EsDeRolBase = p.EsDeRolBase,
+                        TieneAcceso = p.TieneAcceso
+                    });
+                }
+                ModulosPermisos.Add(modulo);
+            }
+
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] EditarUsuarioViewModel: permisos cargados para usuarioId={usuarioId}. Módulos={ModulosPermisos.Count}.");
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] EditarUsuarioViewModel: error cargando permisos -> {ex.Message}.");
+        }
+        finally
+        {
+            IsCargandoPermisos = false;
         }
     }
 
@@ -176,9 +252,11 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
             }
 
             if (!guardadoExitoso)
-            {
                 throw new InvalidOperationException("No se pudo guardar por una falla transitoria de conexión. Intente nuevamente.");
-            }
+
+            // Guardar overrides de permisos (solo en edición, no en creación)
+            if (!EsNuevo && ModulosPermisos.Count > 0)
+                await GuardarOverridesAsync(ctsGuardar.Token);
 
             WeakReferenceMessenger.Default.Send(new NavegarAMensaje("Usuarios", MensajeExito));
         }
@@ -197,6 +275,29 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
         }
     }
 
+    private async Task GuardarOverridesAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Solo se envían los permisos donde el estado deseado difiere del rol base
+            var overrides = ModulosPermisos
+                .SelectMany(m => m.Permisos)
+                .Where(p => p.TieneAcceso != p.EsDeRolBase)
+                .Select(p => new PermisoOverrideDto { PermisoId = p.PermisoId, Concedido = p.TieneAcceso })
+                .ToList();
+
+            using var scope = _serviceProvider.CreateScope();
+            var actualizarPermisosUseCase = scope.ServiceProvider.GetRequiredService<ActualizarPermisosUsuarioUseCase>();
+            await actualizarPermisosUseCase.EjecutarAsync(_usuarioId, overrides, _sesionActual.UsuarioId, cancellationToken);
+
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] EditarUsuarioViewModel: overrides guardados para usuarioId={_usuarioId}. Total={overrides.Count}.");
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] EditarUsuarioViewModel: error guardando overrides -> {ex.Message}. El usuario fue actualizado pero los permisos no.");
+        }
+    }
+
     private int ObtenerRolIdSeleccionado()
     {
         var rol = Roles.FirstOrDefault(r => string.Equals(r.Nombre, RolSeleccionado, StringComparison.OrdinalIgnoreCase));
@@ -208,7 +309,6 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
         if (ex is TimeoutException || ex is OperationCanceledException)
             return true;
 
-        // Revisar mensaje de la excepción actual
         var mensaje = ex.Message.ToLowerInvariant();
         if (mensaje.Contains("stream", StringComparison.OrdinalIgnoreCase)
             || mensaje.Contains("timeout", StringComparison.OrdinalIgnoreCase)
@@ -216,7 +316,6 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
             || mensaje.Contains("likely due to a transient failure", StringComparison.OrdinalIgnoreCase))
             return true;
 
-        // Revisar InnerException (EF wrappea errors)
         if (ex.InnerException != null)
         {
             var innerMensaje = ex.InnerException.Message.ToLowerInvariant();

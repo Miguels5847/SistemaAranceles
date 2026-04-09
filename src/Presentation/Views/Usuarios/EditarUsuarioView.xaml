@@ -42,6 +42,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <TextBlock Grid.Row="0"
@@ -141,8 +142,122 @@
                               Margin="0,0,0,14"/>
                 </StackPanel>
 
+                <!-- Permisos de Acceso por Módulo (solo edición) -->
+                <StackPanel Grid.Row="10"
+                            Margin="0,8,0,0">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding EsNuevo}" Value="False">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+
+                    <Separator Margin="0,4,0,12"/>
+
+                    <TextBlock Text="Permisos de Acceso por Módulo"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Foreground="#1A237E"
+                               Margin="0,0,0,4"/>
+
+                    <TextBlock Text="Estos permisos anulan los del rol base para este usuario específico."
+                               FontSize="11"
+                               Foreground="#757575"
+                               Margin="0,0,0,10"/>
+
+                    <!-- Estado: cargando permisos -->
+                    <TextBlock Text="Cargando permisos..."
+                               Foreground="#757575"
+                               FontSize="12"
+                               Visibility="{Binding IsCargandoPermisos, Converter={StaticResource BoolToVisibilityConverter}}"
+                               Margin="0,0,0,8"/>
+
+                    <!-- Sin permisos configurados -->
+                    <TextBlock Foreground="#9E9E9E"
+                               FontSize="12"
+                               FontStyle="Italic"
+                               Margin="0,0,0,8"
+                               TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding IsCargandoPermisos}" Value="False"/>
+                                            <Condition Binding="{Binding ModulosPermisos.Count}" Value="0"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                        No hay permisos configurados en el sistema. Ejecute el SQL de seed de permisos para habilitarlos.
+                    </TextBlock>
+
+                    <!-- Lista de módulos con checkboxes -->
+                    <ItemsControl ItemsSource="{Binding ModulosPermisos}">
+                        <ItemsControl.Style>
+                            <Style TargetType="ItemsControl">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsCargandoPermisos}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ItemsControl.Style>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,0,0,10">
+                                    <!-- Cabecera del módulo -->
+                                    <Border Background="#E8EAF6"
+                                            CornerRadius="4"
+                                            Padding="8,4"
+                                            Margin="0,0,0,4">
+                                        <TextBlock Text="{Binding ModuloNombre}"
+                                                   FontWeight="Bold"
+                                                   FontSize="12"
+                                                   Foreground="#3949AB"/>
+                                    </Border>
+                                    <!-- Checkboxes de permisos del módulo -->
+                                    <ItemsControl ItemsSource="{Binding Permisos}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <CheckBox IsChecked="{Binding TieneAcceso, Mode=TwoWay}"
+                                                          Margin="10,2,0,2"
+                                                          FontSize="12">
+                                                    <CheckBox.Content>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding AccionNombre}"
+                                                                       VerticalAlignment="Center"/>
+                                                            <TextBlock Text=" (rol base)"
+                                                                       FontSize="10"
+                                                                       Foreground="#9E9E9E"
+                                                                       VerticalAlignment="Center"
+                                                                       Margin="4,0,0,0"
+                                                                       Visibility="{Binding EsDeRolBase, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                        </StackPanel>
+                                                    </CheckBox.Content>
+                                                    <CheckBox.ToolTip>
+                                                        <TextBlock Text="{Binding Descripcion}"/>
+                                                    </CheckBox.ToolTip>
+                                                </CheckBox>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
                 <!-- Mensajes y botón -->
-                <StackPanel Grid.Row="10">
+                <StackPanel Grid.Row="11">
                     <TextBlock Text="{Binding MensajeError}"
                                Foreground="#C62828"
                                FontSize="12"

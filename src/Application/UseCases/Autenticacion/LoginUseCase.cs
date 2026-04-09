@@ -9,7 +9,8 @@ public sealed class LoginUseCase(
     IRepositorioUsuario repositorioUsuario,
     IRepositorioSesionUsuario repositorioSesion,
     IServicioHash servicioHash,
-    IAuditoriaServicio auditoriaServicio)
+    IAuditoriaServicio auditoriaServicio,
+    IRepositorioPermiso repositorioPermiso)
 {
     public async Task<SesionDto> EjecutarAsync(
         string correo,
@@ -175,13 +176,33 @@ public sealed class LoginUseCase(
         Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase.Metric: update_ms=-1.");
         Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase.Metric: auditoria_ms=-1.");
 
+        // Carga de permisos efectivos (no bloquea login si falla).
+        IReadOnlySet<string> permisosEfectivos = new HashSet<string>();
+        var swPermisos = Stopwatch.StartNew();
+        try
+        {
+            using var ctsPermisos = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            ctsPermisos.CancelAfter(TimeSpan.FromSeconds(10));
+            permisosEfectivos = await repositorioPermiso.ObtenerPermisosEfectivosAsync(usuario.Id, ctsPermisos.Token);
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: no se pudieron cargar permisos efectivos -> {ex.Message}. Se usará fallback por rol.");
+        }
+        finally
+        {
+            swPermisos.Stop();
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase.Metric: permisos_ms={swPermisos.ElapsedMilliseconds}. Total={permisosEfectivos.Count}.");
+        }
+
         var dto = new SesionDto
         {
             UsuarioId = usuario.Id,
             NombreCompleto = usuario.NombreCompleto,
             Correo = usuario.CorreoInstitucional.ToString(),
             RolNombre = rolNombre,
-            TokenSesion = token
+            TokenSesion = token,
+            PermisosEfectivos = permisosEfectivos
         };
 
         Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: fin exitoso para usuario Id={dto.UsuarioId}.");

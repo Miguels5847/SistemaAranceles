@@ -52,7 +52,7 @@ public sealed partial class MainViewModel : ObservableObject
         });
 
         ConstruirMenu();
-        if (_sesionActual.EsAdministrador)
+        if (_sesionActual.TienePermiso("US.VER"))
         {
             PaginaActual = _usuariosViewModel;
             _ = MostrarUsuariosAsync();
@@ -79,7 +79,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         MenuItems.Clear();
 
-        if (_sesionActual.EsAdministrador)
+        if (_sesionActual.TienePermiso("US.VER"))
         {
             MenuItems.Add(new ItemMenu
             {
@@ -129,7 +129,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarUsuariosAsync(string? mensajeExito = null)
     {
-        if (!_sesionActual.EsAdministrador)
+        if (!_sesionActual.TienePermiso("US.VER"))
         {
             MensajePagina = "Acceso denegado a Gestión de Usuarios.";
             return;
@@ -161,9 +161,9 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task MostrarNuevoUsuarioAsync()
     {
-        if (!_sesionActual.EsAdministrador)
+        if (!_sesionActual.TienePermiso("US.CREAR"))
         {
-            MensajePagina = "Acceso denegado a Gestión de Usuarios.";
+            MensajePagina = "Acceso denegado. No tiene permiso para crear usuarios.";
             return;
         }
 
@@ -184,9 +184,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarEditarUsuarioAsync(UsuarioDto usuario)
     {
-        if (!_sesionActual.EsAdministrador)
+        if (!_sesionActual.TienePermiso("US.EDITAR"))
         {
-            MensajePagina = "Acceso denegado a Gestión de Usuarios.";
+            MensajePagina = "Acceso denegado. No tiene permiso para editar usuarios.";
             return;
         }
 

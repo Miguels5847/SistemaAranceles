@@ -24,6 +24,7 @@ public static class InfrastructureExtensions
         services.AddTransient<IRepositorioUsuario, RepositorioUsuario>();
         services.AddTransient<IRepositorioCarrera, RepositorioCarrera>();
         services.AddTransient<IRepositorioRol, RepositorioRol>();
+        services.AddTransient<IRepositorioPermiso, RepositorioPermiso>();
         services.AddTransient<IRepositorioSesionUsuario, RepositorioSesionUsuario>();
         services.AddTransient<IRepositorioAuditoriaLog, RepositorioAuditoriaLog>();
         services.AddTransient<IUnidadTrabajo, UnidadTrabajo>();

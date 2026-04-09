@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.UseCases.Autenticacion;
 using SistemaAranceles.Application.UseCases.Usuarios;
+using SistemaAranceles.Application.UseCases.Permisos;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Infrastructure.DI;
 using SistemaAranceles.Infrastructure.Persistence;
@@ -75,6 +76,8 @@ public partial class App
         servicios.AddTransient<CrearUsuarioUseCase>();
         servicios.AddTransient<ActualizarUsuarioUseCase>();
         servicios.AddTransient<EliminarUsuarioUseCase>();
+        servicios.AddTransient<ObtenerPermisosEfectivosUsuarioUseCase>();
+        servicios.AddTransient<ActualizarPermisosUsuarioUseCase>();
 
         // ViewModels
         servicios.AddTransient<LoginViewModel>();

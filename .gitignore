@@ -14,6 +14,7 @@ artifacts/
 *.sln.docstates
 *.txt
 *.md
+*.claude/
 # NuGet
 packages/
 *.nupkg

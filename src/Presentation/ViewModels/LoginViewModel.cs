@@ -52,6 +52,7 @@ public sealed partial class LoginViewModel : ObservableObject
                 sesion.Correo,
                 sesion.RolNombre,
                 sesion.TokenSesion);
+            _sesionActual.EstablecerPermisos(sesion.PermisosEfectivos);
 
             WeakReferenceMessenger.Default.Send(
                 new LoginExitosoMensaje(sesion.UsuarioId, sesion.NombreCompleto, sesion.RolNombre));
