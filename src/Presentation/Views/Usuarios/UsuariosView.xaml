@@ -88,7 +88,6 @@
                                         </Style.Triggers>
                                 </Style>
                         </DataGrid.CellStyle>
-
                         <DataGrid.Columns>
                                 <DataGridTextColumn Header="ID"
                                                     Binding="{Binding Id}"
@@ -110,7 +109,6 @@
                                                     Width="150"/>
                         </DataGrid.Columns>
                 </DataGrid>
-
                 <!-- Loading Overlay para carga de lista -->
                 <Grid Grid.Row="3"
                       Background="#55000000"
