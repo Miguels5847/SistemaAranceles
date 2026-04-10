@@ -76,8 +76,7 @@ public sealed class RepositorioUsuario(
                 x.NombreCompleto,
                 x.CorreoInstitucional,
                 x.HashContrasena,
-                x.Estado,
-                x.UltimoAccesoEn
+                x.Estado
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -89,7 +88,7 @@ public sealed class RepositorioUsuario(
                 usuario.CorreoInstitucional,
                 usuario.HashContrasena,
                 usuario.Estado,
-                usuario.UltimoAccesoEn);
+                null);
     }
 
     public async Task<bool> ExisteCorreoInstitucionalAsync(string correoInstitucional, CancellationToken cancellationToken = default)
