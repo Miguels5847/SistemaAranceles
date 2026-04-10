@@ -13,7 +13,11 @@ public static class SupabaseConnectionStringHelper
         if (!EsPoolerSupabase(builder.Host ?? string.Empty))
             return cadenaConexion;
 
-        if (builder.Port == 5432)
+        var puertoExplicito = cadenaConexion.Contains("Port=", StringComparison.OrdinalIgnoreCase);
+
+        // Si el usuario especifica el puerto, se respeta tal cual.
+        // Solo se aplica 6543 como valor por defecto cuando no se indicó puerto.
+        if (!puertoExplicito && builder.Port == 5432)
             builder.Port = 6543;
 
         return builder.ConnectionString;

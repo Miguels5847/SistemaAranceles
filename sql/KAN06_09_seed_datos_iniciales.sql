@@ -41,7 +41,9 @@ VALUES
   ('PR.EJEC',   'Proyecciones', 'EJECUTAR',  'Ejecutar proyecciones',     NOW(), 1),
   -- Análisis Financiero
   ('AF.VER',    'AnalisisFinanciero', 'VER',      'Ver análisis',         NOW(), 1),
-  ('AF.EJEC',   'AnalisisFinanciero', 'EJECUTAR', 'Ejecutar análisis',    NOW(), 1)
+  ('AF.EJEC',   'AnalisisFinanciero', 'EJECUTAR', 'Ejecutar análisis',    NOW(), 1),
+  -- Auditoría
+  ('AUD.VER',   'Auditoria', 'VER',              'Consultar audit log',   NOW(), 1)
 ON CONFLICT (codigo) DO NOTHING;
 
 -- ------------------------------------------------------------
@@ -60,7 +62,7 @@ ON CONFLICT DO NOTHING;
 INSERT INTO public.rol_permiso (rol_id, permiso_id)
 SELECT r.id, p.id
 FROM public.rol r
-JOIN public.permiso p ON p.codigo NOT IN ('US.CREAR','US.EDITAR','US.ELIMINAR')
+JOIN public.permiso p ON p.codigo NOT IN ('US.CREAR','US.EDITAR','US.ELIMINAR','AUD.VER')
 WHERE r.nombre = 'Analista'
 ON CONFLICT DO NOTHING;
 
@@ -70,7 +72,7 @@ ON CONFLICT DO NOTHING;
 INSERT INTO public.rol_permiso (rol_id, permiso_id)
 SELECT r.id, p.id
 FROM public.rol r
-JOIN public.permiso p ON p.accion_nombre = 'VER'
+JOIN public.permiso p ON p.accion_nombre = 'VER' AND p.codigo <> 'AUD.VER'
 WHERE r.nombre = 'Visualizador'
 ON CONFLICT DO NOTHING;
 
