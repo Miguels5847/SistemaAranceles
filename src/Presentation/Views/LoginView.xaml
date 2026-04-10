@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         Title="Sistema de Aranceles — Iniciar Sesión"
-        Height="420" Width="440"
+        Height="420"
+        Width="440"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
         Background="#F4F6FB">
@@ -20,68 +21,93 @@
         </Grid.RowDefinitions>
 
         <!-- Título -->
-        <TextBlock Grid.Row="0" Text="Sistema de Aranceles"
-                   FontSize="22" FontWeight="Bold" Foreground="#1A237E"
-                   HorizontalAlignment="Center" Margin="0,0,0,4"/>
+        <TextBlock Grid.Row="0"
+                Text="Sistema de Aranceles"
+                   FontSize="22"
+                FontWeight="Bold"
+                Foreground="#1A237E"
+                   HorizontalAlignment="Center"
+                Margin="0,0,0,4"/>
 
-        <TextBlock Grid.Row="1" Text="Iniciar Sesión"
-                   FontSize="14" Foreground="#5C6BC0"
-                   HorizontalAlignment="Center" Margin="0,0,0,24"/>
+        <TextBlock Grid.Row="1"
+                Text="Iniciar Sesión"
+                   FontSize="14"
+                Foreground="#5C6BC0"
+                   HorizontalAlignment="Center"
+                Margin="0,0,0,24"/>
 
         <!-- Correo -->
-        <TextBlock Grid.Row="2" Text="Correo institucional" FontWeight="SemiBold" Margin="0,0,0,4"/>
+        <TextBlock Grid.Row="2"
+                Text="Correo institucional"
+                FontWeight="SemiBold"
+                Margin="0,0,0,4"/>
         <TextBox Grid.Row="3"
                  Text="{Binding Correo, UpdateSourceTrigger=PropertyChanged}"
-                 FontSize="14" Padding="8,6"
-                 BorderBrush="#9FA8DA" BorderThickness="1"
+                 FontSize="14"
+                Padding="8,6"
+                 BorderBrush="#9FA8DA"
+                BorderThickness="1"
                  Margin="0,0,0,16"/>
 
         <!-- Contraseña -->
-        <TextBlock Grid.Row="4" Text="Contraseña" FontWeight="SemiBold" Margin="0,0,0,4"/>
-        <Grid Grid.Row="5" Margin="0,0,0,20">
+        <TextBlock Grid.Row="4"
+                Text="Contraseña"
+                FontWeight="SemiBold"
+                Margin="0,0,0,4"/>
+        <Grid Grid.Row="5"
+                Margin="0,0,0,20">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="50"/>
             </Grid.ColumnDefinitions>
 
             <!-- PasswordBox (visible cuando contraseña está oculta) -->
-            <PasswordBox x:Name="PasswordBox" Grid.Column="0"
-                         FontSize="14" Padding="8,6"
-                         BorderBrush="#9FA8DA" BorderThickness="1"
+            <PasswordBox x:Name="PasswordBox"
+                    Grid.Column="0"
+                         FontSize="14"
+                    Padding="8,6"
+                         BorderBrush="#9FA8DA"
+                    BorderThickness="1"
                          PasswordChanged="PasswordBox_PasswordChanged"
                          Visibility="{Binding MostrarContrasena, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
 
             <!-- TextBox (visible cuando contraseña está visible) -->
-            <TextBox x:Name="RevealedTextBox" Grid.Column="0"
-                                         Text="{Binding Contrasena, UpdateSourceTrigger=PropertyChanged}"
-                     FontSize="14" Padding="8,6"
-                     BorderBrush="#9FA8DA" BorderThickness="1"
+            <TextBox x:Name="RevealedTextBox"
+                    Grid.Column="0"
+                     Text="{Binding Contrasena, UpdateSourceTrigger=PropertyChanged}"
+                     TextChanged="RevealedTextBox_TextChanged"
+                     FontSize="14"
+                    Padding="8,6"
+                     BorderBrush="#9FA8DA"
+                    BorderThickness="1"
                      Visibility="{Binding MostrarContrasena, Converter={StaticResource BoolToVisibilityConverter}}"/>
 
             <!-- Botón toggle con imagen -->
             <!-- Botón toggle con icono FontAwesome -->
             <ToggleButton x:Name="ToggleReveal"
-                          Grid.Column="1" 
-                          Cursor="Hand" Margin="4,0,0,0"
+                          Grid.Column="1"
+                          Cursor="Hand"
+                    Margin="4,0,0,0"
                           VerticalAlignment="Center"
                           Background="Transparent"
                           BorderThickness="0"
                           Padding="4"
-                          Checked="ToggleReveal_Checked"
-                          Unchecked="ToggleReveal_Unchecked">
+                          IsChecked="{Binding MostrarContrasena, Mode=TwoWay}">
                 <Grid>
                     <!-- Icono ojo abierto cuando contraseña está oculta -->
                     <iconPacks:PackIconMaterial x:Name="EyeOpenIcon"
-                                                Kind="Eye" 
-                                                Width="20" Height="20"
+                                                Kind="Eye"
+                                                Width="20"
+                            Height="20"
                                                 Foreground="#3949AB"
-                                                Visibility="Visible"/>
+                                                Visibility="{Binding MostrarContrasena, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
                     <!-- Icono ojo cerrado cuando contraseña está visible -->
                     <iconPacks:PackIconMaterial x:Name="EyeClosedIcon"
-                                                Kind="EyeOff" 
-                                                Width="20" Height="20"
+                                                Kind="EyeOff"
+                                                Width="20"
+                            Height="20"
                                                 Foreground="#3949AB"
-                                                Visibility="Collapsed"/>
+                                                Visibility="{Binding MostrarContrasena, Converter={StaticResource BoolToVisibilityConverter}}"/>
                 </Grid>
             </ToggleButton>
         </Grid>
@@ -89,7 +115,8 @@
         <StackPanel Grid.Row="6">
             <!-- Error -->
             <TextBlock Text="{Binding MensajeError}"
-                       Foreground="#C62828" FontSize="12"
+                       Foreground="#C62828"
+                    FontSize="12"
                        TextWrapping="Wrap"
                        Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"
                        Margin="0,0,0,10"/>
@@ -97,15 +124,20 @@
             <!-- Botón login -->
             <Button Content="Ingresar"
                     Command="{Binding LoginCommand}"
-                    FontSize="14" FontWeight="Bold"
-                    Background="#3949AB" Foreground="White"
-                    BorderThickness="0" Padding="0,10"
+                    FontSize="14"
+                    FontWeight="Bold"
+                    Background="#3949AB"
+                    Foreground="White"
+                    BorderThickness="0"
+                    Padding="0,10"
                     Cursor="Hand"/>
 
             <!-- Cargando -->
             <TextBlock Text="Verificando credenciales..."
-                       HorizontalAlignment="Center" Foreground="#5C6BC0"
-                       FontSize="12" Margin="0,8,0,0"
+                       HorizontalAlignment="Center"
+                    Foreground="#5C6BC0"
+                       FontSize="12"
+                    Margin="0,8,0,0"
                        Visibility="{Binding EstaCargando, Converter={StaticResource BoolToVisibilityConverter}}"/>
         </StackPanel>
     </Grid>
