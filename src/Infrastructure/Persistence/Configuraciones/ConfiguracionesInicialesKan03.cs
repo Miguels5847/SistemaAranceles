@@ -956,3 +956,28 @@ internal sealed class ResumenProyeccionFinancieraConfiguracion : IEntityTypeConf
         builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
     }
 }
+
+internal sealed class UsuarioPermisoOverrideConfiguracion : IEntityTypeConfiguration<UsuarioPermisoOverride>
+{
+    public void Configure(EntityTypeBuilder<UsuarioPermisoOverride> builder)
+    {
+        builder.ToTable("usuario_permiso_override");
+        builder.HasKey(x => new { x.UsuarioId, x.PermisoId });
+
+        builder.Property(x => x.UsuarioId).HasColumnName("usuario_id");
+        builder.Property(x => x.PermisoId).HasColumnName("permiso_id");
+        builder.Property(x => x.Concedido).HasColumnName("concedido").IsRequired();
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+
+        builder.HasOne(x => x.Usuario)
+            .WithMany()
+            .HasForeignKey(x => x.UsuarioId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.Permiso)
+            .WithMany()
+            .HasForeignKey(x => x.PermisoId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}

@@ -1,15 +1,18 @@
 using System.IO;
 using System.Diagnostics;
+using Npgsql;
 using System.Windows;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SistemaAranceles.Application.Options;
 using SistemaAranceles.Application.UseCases.Autenticacion;
 using SistemaAranceles.Application.UseCases.Usuarios;
-using SistemaAranceles.Application.Interfaces.Persistencia;
+using SistemaAranceles.Application.UseCases.Permisos;
 using SistemaAranceles.Infrastructure.DI;
 using SistemaAranceles.Infrastructure.Persistence;
 using SistemaAranceles.Presentation.Mensajes;
+using SistemaAranceles.Presentation.Services;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.ViewModels;
 using SistemaAranceles.Presentation.ViewModels.Usuarios;
@@ -21,18 +24,24 @@ public partial class App
 {
     private ServiceProvider? _proveedor;
     private TextWriterTraceListener? _traceListener;
+    private ServicioInactividad? _servicioInactividad;
 
     private void OnStartup(object sender, StartupEventArgs e)
     {
         ConfigurarTrazas();
         Trace.WriteLine($"[{DateTime.UtcNow:O}] App startup iniciado.");
 
-        var cadenaConexion = ObtenerCadenaConexion();
-        Trace.WriteLine($"[{DateTime.UtcNow:O}] Cadena de conexión cargada. Origen={(Environment.GetEnvironmentVariable("SUPABASE_DB_CONNECTION") is null ? "appsettings" : "env")}");
+        var config = ConstruirConfiguracion();
+        var cadenaConexion = ObtenerCadenaConexion(config);
+        var origen = Environment.GetEnvironmentVariable("SUPABASE_DB_CONNECTION") is null ? "appsettings" : "env";
+        var endpoint = ExtraerEndpoint(cadenaConexion);
+        Trace.WriteLine($"[{DateTime.UtcNow:O}] Cadena de conexión cargada. Origen={origen}. Endpoint={endpoint}");
 
         var servicios = new ServiceCollection();
-        ConfigurarServicios(servicios, cadenaConexion);
+        ConfigurarServicios(servicios, cadenaConexion, config);
         _proveedor = servicios.BuildServiceProvider();
+
+        _servicioInactividad = _proveedor.GetRequiredService<ServicioInactividad>();
 
         RegistrarMensajes();
 
@@ -56,22 +65,31 @@ public partial class App
         Trace.AutoFlush = true;
     }
 
-    private static void ConfigurarServicios(IServiceCollection servicios, string cadenaConexion)
+    private static void ConfigurarServicios(IServiceCollection servicios, string cadenaConexion, IConfiguration config)
     {
         // Infrastructure (DbContext + repos + servicios)
         servicios.AddInfrastructure(cadenaConexion);
 
+        // Configuración de sesión
+        var timeoutMinutes = int.TryParse(config["Session:TimeoutMinutes"], out var t) ? t : 30;
+        servicios.Configure<SesionOpciones>(opts => opts.TimeoutMinutes = timeoutMinutes);
+
         // Estado de sesión (singleton)
         servicios.AddSingleton<SesionActual>();
 
+        // Servicio de inactividad (singleton — contiene el timer)
+        servicios.AddSingleton<ServicioInactividad>();
+
         // Use Cases
-        servicios.AddScoped<LoginUseCase>();
-        servicios.AddScoped<CerrarSesionUseCase>();
-        servicios.AddScoped<ListarUsuariosUseCase>();
-        servicios.AddScoped<ObtenerUsuarioUseCase>();
-        servicios.AddScoped<CrearUsuarioUseCase>();
-        servicios.AddScoped<ActualizarUsuarioUseCase>();
-        servicios.AddScoped<EliminarUsuarioUseCase>();
+        servicios.AddTransient<LoginUseCase>();
+        servicios.AddTransient<CerrarSesionUseCase>();
+        servicios.AddTransient<ListarUsuariosUseCase>();
+        servicios.AddTransient<ObtenerUsuarioUseCase>();
+        servicios.AddTransient<CrearUsuarioUseCase>();
+        servicios.AddTransient<ActualizarUsuarioUseCase>();
+        servicios.AddTransient<EliminarUsuarioUseCase>();
+        servicios.AddTransient<ObtenerPermisosEfectivosUsuarioUseCase>();
+        servicios.AddTransient<ActualizarPermisosUsuarioUseCase>();
 
         // ViewModels
         servicios.AddTransient<LoginViewModel>();
@@ -93,34 +111,62 @@ public partial class App
             var loginView = Current.Windows.OfType<LoginView>().FirstOrDefault();
 
             var mainWindow = _proveedor!.GetRequiredService<MainWindow>();
-            mainWindow.Show();
 
+            // Resetear actividad ante cualquier movimiento o tecla en la ventana principal
+            mainWindow.PreviewMouseMove += (_, _) => _servicioInactividad?.ResetarActividad();
+            mainWindow.PreviewKeyDown += (_, _) => _servicioInactividad?.ResetarActividad();
+
+            mainWindow.Show();
             loginView?.Close();
+
+            _servicioInactividad?.Iniciar();
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] App: timer de inactividad iniciado tras login exitoso.");
         });
 
-        WeakReferenceMessenger.Default.Register<CerrarSesionMensaje>(this, (_, _) =>
+        WeakReferenceMessenger.Default.Register<CerrarSesionMensaje>(this, (_, msg) =>
         {
+            _servicioInactividad?.Detener();
+
             var mainWindow = Current.Windows.OfType<MainWindow>().FirstOrDefault();
 
             var loginView = _proveedor!.GetRequiredService<LoginView>();
-            loginView.Show();
 
+            if (msg.PorInactividad && loginView.DataContext is LoginViewModel vm)
+            {
+                vm.MensajeError = "Sesión cerrada por inactividad.";
+                Trace.WriteLine($"[{DateTime.UtcNow:O}] App: mensaje de inactividad establecido en LoginView.");
+            }
+
+            loginView.Show();
             mainWindow?.Close();
         });
     }
 
-    private static string ObtenerCadenaConexion()
+    private static IConfiguration ConstruirConfiguracion()
     {
-        var cadenaPorVariable = Environment.GetEnvironmentVariable("SUPABASE_DB_CONNECTION");
-        if (!string.IsNullOrWhiteSpace(cadenaPorVariable))
-            return cadenaPorVariable;
-
-        var basePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory);
-        var config = new ConfigurationBuilder()
+        var basePath = AppDomain.CurrentDomain.BaseDirectory;
+        return new ConfigurationBuilder()
             .SetBasePath(basePath)
             .AddJsonFile("appsettings.json", optional: true)
             .AddJsonFile("appsettings.Local.json", optional: true)
             .Build();
+    }
+
+    private static string ExtraerEndpoint(string cadena)
+    {
+        try
+        {
+            var builder = new NpgsqlConnectionStringBuilder(cadena);
+            return $"{builder.Host}:{builder.Port}";
+        }
+        catch { return "(desconocido)"; }
+    }
+
+    private static string ObtenerCadenaConexion(IConfiguration config)
+    {
+        var cadenaPorVariable = Environment.GetEnvironmentVariable("SUPABASE_DB_CONNECTION");
+        if (!string.IsNullOrWhiteSpace(cadenaPorVariable))
+            return cadenaPorVariable;
 
         var conexion = config.GetConnectionString("DefaultConnection");
         if (string.IsNullOrWhiteSpace(conexion))
@@ -133,6 +179,7 @@ public partial class App
     protected override void OnExit(ExitEventArgs e)
     {
         Trace.WriteLine($"[{DateTime.UtcNow:O}] App exit.");
+        _servicioInactividad?.Detener();
         _traceListener?.Flush();
         _traceListener?.Close();
 

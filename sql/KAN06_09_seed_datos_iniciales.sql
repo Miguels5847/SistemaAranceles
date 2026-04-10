@@ -28,7 +28,7 @@ VALUES
   ('US.VER',    'Usuarios', 'VER',      'Ver lista de usuarios',          NOW(), 1),
   ('US.CREAR',  'Usuarios', 'CREAR',    'Crear nuevos usuarios',          NOW(), 1),
   ('US.EDITAR', 'Usuarios', 'EDITAR',   'Editar datos de usuarios',       NOW(), 1),
-  ('US.ELIM',   'Usuarios', 'ELIMINAR', 'Dar de baja usuarios',           NOW(), 1),
+  ('US.ELIMINAR','Usuarios', 'ELIMINAR', 'Dar de baja usuarios',           NOW(), 1),
   -- Carreras
   ('CA.VER',    'Carreras', 'VER',      'Ver catálogo de carreras',       NOW(), 1),
   ('CA.CREAR',  'Carreras', 'CREAR',    'Crear carreras',                 NOW(), 1),
@@ -60,7 +60,7 @@ ON CONFLICT DO NOTHING;
 INSERT INTO public.rol_permiso (rol_id, permiso_id)
 SELECT r.id, p.id
 FROM public.rol r
-JOIN public.permiso p ON p.codigo NOT IN ('US.CREAR','US.EDITAR','US.ELIM')
+JOIN public.permiso p ON p.codigo NOT IN ('US.CREAR','US.EDITAR','US.ELIMINAR')
 WHERE r.nombre = 'Analista'
 ON CONFLICT DO NOTHING;
 
