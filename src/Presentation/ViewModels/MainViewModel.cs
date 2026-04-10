@@ -127,6 +127,9 @@ public sealed partial class MainViewModel : ObservableObject
         Bienvenida = $"Bienvenido, {_sesionActual.NombreCompleto}  |  Rol: {_sesionActual.RolNombre}";
     }
 
+    [RelayCommand]
+    private Task MostrarUsuarios() => MostrarUsuariosAsync();
+
     private async Task MostrarUsuariosAsync(string? mensajeExito = null)
     {
         if (!_sesionActual.TienePermiso("US.VER"))

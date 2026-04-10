@@ -27,7 +27,7 @@
                                 Foreground="White"
                                 BorderThickness="0"
                                 Cursor="Hand"
-                                Visibility="{Binding PuedeGestionar, Converter={StaticResource BoolToVisibilityConverter}}"
+                                Visibility="{Binding PuedeCrear, Converter={StaticResource BoolToVisibilityConverter}}"
                                 Command="{Binding DataContext.MostrarNuevoUsuarioCommand,
                               RelativeSource={RelativeSource AncestorType=Window}}"/>
                 </StackPanel>
@@ -135,7 +135,7 @@
                 <StackPanel Grid.Row="4"
                             Orientation="Horizontal"
                             Margin="0,10,0,0"
-                            Visibility="{Binding PuedeGestionar, Converter={StaticResource BoolToVisibilityConverter}}">
+                            Visibility="{Binding PuedeGestionarAlguna, Converter={StaticResource BoolToVisibilityConverter}}">
                         <Button Content="Editar"
                                 Command="{Binding EditarCommand}"
                                 Padding="12,6"
@@ -143,7 +143,8 @@
                                 Background="#0277BD"
                                 Foreground="White"
                                 BorderThickness="0"
-                                Cursor="Hand"/>
+                                Cursor="Hand"
+                                Visibility="{Binding PuedeEditar, Converter={StaticResource BoolToVisibilityConverter}}"/>
                         <Button Content="{Binding TextoEliminarSeleccionado}"
                                 Command="{Binding EliminarCommand}"
                                 Padding="12,6"
@@ -151,7 +152,8 @@
                                 Background="#B71C1C"
                                 Foreground="White"
                                 BorderThickness="0"
-                                Cursor="Hand"/>
+                                Cursor="Hand"
+                                Visibility="{Binding PuedeEliminar, Converter={StaticResource BoolToVisibilityConverter}}"/>
                 </StackPanel>
         </Grid>
 </UserControl>

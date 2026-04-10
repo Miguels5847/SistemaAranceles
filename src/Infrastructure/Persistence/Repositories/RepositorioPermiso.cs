@@ -153,7 +153,13 @@ public sealed class RepositorioPermiso(ContextoAplicacion contextoAplicacion) : 
         int creadoPorUsuarioId,
         CancellationToken cancellationToken = default)
     {
-        using var transaction = await contextoAplicacion.Database.BeginTransactionAsync(cancellationToken);
+        // Si ya hay una transacción activa (iniciada por el use case coordinador), no crear una nueva.
+        var gestionarTransaccion = contextoAplicacion.Database.CurrentTransaction == null;
+        Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction? transaction = null;
+
+        if (gestionarTransaccion)
+            transaction = await contextoAplicacion.Database.BeginTransactionAsync(cancellationToken);
+
         try
         {
             var existentes = contextoAplicacion.UsuariosPermisosOverride
@@ -165,31 +171,37 @@ public sealed class RepositorioPermiso(ContextoAplicacion contextoAplicacion) : 
             if (listaOverrides.Count > 0)
             {
                 var creadoEn = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss");
-
                 foreach (var ov in listaOverrides)
                 {
-                    var usuarioPermisoOverride = new UsuarioPermisoOverride
+                    contextoAplicacion.UsuariosPermisosOverride.Add(new UsuarioPermisoOverride
                     {
                         UsuarioId = usuarioId,
                         PermisoId = ov.PermisoId,
                         Concedido = ov.Concedido,
                         CreadoEn = creadoEn,
-                        CreadoPorUsuarioId = creadoPorUsuarioId
-                    };
-
-                    contextoAplicacion.UsuariosPermisosOverride.Add(usuarioPermisoOverride);
+                        CreadoPorUsuarioId = creadoPorUsuarioId > 0 ? creadoPorUsuarioId : null
+                    });
                 }
             }
 
             await contextoAplicacion.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
+
+            if (gestionarTransaccion)
+                await transaction!.CommitAsync(cancellationToken);
+
             Trace.WriteLine($"[{DateTime.UtcNow:O}] RepositorioPermiso: overrides guardados para usuarioId={usuarioId}. Total={listaOverrides.Count}.");
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync(CancellationToken.None);
-            Trace.WriteLine($"[{DateTime.UtcNow:O}] RepositorioPermiso: error en GuardarOverridesAsync -> {ex.Message}. Rollback ejecutado.");
+            if (gestionarTransaccion && transaction is not null)
+                await transaction.RollbackAsync(CancellationToken.None);
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] RepositorioPermiso: error en GuardarOverridesAsync -> {ex.Message}. Rollback={gestionarTransaccion}.");
             throw;
+        }
+        finally
+        {
+            if (transaction is not null)
+                await transaction.DisposeAsync();
         }
     }
 

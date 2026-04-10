@@ -1,6 +1,7 @@
 <Window x:Class="SistemaAranceles.Presentation.Views.LoginView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         Title="Sistema de Aranceles — Iniciar Sesión"
         Height="420" Width="440"
         ResizeMode="NoResize"
@@ -37,11 +38,53 @@
 
         <!-- Contraseña -->
         <TextBlock Grid.Row="4" Text="Contraseña" FontWeight="SemiBold" Margin="0,0,0,4"/>
-        <PasswordBox x:Name="PasswordBox" Grid.Row="5"
+        <Grid Grid.Row="5" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="50"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- PasswordBox (visible cuando contraseña está oculta) -->
+            <PasswordBox x:Name="PasswordBox" Grid.Column="0"
+                         FontSize="14" Padding="8,6"
+                         BorderBrush="#9FA8DA" BorderThickness="1"
+                         PasswordChanged="PasswordBox_PasswordChanged"
+                         Visibility="{Binding MostrarContrasena, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+
+            <!-- TextBox (visible cuando contraseña está visible) -->
+            <TextBox x:Name="RevealedTextBox" Grid.Column="0"
+                                         Text="{Binding Contrasena, UpdateSourceTrigger=PropertyChanged}"
                      FontSize="14" Padding="8,6"
                      BorderBrush="#9FA8DA" BorderThickness="1"
-                     PasswordChanged="PasswordBox_PasswordChanged"
-                     Margin="0,0,0,20"/>
+                     Visibility="{Binding MostrarContrasena, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+            <!-- Botón toggle con imagen -->
+            <!-- Botón toggle con icono FontAwesome -->
+            <ToggleButton x:Name="ToggleReveal"
+                          Grid.Column="1" 
+                          Cursor="Hand" Margin="4,0,0,0"
+                          VerticalAlignment="Center"
+                          Background="Transparent"
+                          BorderThickness="0"
+                          Padding="4"
+                          Checked="ToggleReveal_Checked"
+                          Unchecked="ToggleReveal_Unchecked">
+                <Grid>
+                    <!-- Icono ojo abierto cuando contraseña está oculta -->
+                    <iconPacks:PackIconMaterial x:Name="EyeOpenIcon"
+                                                Kind="Eye" 
+                                                Width="20" Height="20"
+                                                Foreground="#3949AB"
+                                                Visibility="Visible"/>
+                    <!-- Icono ojo cerrado cuando contraseña está visible -->
+                    <iconPacks:PackIconMaterial x:Name="EyeClosedIcon"
+                                                Kind="EyeOff" 
+                                                Width="20" Height="20"
+                                                Foreground="#3949AB"
+                                                Visibility="Collapsed"/>
+                </Grid>
+            </ToggleButton>
+        </Grid>
 
         <StackPanel Grid.Row="6">
             <!-- Error -->

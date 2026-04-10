@@ -41,7 +41,10 @@ public sealed partial class UsuariosViewModel : ObservableObject
     [ObservableProperty]
     private bool _isEliminando;
 
-    public bool PuedeGestionar => _sesionActual.EsAdministrador;
+    public bool PuedeCrear    => _sesionActual.TienePermiso("US.CREAR");
+    public bool PuedeEditar   => _sesionActual.TienePermiso("US.EDITAR");
+    public bool PuedeEliminar => _sesionActual.TienePermiso("US.ELIMINAR");
+    public bool PuedeGestionarAlguna => PuedeEditar || PuedeEliminar;
 
     public string TextoEliminarSeleccionado => UsuarioSeleccionado is null
         ? "Eliminar"
@@ -93,7 +96,7 @@ public sealed partial class UsuariosViewModel : ObservableObject
     [RelayCommand]
     private void Editar()
     {
-        if (!PuedeGestionar)
+        if (!PuedeEditar)
             return;
 
         if (UsuarioSeleccionado is null)
@@ -108,7 +111,7 @@ public sealed partial class UsuariosViewModel : ObservableObject
     [RelayCommand]
     private async Task EliminarAsync()
     {
-        if (!PuedeGestionar)
+        if (!PuedeEliminar)
             return;
 
         if (UsuarioSeleccionado is null)

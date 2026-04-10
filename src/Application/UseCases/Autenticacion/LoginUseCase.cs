@@ -179,21 +179,37 @@ public sealed class LoginUseCase(
         // Carga de permisos efectivos (no bloquea login si falla).
         IReadOnlySet<string> permisosEfectivos = new HashSet<string>();
         var swPermisos = Stopwatch.StartNew();
-        try
+        for (var intentoPermisos = 1; intentoPermisos <= 2; intentoPermisos++)
         {
-            using var ctsPermisos = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            ctsPermisos.CancelAfter(TimeSpan.FromSeconds(10));
-            permisosEfectivos = await repositorioPermiso.ObtenerPermisosEfectivosAsync(usuario.Id, ctsPermisos.Token);
+            try
+            {
+                using var ctsPermisos = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                ctsPermisos.CancelAfter(TimeSpan.FromSeconds(25));
+                permisosEfectivos = await repositorioPermiso.ObtenerPermisosEfectivosAsync(usuario.Id, ctsPermisos.Token);
+                Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: permisos_cargados_ok usuarioId={usuario.Id}. Total={permisosEfectivos.Count}.");
+                break;
+            }
+            catch (OperationCanceledException) when (intentoPermisos == 1)
+            {
+                Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: permisos_timeout intento={intentoPermisos}. permisos_retry.");
+            }
+            catch (OperationCanceledException)
+            {
+                Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: permisos_cancelado tras retry. login_warning_permisos. Fallback por rol.");
+                break;
+            }
+            catch (Exception ex) when (intentoPermisos == 1)
+            {
+                Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: permisos_timeout intento={intentoPermisos} -> {ex.Message}. permisos_retry.");
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: permisos_timeout persistente -> {ex.Message}. login_warning_permisos. Fallback por rol.");
+                break;
+            }
         }
-        catch (Exception ex)
-        {
-            Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: no se pudieron cargar permisos efectivos -> {ex.Message}. Se usará fallback por rol.");
-        }
-        finally
-        {
-            swPermisos.Stop();
-            Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase.Metric: permisos_ms={swPermisos.ElapsedMilliseconds}. Total={permisosEfectivos.Count}.");
-        }
+        swPermisos.Stop();
+        Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase.Metric: permisos_ms={swPermisos.ElapsedMilliseconds}. Total={permisosEfectivos.Count}.");
 
         var dto = new SesionDto
         {

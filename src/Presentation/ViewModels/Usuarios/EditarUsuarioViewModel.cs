@@ -12,6 +12,7 @@ using SistemaAranceles.Application.UseCases.Usuarios;
 using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.State;
 using System.Diagnostics;
+using System.Linq;
 
 namespace SistemaAranceles.Presentation.ViewModels.Usuarios;
 
@@ -193,6 +194,17 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
             return;
         }
 
+        // Capturar overrides ANTES de operaciones async (snapshot del estado UI)
+        IEnumerable<PermisoOverrideDto>? overrides = null;
+        if (!EsNuevo && ModulosPermisos.Count > 0)
+        {
+            overrides = ModulosPermisos
+                .SelectMany(m => m.Permisos)
+                .Where(p => p.TieneAcceso != p.EsDeRolBase)
+                .Select(p => new PermisoOverrideDto { PermisoId = p.PermisoId, Concedido = p.TieneAcceso })
+                .ToList();
+        }
+
         EstaGuardando = true;
         try
         {
@@ -227,6 +239,7 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
                     }
                     else
                     {
+                        // Guardado atómico: usuario + rol + overrides en una sola transacción
                         var actualizarUseCase = scope.ServiceProvider.GetRequiredService<ActualizarUsuarioUseCase>();
                         await actualizarUseCase.EjecutarAsync(new ActualizarUsuarioDto
                         {
@@ -236,7 +249,7 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
                             NuevaContrasena = string.IsNullOrWhiteSpace(Contrasena) ? null : Contrasena,
                             RolNombre = RolSeleccionado,
                             Estado = EstadoSeleccionado
-                        }, _sesionActual.UsuarioId, ctsGuardar.Token);
+                        }, _sesionActual.UsuarioId, ctsGuardar.Token, overrides);
 
                         MensajeExito = "Usuario actualizado correctamente.";
                     }
@@ -254,10 +267,6 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
             if (!guardadoExitoso)
                 throw new InvalidOperationException("No se pudo guardar por una falla transitoria de conexión. Intente nuevamente.");
 
-            // Guardar overrides de permisos (solo en edición, no en creación)
-            if (!EsNuevo && ModulosPermisos.Count > 0)
-                await GuardarOverridesAsync(ctsGuardar.Token);
-
             WeakReferenceMessenger.Default.Send(new NavegarAMensaje("Usuarios", MensajeExito));
         }
         catch (OperationCanceledException)
@@ -272,29 +281,6 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
         finally
         {
             EstaGuardando = false;
-        }
-    }
-
-    private async Task GuardarOverridesAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            // Solo se envían los permisos donde el estado deseado difiere del rol base
-            var overrides = ModulosPermisos
-                .SelectMany(m => m.Permisos)
-                .Where(p => p.TieneAcceso != p.EsDeRolBase)
-                .Select(p => new PermisoOverrideDto { PermisoId = p.PermisoId, Concedido = p.TieneAcceso })
-                .ToList();
-
-            using var scope = _serviceProvider.CreateScope();
-            var actualizarPermisosUseCase = scope.ServiceProvider.GetRequiredService<ActualizarPermisosUsuarioUseCase>();
-            await actualizarPermisosUseCase.EjecutarAsync(_usuarioId, overrides, _sesionActual.UsuarioId, cancellationToken);
-
-            Trace.WriteLine($"[{DateTime.UtcNow:O}] EditarUsuarioViewModel: overrides guardados para usuarioId={_usuarioId}. Total={overrides.Count}.");
-        }
-        catch (Exception ex)
-        {
-            Trace.WriteLine($"[{DateTime.UtcNow:O}] EditarUsuarioViewModel: error guardando overrides -> {ex.Message}. El usuario fue actualizado pero los permisos no.");
         }
     }
 

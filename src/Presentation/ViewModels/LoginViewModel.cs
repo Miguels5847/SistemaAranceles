@@ -32,6 +32,15 @@ public sealed partial class LoginViewModel : ObservableObject
     [ObservableProperty]
     private bool _estaCargando;
 
+    [ObservableProperty]
+    private bool _mostrarContrasena;
+
+    [RelayCommand]
+    private void AlternarVisibilidad()
+    {
+        MostrarContrasena = !MostrarContrasena;
+    }
+
     [RelayCommand(CanExecute = nameof(PuedeLogin))]
     private async Task LoginAsync()
     {
