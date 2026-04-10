@@ -1,11 +1,13 @@
 using System.IO;
 using System.Diagnostics;
+using Npgsql;
 using System.Windows;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.UseCases.Autenticacion;
 using SistemaAranceles.Application.UseCases.Usuarios;
+using SistemaAranceles.Application.UseCases.Permisos;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Infrastructure.DI;
 using SistemaAranceles.Infrastructure.Persistence;
@@ -28,7 +30,9 @@ public partial class App
         Trace.WriteLine($"[{DateTime.UtcNow:O}] App startup iniciado.");
 
         var cadenaConexion = ObtenerCadenaConexion();
-        Trace.WriteLine($"[{DateTime.UtcNow:O}] Cadena de conexión cargada. Origen={(Environment.GetEnvironmentVariable("SUPABASE_DB_CONNECTION") is null ? "appsettings" : "env")}");
+        var origen = Environment.GetEnvironmentVariable("SUPABASE_DB_CONNECTION") is null ? "appsettings" : "env";
+        var endpoint = ExtraerEndpoint(cadenaConexion);
+        Trace.WriteLine($"[{DateTime.UtcNow:O}] Cadena de conexión cargada. Origen={origen}. Endpoint={endpoint}");
 
         var servicios = new ServiceCollection();
         ConfigurarServicios(servicios, cadenaConexion);
@@ -65,13 +69,15 @@ public partial class App
         servicios.AddSingleton<SesionActual>();
 
         // Use Cases
-        servicios.AddScoped<LoginUseCase>();
-        servicios.AddScoped<CerrarSesionUseCase>();
-        servicios.AddScoped<ListarUsuariosUseCase>();
-        servicios.AddScoped<ObtenerUsuarioUseCase>();
-        servicios.AddScoped<CrearUsuarioUseCase>();
-        servicios.AddScoped<ActualizarUsuarioUseCase>();
-        servicios.AddScoped<EliminarUsuarioUseCase>();
+        servicios.AddTransient<LoginUseCase>();
+        servicios.AddTransient<CerrarSesionUseCase>();
+        servicios.AddTransient<ListarUsuariosUseCase>();
+        servicios.AddTransient<ObtenerUsuarioUseCase>();
+        servicios.AddTransient<CrearUsuarioUseCase>();
+        servicios.AddTransient<ActualizarUsuarioUseCase>();
+        servicios.AddTransient<EliminarUsuarioUseCase>();
+        servicios.AddTransient<ObtenerPermisosEfectivosUsuarioUseCase>();
+        servicios.AddTransient<ActualizarPermisosUsuarioUseCase>();
 
         // ViewModels
         servicios.AddTransient<LoginViewModel>();
@@ -107,6 +113,16 @@ public partial class App
 
             mainWindow?.Close();
         });
+    }
+
+    private static string ExtraerEndpoint(string cadena)
+    {
+        try
+        {
+            var builder = new NpgsqlConnectionStringBuilder(cadena);
+            return $"{builder.Host}:{builder.Port}";
+        }
+        catch { return "(desconocido)"; }
     }
 
     private static string ObtenerCadenaConexion()
