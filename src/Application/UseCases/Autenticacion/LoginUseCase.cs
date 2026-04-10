@@ -1,16 +1,19 @@
+using Microsoft.Extensions.Options;
 using SistemaAranceles.Application.DTOs.Autenticacion;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.Interfaces.Servicios;
+using SistemaAranceles.Application.Options;
 using System.Diagnostics;
 
 namespace SistemaAranceles.Application.UseCases.Autenticacion;
 
 public sealed class LoginUseCase(
     IRepositorioUsuario repositorioUsuario,
-    IRepositorioRol repositorioRol,
     IRepositorioSesionUsuario repositorioSesion,
     IServicioHash servicioHash,
-    IAuditoriaServicio auditoriaServicio)
+    IAuditoriaServicio auditoriaServicio,
+    IRepositorioPermiso repositorioPermiso,
+    IOptions<SesionOpciones> sesionOpciones)
 {
     public async Task<SesionDto> EjecutarAsync(
         string correo,
@@ -26,8 +29,46 @@ public sealed class LoginUseCase(
             throw new ArgumentException("La contraseña es obligatoria.");
 
         Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: consultando usuario por correo.");
-        var usuario = await repositorioUsuario.ObtenerPorCorreoInstitucionalAsync(correo, cancellationToken)
-            ?? throw new UnauthorizedAccessException("Correo o contraseña incorrectos.");
+        var swUsuario = Stopwatch.StartNew();
+        SistemaAranceles.Domain.Entities.Usuario? usuario = null;
+        var timeoutPersistente = false;
+        try
+        {
+            for (var intento = 1; intento <= 2; intento++)
+            {
+                try
+                {
+                    using var ctsUsuario = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    ctsUsuario.CancelAfter(TimeSpan.FromSeconds(12));
+
+                    usuario = await repositorioUsuario.ObtenerPorCorreoInstitucionalAsync(correo, ctsUsuario.Token);
+                    break;
+                }
+                catch (OperationCanceledException) when (intento == 1)
+                {
+                    Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: timeout transitorio en consulta de usuario (intento 1). Reintentando.");
+                }
+                catch (OperationCanceledException) when (intento == 2)
+                {
+                    timeoutPersistente = true;
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw new TimeoutException("La consulta de usuario tardó demasiado.");
+        }
+        finally
+        {
+            swUsuario.Stop();
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase.Metric: usuario_ms={swUsuario.ElapsedMilliseconds}.");
+        }
+
+        if (timeoutPersistente)
+            throw new TimeoutException("La consulta de usuario tardó demasiado.");
+
+        if (usuario is null)
+            throw new UnauthorizedAccessException("Correo o contraseña incorrectos.");
         Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: usuario encontrado Id={usuario.Id}.");
 
         if (!servicioHash.Verificar(contrasena, usuario.HashContrasena))
@@ -54,10 +95,26 @@ public sealed class LoginUseCase(
 
         try
         {
-            using var ctsRoles = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            ctsRoles.CancelAfter(TimeSpan.FromSeconds(2));
+            IReadOnlyList<string> roles = [];
+            for (var intento = 1; intento <= 2; intento++)
+            {
+                try
+                {
+                    using var ctsRoles = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    ctsRoles.CancelAfter(TimeSpan.FromSeconds(25));
+                    roles = await repositorioUsuario.ObtenerRolesDelUsuarioAsync(usuario.Id, ctsRoles.Token);
+                    break;
+                }
+                catch (OperationCanceledException) when (intento == 1)
+                {
+                    Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: timeout transitorio leyendo roles (intento 1). Reintentando.");
+                }
+                catch (Exception ex) when (intento == 1 && EsErrorTransitorio(ex))
+                {
+                    Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: error transitorio leyendo roles (intento 1) -> {ex.Message}. Reintentando.");
+                }
+            }
 
-            var roles = await repositorioRol.ObtenerNombresDeRolesDelUsuarioAsync(usuario.Id, ctsRoles.Token);
             rolNombre = roles.FirstOrDefault() ?? InferirRolDeRespaldo(usuario.Id, usuario.CorreoInstitucional.ToString());
         }
         catch (Exception ex)
@@ -74,18 +131,88 @@ public sealed class LoginUseCase(
         Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: rol resuelto '{rolNombre}'.");
 
         var token = Guid.NewGuid().ToString("N");
-        var expira = DateTime.UtcNow.AddHours(8);
+        var expira = DateTime.UtcNow.AddMinutes(sesionOpciones.Value.TimeoutMinutes);
 
         Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: creando sesión en base de datos.");
         var swSesion = Stopwatch.StartNew();
-        await repositorioSesion.CrearAsync(usuario.Id, token, expira, cancellationToken);
+        var sesionPersistida = false;
+        for (var intento = 1; intento <= 2; intento++)
+        {
+            try
+            {
+                using var ctsSesion = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                ctsSesion.CancelAfter(TimeSpan.FromSeconds(8));
+                await repositorioSesion.CrearAsync(usuario.Id, token, expira, ctsSesion.Token);
+                sesionPersistida = true;
+                break;
+            }
+            catch (OperationCanceledException) when (intento == 1)
+            {
+                Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: timeout transitorio creando sesión (intento 1). Reintentando.");
+            }
+            catch (Exception ex) when (intento == 1)
+            {
+                Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: error transitorio creando sesión (intento 1) -> {ex.Message}. Reintentando.");
+            }
+            catch (Exception ex) when (intento == 2)
+            {
+                Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: no se pudo persistir sesión tras reintentos -> {ex.Message}. Se continúa en modo resiliente.");
+            }
+        }
         swSesion.Stop();
         Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase.Metric: sesion_ms={swSesion.ElapsedMilliseconds}.");
+        Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase.Metric: sesion_persistida={(sesionPersistida ? 1 : 0)}.");
+
+        try
+        {
+            using var ctsAcceso = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            ctsAcceso.CancelAfter(TimeSpan.FromSeconds(4));
+            await repositorioUsuario.RegistrarUltimoAccesoAsync(usuario.Id, DateTime.UtcNow, ctsAcceso.Token);
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: no se pudo actualizar ultimo acceso -> {ex.Message}. Se continúa en modo resiliente.");
+        }
 
         // Temporalmente fuera de ruta crítica por latencia intermitente en BD.
         Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: update/auditoría de login omitidos (modo resiliente). ");
         Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase.Metric: update_ms=-1.");
         Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase.Metric: auditoria_ms=-1.");
+
+        // Carga de permisos efectivos (no bloquea login si falla).
+        IReadOnlySet<string> permisosEfectivos = new HashSet<string>();
+        var swPermisos = Stopwatch.StartNew();
+        for (var intentoPermisos = 1; intentoPermisos <= 2; intentoPermisos++)
+        {
+            try
+            {
+                using var ctsPermisos = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                ctsPermisos.CancelAfter(TimeSpan.FromSeconds(25));
+                permisosEfectivos = await repositorioPermiso.ObtenerPermisosEfectivosAsync(usuario.Id, ctsPermisos.Token);
+                Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: permisos_cargados_ok usuarioId={usuario.Id}. Total={permisosEfectivos.Count}.");
+                break;
+            }
+            catch (OperationCanceledException) when (intentoPermisos == 1)
+            {
+                Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: permisos_timeout intento={intentoPermisos}. permisos_retry.");
+            }
+            catch (OperationCanceledException)
+            {
+                Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: permisos_cancelado tras retry. login_warning_permisos. Fallback por rol.");
+                break;
+            }
+            catch (Exception ex) when (intentoPermisos == 1)
+            {
+                Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: permisos_timeout intento={intentoPermisos} -> {ex.Message}. permisos_retry.");
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: permisos_timeout persistente -> {ex.Message}. login_warning_permisos. Fallback por rol.");
+                break;
+            }
+        }
+        swPermisos.Stop();
+        Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase.Metric: permisos_ms={swPermisos.ElapsedMilliseconds}. Total={permisosEfectivos.Count}.");
 
         var dto = new SesionDto
         {
@@ -93,7 +220,8 @@ public sealed class LoginUseCase(
             NombreCompleto = usuario.NombreCompleto,
             Correo = usuario.CorreoInstitucional.ToString(),
             RolNombre = rolNombre,
-            TokenSesion = token
+            TokenSesion = token,
+            PermisosEfectivos = permisosEfectivos
         };
 
         Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: fin exitoso para usuario Id={dto.UsuarioId}.");
@@ -105,6 +233,16 @@ public sealed class LoginUseCase(
         if (usuarioId == 1 || correo.Equals("admin@ucacue.edu.ec", StringComparison.OrdinalIgnoreCase))
             return "Administrador";
 
-        return "Sin rol";
+        return "Analista";
+    }
+
+    private static bool EsErrorTransitorio(Exception ex)
+    {
+        if (ex is TimeoutException || ex is OperationCanceledException)
+            return true;
+
+        return ex.Message.Contains("stream", StringComparison.OrdinalIgnoreCase)
+            || ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase)
+            || ex.Message.Contains("transient", StringComparison.OrdinalIgnoreCase);
     }
 }

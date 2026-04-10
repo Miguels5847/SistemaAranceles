@@ -14,6 +14,11 @@ public interface IRepositorioRol
         int rolId,
         CancellationToken cancellationToken = default);
 
+    Task<int?> AsignarRolAUsuarioPorCorreoAsync(
+        string correoInstitucional,
+        int rolId,
+        CancellationToken cancellationToken = default);
+
     Task QuitarRolDeUsuarioAsync(
         int usuarioId,
         int rolId,
