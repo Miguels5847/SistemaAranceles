@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.Options;
+using SistemaAranceles.Application.UseCases.Auditoria;
 using SistemaAranceles.Application.UseCases.Autenticacion;
 using SistemaAranceles.Application.UseCases.Usuarios;
 using SistemaAranceles.Application.UseCases.Permisos;
@@ -15,6 +16,7 @@ using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.Services;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.ViewModels;
+using SistemaAranceles.Presentation.ViewModels.Auditoria;
 using SistemaAranceles.Presentation.ViewModels.Usuarios;
 using SistemaAranceles.Presentation.Views;
 
@@ -90,10 +92,12 @@ public partial class App
         servicios.AddTransient<EliminarUsuarioUseCase>();
         servicios.AddTransient<ObtenerPermisosEfectivosUsuarioUseCase>();
         servicios.AddTransient<ActualizarPermisosUsuarioUseCase>();
+        servicios.AddTransient<ConsultarAuditoriaUseCase>();
 
         // ViewModels
         servicios.AddTransient<LoginViewModel>();
         servicios.AddTransient<UsuariosViewModel>();
+        servicios.AddTransient<AuditoriaViewModel>();
         servicios.AddTransient<EditarUsuarioViewModel>();
         servicios.AddTransient<Func<EditarUsuarioViewModel>>(sp =>
             () => sp.GetRequiredService<EditarUsuarioViewModel>());

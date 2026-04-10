@@ -1,3 +1,4 @@
+using SistemaAranceles.Application.DTOs.Auditoria;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.Interfaces.Servicios;
 
@@ -22,5 +23,12 @@ public sealed class ServicioAuditoria(IRepositorioAuditoriaLog repositorioAudito
             ejecutadoPorUsuarioId,
             valoresAnterioresJson, valoresNuevosJson,
             cancellationToken);
+    }
+
+    public Task<AuditoriaConsultaResultadoDto> ConsultarAsync(
+        AuditoriaFiltroDto filtros,
+        CancellationToken cancellationToken = default)
+    {
+        return repositorioAuditoriaLog.ConsultarAsync(filtros, cancellationToken);
     }
 }

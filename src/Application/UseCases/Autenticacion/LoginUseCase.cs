@@ -174,10 +174,24 @@ public sealed class LoginUseCase(
             Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: no se pudo actualizar ultimo acceso -> {ex.Message}. Se continúa en modo resiliente.");
         }
 
-        // Temporalmente fuera de ruta crítica por latencia intermitente en BD.
-        Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: update/auditoría de login omitidos (modo resiliente). ");
-        Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase.Metric: update_ms=-1.");
-        Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase.Metric: auditoria_ms=-1.");
+        try
+        {
+            using var ctsAuditoria = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            ctsAuditoria.CancelAfter(TimeSpan.FromSeconds(4));
+            await auditoriaServicio.RegistrarAsync(
+                moduloNombre: "Autenticacion",
+                entidadNombre: "Usuario",
+                entidadId: usuario.Id.ToString(),
+                accionNombre: "LOGIN_EXITOSO",
+                resumenTexto: $"Inicio de sesión exitoso para '{usuario.CorreoInstitucional}'.",
+                ejecutadoPorUsuarioId: usuario.Id,
+                cancellationToken: ctsAuditoria.Token);
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: auditoría de login exitoso registrada.");
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: auditoría de login omitida por error/transitorio -> {ex.Message}.");
+        }
 
         // Carga de permisos efectivos (no bloquea login si falla).
         IReadOnlySet<string> permisosEfectivos = new HashSet<string>();

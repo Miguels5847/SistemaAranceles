@@ -3,7 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:SistemaAranceles.Presentation.ViewModels"
         xmlns:vmU="clr-namespace:SistemaAranceles.Presentation.ViewModels.Usuarios"
+        xmlns:vmA="clr-namespace:SistemaAranceles.Presentation.ViewModels.Auditoria"
         xmlns:vU="clr-namespace:SistemaAranceles.Presentation.Views.Usuarios"
+        xmlns:vA="clr-namespace:SistemaAranceles.Presentation.Views.Auditoria"
         Title="Sistema de Aranceles Universitarios"
         Height="680"
         Width="1100"
@@ -16,6 +18,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmU:EditarUsuarioViewModel}">
             <vU:EditarUsuarioView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmA:AuditoriaViewModel}">
+            <vA:AuditoriaView/>
         </DataTemplate>
     </Window.Resources>
 
@@ -37,37 +42,37 @@
 
                 <!-- Header sidebar -->
                 <StackPanel Grid.Row="0"
-                        Margin="16,20,16,16">
+                            Margin="16,20,16,16">
                     <TextBlock Text="🎓 Aranceles"
-                            FontSize="18"
-                            FontWeight="Bold"
+                               FontSize="18"
+                               FontWeight="Bold"
                                Foreground="White"
-                            Margin="0,0,0,4"/>
+                               Margin="0,0,0,4"/>
                     <TextBlock Text="{Binding NombreUsuario}"
-                            FontSize="11"
+                               FontSize="11"
                                Foreground="#9FA8DA"
-                            TextWrapping="Wrap"/>
+                               TextWrapping="Wrap"/>
                     <Border Background="#283593"
                             CornerRadius="4"
                             Padding="6,2"
                             Margin="0,4,0,0"
                             HorizontalAlignment="Left">
                         <TextBlock Text="{Binding RolUsuario}"
-                                FontSize="10"
+                                   FontSize="10"
                                    Foreground="#90CAF9"
-                                FontWeight="SemiBold"/>
+                                   FontWeight="SemiBold"/>
                     </Border>
                 </StackPanel>
 
                 <Separator Grid.Row="0"
-                        VerticalAlignment="Bottom"
-                        Background="#283593"
-                        Margin="0"/>
+                           VerticalAlignment="Bottom"
+                           Background="#283593"
+                           Margin="0"/>
 
                 <!-- Menú -->
                 <ItemsControl Grid.Row="1"
-                        ItemsSource="{Binding MenuItems}"
-                        Margin="0,8,0,0">
+                              ItemsSource="{Binding MenuItems}"
+                              Margin="0,8,0,0">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Button Content="{Binding Titulo}"
@@ -92,7 +97,7 @@
                                                     </Border>
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver"
-                                                                Value="True">
+                                                                 Value="True">
                                                             <Setter Property="Background"
                                                                     Value="#283593"/>
                                                         </Trigger>
@@ -109,11 +114,11 @@
 
                 <!-- Footer sidebar -->
                 <TextBlock Grid.Row="2"
-                        Text="{Binding Bienvenida}"
+                           Text="{Binding Bienvenida}"
                            Foreground="#7986CB"
-                        FontSize="10"
+                           FontSize="10"
                            TextWrapping="Wrap"
-                        Margin="16,8,16,16"/>
+                           Margin="16,8,16,16"/>
             </Grid>
         </Border>
 
@@ -126,17 +131,17 @@
 
             <!-- Mensaje de página placeholder -->
             <TextBlock Grid.Row="0"
-                    Text="{Binding MensajePagina}"
+                       Text="{Binding MensajePagina}"
                        FontSize="14"
-                    Foreground="#5C6BC0"
+                       Foreground="#5C6BC0"
                        HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
+                       VerticalAlignment="Center"
                        Margin="20,12"
                        Visibility="{Binding MensajePagina, Converter={StaticResource StringToVisibilityConverter}}"/>
 
             <!-- Contenido dinámico -->
             <ContentControl Grid.Row="1"
-                    Content="{Binding PaginaActual}"/>
+                            Content="{Binding PaginaActual}"/>
         </Grid>
 
         <!-- Overlay de bloqueo durante cierre de sesión -->

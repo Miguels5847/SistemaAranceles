@@ -51,11 +51,20 @@ public sealed class ActualizarUsuarioUseCase(
         {
             switch (nuevoEstado)
             {
-                case EstadoUsuario.Activo:     usuario.Reactivar(); break;
+                case EstadoUsuario.Activo: usuario.Reactivar(); break;
                 case EstadoUsuario.Suspendido: usuario.Suspender(); break;
-                case EstadoUsuario.Inactivo:   usuario.Inactivar(); break;
+                case EstadoUsuario.Inactivo: usuario.Inactivar(); break;
             }
         }
+
+        var rolesActualesAntes = await repositorioRol.ObtenerNombresDeRolesDelUsuarioAsync(dto.Id, cancellationToken);
+        var rolAnterior = rolesActualesAntes.FirstOrDefault() ?? "Sin rol";
+        var rolNuevoSolicitado = dto.RolNombre?.Trim();
+        var cambioRolSolicitado = !string.IsNullOrWhiteSpace(rolNuevoSolicitado)
+            && !string.Equals(rolAnterior, rolNuevoSolicitado, StringComparison.OrdinalIgnoreCase);
+
+        var overridesLista = overrides?.ToList() ?? [];
+        var cambioPermisosSolicitado = overridesLista.Count > 0;
 
         // Iniciar transacción única para usuario + rol + overrides
         await unidadTrabajo.IniciarTransaccionAsync(cancellationToken);
@@ -67,8 +76,7 @@ public sealed class ActualizarUsuarioUseCase(
                 if (!rolNuevo.HasValue)
                     throw new InvalidOperationException($"El rol '{dto.RolNombre}' no existe.");
 
-                var rolesActuales = await repositorioRol.ObtenerNombresDeRolesDelUsuarioAsync(dto.Id, cancellationToken);
-                foreach (var nombreRol in rolesActuales)
+                foreach (var nombreRol in rolesActualesAntes)
                 {
                     var rolActual = await repositorioRol.ObtenerPorNombreAsync(nombreRol, cancellationToken);
                     if (rolActual.HasValue)
@@ -82,10 +90,10 @@ public sealed class ActualizarUsuarioUseCase(
             await unidadTrabajo.GuardarCambiosAsync(cancellationToken);
 
             // Overrides dentro de la misma transacción (GuardarOverridesAsync detecta CurrentTransaction)
-            if (overrides is not null)
+            if (overridesLista.Count > 0)
             {
                 await repositorioPermiso.GuardarOverridesAsync(
-                    dto.Id, overrides, actualizadoPorUsuarioId ?? 0, cancellationToken);
+                    dto.Id, overridesLista, actualizadoPorUsuarioId ?? 0, cancellationToken);
             }
 
             await unidadTrabajo.ConfirmarTransaccionAsync(cancellationToken);
@@ -109,6 +117,30 @@ public sealed class ActualizarUsuarioUseCase(
                 resumenTexto: $"Usuario Id {dto.Id} actualizado.",
                 ejecutadoPorUsuarioId: actualizadoPorUsuarioId,
                 cancellationToken: cancellationToken);
+
+            if (cambioRolSolicitado)
+            {
+                await auditoriaServicio.RegistrarAsync(
+                    moduloNombre: "Usuarios",
+                    entidadNombre: "UsuarioRol",
+                    entidadId: dto.Id.ToString(),
+                    accionNombre: "CAMBIO_ROL",
+                    resumenTexto: $"Usuario Id {dto.Id}: rol cambiado de '{rolAnterior}' a '{rolNuevoSolicitado}'.",
+                    ejecutadoPorUsuarioId: actualizadoPorUsuarioId,
+                    cancellationToken: cancellationToken);
+            }
+
+            if (cambioPermisosSolicitado)
+            {
+                await auditoriaServicio.RegistrarAsync(
+                    moduloNombre: "Usuarios",
+                    entidadNombre: "UsuarioPermisoOverride",
+                    entidadId: dto.Id.ToString(),
+                    accionNombre: "CAMBIO_PERMISOS",
+                    resumenTexto: $"Usuario Id {dto.Id}: se actualizaron {overridesLista.Count} override(s) de permisos.",
+                    ejecutadoPorUsuarioId: actualizadoPorUsuarioId,
+                    cancellationToken: cancellationToken);
+            }
         }
         catch (Exception ex)
         {

@@ -7,6 +7,7 @@ using SistemaAranceles.Application.DTOs.Usuarios;
 using SistemaAranceles.Application.UseCases.Autenticacion;
 using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.State;
+using SistemaAranceles.Presentation.ViewModels.Auditoria;
 using SistemaAranceles.Presentation.ViewModels.Usuarios;
 using System.Diagnostics;
 
@@ -25,6 +26,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
     private readonly UsuariosViewModel _usuariosViewModel;
+    private readonly AuditoriaViewModel _auditoriaViewModel;
     private readonly Func<EditarUsuarioViewModel> _editarUsuarioViewModelFactory;
     private int _cerrandoSesion;
     private int _cargandoUsuarios;
@@ -33,11 +35,13 @@ public sealed partial class MainViewModel : ObservableObject
         IServiceProvider serviceProvider,
         SesionActual sesionActual,
         UsuariosViewModel usuariosViewModel,
+        AuditoriaViewModel auditoriaViewModel,
         Func<EditarUsuarioViewModel> editarUsuarioViewModelFactory)
     {
         _serviceProvider = serviceProvider;
         _sesionActual = sesionActual;
         _usuariosViewModel = usuariosViewModel;
+        _auditoriaViewModel = auditoriaViewModel;
         _editarUsuarioViewModelFactory = editarUsuarioViewModelFactory;
 
         WeakReferenceMessenger.Default.Register<NavegarAMensaje>(this, (_, msg) =>
@@ -131,6 +135,16 @@ public sealed partial class MainViewModel : ObservableObject
             });
         }
 
+        if (_sesionActual.EsAdministrador && _sesionActual.TienePermiso("AUD.VER"))
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Auditoría",
+                Icono = "🧾",
+                Comando = new AsyncRelayCommand(() => MostrarAuditoriaAsync())
+            });
+        }
+
         MenuItems.Add(new ItemMenu
         {
             Titulo = "Cerrar Sesión",
@@ -143,6 +157,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private Task MostrarUsuarios() => MostrarUsuariosAsync();
+
+    [RelayCommand]
+    private Task MostrarAuditoria() => MostrarAuditoriaAsync();
 
     private async Task MostrarUsuariosAsync(string? mensajeExito = null)
     {
@@ -173,6 +190,19 @@ public sealed partial class MainViewModel : ObservableObject
         {
             Interlocked.Exchange(ref _cargandoUsuarios, 0);
         }
+    }
+
+    private Task MostrarAuditoriaAsync()
+    {
+        if (!(_sesionActual.EsAdministrador && _sesionActual.TienePermiso("AUD.VER")))
+        {
+            MensajePagina = "Acceso denegado a Auditoría.";
+            return Task.CompletedTask;
+        }
+
+        MensajePagina = string.Empty;
+        PaginaActual = _auditoriaViewModel;
+        return Task.CompletedTask;
     }
 
     [RelayCommand]
