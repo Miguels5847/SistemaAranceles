@@ -60,7 +60,9 @@ public sealed partial class MainViewModel : ObservableObject
         else
         {
             PaginaActual = null;
-            MensajePagina = "Bienvenido. Tu perfil no tiene acceso a Gestión de Usuarios.";
+            MensajePagina = MenuItems.Count > 1
+                ? "Selecciona un módulo del menú lateral."
+                : "Sin módulos disponibles para tu perfil. Contacta al administrador.";
         }
     }
 
@@ -89,33 +91,45 @@ public sealed partial class MainViewModel : ObservableObject
             });
         }
 
-        MenuItems.Add(new ItemMenu
+        if (_sesionActual.TienePermiso("CA.VER"))
         {
-            Titulo = "Carreras",
-            Icono = "🎓",
-            Comando = new RelayCommand(() => MensajePagina = "Módulo Carreras — disponible en Épica 3")
-        });
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Carreras",
+                Icono = "🎓",
+                Comando = new RelayCommand(() => MensajePagina = "Módulo Carreras — disponible en Épica 3")
+            });
+        }
 
-        MenuItems.Add(new ItemMenu
+        if (_sesionActual.TienePermiso("INF.VER"))
         {
-            Titulo = "Inflación",
-            Icono = "📈",
-            Comando = new RelayCommand(() => MensajePagina = "Módulo Inflación — disponible en Épica 3")
-        });
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Inflación",
+                Icono = "📈",
+                Comando = new RelayCommand(() => MensajePagina = "Módulo Inflación — disponible en Épica 3")
+            });
+        }
 
-        MenuItems.Add(new ItemMenu
+        if (_sesionActual.TienePermiso("PR.VER"))
         {
-            Titulo = "Proyecciones",
-            Icono = "📊",
-            Comando = new RelayCommand(() => MensajePagina = "Módulo Proyecciones — disponible en Épica 4")
-        });
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Proyecciones",
+                Icono = "📊",
+                Comando = new RelayCommand(() => MensajePagina = "Módulo Proyecciones — disponible en Épica 4")
+            });
+        }
 
-        MenuItems.Add(new ItemMenu
+        if (_sesionActual.TienePermiso("AF.VER"))
         {
-            Titulo = "Análisis Financiero",
-            Icono = "💰",
-            Comando = new RelayCommand(() => MensajePagina = "Módulo Análisis Financiero — disponible en Épica 5")
-        });
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Análisis Financiero",
+                Icono = "💰",
+                Comando = new RelayCommand(() => MensajePagina = "Módulo Análisis Financiero — disponible en Épica 5")
+            });
+        }
 
         MenuItems.Add(new ItemMenu
         {
