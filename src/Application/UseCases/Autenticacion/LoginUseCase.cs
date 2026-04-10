@@ -1,6 +1,8 @@
+using Microsoft.Extensions.Options;
 using SistemaAranceles.Application.DTOs.Autenticacion;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.Interfaces.Servicios;
+using SistemaAranceles.Application.Options;
 using System.Diagnostics;
 
 namespace SistemaAranceles.Application.UseCases.Autenticacion;
@@ -10,7 +12,8 @@ public sealed class LoginUseCase(
     IRepositorioSesionUsuario repositorioSesion,
     IServicioHash servicioHash,
     IAuditoriaServicio auditoriaServicio,
-    IRepositorioPermiso repositorioPermiso)
+    IRepositorioPermiso repositorioPermiso,
+    IOptions<SesionOpciones> sesionOpciones)
 {
     public async Task<SesionDto> EjecutarAsync(
         string correo,
@@ -128,7 +131,7 @@ public sealed class LoginUseCase(
         Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: rol resuelto '{rolNombre}'.");
 
         var token = Guid.NewGuid().ToString("N");
-        var expira = DateTime.UtcNow.AddHours(8);
+        var expira = DateTime.UtcNow.AddMinutes(sesionOpciones.Value.TimeoutMinutes);
 
         Trace.WriteLine($"[{DateTime.UtcNow:O}] LoginUseCase: creando sesión en base de datos.");
         var swSesion = Stopwatch.StartNew();
