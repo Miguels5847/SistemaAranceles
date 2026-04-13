@@ -47,6 +47,12 @@ Epic 2:
 - KAN-08 Menu dinamico por rol + permisos: implementado y separado en rama `feature/KAN-08-menu-dinamico-permisos`.
 - KAN-09 AuditLog acciones criticas: implementado y separado en rama `feature/KAN-09-auditlog-acciones-criticas`.
 
+Estado de cierre Epic 2:
+
+- Epic 2 cerrada funcionalmente (KAN-06 a KAN-09 completados).
+- Consulta de auditoria estable y optimizada para entorno Supabase.
+- Informe consolidado: `docs/EPICA-2-Informe-KAN06-KAN09.md`.
+
 Notas tecnicas recientes:
 
 - Se aplicaron scripts de soporte para Supabase y sincronizacion de migraciones EF Core.
@@ -55,9 +61,9 @@ Notas tecnicas recientes:
 
 ## Roadmap inmediato
 
-1. Publicar ramas de Epic 2 a origin y abrir PRs secuenciales hacia develop (KAN-06 -> KAN-07 -> KAN-08 -> KAN-09).
-2. Validar pruebas funcionales de usuarios/login/menu/auditoria sobre base Supabase.
-3. Cerrar merges de Epic 2 y preparar inicio de Epic 3.
+1. Iniciar Epic 3 con KAN-10: CRUD Inflacion + validacion (RF-IN-01/02), prioridad tier-1 backend/frontend.
+2. Tomar como base de desarrollo todo lo consolidado en `develop` antes de implementar KAN-10.
+3. Mantener integracion por historia tecnica en ramas `feature/KAN-xx` y merge secuencial hacia `develop`.
 
 ## Estrategia de ramas
 

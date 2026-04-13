@@ -4,8 +4,10 @@
         xmlns:vm="clr-namespace:SistemaAranceles.Presentation.ViewModels"
         xmlns:vmU="clr-namespace:SistemaAranceles.Presentation.ViewModels.Usuarios"
         xmlns:vmA="clr-namespace:SistemaAranceles.Presentation.ViewModels.Auditoria"
+        xmlns:vmI="clr-namespace:SistemaAranceles.Presentation.ViewModels.Inflacion"
         xmlns:vU="clr-namespace:SistemaAranceles.Presentation.Views.Usuarios"
         xmlns:vA="clr-namespace:SistemaAranceles.Presentation.Views.Auditoria"
+        xmlns:vI="clr-namespace:SistemaAranceles.Presentation.Views.Inflacion"
         Title="Sistema de Aranceles Universitarios"
         Height="680"
         Width="1100"
@@ -21,6 +23,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmA:AuditoriaViewModel}">
             <vA:AuditoriaView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmI:InflacionViewModel}">
+            <vI:InflacionView/>
         </DataTemplate>
     </Window.Resources>
 
@@ -40,28 +45,57 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Header sidebar -->
+                <!-- Header con nombre usuario y COUNTDOWN de sesión -->
                 <StackPanel Grid.Row="0"
                             Margin="16,20,16,16">
-                    <TextBlock Text="🎓 Aranceles"
-                               FontSize="18"
-                               FontWeight="Bold"
-                               Foreground="White"
-                               Margin="0,0,0,4"/>
-                    <TextBlock Text="{Binding NombreUsuario}"
-                               FontSize="11"
-                               Foreground="#9FA8DA"
-                               TextWrapping="Wrap"/>
-                    <Border Background="#283593"
-                            CornerRadius="4"
-                            Padding="6,2"
-                            Margin="0,4,0,0"
-                            HorizontalAlignment="Left">
-                        <TextBlock Text="{Binding RolUsuario}"
-                                   FontSize="10"
-                                   Foreground="#90CAF9"
-                                   FontWeight="SemiBold"/>
-                    </Border>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="🎓 Aranceles"
+                                       FontSize="18"
+                                       FontWeight="Bold"
+                                       Foreground="White"
+                                       Margin="0,0,0,4"/>
+                            <TextBlock Text="{Binding NombreUsuario}"
+                                       FontSize="11"
+                                       Foreground="#9FA8DA"
+                                       TextWrapping="Wrap"/>
+                            <Border Background="#283593"
+                                    CornerRadius="4"
+                                    Padding="6,2"
+                                    Margin="0,4,0,0"
+                                    HorizontalAlignment="Left">
+                                <TextBlock Text="{Binding RolUsuario}"
+                                           FontSize="10"
+                                           Foreground="#90CAF9"
+                                           FontWeight="SemiBold"/>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Countdown de sesión -->
+                        <Border Grid.Column="1"
+                                Background="#C62828"
+                                CornerRadius="4"
+                                Padding="10,6"
+                                VerticalAlignment="Top">
+                            <StackPanel Orientation="Vertical">
+                                <TextBlock Text="⏱️ Sesión"
+                                           FontSize="9"
+                                           Foreground="White"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,0,2"/>
+                                <TextBlock Text="{Binding TiempoRestanteSesion}"
+                                           FontSize="14"
+                                           Foreground="#FFEB3B"
+                                           FontWeight="Bold"
+                                           TextAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
                 </StackPanel>
 
                 <Separator Grid.Row="0"

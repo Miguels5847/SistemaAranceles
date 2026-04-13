@@ -12,7 +12,9 @@ using SistemaAranceles.Application.UseCases.Usuarios;
 using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.State;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
+using System.Text;
 
 namespace SistemaAranceles.Presentation.ViewModels.Usuarios;
 
@@ -24,6 +26,7 @@ namespace SistemaAranceles.Presentation.ViewModels.Usuarios;
 public sealed partial class PermisoCheckboxItem : ObservableObject
 {
     public int PermisoId { get; init; }
+    public string Codigo { get; init; } = string.Empty;
     public string AccionNombre { get; init; } = string.Empty;
     public string Descripcion { get; init; } = string.Empty;
 
@@ -152,7 +155,7 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
             if (permisos.Count == 0)
                 return;
 
-            var grupos = permisos.GroupBy(p => p.ModuloNombre);
+            var grupos = permisos.GroupBy(p => NormalizarModulo(p.ModuloNombre));
             foreach (var grupo in grupos.OrderBy(g => g.Key))
             {
                 var modulo = new ModuloPermisosVm { ModuloNombre = grupo.Key };
@@ -161,7 +164,8 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
                     modulo.Permisos.Add(new PermisoCheckboxItem
                     {
                         PermisoId = p.Id,
-                        AccionNombre = p.AccionNombre,
+                        Codigo = p.Codigo,
+                        AccionNombre = NormalizarAccion(p.AccionNombre),
                         Descripcion = p.Descripcion,
                         EsDeRolBase = p.EsDeRolBase,
                         TieneAcceso = p.TieneAcceso
@@ -196,8 +200,22 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
 
         // Capturar overrides ANTES de operaciones async (snapshot del estado UI)
         IEnumerable<PermisoOverrideDto>? overrides = null;
+        var totalPermisosSeleccionados = 0;
         if (!EsNuevo && ModulosPermisos.Count > 0)
         {
+            totalPermisosSeleccionados = ModulosPermisos
+                .SelectMany(m => m.Permisos)
+                .Count(p => p.TieneAcceso);
+
+            if (totalPermisosSeleccionados == 0)
+            {
+                var rolBaseCritico = EsRolBaseCritico(RolSeleccionado);
+                MensajeError = rolBaseCritico
+                    ? $"El rol '{RolSeleccionado}' no puede quedar sin permisos. Seleccione al menos un permiso antes de guardar."
+                    : "Debe seleccionar al menos un permiso para el usuario antes de guardar.";
+                return;
+            }
+
             overrides = ModulosPermisos
                 .SelectMany(m => m.Permisos)
                 .Where(p => p.TieneAcceso != p.EsDeRolBase)
@@ -316,5 +334,44 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
         }
 
         return false;
+    }
+
+    private static bool EsRolBaseCritico(string rolNombre)
+        => rolNombre.Equals("Administrador", StringComparison.OrdinalIgnoreCase)
+           || rolNombre.Equals("Analista", StringComparison.OrdinalIgnoreCase)
+           || rolNombre.Equals("Planificador", StringComparison.OrdinalIgnoreCase);
+
+    private static string NormalizarModulo(string modulo)
+    {
+        var valor = QuitarDiacriticos(modulo).Trim();
+        if (string.IsNullOrWhiteSpace(valor))
+            return "Sin modulo";
+
+        var sinSeparadores = valor.Replace("_", " ");
+        return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(sinSeparadores.ToLowerInvariant());
+    }
+
+    private static string NormalizarAccion(string accion)
+    {
+        var valor = QuitarDiacriticos(accion).Trim();
+        return string.IsNullOrWhiteSpace(valor)
+            ? "ver"
+            : valor.ToLowerInvariant();
+    }
+
+    private static string QuitarDiacriticos(string texto)
+    {
+        if (string.IsNullOrWhiteSpace(texto))
+            return string.Empty;
+
+        var normalized = texto.Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder(capacity: normalized.Length);
+        foreach (var c in normalized)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                sb.Append(c);
+        }
+
+        return sb.ToString().Normalize(NormalizationForm.FormC);
     }
 }

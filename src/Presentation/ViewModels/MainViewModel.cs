@@ -6,8 +6,10 @@ using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.DTOs.Usuarios;
 using SistemaAranceles.Application.UseCases.Autenticacion;
 using SistemaAranceles.Presentation.Mensajes;
+using SistemaAranceles.Presentation.Services;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.ViewModels.Auditoria;
+using SistemaAranceles.Presentation.ViewModels.Inflacion;
 using SistemaAranceles.Presentation.ViewModels.Usuarios;
 using System.Diagnostics;
 
@@ -25,8 +27,10 @@ public sealed partial class MainViewModel : ObservableObject
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
+    private readonly ServicioInactividad _servicioInactividad;
     private readonly UsuariosViewModel _usuariosViewModel;
     private readonly AuditoriaViewModel _auditoriaViewModel;
+    private readonly InflacionViewModel _inflacionViewModel;
     private readonly Func<EditarUsuarioViewModel> _editarUsuarioViewModelFactory;
     private int _cerrandoSesion;
     private int _cargandoUsuarios;
@@ -34,15 +38,25 @@ public sealed partial class MainViewModel : ObservableObject
     public MainViewModel(
         IServiceProvider serviceProvider,
         SesionActual sesionActual,
+        ServicioInactividad servicioInactividad,
         UsuariosViewModel usuariosViewModel,
         AuditoriaViewModel auditoriaViewModel,
+        InflacionViewModel inflacionViewModel,
         Func<EditarUsuarioViewModel> editarUsuarioViewModelFactory)
     {
         _serviceProvider = serviceProvider;
         _sesionActual = sesionActual;
+        _servicioInactividad = servicioInactividad;
         _usuariosViewModel = usuariosViewModel;
         _auditoriaViewModel = auditoriaViewModel;
+        _inflacionViewModel = inflacionViewModel;
         _editarUsuarioViewModelFactory = editarUsuarioViewModelFactory;
+
+        // Subscribirse a actualizaciones de tiempo restante
+        _servicioInactividad.TiempoRestanteActualizado += (_, tiempoRestante) =>
+        {
+            TiempoRestanteSesion = FormatearTiempoRestante(tiempoRestante);
+        };
 
         WeakReferenceMessenger.Default.Register<NavegarAMensaje>(this, (_, msg) =>
         {
@@ -61,6 +75,11 @@ public sealed partial class MainViewModel : ObservableObject
             PaginaActual = _usuariosViewModel;
             _ = MostrarUsuariosAsync();
         }
+        else if (_sesionActual.TienePermiso("INF.VER"))
+        {
+            PaginaActual = _inflacionViewModel;
+            _ = MostrarInflacionAsync();
+        }
         else
         {
             PaginaActual = null;
@@ -75,11 +94,17 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _mensajePagina = string.Empty;
     [ObservableProperty] private bool _estaCerrandoSesion;
     [ObservableProperty] private string _mensajeCierreSesion = "Cerrando sesión...";
+    [ObservableProperty] private string _tiempoRestanteSesion = "45:00";
 
     public ObservableCollection<ItemMenu> MenuItems { get; } = [];
 
     public string NombreUsuario => _sesionActual.NombreCompleto;
     public string RolUsuario => _sesionActual.RolNombre;
+
+    private static string FormatearTiempoRestante(TimeSpan tiempo)
+    {
+        return $"{(int)tiempo.TotalMinutes}:{tiempo.Seconds:D2}";
+    }
 
     private void ConstruirMenu()
     {
@@ -111,7 +136,7 @@ public sealed partial class MainViewModel : ObservableObject
             {
                 Titulo = "Inflación",
                 Icono = "📈",
-                Comando = new RelayCommand(() => MensajePagina = "Módulo Inflación — disponible en Épica 3")
+                Comando = new AsyncRelayCommand(() => MostrarInflacionAsync())
             });
         }
 
@@ -161,6 +186,9 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private Task MostrarAuditoria() => MostrarAuditoriaAsync();
 
+    [RelayCommand]
+    private Task MostrarInflacion() => MostrarInflacionAsync();
+
     private async Task MostrarUsuariosAsync(string? mensajeExito = null)
     {
         if (!_sesionActual.TienePermiso("US.VER"))
@@ -203,6 +231,19 @@ public sealed partial class MainViewModel : ObservableObject
         MensajePagina = string.Empty;
         PaginaActual = _auditoriaViewModel;
         return Task.CompletedTask;
+    }
+
+    private async Task MostrarInflacionAsync()
+    {
+        if (!_sesionActual.TienePermiso("INF.VER"))
+        {
+            MensajePagina = "Acceso denegado al módulo de Inflación.";
+            return;
+        }
+
+        MensajePagina = string.Empty;
+        PaginaActual = _inflacionViewModel;
+        await _inflacionViewModel.CargarCommand.ExecuteAsync(null);
     }
 
     [RelayCommand]
