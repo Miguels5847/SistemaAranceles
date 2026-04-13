@@ -1,3 +1,5 @@
+using SistemaAranceles.Application.DTOs.Auditoria;
+
 namespace SistemaAranceles.Application.Interfaces.Persistencia;
 
 public interface IRepositorioAuditoriaLog
@@ -11,5 +13,9 @@ public interface IRepositorioAuditoriaLog
         int? ejecutadoPorUsuarioId = null,
         string? valoresAnterioresJson = null,
         string? valoresNuevosJson = null,
+        CancellationToken cancellationToken = default);
+
+    Task<AuditoriaConsultaResultadoDto> ConsultarAsync(
+        AuditoriaFiltroDto filtros,
         CancellationToken cancellationToken = default);
 }

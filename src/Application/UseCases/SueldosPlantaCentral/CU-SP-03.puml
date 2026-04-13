@@ -1,0 +1,52 @@
+@startuml
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+skinparam actor {
+    BorderColor Black
+}
+
+skinparam nodesep 60
+skinparam ranksep 80
+left to right direction
+
+actor "Administrador" as admin
+actor "Planificador\nAcadémico" as pa
+actor "Consultor" as consultor
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Registrar cargos\nde planta central" as UC03a
+    usecase "Calcular costo atribuido\na la carrera por período" as UC03b
+    usecase "Importar estructura\nsalarial desde archivo" as UC03c
+    usecase "Leer estudiantes\ndesde módulo Estudiantes" as UC03d
+    usecase "Aplicar inflación\n(opcional)" as UC03e
+    usecase "Registrar auditoría\n(CU-US-04)" as UCAUD
+
+    admin --> UC03a
+    pa --> UC03b
+    consultor --> UC03b
+
+    UC03a ..> UC03b : <<include>>
+    UC03a ..> UC03d : <<include>>
+    UC03a ..> UCAUD : <<include>>
+    UC03c ..> UC03a : <<extend>>
+    UC03b ..> UC03e : <<extend>>
+}
+
+admin -[hidden]down-> pa
+
+' empujar consultor abajo derecha
+pa -[hidden]right-> consultor
+UC03e -[hidden]right-> consultor
+UCAUD -[hidden]right-> consultor
+
+note bottom of UC03a
+    RF-SP-03: Registrar planta
+    central y calcular costo
+    atribuido a la carrera por
+    peso de estudiantes.
+end note
+
+@enduml

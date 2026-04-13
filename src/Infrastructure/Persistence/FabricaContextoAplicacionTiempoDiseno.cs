@@ -13,7 +13,7 @@ public sealed class FabricaContextoAplicacionTiempoDiseno : IDesignTimeDbContext
 
         if (!string.IsNullOrWhiteSpace(cadenaConexionPostgres))
         {
-            optionsBuilder.UseNpgsql(cadenaConexionPostgres);
+            optionsBuilder.UseNpgsql(SupabaseConnectionStringHelper.Normalizar(cadenaConexionPostgres));
         }
         else
         {

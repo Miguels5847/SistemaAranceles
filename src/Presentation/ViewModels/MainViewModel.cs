@@ -2,10 +2,14 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.DependencyInjection;
+using SistemaAranceles.Application.DTOs.Usuarios;
 using SistemaAranceles.Application.UseCases.Autenticacion;
 using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.State;
+using SistemaAranceles.Presentation.ViewModels.Auditoria;
 using SistemaAranceles.Presentation.ViewModels.Usuarios;
+using System.Diagnostics;
 
 namespace SistemaAranceles.Presentation.ViewModels;
 
@@ -19,35 +23,58 @@ public sealed class ItemMenu
 
 public sealed partial class MainViewModel : ObservableObject
 {
+    private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
-    private readonly CerrarSesionUseCase _cerrarSesionUseCase;
     private readonly UsuariosViewModel _usuariosViewModel;
+    private readonly AuditoriaViewModel _auditoriaViewModel;
     private readonly Func<EditarUsuarioViewModel> _editarUsuarioViewModelFactory;
+    private int _cerrandoSesion;
+    private int _cargandoUsuarios;
 
     public MainViewModel(
+        IServiceProvider serviceProvider,
         SesionActual sesionActual,
-        CerrarSesionUseCase cerrarSesionUseCase,
         UsuariosViewModel usuariosViewModel,
+        AuditoriaViewModel auditoriaViewModel,
         Func<EditarUsuarioViewModel> editarUsuarioViewModelFactory)
     {
+        _serviceProvider = serviceProvider;
         _sesionActual = sesionActual;
-        _cerrarSesionUseCase = cerrarSesionUseCase;
         _usuariosViewModel = usuariosViewModel;
+        _auditoriaViewModel = auditoriaViewModel;
         _editarUsuarioViewModelFactory = editarUsuarioViewModelFactory;
 
         WeakReferenceMessenger.Default.Register<NavegarAMensaje>(this, (_, msg) =>
         {
             if (msg.DestinoPagina == "Usuarios")
-                _ = MostrarUsuariosAsync();
+                LanzarSinEsperar(MostrarUsuariosAsync(msg.MensajeExito));
+        });
+
+        WeakReferenceMessenger.Default.Register<EditarUsuarioMensaje>(this, (_, msg) =>
+        {
+            LanzarSinEsperar(MostrarEditarUsuarioAsync(msg.Usuario));
         });
 
         ConstruirMenu();
-        PaginaActual = _usuariosViewModel;
+        if (_sesionActual.TienePermiso("US.VER"))
+        {
+            PaginaActual = _usuariosViewModel;
+            _ = MostrarUsuariosAsync();
+        }
+        else
+        {
+            PaginaActual = null;
+            MensajePagina = MenuItems.Count > 1
+                ? "Selecciona un módulo del menú lateral."
+                : "Sin módulos disponibles para tu perfil. Contacta al administrador.";
+        }
     }
 
     [ObservableProperty] private string _bienvenida = string.Empty;
     [ObservableProperty] private ObservableObject? _paginaActual;
     [ObservableProperty] private string _mensajePagina = string.Empty;
+    [ObservableProperty] private bool _estaCerrandoSesion;
+    [ObservableProperty] private string _mensajeCierreSesion = "Cerrando sesión...";
 
     public ObservableCollection<ItemMenu> MenuItems { get; } = [];
 
@@ -58,82 +85,211 @@ public sealed partial class MainViewModel : ObservableObject
     {
         MenuItems.Clear();
 
-        if (_sesionActual.EsAdministrador)
+        if (_sesionActual.TienePermiso("US.VER"))
         {
             MenuItems.Add(new ItemMenu
             {
                 Titulo = "Usuarios",
                 Icono = "👤",
-                Comando = new AsyncRelayCommand(MostrarUsuariosAsync)
+                Comando = new AsyncRelayCommand(() => MostrarUsuariosAsync())
+            });
+        }
+
+        if (_sesionActual.TienePermiso("CA.VER"))
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Carreras",
+                Icono = "🎓",
+                Comando = new RelayCommand(() => MensajePagina = "Módulo Carreras — disponible en Épica 3")
+            });
+        }
+
+        if (_sesionActual.TienePermiso("INF.VER"))
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Inflación",
+                Icono = "📈",
+                Comando = new RelayCommand(() => MensajePagina = "Módulo Inflación — disponible en Épica 3")
+            });
+        }
+
+        if (_sesionActual.TienePermiso("PR.VER"))
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Proyecciones",
+                Icono = "📊",
+                Comando = new RelayCommand(() => MensajePagina = "Módulo Proyecciones — disponible en Épica 4")
+            });
+        }
+
+        if (_sesionActual.TienePermiso("AF.VER"))
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Análisis Financiero",
+                Icono = "💰",
+                Comando = new RelayCommand(() => MensajePagina = "Módulo Análisis Financiero — disponible en Épica 5")
+            });
+        }
+
+        if (_sesionActual.EsAdministrador && _sesionActual.TienePermiso("AUD.VER"))
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Auditoría",
+                Icono = "🧾",
+                Comando = new AsyncRelayCommand(() => MostrarAuditoriaAsync())
             });
         }
 
         MenuItems.Add(new ItemMenu
         {
-            Titulo = "Carreras",
-            Icono = "🎓",
-            Comando = new RelayCommand(() => MensajePagina = "Módulo Carreras — disponible en Épica 3")
-        });
-
-        MenuItems.Add(new ItemMenu
-        {
-            Titulo = "Inflación",
-            Icono = "📈",
-            Comando = new RelayCommand(() => MensajePagina = "Módulo Inflación — disponible en Épica 3")
-        });
-
-        MenuItems.Add(new ItemMenu
-        {
-            Titulo = "Proyecciones",
-            Icono = "📊",
-            Comando = new RelayCommand(() => MensajePagina = "Módulo Proyecciones — disponible en Épica 4")
-        });
-
-        MenuItems.Add(new ItemMenu
-        {
-            Titulo = "Análisis Financiero",
-            Icono = "💰",
-            Comando = new RelayCommand(() => MensajePagina = "Módulo Análisis Financiero — disponible en Épica 5")
-        });
-
-        MenuItems.Add(new ItemMenu
-        {
             Titulo = "Cerrar Sesión",
             Icono = "🚪",
-            Comando = new AsyncRelayCommand(CerrarSesionAsync)
+            Comando = new RelayCommand(() => _ = CerrarSesionAsync())
         });
 
         Bienvenida = $"Bienvenido, {_sesionActual.NombreCompleto}  |  Rol: {_sesionActual.RolNombre}";
     }
 
-    private async Task MostrarUsuariosAsync()
+    [RelayCommand]
+    private Task MostrarUsuarios() => MostrarUsuariosAsync();
+
+    [RelayCommand]
+    private Task MostrarAuditoria() => MostrarAuditoriaAsync();
+
+    private async Task MostrarUsuariosAsync(string? mensajeExito = null)
     {
+        if (!_sesionActual.TienePermiso("US.VER"))
+        {
+            MensajePagina = "Acceso denegado a Gestión de Usuarios.";
+            return;
+        }
+
+        if (Interlocked.Exchange(ref _cargandoUsuarios, 1) == 1)
+        {
+            Trace.TraceInformation($"[{DateTime.UtcNow:O}] MainViewModel: MostrarUsuariosAsync ignorado por carga en curso.");
+            return;
+        }
+
         MensajePagina = string.Empty;
-        PaginaActual = _usuariosViewModel;
-        await _usuariosViewModel.CargarCommand.ExecuteAsync(null);
+        try
+        {
+            PaginaActual = _usuariosViewModel;
+            await _usuariosViewModel.CargarCommand.ExecuteAsync(null);
+
+            if (!string.IsNullOrWhiteSpace(mensajeExito))
+            {
+                _usuariosViewModel.MensajeExito = mensajeExito;
+            }
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _cargandoUsuarios, 0);
+        }
+    }
+
+    private Task MostrarAuditoriaAsync()
+    {
+        if (!(_sesionActual.EsAdministrador && _sesionActual.TienePermiso("AUD.VER")))
+        {
+            MensajePagina = "Acceso denegado a Auditoría.";
+            return Task.CompletedTask;
+        }
+
+        MensajePagina = string.Empty;
+        PaginaActual = _auditoriaViewModel;
+        return Task.CompletedTask;
     }
 
     [RelayCommand]
     private async Task MostrarNuevoUsuarioAsync()
     {
+        if (!_sesionActual.TienePermiso("US.CREAR"))
+        {
+            MensajePagina = "Acceso denegado. No tiene permiso para crear usuarios.";
+            return;
+        }
+
         var vm = _editarUsuarioViewModelFactory();
-        await vm.InicializarAsync();
         PaginaActual = vm;
+        MensajePagina = string.Empty;
+
+        try
+        {
+            await vm.InicializarAsync();
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError($"[{DateTime.UtcNow:O}] MainViewModel: error al inicializar nuevo usuario -> {ex.Message}.");
+            vm.MensajeError = "No se pudo inicializar el formulario de usuario. Intente nuevamente.";
+        }
+    }
+
+    private async Task MostrarEditarUsuarioAsync(UsuarioDto usuario)
+    {
+        if (!_sesionActual.TienePermiso("US.EDITAR"))
+        {
+            MensajePagina = "Acceso denegado. No tiene permiso para editar usuarios.";
+            return;
+        }
+
+        var vm = _editarUsuarioViewModelFactory();
+        PaginaActual = vm;
+        MensajePagina = string.Empty;
+
+        try
+        {
+            // Mostrar primero la vista para que el overlay "Cargando datos" sea visible durante la inicialización.
+            await vm.InicializarAsync(usuario);
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError($"[{DateTime.UtcNow:O}] MainViewModel: error al inicializar edición de usuario -> {ex.Message}.");
+            vm.MensajeError = "No se pudo cargar los datos del usuario. Intente nuevamente.";
+        }
     }
 
     private async Task CerrarSesionAsync()
     {
+        if (Interlocked.Exchange(ref _cerrandoSesion, 1) == 1)
+        {
+            Trace.TraceInformation($"[{DateTime.UtcNow:O}] MainViewModel: CerrarSesionAsync ignorado por ejecución en curso.");
+            return;
+        }
+
+        EstaCerrandoSesion = true;
+        Trace.TraceInformation($"[{DateTime.UtcNow:O}] MainViewModel: inicio CerrarSesionAsync.");
         try
         {
-            await _cerrarSesionUseCase.EjecutarAsync(
+            using var scope = _serviceProvider.CreateScope();
+            var cerrarSesionUseCase = scope.ServiceProvider.GetRequiredService<CerrarSesionUseCase>();
+            await cerrarSesionUseCase.EjecutarAsync(
                 _sesionActual.UsuarioId,
                 _sesionActual.TokenSesion);
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError($"[{DateTime.UtcNow:O}] MainViewModel: error en CerrarSesionAsync -> {ex.Message}.");
         }
         finally
         {
             _sesionActual.CerrarSesion();
             WeakReferenceMessenger.Default.UnregisterAll(this);
             WeakReferenceMessenger.Default.Send(new CerrarSesionMensaje());
+            Trace.TraceInformation($"[{DateTime.UtcNow:O}] MainViewModel: fin CerrarSesionAsync.");
+            EstaCerrandoSesion = false;
+            Interlocked.Exchange(ref _cerrandoSesion, 0);
         }
+    }
+
+    private static void LanzarSinEsperar(Task tarea)
+    {
+        _ = tarea.ContinueWith(
+            antecedente => Trace.TraceError($"[{DateTime.UtcNow:O}] MainViewModel: tarea en segundo plano falló -> {antecedente.Exception?.GetBaseException().Message}"),
+            TaskContinuationOptions.OnlyOnFaulted);
     }
 }

@@ -1,0 +1,116 @@
+@startuml
+top to bottom direction
+scale 0.88
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+skinparam arrowColor Black
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 16
+skinparam ranksep 24
+
+title DC-04.2: Análisis Financiero
+
+package "Domain" #EFF6FF {
+    class EscenarioProyeccion {
+        +int Id
+        +int CarreraId
+        +string Nombre
+        +bool EsPredeterminado
+        +bool EstaActivo
+    }
+    class ConfiguracionTmr {
+        +int Id
+        +int EscenarioProyeccionId
+        +decimal TasaBancariaPorcentaje
+        +decimal InflacionPorcentaje
+        +decimal PremioRiesgoPorcentaje
+        +decimal TmrCalculadaPorcentaje
+    }
+    class ResultadoAnalisisFinanciero {
+        +int Id
+        +int EscenarioProyeccionId
+        +decimal TirPorcentaje
+        +decimal VanValor
+        +decimal PuntoEquilibrioEstudiantes
+        +decimal PeriodoRecuperacionAnios
+        +bool EsViable
+        +DateTime FechaCalculo
+        +string Notas
+    }
+
+    EscenarioProyeccion -[hidden]-> ConfiguracionTmr
+    ConfiguracionTmr -[hidden]-> ResultadoAnalisisFinanciero
+}
+
+package "Application" #F0FDF4 {
+    interface IConfiguracionTmrRepository <<Interface>> {
+        +ObtenerPorEscenario(escenarioId: int) : ConfiguracionTmr
+        +Guardar(config: ConfiguracionTmr) : void
+    }
+    interface IResultadoAnalisisRepository <<Interface>> {
+        +GuardarResultado(resultado: ResultadoAnalisisFinanciero) : void
+        +ObtenerPorEscenario(escenarioId: int) : ResultadoAnalisisFinanciero
+    }
+    interface ICostoGastoRepository <<Interface>> {
+        +ObtenerFlujosAnuales(escenarioId: int) : List~CostoGastoPeriodo~
+    }
+    class CalcularIndicadoresUseCase <<UseCase>> {
+        -IConfiguracionTmrRepository _tmrRepo
+        -ICostoGastoRepository _costoRepo
+        -IResultadoAnalisisRepository _resultadoRepo
+        +Ejecutar(escenarioId: int) : IndicadoresDto
+    }
+
+    IConfiguracionTmrRepository -[hidden]-> IResultadoAnalisisRepository
+    IResultadoAnalisisRepository -[hidden]-> ICostoGastoRepository
+    ICostoGastoRepository -[hidden]-> CalcularIndicadoresUseCase
+}
+
+package "Infrastructure" #FFF7ED {
+    class ConfiguracionTmrRepository <<Repository>> {
+        -AppDbContext _context
+        +ObtenerPorEscenario(escenarioId: int) : ConfiguracionTmr
+        +Guardar(config: ConfiguracionTmr) : void
+    }
+    class ResultadoAnalisisRepository <<Repository>> {
+        -AppDbContext _context
+        +GuardarResultado(resultado: ResultadoAnalisisFinanciero) : void
+        +ObtenerPorEscenario(escenarioId: int) : ResultadoAnalisisFinanciero
+    }
+
+    ConfiguracionTmrRepository -[hidden]-> ResultadoAnalisisRepository
+}
+
+package "Presentation" #FDF4FF {
+    class AnalisisFinancieroViewModel <<ViewModel>> {
+        +ICommand AjustarArancelCommand
+        +ICommand CalcularIndicadoresCommand
+        +CargarDashboard() : void
+    }
+}
+
+Domain -[hidden]-> Application
+Application -[hidden]-> Infrastructure
+Infrastructure -[hidden]-> Presentation
+
+' Relaciones de dominio
+EscenarioProyeccion "1" --> "1" ConfiguracionTmr : tiene
+EscenarioProyeccion "1" --> "1" ResultadoAnalisisFinanciero : genera
+
+' Implementaciones
+ConfiguracionTmrRepository ..|> IConfiguracionTmrRepository : implementa
+ResultadoAnalisisRepository ..|> IResultadoAnalisisRepository : implementa
+
+' Dependencias de casos de uso
+CalcularIndicadoresUseCase --> IConfiguracionTmrRepository : usa
+CalcularIndicadoresUseCase --> ICostoGastoRepository : usa
+CalcularIndicadoresUseCase --> IResultadoAnalisisRepository : usa
+
+' Dependencias de presentación
+AnalisisFinancieroViewModel --> CalcularIndicadoresUseCase : invoca
+@enduml

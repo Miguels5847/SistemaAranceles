@@ -1,0 +1,46 @@
+@startuml CU-DI-04
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Planificador\nAcadémico" as planif
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Registrar material" as UC04a
+    usecase "Editar material" as UC04b
+    usecase "Eliminar material" as UC04c
+    usecase "Proyectar cantidades\npor estudiantes" as UC04d
+    usecase "Calcular costos\ncon inflación" as UC04e
+    usecase "Registrar auditoría\n(CU-US-04)" as UC04
+
+    planif --> UC04a
+    planif --> UC04b
+    planif --> UC04c
+
+    UC04a ..> UC04d : <<include>>
+    UC04a ..> UC04e : <<include>>
+    UC04a ..> UC04 : <<include>>
+
+    UC04b ..> UC04d : <<include>>
+    UC04b ..> UC04e : <<include>>
+    UC04b ..> UC04 : <<include>>
+
+    UC04c ..> UC04 : <<include>>
+}
+
+note bottom of UC04a
+    RF-DI-04: Materiales con
+    cantidades proporcionales
+    y costos con inflación.
+end note
+
+@enduml

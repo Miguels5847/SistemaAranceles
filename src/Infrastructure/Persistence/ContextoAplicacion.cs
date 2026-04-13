@@ -10,6 +10,7 @@ public sealed class ContextoAplicacion(DbContextOptions<ContextoAplicacion> opti
     public DbSet<Permiso> Permisos => Set<Permiso>();
     public DbSet<RolPermiso> RolesPermisos => Set<RolPermiso>();
     public DbSet<UsuarioRol> UsuariosRoles => Set<UsuarioRol>();
+    public DbSet<UsuarioPermisoOverride> UsuariosPermisosOverride => Set<UsuarioPermisoOverride>();
     public DbSet<SesionUsuario> SesionesUsuario => Set<SesionUsuario>();
     public DbSet<AuditoriaLog> AuditoriasLog => Set<AuditoriaLog>();
     public DbSet<Carrera> Carreras => Set<Carrera>();

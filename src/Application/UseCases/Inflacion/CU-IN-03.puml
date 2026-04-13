@@ -1,0 +1,45 @@
+@startuml CU-IN-03
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Administrador" as admin
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Generar proyección\npor regresión lineal" as UC03a
+    usecase "Ajustar manualmente\nvalor proyectado" as UC03b
+    usecase "Regenerar\nproyección" as UC03c
+    usecase "Calcular regresión\n(mínimos cuadrados)" as UC03d
+    usecase "Mostrar gráfico\nde tendencia" as UC03e
+    usecase "Registrar auditoría\n(CU-US-04)" as UC04
+
+    admin --> UC03a
+    admin --> UC03b
+    admin --> UC03c
+
+    UC03a ..> UC03d : <<include>>
+    UC03a ..> UC03e : <<include>>
+    UC03a ..> UC04 : <<include>>
+
+    UC03b ..> UC04 : <<include>>
+
+    UC03c ..> UC03d : <<include>>
+    UC03c ..> UC04 : <<include>>
+}
+
+note bottom of UC03a
+    RF-IN-04: Proyectar inflación
+    futura mediante regresión
+    lineal con ajuste manual.
+end note
+
+@enduml

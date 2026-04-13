@@ -21,7 +21,7 @@ Esta estructura permite aislar la logica de negocio del framework de interfaz y 
 
 - .NET 8
 - WPF
-- Entity Framework Core + SQLite
+- Entity Framework Core + PostgreSQL (Supabase)
 - CommunityToolkit.Mvvm
 - FluentValidation
 - BCrypt.Net-Next
@@ -36,16 +36,28 @@ Epic 1:
 
 - KAN-01 Crear solucion WPF + 4 proyectos Clean Architecture: completado.
 - KAN-02 Instalar paquetes base de la solucion: completado.
-- KAN-03 Diseno de base de datos y migraciones: pendiente.
-- KAN-04 Entidades de dominio base: pendiente.
-- KAN-05 DbContext y repositorio generico: pendiente.
+- KAN-03 Diseno de base de datos y migraciones: completado.
+- KAN-04 Entidades de dominio base: completado.
+- KAN-05 DbContext y repositorio generico: completado.
+
+Epic 2:
+
+- KAN-06 CRUD Usuarios: implementado y separado en rama `feature/KAN-06-CRUD-Usuarios`.
+- KAN-07 Login + BCrypt + sesion por rol: implementado y separado en rama `feature/KAN-07-login-sesion-rol`.
+- KAN-08 Menu dinamico por rol + permisos: implementado y separado en rama `feature/KAN-08-menu-dinamico-permisos`.
+- KAN-09 AuditLog acciones criticas: implementado y separado en rama `feature/KAN-09-auditlog-acciones-criticas`.
+
+Notas tecnicas recientes:
+
+- Se aplicaron scripts de soporte para Supabase y sincronizacion de migraciones EF Core.
+- Se ejecuto seed inicial de roles, permisos y usuario administrador.
+- Se corrigio la rehidratacion de Id en creacion de usuario antes de asignar rol.
 
 ## Roadmap inmediato
 
-1. KAN-03: definir modelo de datos relacional y primera migracion.
-2. KAN-04: modelar entidades nucleares del dominio (Usuario, Rol, Carrera, Inflacion, Retencion).
-3. KAN-05: implementar DbContext, contratos de repositorio y primera version de acceso a datos.
-4. Iniciar casos de uso del modulo de Usuarios con validaciones y trazabilidad RF a implementacion.
+1. Publicar ramas de Epic 2 a origin y abrir PRs secuenciales hacia develop (KAN-06 -> KAN-07 -> KAN-08 -> KAN-09).
+2. Validar pruebas funcionales de usuarios/login/menu/auditoria sobre base Supabase.
+3. Cerrar merges de Epic 2 y preparar inicio de Epic 3.
 
 ## Estrategia de ramas
 

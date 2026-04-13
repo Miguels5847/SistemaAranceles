@@ -1,0 +1,107 @@
+erDiagram
+    escenario_proyeccion {
+        int id PK
+        int carrera_id FK
+        text nombre
+        int esta_activo
+    }
+    periodo_academico {
+        int id PK
+        int anio
+        int numero_periodo
+        text etiqueta_periodo
+    }
+    inflacion_anual {
+        int id PK
+        int anio
+        numeric porcentaje_inflacion
+        text fuente_nombre
+        text tipo_fuente
+    }
+    inflacion_proyectada {
+        int id PK
+        int escenario_proyeccion_id FK
+        int anio
+        numeric porcentaje_inflacion
+        text metodo_proyeccion
+        int es_ajuste_manual
+    }
+    configuracion_retencion {
+        int id PK
+        int carrera_id FK
+        int escenario_proyeccion_id FK
+        int total_ciclos
+        numeric tasa_retencion_porcentaje
+        numeric tasa_graduacion_porcentaje
+    }
+    criterio_referencia_retencion {
+        int id PK
+        int configuracion_retencion_id FK
+        numeric meta_retencion_porcentaje
+        numeric meta_graduacion_porcentaje
+    }
+    simulacion_retencion {
+        int id PK
+        int configuracion_retencion_id FK
+        text ejecutado_en
+        text notas
+    }
+    detalle_simulacion_retencion {
+        int id PK
+        int simulacion_retencion_id FK
+        int numero_ciclo
+        int numero_periodo
+        numeric valor_estudiantes
+        text tipo_zona
+    }
+    proyeccion_estudiantes {
+        int id PK
+        int carrera_id FK
+        int escenario_proyeccion_id FK
+        int anio_base
+        int semanas_por_semestre
+    }
+    detalle_proyeccion_estudiantes {
+        int id PK
+        int proyeccion_estudiantes_id FK
+        int periodo_academico_id FK
+        int numero_ciclo
+        int cantidad_paralelos
+        numeric total_estudiantes
+    }
+    configuracion_carga_docente {
+        int id PK
+        int proyeccion_estudiantes_id FK
+        numeric horas_docencia_estandar
+        numeric proporcion_phd_porcentaje
+        numeric proporcion_mgs_porcentaje
+    }
+    proyeccion_requerimiento_docente {
+        int id PK
+        int configuracion_carga_docente_id FK
+        int periodo_academico_id FK
+        numeric total_docentes
+        numeric docentes_phd
+        numeric docentes_mgs
+    }
+    configuracion_arancel {
+        int id PK
+        int carrera_id FK
+        int escenario_proyeccion_id FK
+        numeric valor_arancel
+        numeric arancel_optimo
+        text tipo_origen
+    }
+
+    escenario_proyeccion ||--o{ inflacion_proyectada : ""
+    escenario_proyeccion ||--o{ configuracion_retencion : ""
+    escenario_proyeccion ||--o{ proyeccion_estudiantes : ""
+    escenario_proyeccion ||--o{ configuracion_arancel : ""
+    configuracion_retencion ||--o{ criterio_referencia_retencion : ""
+    configuracion_retencion ||--o{ simulacion_retencion : ""
+    simulacion_retencion ||--o{ detalle_simulacion_retencion : ""
+    proyeccion_estudiantes ||--o{ detalle_proyeccion_estudiantes : ""
+    proyeccion_estudiantes ||--o{ configuracion_carga_docente : ""
+    configuracion_carga_docente ||--o{ proyeccion_requerimiento_docente : ""
+    periodo_academico ||--o{ detalle_proyeccion_estudiantes : ""
+    periodo_academico ||--o{ proyeccion_requerimiento_docente : ""

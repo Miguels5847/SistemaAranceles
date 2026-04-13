@@ -1,0 +1,39 @@
+@startuml CU-AF-03
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Administrador" as admin
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Configurar\ncomponentes TMR" as UC03a
+    usecase "Calcular TIR" as UC03b
+    usecase "Calcular VAN" as UC03c
+    usecase "Evaluar viabilidad" as UC03d
+    usecase "Registrar auditoría\n(CU-US-04)" as UC04
+
+    admin --> UC03a
+
+    UC03a ..> UC03b : <<include>>
+    UC03a ..> UC03c : <<include>>
+    UC03b ..> UC03d : <<include>>
+    UC03c ..> UC03d : <<include>>
+    UC03a ..> UC04 : <<include>>
+}
+
+note bottom of UC03a
+    RF-AF-03: TMR, TIR y VAN
+    con indicadores de
+    viabilidad financiera.
+end note
+
+@enduml
