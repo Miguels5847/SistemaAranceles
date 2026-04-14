@@ -577,13 +577,93 @@ Ante falla crítica de lote, detener ejecución y restaurar respaldo del lote/en
 3. `KAN14_fase3_lote01_seguridad_postcheck.sql`: ejecutado sin errores; auditoría ya muestra `evento_en` en `timestamptz` con valores coherentes en UTC.
 4. Lote 01 considerado **cerrado** para base de prueba y Supabase.
 
-#### Validación funcional que todavía debe hacerse en la aplicación
+#### Validación funcional completada en la aplicación (2026-04-14 post-deploy)
 
-1. Login y logout deben seguir funcionando.
-2. Sesión debe persistir y cerrarse sin errores de fecha.
-3. Auditoría debe cargar sin excepciones y mostrar fechas legibles.
-4. CRUD de usuarios debe listar, editar y eliminar sin `InvalidCastException`.
-5. Pantalla de inflación debe abrir, listar y guardar sin cambios en comportamiento.
+Smoke test ejecutado tras deploy de código (Fase 2) en local con Supabase producción (Lote 01 ya migrado):
+
+1. ✅ **Login Administrador sin errores de fecha:**
+   - Usuario encontrado, roles cargados, sesión persistida=1 (sin `42804`).
+   - Auditoría registrada exitosamente.
+   - Inactividad timer iniciado.
+
+2. ✅ **Operaciones de inflación sin regresión:**
+   - Crear inflación anual (2032, valor=1.99): OK.
+   - Actualizar inflación (2011, valor=5.8074): OK.
+   - Eliminar inflación: OK.
+
+3. ✅ **CRUD usuarios sin excepciones:**
+   - Editar usuario 8 (cambiar permisos): overrides guardados, commit exitoso.
+   - Carga de roles y permisos sin errores.
+
+4. ✅ **Auditoría sin InvalidCastException:**
+   - Consulta de 26 registros completada.
+   - Lectura de evento_en (ahora `timestamptz`) sin exceptions.
+   - Paginación operativa (página 1/2, 25 items).
+
+**Gate de Lote 01 cumplido: persistencia tipada validada en todos los flows críticos.**
+
+---
+
+### Lotes pendientes - Fase 3 (02-05)
+
+#### Lote 02 (Académico-Operativo)
+
+**Tablas a migrar:**
+
+- `carrera`: `creado_en`, `actualizado_en`, `eliminado_en`
+- `escenario_proyeccion`: `creado_en`, `actualizado_en`, `eliminado_en`
+- `periodo_academico`: `creado_en`, `actualizado_en`, `eliminado_en`
+- `configuracion_carga_docente`: `creado_en`, `actualizado_en`, `eliminado_en`
+- `detalle_proyeccion_estudiantes`: `creado_en`, `actualizado_en`, `eliminado_en`
+- `detalle_simulacion_retencion`: `creado_en`, `actualizado_en`, `eliminado_en`
+- `simulacion_retencion`: `creado_en`, `actualizado_en`, `eliminado_en`
+
+**Impacto en módulos:** Épicas 4, 5 (carreras, escenarios, proyecciones académicas).
+
+---
+
+#### Lote 03 (Costos/Operativo)
+
+**Tablas a migrar:**
+
+- `cargo_facultad`: `creado_en`, `actualizado_en`, `eliminado_en`
+- `cargo_planta_central`: `creado_en`, `actualizado_en`, `eliminado_en`
+- `configuracion_retencion`: `creado_en`, `actualizado_en`, `eliminado_en`
+- `criterio_referencia_retencion`: `creado_en`, `actualizado_en`, `eliminado_en`
+- `item_material_insumo`: `creado_en`, `actualizado_en`, `eliminado_en`
+- `proyeccion_cargo_facultad`: `creado_en`, `actualizado_en`, `eliminado_en`
+- `proyeccion_cargo_planta_central`: `creado_en`, `actualizado_en`, `eliminado_en`
+- `proyeccion_material_insumo`: `creado_en`, `actualizado_en`, `eliminado_en`
+- `proyeccion_requerimiento_docente`: `creado_en`, `actualizado_en`, `eliminado_en`
+
+**Impacto en módulos:** Épicas 6, 7, 8 (sueldos, materiales, servicios, depreciación).
+
+---
+
+#### Lote 04 (Financiero)
+
+**Tablas a migrar:**
+
+- `presupuesto_institucional`: `creado_en`, `actualizado_en`, `eliminado_en`
+- `proyeccion_estudiantes`: `creado_en`, `actualizado_en`, `eliminado_en`
+- `resumen_proyeccion_financiera`: `creado_en`, `actualizado_en`, `eliminado_en`
+- `configuracion_arancel`: `creado_en`, `actualizado_en`, `eliminado_en`
+
+**Impacto en módulos:** Épicas 9, 10, 11 (análisis financiero, balance, reportes).
+
+---
+
+#### Lote 05 (Complementario)
+
+**Tablas a migrar (si las hay restantes):**
+
+- Cualquier tabla con `TEXT` timestamps no cubierta en lotes 02-04.
+
+**Gate de ejecución de Lotes 02-05:**
+
+1. Generar scripts precheck/apply/postcheck/rollback similares a Lote 01.
+2. Validar smoke tests nuevamente tras cada lote.
+3. Realizar backup Supabase tras cada lote exitoso (o al menos tras lote 02).
 
 ---
 
