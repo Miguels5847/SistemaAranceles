@@ -40,12 +40,12 @@ public sealed class RepositorioSesionUsuario(ContextoAplicacion contextoAplicaci
 
         var pEmitido = command.CreateParameter();
         pEmitido.ParameterName = "@emitido_en";
-        pEmitido.Value = DateTime.UtcNow.ToString("O");
+        pEmitido.Value = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
         command.Parameters.Add(pEmitido);
 
         var pExpira = command.CreateParameter();
         pExpira.ParameterName = "@expira_en";
-        pExpira.Value = expiraEn.ToUniversalTime().ToString("O");
+        pExpira.Value = DateTime.SpecifyKind(expiraEn.ToUniversalTime(), DateTimeKind.Utc);
         command.Parameters.Add(pExpira);
 
         var result = await command.ExecuteScalarAsync(cancellationToken);
@@ -69,7 +69,7 @@ public sealed class RepositorioSesionUsuario(ContextoAplicacion contextoAplicaci
 
         var pRevocado = command.CreateParameter();
         pRevocado.ParameterName = "@revocado_en";
-        pRevocado.Value = DateTime.UtcNow.ToString("O");
+        pRevocado.Value = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
         command.Parameters.Add(pRevocado);
 
         var parameter = command.CreateParameter();

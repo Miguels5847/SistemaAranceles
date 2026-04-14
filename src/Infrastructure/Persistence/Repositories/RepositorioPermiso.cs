@@ -204,7 +204,7 @@ public sealed class RepositorioPermiso(ContextoAplicacion contextoAplicacion) : 
             var listaOverrides = overrides.ToList();
             if (listaOverrides.Count > 0)
             {
-                var creadoEn = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss");
+                var creadoEn = DateTime.UtcNow;
                 foreach (var ov in listaOverrides)
                 {
                     contextoAplicacion.UsuariosPermisosOverride.Add(new UsuarioPermisoOverride

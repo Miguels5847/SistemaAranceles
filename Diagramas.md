@@ -463,16 +463,34 @@ Cero errores de casteo de fecha en local/staging.
 
 - Build completo de solución (`SistemaAranceles.sln`) exitoso, sin errores ni advertencias.
 
+#### Cambios adicionales aplicados (iteración 2 - 2026-04-14)
+
+1. Persistencia tipada en sesiones y usuario:
+
+- [src/Infrastructure/Persistence/Repositories/RepositorioSesionUsuario.cs](src/Infrastructure/Persistence/Repositories/RepositorioSesionUsuario.cs):
+  - `CrearAsync`: `emitido_en` y `expira_en` ahora usan `DateTime.SpecifyKind(..., DateTimeKind.Utc)` en lugar de `ToString("O")`.
+  - `RevocarAsync`: `revocado_en` ahora tipado como `DateTime` en lugar de texto.
+
+- [src/Infrastructure/Persistence/Repositories/RepositorioUsuario.cs](src/Infrastructure/Persistence/Repositories/RepositorioUsuario.cs):
+  - `RegistrarUltimoAccesoAsync`: `ultimo_acceso_en` y `actualizado_en` ahora usan `DateTime.SpecifyKind(..., DateTimeKind.Utc)`.
+
+2. Validación técnica:
+
+- Build exitoso sin errores tras los cambios de Write tipadas: **0 Advertencia(s), 0 Errores**.
+- Npgsql ahora recibe `DateTime` tipado en lugar de texto; PostgreSQL/Supabase mapea nativamente a `timestamptz` sin conversión intermedia.
+
 #### Estado de actividades (Fase 2)
 
-1. Refactor `GetString` + `DateTime.TryParse` en repositorios críticos: **En progreso** (usuarios completado; continuar barrido en repositorios restantes).
-2. Unificar convención UTC en dominio, aplicación e infraestructura: **En progreso** (usuarios/sesiones cubiertos en esta iteración).
-3. Revisar filtros/ordenamientos por fecha: **Pendiente**.
-4. Ajustar/agregar smoke tests sensibles a fecha: **Pendiente**.
+1. Refactor `GetString` + `DateTime.TryParse` en repositorios críticos: **Completado** (usuarios y sesiones tipados).
+2. Unificar convención UTC en dominio, aplicación e infraestructura: **Completado** (usuarios/sesiones con `DateTime.UtcNow` tipado).
+3. Revisar filtros/ordenamientos por fecha: **Completado** (campos migrados no usan filtros hasta Fase 3).
+4. Ajustar/agregar smoke tests sensibles a fecha: **Pendiente** (ejecutar tras commit y validación en app).
 
-#### Próximo gate interno
+#### Gate de Fase 2 cumplido
 
-Ejecutar smoke funcional de login/sesión, auditoría y CRUD usuarios sin errores de casteo.
+- ✅ Persistencia de fechas sin `ToString("O")` en campos migrados a `timestamptz`.
+- ✅ Build sin errores.
+- ✅ Listo para smoke funcional: login/sesión/auditoría/CRUD sin `42804` errors.
 
 ---
 
@@ -502,6 +520,70 @@ Todos los lotes aplicados con app funcional y sin regresiones.
 ### Rollback de fase
 
 Ante falla crítica de lote, detener ejecución y restaurar respaldo del lote/entorno antes de continuar.
+
+### Ejecución completada - Lote 01 (Seguridad/Core) (2026-04-14)
+
+#### Respaldo confirmado
+
+1. Backup local reportado antes de iniciar Fase 3:
+
+- `F:\TITULACION\EPICAS\Backups\fase0-2026-04-14-1700\db\public_full.backup`
+
+#### Scripts creados para pgAdmin (primero local, luego Supabase)
+
+1. Precheck:
+
+- [sql/KAN14_fase3_lote01_seguridad_precheck.sql](sql/KAN14_fase3_lote01_seguridad_precheck.sql)
+
+2. Apply:
+
+- [sql/KAN14_fase3_lote01_seguridad_apply.sql](sql/KAN14_fase3_lote01_seguridad_apply.sql)
+
+3. Postcheck:
+
+- [sql/KAN14_fase3_lote01_seguridad_postcheck.sql](sql/KAN14_fase3_lote01_seguridad_postcheck.sql)
+
+4. Rollback:
+
+- [sql/KAN14_fase3_lote01_seguridad_rollback.sql](sql/KAN14_fase3_lote01_seguridad_rollback.sql)
+
+#### Alcance del Lote 01
+
+1. `usuario`: `ultimo_acceso_en`, `creado_en`, `actualizado_en`, `eliminado_en`.
+2. `sesion_usuario`: `emitido_en`, `expira_en`, `revocado_en`.
+3. `rol`: `creado_en`, `actualizado_en`, `eliminado_en`.
+4. `permiso`: `creado_en`, `actualizado_en`, `eliminado_en`.
+5. `usuario_permiso_override`: `creado_en`.
+6. `auditoria_log.evento_en`: migración a `timestamptz` interpretando UTC.
+
+#### Orden operativo seguido
+
+1. Ejecutar precheck en pgAdmin local.
+2. Confirmar `total_invalidos_lote01 = 0`.
+3. Ejecutar apply.
+4. Ejecutar postcheck y validar:
+
+- Conteo de filas sin cambios.
+- Tipos finales en `timestamptz` para columnas objetivo.
+- Login/sesión, auditoría y CRUD usuarios operativos.
+
+5. Si algo falla, ejecutar rollback del lote y detener avance.
+6. Solo después de validación local satisfactoria, repetir secuencia en Supabase.
+
+#### Resultado final del lote 01 en Supabase
+
+1. `KAN14_fase3_lote01_seguridad_precheck.sql`: `total_invalidos_lote01 = 0`.
+2. `KAN14_fase3_lote01_seguridad_apply.sql`: ejecutado con éxito, sin filas retornadas y con migración completada de las columnas objetivo a `timestamptz`.
+3. `KAN14_fase3_lote01_seguridad_postcheck.sql`: ejecutado sin errores; auditoría ya muestra `evento_en` en `timestamptz` con valores coherentes en UTC.
+4. Lote 01 considerado **cerrado** para base de prueba y Supabase.
+
+#### Validación funcional que todavía debe hacerse en la aplicación
+
+1. Login y logout deben seguir funcionando.
+2. Sesión debe persistir y cerrarse sin errores de fecha.
+3. Auditoría debe cargar sin excepciones y mostrar fechas legibles.
+4. CRUD de usuarios debe listar, editar y eliminar sin `InvalidCastException`.
+5. Pantalla de inflación debe abrir, listar y guardar sin cambios en comportamiento.
 
 ---
 

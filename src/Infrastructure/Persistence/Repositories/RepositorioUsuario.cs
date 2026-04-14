@@ -306,12 +306,12 @@ public sealed class RepositorioUsuario(
 
         var pUltimoAcceso = command.CreateParameter();
         pUltimoAcceso.ParameterName = "@ultimo_acceso_en";
-        pUltimoAcceso.Value = ultimoAccesoEn.ToUniversalTime().ToString("O");
+        pUltimoAcceso.Value = DateTime.SpecifyKind(ultimoAccesoEn.ToUniversalTime(), DateTimeKind.Utc);
         command.Parameters.Add(pUltimoAcceso);
 
         var pActualizado = command.CreateParameter();
         pActualizado.ParameterName = "@actualizado_en";
-        pActualizado.Value = DateTime.UtcNow.ToString("O");
+        pActualizado.Value = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
         command.Parameters.Add(pActualizado);
 
         await command.ExecuteNonQueryAsync(cancellationToken);
