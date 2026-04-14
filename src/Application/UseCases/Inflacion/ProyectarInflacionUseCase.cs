@@ -1,8 +1,10 @@
 using SistemaAranceles.Application.DTOs.Inflacion;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.Interfaces.Servicios;
+using SistemaAranceles.Application.Options;
 using SistemaAranceles.Domain.Entities;
 using System.Diagnostics;
+using Microsoft.Extensions.Options;
 
 namespace SistemaAranceles.Application.UseCases.Inflacion;
 
@@ -10,8 +12,12 @@ public sealed class ProyectarInflacionUseCase(
     IRepositorioInflacionAnual repositorioInflacionAnual,
     IServicioProyeccion servicioProyeccion,
     IUnidadTrabajo unidadTrabajo,
-    IAuditoriaServicio auditoriaServicio)
+    IAuditoriaServicio auditoriaServicio,
+    IOptions<InflacionOpciones> inflacionOpciones)
 {
+    private const string MetodoRegresionLineal = "regresion-lineal";
+    private const string MetodoPromedioSuave = "promedio-suave";
+
     public async Task<ProyeccionInflacionResultadoDto> EjecutarAsync(
         ProyeccionInflacionSolicitudDto solicitud,
         int? ejecutadoPorUsuarioId,
@@ -30,10 +36,29 @@ public sealed class ProyectarInflacionUseCase(
             .Select(x => (x.Anio, x.PorcentajeInflacion))
             .ToList();
 
-        if (historicos.Count < 3)
-            throw new InvalidOperationException("Se requieren al menos 3 datos históricos para proyectar con el método conservador.");
+        var metodoConfigurado = (inflacionOpciones.Value.MetodoProyeccion ?? MetodoRegresionLineal)
+            .Trim()
+            .ToLowerInvariant();
 
-        var proyecciones = servicioProyeccion.ProyectarPromedioSuave(historicos, solicitud.AnioDesde, solicitud.AnioHasta);
+        IReadOnlyList<(int anio, decimal porcentaje)> proyecciones;
+        var fuenteProyeccion = "Proyeccion lineal";
+
+        if (metodoConfigurado == MetodoPromedioSuave)
+        {
+            if (historicos.Count < 3)
+                throw new InvalidOperationException("Se requieren al menos 3 datos históricos para proyectar con promedio suave.");
+
+            proyecciones = servicioProyeccion.ProyectarPromedioSuave(historicos, solicitud.AnioDesde, solicitud.AnioHasta);
+            fuenteProyeccion = "Proyeccion promedio suave";
+        }
+        else
+        {
+            if (historicos.Count < 2)
+                throw new InvalidOperationException("Se requieren al menos 2 datos históricos para proyectar con regresión lineal.");
+
+            proyecciones = servicioProyeccion.ProyectarRegresionLineal(historicos, solicitud.AnioDesde, solicitud.AnioHasta);
+            metodoConfigurado = MetodoRegresionLineal;
+        }
 
         var creados = 0;
         var actualizados = 0;
@@ -46,7 +71,7 @@ public sealed class ProyectarInflacionUseCase(
             if (existente is null)
             {
                 await repositorioInflacionAnual.AgregarAsync(
-                    new InflacionAnual(anio, porcentaje, "Proyeccion lineal", "Estimacion"),
+                    new InflacionAnual(anio, porcentaje, fuenteProyeccion, "Estimacion"),
                     usuarioId,
                     cancellationToken);
                 creados++;
@@ -61,7 +86,7 @@ public sealed class ProyectarInflacionUseCase(
             }
 
             existente.CambiarPorcentajeInflacion(porcentaje);
-            existente.CambiarFuente("Proyeccion lineal", "Estimacion");
+            existente.CambiarFuente(fuenteProyeccion, "Estimacion");
             await repositorioInflacionAnual.ActualizarAsync(existente, usuarioId, cancellationToken);
             actualizados++;
         }
@@ -84,7 +109,7 @@ public sealed class ProyectarInflacionUseCase(
                 entidadNombre: "ProyeccionInflacion",
                 entidadId: $"{solicitud.AnioDesde}-{solicitud.AnioHasta}",
                 accionNombre: "PROYECCION_GENERADA",
-                resumenTexto: $"Proyección conservadora generada. Creados={creados}, actualizados={actualizados}, omitidos={omitidos}.",
+                resumenTexto: $"Proyección ({metodoConfigurado}) generada. Creados={creados}, actualizados={actualizados}, omitidos={omitidos}.",
                 ejecutadoPorUsuarioId: usuarioId,
                 cancellationToken: cancellationToken);
         }

@@ -59,11 +59,45 @@ Notas tecnicas recientes:
 - Se ejecuto seed inicial de roles, permisos y usuario administrador.
 - Se corrigio la rehidratacion de Id en creacion de usuario antes de asignar rol.
 
+Epic 3:
+
+- KAN-10 CRUD Inflacion + validacion (RF-IN-01/RF-IN-02): implementado.
+- KAN-11 Proyeccion y grafico de inflacion: implementado con metodo configurable.
+- KAN-12 Solo lectura para modulos dependientes + endurecimiento RBAC: implementado.
+
+Estado de cierre parcial Epic 3:
+
+- Se separaron ramas y commits por KAN para trazabilidad.
+- Proyeccion de inflacion configurada por opcion (`regresion-lineal` por defecto, `promedio-suave` opcional).
+- Se mantiene soporte de ajuste manual sobre valores proyectados.
+- Se reforzo el guardado de rol/permisos para evitar perdida de rol al editar usuarios.
+- Se restringio auditoria a Administrador con permiso `AUD.VER`.
+- Se corrigio el contador de sesion por inactividad para evitar que quede congelado.
+- Se agregaron placeholders de modulos en desarrollo para pruebas de permisos por rol.
+
 ## Roadmap inmediato
 
-1. Iniciar Epic 3 con KAN-10: CRUD Inflacion + validacion (RF-IN-01/02), prioridad tier-1 backend/frontend.
-2. Tomar como base de desarrollo todo lo consolidado en `develop` antes de implementar KAN-10.
+1. Integrar modulos consumidores (Sueldos, Demanda, Mantenimiento, Costos y Gastos) para consumir directamente el contrato de solo lectura de inflacion.
+2. Completar pantallas funcionales de modulos con placeholder actualmente habilitados por permisos (Carreras, Proyecciones, Analisis Financiero, Configuracion, Reportes).
 3. Mantener integracion por historia tecnica en ramas `feature/KAN-xx` y merge secuencial hacia `develop`.
+
+## Dependencias de inflacion (solo lectura)
+
+La inflacion se administra en su propio modulo (KAN-10) y se expone para consumo en solo lectura en modulos dependientes.
+
+```text
+Inflacion (fuente unica de verdad)
+	-> Sueldos
+	-> Demanda
+	-> Mantenimiento
+	-> Costos y Gastos
+```
+
+Reglas:
+
+- Los modulos consumidores no deben editar ni eliminar datos de inflacion.
+- Las variaciones por modulo se gestionan como logica de calculo local, no como mutacion del dato base de inflacion.
+- El use case de consumo para dependientes retorna datos marcados con `SoloLectura = true`.
 
 ## Estrategia de ramas
 

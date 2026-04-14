@@ -216,9 +216,10 @@ public sealed partial class EditarUsuarioViewModel : ObservableObject
                 return;
             }
 
+            // Se envía el estado deseado completo para que el use case
+            // calcule el delta real contra el rol objetivo seleccionado.
             overrides = ModulosPermisos
                 .SelectMany(m => m.Permisos)
-                .Where(p => p.TieneAcceso != p.EsDeRolBase)
                 .Select(p => new PermisoOverrideDto { PermisoId = p.PermisoId, Concedido = p.TieneAcceso })
                 .ToList();
         }

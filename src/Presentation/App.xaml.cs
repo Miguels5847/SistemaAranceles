@@ -77,6 +77,8 @@ public partial class App
         // Configuración de sesión
         var timeoutMinutes = int.TryParse(config["Session:TimeoutMinutes"], out var t) ? t : 30;
         servicios.Configure<SesionOpciones>(opts => opts.TimeoutMinutes = timeoutMinutes);
+        servicios.Configure<InflacionOpciones>(opts =>
+            opts.MetodoProyeccion = config["Inflacion:MetodoProyeccion"] ?? "regresion-lineal");
 
         // Estado de sesión (singleton)
         servicios.AddSingleton<SesionActual>();
@@ -104,6 +106,7 @@ public partial class App
         servicios.AddTransient<ImportarInflacionBceArchivoUseCase>();
         servicios.AddTransient<ImportarInflacionBceUseCase>();
         servicios.AddTransient<ProyectarInflacionUseCase>();
+        servicios.AddTransient<ObtenerInflacionProyectadaParaDependientesUseCase>();
 
         // ViewModels
         servicios.AddTransient<LoginViewModel>();
@@ -128,8 +131,9 @@ public partial class App
 
             var mainWindow = _proveedor!.GetRequiredService<MainWindow>();
 
-            // Resetear actividad ante cualquier movimiento o tecla en la ventana principal
-            mainWindow.PreviewMouseMove += (_, _) => _servicioInactividad?.ResetarActividad();
+            // Resetear actividad solo en interacciones intencionales (evita que el contador quede pegado en 44:59)
+            mainWindow.PreviewMouseDown += (_, _) => _servicioInactividad?.ResetarActividad();
+            mainWindow.PreviewMouseWheel += (_, _) => _servicioInactividad?.ResetarActividad();
             mainWindow.PreviewKeyDown += (_, _) => _servicioInactividad?.ResetarActividad();
 
             mainWindow.Show();

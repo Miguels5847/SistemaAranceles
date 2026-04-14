@@ -126,7 +126,7 @@ public sealed partial class MainViewModel : ObservableObject
             {
                 Titulo = "Carreras",
                 Icono = "🎓",
-                Comando = new RelayCommand(() => MensajePagina = "Módulo Carreras — disponible en Épica 3")
+                Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Carreras", "Épica 3"))
             });
         }
 
@@ -146,7 +146,7 @@ public sealed partial class MainViewModel : ObservableObject
             {
                 Titulo = "Proyecciones",
                 Icono = "📊",
-                Comando = new RelayCommand(() => MensajePagina = "Módulo Proyecciones — disponible en Épica 4")
+                Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Proyecciones", "Épica 4"))
             });
         }
 
@@ -156,7 +156,27 @@ public sealed partial class MainViewModel : ObservableObject
             {
                 Titulo = "Análisis Financiero",
                 Icono = "💰",
-                Comando = new RelayCommand(() => MensajePagina = "Módulo Análisis Financiero — disponible en Épica 5")
+                Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Análisis Financiero", "Épica 5"))
+            });
+        }
+
+        if (_sesionActual.TienePermiso("CFG.VER"))
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Configuración",
+                Icono = "⚙️",
+                Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Configuración", "Pendiente"))
+            });
+        }
+
+        if (_sesionActual.TienePermiso("REP.VER"))
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Reportes",
+                Icono = "📄",
+                Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Reportes", "Pendiente"))
             });
         }
 
@@ -178,6 +198,12 @@ public sealed partial class MainViewModel : ObservableObject
         });
 
         Bienvenida = $"Bienvenido, {_sesionActual.NombreCompleto}  |  Rol: {_sesionActual.RolNombre}";
+    }
+
+    private void MostrarModuloEnDesarrollo(string modulo, string epica)
+    {
+        PaginaActual = null;
+        MensajePagina = $"Módulo {modulo} — en desarrollo ({epica}). Se habilitó menú por permisos para pruebas de acceso por rol.";
     }
 
     [RelayCommand]
