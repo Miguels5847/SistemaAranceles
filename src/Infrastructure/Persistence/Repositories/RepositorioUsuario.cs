@@ -5,6 +5,7 @@ using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Domain.Enums;
 using SistemaAranceles.Domain.ValueObjects;
 using System.Globalization;
+using System.Data.Common;
 using UsuarioDominio = SistemaAranceles.Domain.Entities.Usuario;
 using UsuarioPersistencia = SistemaAranceles.Infrastructure.Persistence.Entidades.Usuario;
 
@@ -41,13 +42,7 @@ public sealed class RepositorioUsuario(
             var hash = reader.GetString(3);
             var estado = reader.GetString(4);
 
-            DateTime? ultimoAcceso = null;
-            if (!await reader.IsDBNullAsync(5, cancellationToken))
-            {
-                var ultimoAccesoTexto = reader.GetString(5);
-                if (DateTime.TryParse(ultimoAccesoTexto, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var parsed))
-                    ultimoAcceso = DateTime.SpecifyKind(parsed, DateTimeKind.Utc);
-            }
+            var ultimoAcceso = await LeerFechaUtcAsync(reader, 5, cancellationToken);
 
             usuarios.Add(MapearADominio(id, nombreCompleto, correo, hash, estado, ultimoAcceso));
         }
@@ -85,13 +80,7 @@ public sealed class RepositorioUsuario(
             var hash = reader.GetString(3);
             var estado = reader.GetString(4);
 
-            DateTime? ultimoAcceso = null;
-            if (!await reader.IsDBNullAsync(5, cancellationToken))
-            {
-                var ultimoAccesoTexto = reader.GetString(5);
-                if (DateTime.TryParse(ultimoAccesoTexto, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var parsed))
-                    ultimoAcceso = DateTime.SpecifyKind(parsed, DateTimeKind.Utc);
-            }
+            var ultimoAcceso = await LeerFechaUtcAsync(reader, 5, cancellationToken);
 
             return MapearADominio(idUsuario, nombreCompleto, correo, hash, estado, ultimoAcceso);
         }
@@ -131,13 +120,7 @@ public sealed class RepositorioUsuario(
             var hash = reader.GetString(3);
             var estado = reader.GetString(4);
 
-            DateTime? ultimoAcceso = null;
-            if (!await reader.IsDBNullAsync(5, cancellationToken))
-            {
-                var ultimoAccesoTexto = reader.GetString(5);
-                if (DateTime.TryParse(ultimoAccesoTexto, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var parsed))
-                    ultimoAcceso = DateTime.SpecifyKind(parsed, DateTimeKind.Utc);
-            }
+            var ultimoAcceso = await LeerFechaUtcAsync(reader, 5, cancellationToken);
 
             return MapearADominio(idUsuario, nombreCompleto, correoLeido, hash, estado, ultimoAcceso);
         }
@@ -449,5 +432,36 @@ public sealed class RepositorioUsuario(
             Estado = dominio.Estado.ToString(),
             UltimoAccesoEn = dominio.UltimoAccesoEn
         };
+    }
+
+    private static async Task<DateTime?> LeerFechaUtcAsync(
+        DbDataReader reader,
+        int ordinal,
+        CancellationToken cancellationToken)
+    {
+        if (await reader.IsDBNullAsync(ordinal, cancellationToken))
+            return null;
+
+        var fieldType = reader.GetFieldType(ordinal);
+        if (fieldType == typeof(DateTime))
+        {
+            var valor = reader.GetDateTime(ordinal);
+            return valor.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(valor, DateTimeKind.Utc)
+                : valor.ToUniversalTime();
+        }
+
+        if (fieldType == typeof(DateTimeOffset))
+        {
+            return reader.GetFieldValue<DateTimeOffset>(ordinal).UtcDateTime;
+        }
+
+        var fechaTexto = reader.GetString(ordinal);
+        if (!DateTime.TryParse(fechaTexto, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var parsed))
+            return null;
+
+        return parsed.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(parsed, DateTimeKind.Utc)
+            : parsed.ToUniversalTime();
     }
 }

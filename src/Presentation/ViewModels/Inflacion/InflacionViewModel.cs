@@ -125,7 +125,8 @@ public sealed partial class InflacionViewModel : ObservableObject
     private string _mensajeExito = string.Empty;
 
     public bool PuedeVer => _sesionActual.TienePermiso("INF.VER");
-    public bool PuedeEditar => _sesionActual.TienePermiso("INF.ED");
+    // Compatibilidad temporal durante la migracion de permisos INF.ED -> INF.EDITAR.
+    public bool PuedeEditar => _sesionActual.TienePermiso("INF.EDITAR") || _sesionActual.TienePermiso("INF.ED");
 
     public string TituloFormulario => EstaEditando
         ? "Editar registro de inflación"
