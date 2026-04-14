@@ -122,12 +122,12 @@
                             Value="True"/>
                     <Style.Triggers>
                         <Trigger Property="IsMouseOver"
-                                Value="True">
+                                 Value="True">
                             <Setter Property="Background"
                                     Value="#E8EAF6"/>
                         </Trigger>
                         <Trigger Property="IsSelected"
-                                Value="True">
+                                 Value="True">
                             <Setter Property="Background"
                                     Value="#C5CAE9"/>
                         </Trigger>
@@ -136,7 +136,7 @@
             </DataGrid.RowStyle>
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Fecha"
-                                    Binding="{Binding EventoEnUtc, StringFormat=\{0:dd/MM/yyyy HH:mm:ss\}}"
+                                    Binding="{Binding EventoEnUtc, Converter={StaticResource UtcToEcuadorDateTimeConverter}, StringFormat=\{0:dd/MM/yyyy HH:mm:ss\}}"
                                     Width="170"/>
                 <DataGridTextColumn Header="Usuario"
                                     Binding="{Binding EjecutadoPorUsuarioNombre}"

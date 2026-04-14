@@ -108,3 +108,31 @@ Se aplicara una estrategia GitFlow simple:
 - feature/KAN-xx: desarrollo por historia tecnica.
 
 Cada avance se integra primero en develop y posteriormente en main cuando cumpla los criterios de cierre del hito.
+
+# Restore
+
+## Backup (para un solo archivo restaurable):
+
+Formato: Custom
+Filename: public_full.backup
+Dump options #1:
+Only schema: No
+Only data: No
+Include blobs: No (si no usas blobs)
+Dump options #2:
+Use INSERT commands: opcional
+No owner: Yes
+No privileges: Yes
+Objects:
+Schema: solo public
+No incluir realtime, storage, auth, extensions internas
+
+## Restore (ese mismo archivo):
+
+Archivo: public_full.backup
+Pre-data: Yes
+Data: Yes
+Post-data: Yes
+No owner: Yes
+No privileges: Yes
+Clean before restore: solo en entorno de prueba, no en producción
