@@ -687,25 +687,26 @@ El lote 02 solo se considera cerrado cuando:
 
 ---
 
-### Lotes pendientes - Fase 3 (02-05)
+### Lotes pendientes - Fase 3 (03-05)
 
-#### Lote 02 (Académico-Operativo)
+#### Lote 02 (Académico-Operativo) - Cerrado
 
-**Tablas a migrar:**
+- Este lote ya fue ejecutado y validado en base de prueba y en Supabase.
+- Scripts creados y probados:
+  - [KAN14_fase3_lote02_academico_operativo_precheck.sql](sql/KAN14_fase3_lote02_academico_operativo_precheck.sql)
+  - [KAN14_fase3_lote02_academico_operativo_apply.sql](sql/KAN14_fase3_lote02_academico_operativo_apply.sql)
+  - [KAN14_fase3_lote02_academico_operativo_postcheck.sql](sql/KAN14_fase3_lote02_academico_operativo_postcheck.sql)
+  - [KAN14_fase3_lote02_academico_operativo_rollback.sql](sql/KAN14_fase3_lote02_academico_operativo_rollback.sql)
 
-- `carrera`: `creado_en`, `actualizado_en`, `eliminado_en`
-- `escenario_proyeccion`: `creado_en`, `actualizado_en`, `eliminado_en`
-- `periodo_academico`: `creado_en`, `actualizado_en`, `eliminado_en`
-- `configuracion_carga_docente`: `creado_en`, `actualizado_en`, `eliminado_en`
-- `detalle_proyeccion_estudiantes`: `creado_en`, `actualizado_en`, `eliminado_en`
-- `detalle_simulacion_retencion`: `creado_en`, `actualizado_en`, `eliminado_en`
-- `simulacion_retencion`: `creado_en`, `actualizado_en`, `eliminado_en`
-
-**Impacto en módulos:** Épicas 4, 5 (carreras, escenarios, proyecciones académicas).
+**Impacto ya cubierto:** Épicas 4, 5 (carreras, escenarios, proyecciones académicas).
 
 ---
 
 #### Lote 03 (Costos/Operativo)
+
+**Objetivo del lote**
+
+Migrar a `timestamptz` las columnas de auditoría temporal del bloque de costos/operativo sin romper los flujos de sueldos, materiales, servicios y depreciación.
 
 **Tablas a migrar:**
 
@@ -719,11 +720,67 @@ El lote 02 solo se considera cerrado cuando:
 - `proyeccion_material_insumo`: `creado_en`, `actualizado_en`, `eliminado_en`
 - `proyeccion_requerimiento_docente`: `creado_en`, `actualizado_en`, `eliminado_en`
 
-**Impacto en módulos:** Épicas 6, 7, 8 (sueldos, materiales, servicios, depreciación).
+**Scripts creados para el lote 03**
+
+1. [KAN14_fase3_lote03_costos_operativo_precheck.sql](sql/KAN14_fase3_lote03_costos_operativo_precheck.sql).
+2. [KAN14_fase3_lote03_costos_operativo_apply.sql](sql/KAN14_fase3_lote03_costos_operativo_apply.sql).
+3. [KAN14_fase3_lote03_costos_operativo_postcheck.sql](sql/KAN14_fase3_lote03_costos_operativo_postcheck.sql).
+4. [KAN14_fase3_lote03_costos_operativo_rollback.sql](sql/KAN14_fase3_lote03_costos_operativo_rollback.sql).
+
+**Estado del lote 03**
+
+- Scripts ejecutados y validados en base local y en Supabase.
+- Postcheck de Supabase sin diferencias de filas: todas las tablas objetivo devolvieron `filas = 0` en la validación reportada.
+- Lote 03 cerrado operacionalmente.
+
+**Orden operativo del lote 03**
+
+1. Ejecutar precheck primero en la base de prueba local.
+2. Confirmar que `total_invalidos_lote03 = 0` antes de aplicar.
+3. Ejecutar apply solo si el precheck queda limpio.
+4. Ejecutar postcheck y validar:
+
+- Conteo de filas sin cambios.
+- Tipos finales en `timestamptz` para las tablas del lote.
+- Coherencia de datos en costos, materiales, servicios y depreciación.
+
+5. Si falla algo, ejecutar rollback y detener el avance.
+6. Cuando la base de prueba quede correcta, repetir exactamente la secuencia en Supabase.
+
+**Resultado validado del lote 03 en Supabase**
+
+1. `KAN14_fase3_lote03_costos_operativo_precheck.sql`: `total_invalidos_lote03 = 0`.
+2. `KAN14_fase3_lote03_costos_operativo_apply.sql`: ejecutado con éxito.
+3. `KAN14_fase3_lote03_costos_operativo_postcheck.sql`: sin diferencias de filas en las tablas objetivo.
+4. El esquema del bloque costos/operativo quedó consistente para avanzar al siguiente lote.
+
+**Validación funcional requerida después del apply en Supabase**
+
+1. Levantar la aplicación con el esquema nuevo.
+2. Verificar que los flujos de costos/operativo no arrojen errores de casteo o lectura de fechas.
+3. Confirmar que no aparezcan regresiones en los módulos que consumen estas tablas.
+4. Registrar cualquier ajuste de código que haga falta solo después de validar la base migrada.
+
+**Criterio de cierre del lote 03**
+
+El lote 03 solo se considera cerrado cuando:
+
+1. El precheck, apply y postcheck pasan en la base de prueba.
+2. El mismo lote se ejecuta con éxito en Supabase.
+3. La aplicación arranca y mantiene el comportamiento esperado sin romper los flujos de costos.
+
+**Estado actual del lote 03**
+
+- Cerrado.
+- Listo para avanzar con el lote 04.
 
 ---
 
 #### Lote 04 (Financiero)
+
+**Objetivo del lote**
+
+Migrar a `timestamptz` las columnas de auditoría temporal del bloque financiero sin romper los flujos de análisis financiero, balance y reportes.
 
 **Tablas a migrar:**
 
@@ -734,9 +791,20 @@ El lote 02 solo se considera cerrado cuando:
 
 **Impacto en módulos:** Épicas 9, 10, 11 (análisis financiero, balance, reportes).
 
+**Siguiente secuencia recomendada para el lote 04**
+
+1. Preparar `precheck`, `apply`, `postcheck` y `rollback`.
+2. Ejecutar primero en la base local.
+3. Validar `total_invalidos_lote04 = 0` antes de aplicar.
+4. Repetir la misma secuencia en Supabase solo si la validación local queda limpia.
+
 ---
 
 #### Lote 05 (Complementario)
+
+**Objetivo del lote**
+
+Cerrar cualquier tabla restante con `TEXT` timestamps que no haya quedado cubierta por los lotes 02, 03 y 04.
 
 **Tablas a migrar (si las hay restantes):**
 
@@ -747,6 +815,12 @@ El lote 02 solo se considera cerrado cuando:
 1. Generar scripts precheck/apply/postcheck/rollback similares a Lote 01.
 2. Validar smoke tests nuevamente tras cada lote.
 3. Realizar backup Supabase tras cada lote exitoso (o al menos tras lote 02).
+
+**Siguiente secuencia recomendada para el lote 05**
+
+1. Confirmar qué tablas siguen pendientes después de los lotes 02-04.
+2. Preparar scripts solo si realmente quedan tablas por migrar.
+3. Ejecutar la misma secuencia segura: precheck, apply, postcheck y rollback.
 
 ---
 
