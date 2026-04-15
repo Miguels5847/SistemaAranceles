@@ -789,14 +789,33 @@ Migrar a `timestamptz` las columnas de auditoría temporal del bloque financiero
 - `resumen_proyeccion_financiera`: `creado_en`, `actualizado_en`, `eliminado_en`
 - `configuracion_arancel`: `creado_en`, `actualizado_en`, `eliminado_en`
 
+**Scripts creados para el lote 04**
+
+1. [KAN14_fase3_lote04_financiero_precheck.sql](sql/KAN14_fase3_lote04_financiero_precheck.sql).
+2. [KAN14_fase3_lote04_financiero_apply.sql](sql/KAN14_fase3_lote04_financiero_apply.sql).
+3. [KAN14_fase3_lote04_financiero_postcheck.sql](sql/KAN14_fase3_lote04_financiero_postcheck.sql).
+4. [KAN14_fase3_lote04_financiero_rollback.sql](sql/KAN14_fase3_lote04_financiero_rollback.sql).
+
+**Estado del lote 04**
+
+- Scripts ejecutados y validados en base local y en Supabase.
+- Postcheck de Supabase sin diferencias de filas: todas las tablas objetivo devolvieron `filas = 0` en la validación reportada.
+- Lote 04 cerrado operacionalmente.
+
 **Impacto en módulos:** Épicas 9, 10, 11 (análisis financiero, balance, reportes).
 
 **Siguiente secuencia recomendada para el lote 04**
 
-1. Preparar `precheck`, `apply`, `postcheck` y `rollback`.
-2. Ejecutar primero en la base local.
-3. Validar `total_invalidos_lote04 = 0` antes de aplicar.
-4. Repetir la misma secuencia en Supabase solo si la validación local queda limpia.
+1. Lote 04 ya completado en local y Supabase.
+2. Continuar con validación funcional de aplicación sobre flujos de Épicas 9-11.
+3. Mantener script rollback para ventana de observación.
+
+**Resultado validado del lote 04 en Supabase**
+
+1. `KAN14_fase3_lote04_financiero_precheck.sql`: `total_invalidos_lote04 = 0`.
+2. `KAN14_fase3_lote04_financiero_apply.sql`: ejecutado con éxito.
+3. `KAN14_fase3_lote04_financiero_postcheck.sql`: sin diferencias de filas en las tablas objetivo.
+4. El esquema del bloque financiero quedó consistente para cierre de fase de timestamps.
 
 ---
 
@@ -804,7 +823,12 @@ Migrar a `timestamptz` las columnas de auditoría temporal del bloque financiero
 
 **Objetivo del lote**
 
-Cerrar cualquier tabla restante con `TEXT` timestamps que no haya quedado cubierta por los lotes 02, 03 y 04.
+Lote actualmente vacío: no quedan tablas con `TEXT` timestamps pendientes dentro del inventario cubierto por los lotes 02, 03 y 04.
+
+**Estado actual del lote 05**
+
+- Sin ejecución requerida por ahora.
+- Se mantiene como lote de contingencia por si aparece una tabla adicional no inventariada.
 
 **Tablas a migrar (si las hay restantes):**
 
@@ -818,9 +842,9 @@ Cerrar cualquier tabla restante con `TEXT` timestamps que no haya quedado cubier
 
 **Siguiente secuencia recomendada para el lote 05**
 
-1. Confirmar qué tablas siguen pendientes después de los lotes 02-04.
-2. Preparar scripts solo si realmente quedan tablas por migrar.
-3. Ejecutar la misma secuencia segura: precheck, apply, postcheck y rollback.
+1. Revalidar el inventario solo si aparece una tabla nueva o se detecta una omisión documental.
+2. Preparar scripts únicamente si surge una tabla adicional fuera del alcance actual.
+3. Mientras no aparezcan nuevas tablas, no ejecutar lote 05.
 
 ---
 
