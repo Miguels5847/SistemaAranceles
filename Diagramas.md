@@ -604,6 +604,89 @@ Smoke test ejecutado tras deploy de código (Fase 2) en local con Supabase produ
 
 ---
 
+### Ejecución planificada - Lote 02 (Académico-Operativo)
+
+#### Objetivo del lote
+
+Migrar a `timestamptz` las columnas de auditoría temporal del bloque académico-operativo sin romper los flujos de carreras, escenarios, períodos y proyecciones académicas.
+
+#### Alcance del lote 02
+
+1. `carrera`: `creado_en`, `actualizado_en`, `eliminado_en`.
+2. `escenario_proyeccion`: `creado_en`, `actualizado_en`, `eliminado_en`.
+3. `periodo_academico`: `creado_en`, `actualizado_en`, `eliminado_en`.
+4. `configuracion_carga_docente`: `creado_en`, `actualizado_en`, `eliminado_en`.
+5. `detalle_proyeccion_estudiantes`: `creado_en`, `actualizado_en`, `eliminado_en`.
+6. `detalle_simulacion_retencion`: `creado_en`, `actualizado_en`, `eliminado_en`.
+7. `simulacion_retencion`: `creado_en`, `actualizado_en`, `eliminado_en`.
+
+#### Scripts creados para el lote 02
+
+1. [KAN14_fase3_lote02_academico_operativo_precheck.sql](sql/KAN14_fase3_lote02_academico_operativo_precheck.sql).
+2. [KAN14_fase3_lote02_academico_operativo_apply.sql](sql/KAN14_fase3_lote02_academico_operativo_apply.sql).
+3. [KAN14_fase3_lote02_academico_operativo_postcheck.sql](sql/KAN14_fase3_lote02_academico_operativo_postcheck.sql).
+4. [KAN14_fase3_lote02_academico_operativo_rollback.sql](sql/KAN14_fase3_lote02_academico_operativo_rollback.sql).
+
+#### Orden operativo del lote 02
+
+1. Ejecutar precheck en la base de prueba local.
+2. Confirmar que no existan valores inválidos o no convertibles en las columnas objetivo.
+3. Ejecutar apply solo si el precheck devuelve `total_invalidos_lote02 = 0`.
+4. Ejecutar postcheck y validar:
+
+- Conteo de filas sin cambios.
+- Tipos finales en `timestamptz` para todas las columnas del lote.
+- Consulta de control sobre las tablas del bloque académico-operativo.
+
+5. Si algo falla, ejecutar rollback del lote y no avanzar a Supabase.
+6. Si la base de prueba queda correcta, repetir exactamente la misma secuencia en Supabase.
+
+#### Validación funcional requerida después del apply en Supabase
+
+1. Levantar la aplicación con el esquema nuevo.
+2. Verificar que los flujos académicos y de proyección no arrojen errores de casteo o lectura de fechas.
+3. Confirmar que no aparezcan regresiones en pantallas o use cases que consuman estas tablas.
+4. Registrar cualquier ajuste de código que haga falta solo después de validar la base migrada.
+
+#### Verificación de código realizada sobre el lote 02 (2026-04-14)
+
+1. Persistencia tipada confirmada en [src/Infrastructure/Persistence/Configuraciones/ConfiguracionesInicialesKan03.cs](src/Infrastructure/Persistence/Configuraciones/ConfiguracionesInicialesKan03.cs):
+
+- `carrera`, `escenario_proyeccion`, `periodo_academico`, `configuracion_carga_docente`, `detalle_proyeccion_estudiantes`, `detalle_simulacion_retencion` y `simulacion_retencion` siguen mapeando `creado_en`, `actualizado_en` y `eliminado_en` como propiedades `DateTime` del dominio.
+- No se detectó parseo de texto para esas columnas en el mapeo EF.
+- `configuracion_carga_docente` ya incluye `horas_tecnico_estandar`, por lo que el modelo y el esquema siguen alineados.
+
+2. Cobertura de `DbSet` confirmada en [src/Infrastructure/Persistence/ContextoAplicacion.cs](src/Infrastructure/Persistence/ContextoAplicacion.cs):
+
+- Existen `DbSet` para `Carrera`, `PeriodoAcademico`, `EscenarioProyeccion`, `ConfiguracionCargaDocente`, `DetalleProyeccionEstudiantes`, `DetalleSimulacionRetencion` y `SimulacionRetencion`.
+- No hay desalineación de nombres en los conjuntos usados por EF Core para este lote.
+
+3. CRUD de carreras validado en [src/Infrastructure/Persistence/Repositories/RepositorioCarrera.cs](src/Infrastructure/Persistence/Repositories/RepositorioCarrera.cs):
+
+- `ListarAsync`, `ObtenerPorIdAsync`, `ObtenerPorCodigoAsync`, `ExisteCodigoAsync`, `AgregarAsync` y `ActualizarAsync` siguen presentes.
+- El repositorio trabaja con entidades tipadas y no contiene lectura de fechas como texto para este flujo.
+
+4. Navegación actual de la app revisada en [src/Presentation/ViewModels/MainViewModel.cs](src/Presentation/ViewModels/MainViewModel.cs):
+
+- El menú sigue mostrando `Usuarios`, `Carreras`, `Inflación`, `Proyecciones`, `Análisis Financiero`, `Configuración`, `Reportes` y `Auditoría` según permisos.
+- `Carreras` todavía se abre como módulo en desarrollo, así que no existe todavía una pantalla funcional para validar en UI los flujos del lote 02.
+- Para este lote, la validación real de programa debe concentrarse en login, carga de menú, ausencia de excepciones de fechas y en los módulos ya operativos.
+
+5. Conclusión de la verificación de código:
+
+- No se requiere ajuste de código inmediato para consumar el Lote 02.
+- El siguiente paso correcto sigue siendo aplicar el lote 02 en Supabase y validar que la app no rompa al arrancar con el esquema ya migrado.
+
+#### Criterio de cierre del lote 02
+
+El lote 02 solo se considera cerrado cuando:
+
+1. El precheck, apply y postcheck pasan en la base de prueba.
+2. El mismo lote se ejecuta con éxito en Supabase.
+3. La aplicación arranca y mantiene el comportamiento esperado sin romper los flujos académicos.
+
+---
+
 ### Lotes pendientes - Fase 3 (02-05)
 
 #### Lote 02 (Académico-Operativo)
