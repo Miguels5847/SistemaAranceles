@@ -961,6 +961,43 @@ Seguridad endurecida sin bloqueo funcional de la app.
 
 Bloqueo total/parcial de lecturas y escrituras por políticas RLS incorrectas.
 
+### Ejecución planificada - Fase 5 Lote 01 (Permisos)
+
+#### Scripts creados para Lote 01
+
+1. [sql/KAN14_fase5_lote01_permisos_precheck.sql](sql/KAN14_fase5_lote01_permisos_precheck.sql).
+2. [sql/KAN14_fase5_lote01_permisos_apply.sql](sql/KAN14_fase5_lote01_permisos_apply.sql).
+3. [sql/KAN14_fase5_lote01_permisos_postcheck.sql](sql/KAN14_fase5_lote01_permisos_postcheck.sql).
+4. [sql/KAN14_fase5_lote01_permisos_rollback.sql](sql/KAN14_fase5_lote01_permisos_rollback.sql).
+
+#### Alcance del Lote 01
+
+1. Garantizar existencia activa de: `CFG.VER`, `CFG.EDITAR`, `REP.VER`, `REP.EXPORTAR`, `CA.ELIMINAR`.
+2. Asignar esos permisos al rol `Administrador`.
+3. Mantener este lote sin cambios de RLS para evitar bloqueo funcional temprano.
+
+#### Orden operativo (primero base de respaldo/local, luego Supabase)
+
+1. Ejecutar `KAN14_fase5_lote01_permisos_precheck.sql` en base local.
+2. Ejecutar `KAN14_fase5_lote01_permisos_apply.sql`.
+3. Ejecutar `KAN14_fase5_lote01_permisos_postcheck.sql` y validar:
+
+- `total_errores_lote01_permisos = 0`.
+
+4. Si falla algo, ejecutar `KAN14_fase5_lote01_permisos_rollback.sql`.
+5. Si local queda estable, repetir la secuencia en Supabase.
+
+#### Gate de cierre Lote 01
+
+1. `Administrador` con permisos completos `CFG.*`, `REP.*` y `CA.ELIMINAR`.
+2. Menú por permisos de configuración/reportes sin regresiones visibles.
+
+#### Siguiente paso dentro de Fase 5 (Lote 02 - RLS)
+
+1. Confirmar rol real de conexión de la app por entorno.
+2. Definir y aplicar RLS de forma progresiva por tabla crítica (staging primero).
+3. Validar E2E antes de producción.
+
 ---
 
 ## Fase 6 - Actualización de diagramas y documentos (obligatoria para handoff)
