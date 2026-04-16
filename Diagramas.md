@@ -992,11 +992,49 @@ Bloqueo total/parcial de lecturas y escrituras por políticas RLS incorrectas.
 1. `Administrador` con permisos completos `CFG.*`, `REP.*` y `CA.ELIMINAR`.
 2. Menú por permisos de configuración/reportes sin regresiones visibles.
 
+#### Resultado validado de Lote 01 en Supabase (2026-04-15)
+
+1. `KAN14_fase5_lote01_permisos_precheck.sql`: diagnóstico de RLS ejecutado y sin bloqueantes de tablas faltantes.
+2. `KAN14_fase5_lote01_permisos_apply.sql`: ejecutado con éxito.
+3. `KAN14_fase5_lote01_permisos_postcheck.sql`: `total_errores_lote01_permisos = 0`.
+4. Lote 01 de Fase 5 considerado **cerrado**.
+
 #### Siguiente paso dentro de Fase 5 (Lote 02 - RLS)
 
 1. Confirmar rol real de conexión de la app por entorno.
 2. Definir y aplicar RLS de forma progresiva por tabla crítica (staging primero).
 3. Validar E2E antes de producción.
+
+### Ejecución planificada - Fase 5 Lote 02 (RLS)
+
+#### Scripts creados para Lote 02
+
+1. [sql/KAN14_fase5_lote02_rls_precheck.sql](sql/KAN14_fase5_lote02_rls_precheck.sql).
+2. [sql/KAN14_fase5_lote02_rls_apply.sql](sql/KAN14_fase5_lote02_rls_apply.sql).
+3. [sql/KAN14_fase5_lote02_rls_postcheck.sql](sql/KAN14_fase5_lote02_rls_postcheck.sql).
+4. [sql/KAN14_fase5_lote02_rls_rollback.sql](sql/KAN14_fase5_lote02_rls_rollback.sql).
+
+#### Alcance del Lote 02
+
+1. Habilitar RLS progresivo sobre tablas críticas transversales: `usuario`, `rol`, `permiso`, `rol_permiso`, `usuario_permiso_override`, `sesion_usuario`, `auditoria_log`.
+2. Crear política de continuidad `kan14_lote02_app_rw` para roles de app detectados (`authenticated`, `service_role`, `postgres`, `current_user`).
+3. Preparar rollback inmediato para evitar bloqueo funcional en caso de regresión.
+
+#### Orden operativo (primero base de respaldo/local, luego Supabase)
+
+1. Ejecutar `KAN14_fase5_lote02_rls_precheck.sql` en base local.
+2. Confirmar `tablas_faltantes = 0`.
+3. Ejecutar `KAN14_fase5_lote02_rls_apply.sql`.
+4. Ejecutar `KAN14_fase5_lote02_rls_postcheck.sql` y validar `total_errores_lote02_rls = 0`.
+5. Si falla algo o hay corte funcional, ejecutar `KAN14_fase5_lote02_rls_rollback.sql`.
+6. Si local queda estable, repetir exactamente la secuencia en Supabase.
+
+#### Validación funcional obligatoria tras APPLY de Lote 02
+
+1. Login y carga de menú por rol sin errores de acceso.
+2. CRUD usuarios (listar/crear/editar/baja lógica) sin bloqueos por RLS.
+3. Auditoría visible para administrador y no visible para visualizador.
+4. Flujo de sesión (login/logout/revocación) sin errores de permisos SQL.
 
 ---
 
