@@ -846,8 +846,6 @@ Lote actualmente vacío: no quedan tablas con `TEXT` timestamps pendientes dentr
 2. Preparar scripts únicamente si surge una tabla adicional fuera del alcance actual.
 3. Mientras no aparezcan nuevas tablas, no ejecutar lote 05.
 
----
-
 ## Fase 4 - Booleanos y consistencia de estado
 
 ### Objetivo
@@ -870,6 +868,68 @@ Corregir deuda de tipos booleanos y alinear estado funcional de usuarios.
 ### Gate para avanzar
 
 Gestión de usuarios estable y consistente sin falsos activos.
+
+### Ejecución planificada - Fase 4 (Booleanos)
+
+#### Scripts creados para Fase 4
+
+1. [KAN14_fase4_booleanos_precheck.sql](sql/KAN14_fase4_booleanos_precheck.sql).
+2. [KAN14_fase4_booleanos_apply.sql](sql/KAN14_fase4_booleanos_apply.sql).
+3. [KAN14_fase4_booleanos_postcheck.sql](sql/KAN14_fase4_booleanos_postcheck.sql).
+4. [KAN14_fase4_booleanos_rollback.sql](sql/KAN14_fase4_booleanos_rollback.sql).
+
+#### Alcance técnico de Fase 4
+
+1. Migración de todas las columnas `esta_activo` detectadas en `public.*` de `integer/smallint/bigint` a `boolean`.
+2. Migración específica de `balance_proyectado.cuadra_balance` de `integer` a `boolean`.
+3. Normalización de `usuario.estado` a catálogo canónico (`Activo`, `Suspendido`, `Inactivo`).
+4. Corrección de consistencia en `usuario`: `esta_activo = (estado = 'Activo')`.
+
+#### Orden operativo (primero base de respaldo/local, luego Supabase)
+
+1. Ejecutar `KAN14_fase4_booleanos_precheck.sql` en base local.
+2. Confirmar que `total_invalidos_fase4 = 0`.
+3. Ejecutar `KAN14_fase4_booleanos_apply.sql`.
+4. Ejecutar `KAN14_fase4_booleanos_postcheck.sql` y validar:
+
+- `columnas_no_boolean = 0`.
+- `activos_inconsistentes = 0`.
+- `no_activos_inconsistentes = 0`.
+- `estados_fuera_catalogo = 0`.
+
+5. Si falla algo, ejecutar `KAN14_fase4_booleanos_rollback.sql` y detener avance.
+6. Si local queda estable, repetir exactamente la misma secuencia en Supabase.
+
+#### Resultado validado de Fase 4 en Supabase (2026-04-15)
+
+1. `KAN14_fase4_booleanos_precheck.sql`: `total_invalidos_fase4 = 0`.
+2. `KAN14_fase4_booleanos_apply.sql`: ejecutado con éxito (conversiones aplicadas y columnas ya booleanas omitidas de forma idempotente).
+3. `KAN14_fase4_booleanos_postcheck.sql`: `columnas_no_boolean = 0`.
+4. Conversión de `balance_proyectado.cuadra_balance` confirmada durante el apply.
+
+#### Estado de cierre de Fase 4
+
+1. Cierre técnico de esquema: **cumplido** (local + Supabase).
+2. Cierre funcional de aplicación: **pendiente de validación smoke** (login y gestión de usuarios).
+
+#### Alineación de código aplicada para evitar regresión
+
+1. [src/Infrastructure/Persistence/Repositories/RepositorioUsuario.cs](src/Infrastructure/Persistence/Repositories/RepositorioUsuario.cs): en `ActualizarAsync`, al cambiar estado ahora también se actualiza `esta_activo` de forma consistente (`Activo => true`, resto => `false`).
+
+#### Validación funcional obligatoria tras APPLY en Supabase
+
+1. Login con usuario `Activo`: acceso permitido.
+2. Login con usuario `Suspendido` o `Inactivo`: acceso bloqueado con mensaje esperado.
+3. Gestión de usuarios:
+
+- Cambiar a `Activo` deja `esta_activo = true`.
+- Cambiar a `Suspendido/Inactivo` deja `esta_activo = false`.
+- Baja lógica mantiene ambos campos coherentes.
+
+4. Smoke técnico:
+
+- Build de solución sin errores.
+- Sin excepciones ORM por conversión de booleanos en consultas/filtros.
 
 ---
 

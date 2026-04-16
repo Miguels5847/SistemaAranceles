@@ -150,8 +150,8 @@ public sealed class RepositorioUsuario(
         await using var transaction = await contextoAplicacion.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            // INSERT directo con RETURNING para: (a) evitar mismatch bool→integer en esta_activo,
-            // (b) obtener el id real generado por la BD (EF no rehidrata la entidad tras SaveChanges).
+            // INSERT directo con RETURNING para obtener el id real generado por la BD
+            // (EF no rehidrata la entidad tras SaveChanges).
             var connection = (NpgsqlConnection)contextoAplicacion.Database.GetDbConnection();
             var dbTx = (NpgsqlTransaction)contextoAplicacion.Database.CurrentTransaction!.GetDbTransaction();
 
@@ -220,6 +220,7 @@ public sealed class RepositorioUsuario(
                 .SetProperty(x => x.CorreoInstitucional, usuario.CorreoInstitucional.ToString())
                 .SetProperty(x => x.HashContrasena, usuario.HashContrasena)
                 .SetProperty(x => x.Estado, usuario.Estado.ToString())
+                .SetProperty(x => x.EstaActivo, usuario.Estado == EstadoUsuario.Activo)
                 .SetProperty(x => x.UltimoAccesoEn, usuario.UltimoAccesoEn), cancellationToken);
     }
 
