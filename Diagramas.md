@@ -1036,6 +1036,19 @@ Bloqueo total/parcial de lecturas y escrituras por políticas RLS incorrectas.
 3. Auditoría visible para administrador y no visible para visualizador.
 4. Flujo de sesión (login/logout/revocación) sin errores de permisos SQL.
 
+#### Resultado validado de Lote 02 en Supabase (2026-04-15)
+
+1. `KAN14_fase5_lote02_rls_precheck.sql`: `tablas_faltantes = 0`.
+2. `KAN14_fase5_lote02_rls_apply.sql`: ejecutado con éxito, creando política `kan14_lote02_app_rw` en tablas críticas.
+3. `KAN14_fase5_lote02_rls_postcheck.sql`: `total_errores_lote02_rls = 0`.
+4. Lote 02 de Fase 5 considerado **cerrado técnicamente** en local y Supabase.
+
+#### Estado restante de Fase 5
+
+1. Ejecutar smoke funcional final de aplicación con RLS activo (login, menú por rol, CRUD usuarios, auditoría, sesión).
+2. Endurecimiento fino de RLS (migrar de política abierta de continuidad a políticas específicas por tabla/acción).
+3. Cierre documental final de Fase 5 con evidencia E2E.
+
 ---
 
 ## Fase 6 - Actualización de diagramas y documentos (obligatoria para handoff)
