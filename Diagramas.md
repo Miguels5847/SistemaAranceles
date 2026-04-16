@@ -1096,8 +1096,10 @@ Bloqueo total/parcial de lecturas y escrituras por políticas RLS incorrectas.
 
 1. Login con `Administrador`, `Analista` y `Visualizador` sin errores de acceso SQL/RLS.
 2. Menú dinámico:
+
 - `Administrador`: ve `Usuarios`, `Configuración`, `Reportes`, `Auditoría`.
 - `Visualizador`: no ve `Auditoría`.
+
 3. Gestión de usuarios (como `Administrador`): listar, crear, editar, baja lógica y reactivar.
 4. Cambio de rol de usuario (por ejemplo a `Visualizador`) y recarga de menú conforme a permisos.
 5. Sesión: login -> cerrar sesión -> nuevo login sin errores de persistencia/revocación.
@@ -1111,8 +1113,10 @@ Bloqueo total/parcial de lecturas y escrituras por políticas RLS incorrectas.
 
 #### Cierre de Fase 5
 
-1. Si el checklist funcional anterior pasa en local y Supabase, Fase 5 se considera **cerrada**.
-2. Siguiente fase recomendada: Fase 6 (actualización de diagramas/documentación de handoff).
+1. Checklist funcional ejecutado y validado tras Lote 03 (login, menú por rol, CRUD usuarios, sesión, auditoría e inflación).
+2. Fase 5 se considera **cerrada técnicamente y funcionalmente** en local y Supabase.
+3. Los scripts de rollback de los lotes 01-03 se mantienen como contingencia durante ventana de observación.
+4. Siguiente fase activa: **Fase 6** (actualización progresiva de diagramas/documentación de handoff).
 
 ---
 
@@ -1132,6 +1136,45 @@ Dejar la documentación sincronizada con el código real para que próximos chat
 ### Gate de cierre
 
 Documentación alineada con código real y validada por checklist final.
+
+### Ejecución incremental propuesta (paso a paso)
+
+1. Trabajar por lotes documentales pequeños (1 diagrama por ciclo), con commit independiente por diagrama.
+2. Para cada diagrama: actualizar `.puml` + registrar evidencia en esta sección + validar consistencia con BD/código.
+3. No mezclar cambios de varios dominios en un mismo commit (ejemplo: no combinar ER + secuencia en un solo lote).
+
+### Lotes sugeridos de Fase 6 (según prioridad ya identificada)
+
+1. **F6-L01**: `BD-03A-Costos operativos, activos y gastos.puml` (crítico).
+2. **F6-L02**: `DC-01 Dominio Transversal Seguridad y Auditoria.puml` (crítico).
+3. **F6-L03**: `Diagrama-Secuencia-3-Proyección de inflación.puml` (crítico).
+4. **F6-L04**: `Diagrama-Secuencia-2-Gestión de usuarios y control de acceso por rol.puml`.
+5. **F6-L05**: `DC-02.1 — Inflación.puml`.
+6. **F6-L06**: `BD-02 Persistencia Academico-Operativa.puml`.
+7. **F6-L07**: `BD-03B-Persistencia Financiera.puml`.
+8. **F6-L08**: `Diagrama-Secuencia-1-Autenticación y gestión de sesión.puml`.
+9. **F6-L09**: `BD-01 Persistencia Transversal y Académica Core.puml`.
+
+### Estado de avance de Fase 6
+
+| Lote   | Diagrama objetivo                                                           | Estado      | Observación             |
+| ------ | --------------------------------------------------------------------------- | ----------- | ----------------------- |
+| F6-L01 | `BD-03A-Costos operativos, activos y gastos.puml`                           | Planificado | Próximo lote a ejecutar |
+| F6-L02 | `DC-01 Dominio Transversal Seguridad y Auditoria.puml`                      | Planificado | Pendiente               |
+| F6-L03 | `Diagrama-Secuencia-3-Proyección de inflación.puml`                         | Planificado | Pendiente               |
+| F6-L04 | `Diagrama-Secuencia-2-Gestión de usuarios y control de acceso por rol.puml` | Planificado | Pendiente               |
+| F6-L05 | `DC-02.1 — Inflación.puml`                                                  | Planificado | Pendiente               |
+| F6-L06 | `BD-02 Persistencia Academico-Operativa.puml`                               | Planificado | Pendiente               |
+| F6-L07 | `BD-03B-Persistencia Financiera.puml`                                       | Planificado | Pendiente               |
+| F6-L08 | `Diagrama-Secuencia-1-Autenticación y gestión de sesión.puml`               | Planificado | Pendiente               |
+| F6-L09 | `BD-01 Persistencia Transversal y Académica Core.puml`                      | Planificado | Pendiente               |
+
+### Gate por lote documental (obligatorio antes del siguiente)
+
+1. El `.puml` actualizado refleja el estado real del código/BD vigente.
+2. No quedan métodos, permisos o nombres de clases/interfaces fantasma en el diagrama intervenido.
+3. Se actualiza este `Diagramas.md` con estado del lote: `Planificado` -> `En ejecución` -> `Cerrado`.
+4. Commit único del lote con mensaje trazable (`KAN14 Fase 6 Lote XX: ...`).
 
 ---
 
