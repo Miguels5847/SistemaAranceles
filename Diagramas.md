@@ -1049,6 +1049,71 @@ Bloqueo total/parcial de lecturas y escrituras por políticas RLS incorrectas.
 2. Endurecimiento fino de RLS (migrar de política abierta de continuidad a políticas específicas por tabla/acción).
 3. Cierre documental final de Fase 5 con evidencia E2E.
 
+### Ejecución planificada - Fase 5 Lote 03 (RLS Endurecimiento fino)
+
+#### Scripts creados para Lote 03
+
+1. [sql/KAN14_fase5_lote03_rls_endurecimiento_precheck.sql](sql/KAN14_fase5_lote03_rls_endurecimiento_precheck.sql).
+2. [sql/KAN14_fase5_lote03_rls_endurecimiento_apply.sql](sql/KAN14_fase5_lote03_rls_endurecimiento_apply.sql).
+3. [sql/KAN14_fase5_lote03_rls_endurecimiento_postcheck.sql](sql/KAN14_fase5_lote03_rls_endurecimiento_postcheck.sql).
+4. [sql/KAN14_fase5_lote03_rls_endurecimiento_rollback.sql](sql/KAN14_fase5_lote03_rls_endurecimiento_rollback.sql).
+
+#### Alcance del Lote 03
+
+1. Reemplazar la política amplia `kan14_lote02_app_rw` por políticas separadas por operación:
+
+- `kan14_lote03_read`
+- `kan14_lote03_insert`
+- `kan14_lote03_update`
+- `kan14_lote03_delete`
+
+2. Mantener continuidad funcional con los roles de app detectados (`authenticated`, `service_role`, `postgres`, `current_user` existente).
+3. Conservar rollback inmediato para regresar al esquema de continuidad del Lote 02 si hay regresión.
+
+#### Orden operativo (primero base de respaldo/local, luego Supabase)
+
+1. Ejecutar `KAN14_fase5_lote03_rls_endurecimiento_precheck.sql` en base local.
+2. Confirmar gate: `total_bloqueantes_lote03_rls = 0`.
+3. Ejecutar `KAN14_fase5_lote03_rls_endurecimiento_apply.sql`.
+4. Ejecutar `KAN14_fase5_lote03_rls_endurecimiento_postcheck.sql` y validar `total_errores_lote03_rls = 0`.
+5. Ejecutar smoke funcional de aplicación (login, menú por rol, CRUD usuarios, auditoría, sesión).
+6. Si algo falla, ejecutar `KAN14_fase5_lote03_rls_endurecimiento_rollback.sql`.
+7. Si local queda estable, repetir exactamente la secuencia en Supabase.
+
+#### Gate de cierre Lote 03
+
+1. `total_errores_lote03_rls = 0` en local y Supabase.
+2. Cero regresiones funcionales en pruebas E2E críticas de seguridad y operación.
+
+#### Resultado validado de Lote 03 en Supabase (2026-04-15)
+
+1. `KAN14_fase5_lote03_rls_endurecimiento_precheck.sql`: `total_bloqueantes_lote03_rls = 0`.
+2. `KAN14_fase5_lote03_rls_endurecimiento_apply.sql`: ejecutado con éxito y políticas finas creadas por tabla.
+3. `KAN14_fase5_lote03_rls_endurecimiento_postcheck.sql`: `total_errores_lote03_rls = 0`.
+4. Lote 03 de Fase 5 considerado **cerrado técnicamente** en local y Supabase.
+
+#### Checklist exacto de pruebas en la app (post-Lote 03)
+
+1. Login con `Administrador`, `Analista` y `Visualizador` sin errores de acceso SQL/RLS.
+2. Menú dinámico:
+- `Administrador`: ve `Usuarios`, `Configuración`, `Reportes`, `Auditoría`.
+- `Visualizador`: no ve `Auditoría`.
+3. Gestión de usuarios (como `Administrador`): listar, crear, editar, baja lógica y reactivar.
+4. Cambio de rol de usuario (por ejemplo a `Visualizador`) y recarga de menú conforme a permisos.
+5. Sesión: login -> cerrar sesión -> nuevo login sin errores de persistencia/revocación.
+6. Auditoría: consulta y paginación de registros sin errores (solo para admin).
+7. Inflación: listar/crear/editar/eliminar para validar que RLS no afectó módulos existentes.
+
+#### Revisión de código tras endurecimiento RLS
+
+1. No se identifica cambio obligatorio de código por RLS en esta etapa: las políticas de Lote 03 mantienen continuidad para roles de app detectados.
+2. Hallazgos de análisis estático existentes (trazas `Trace.WriteLine`, complejidad, recomendaciones async) son deuda previa y no bloquean el cierre funcional de Fase 5.
+
+#### Cierre de Fase 5
+
+1. Si el checklist funcional anterior pasa en local y Supabase, Fase 5 se considera **cerrada**.
+2. Siguiente fase recomendada: Fase 6 (actualización de diagramas/documentación de handoff).
+
 ---
 
 ## Fase 6 - Actualización de diagramas y documentos (obligatoria para handoff)
