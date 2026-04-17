@@ -20,15 +20,28 @@ public sealed class SesionActual
 
     /// <summary>
     /// Verifica si el usuario tiene un permiso por su código (ej. "US.VER").
-    /// Si los permisos no pudieron cargarse, usa fallback por rol (EsAdministrador).
+    /// 
+    /// Lógica:
+    /// 1) Si permisos se cargaron correctamente → verificar en el set.
+    /// 2) Si permisos están vacíos pero se cargaron:
+    ///    - Administrador → tiene todos (fallback true).
+    ///    - Otros → no tienen (fallback false) para evitar mostrar menú vacío.
+    /// 3) Si permisos NO se cargaron (timeout persistente) → fallback por rol (admin=true).
     /// </summary>
     public bool TienePermiso(string codigo)
     {
-        // Permisos cargados y con contenido → usarlos
+        // 1) Si permisos se cargaron y tienen contenido, usarlos
         if (_permisosEfectivosCargados && PermisosEfectivos.Count > 0)
             return PermisosEfectivos.Contains(codigo);
 
-        // Fallback: si los permisos no cargaron (o la tabla permiso está vacía), usar rol
+        // 2) Si permisos se cargaron pero están vacíos (ej. rol Visualizador sin permisos)
+        if (_permisosEfectivosCargados && PermisosEfectivos.Count == 0)
+        {
+            // Solo admin puede acceder a todo cuando permisos están vacíos
+            return EsAdministrador;
+        }
+
+        // 3) Si permisos NO se cargaron (timeout persistente), fallback por rol
         return EsAdministrador;
     }
 

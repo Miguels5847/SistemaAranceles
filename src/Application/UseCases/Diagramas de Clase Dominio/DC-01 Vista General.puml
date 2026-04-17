@@ -1,0 +1,130 @@
+@startuml DC-01 Vista General
+top to bottom direction
+scale 0.88
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+skinparam arrowColor Black
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 20
+skinparam ranksep 30
+
+title DC-01 Vista General: Dominio Transversal - Seguridad y Auditoría\n(Ver DC-01.1 Autenticación · DC-01.2 Gestión de Usuarios · DC-01.3 RBAC y Permisos · DC-01.4 Auditoría)
+
+package "Domain" #EFF6FF {
+    class Usuario
+    class Rol
+    class Permiso
+    class UsuarioRol
+    class RolPermiso
+    class UsuarioPermisoOverride
+    class SesionUsuario
+    class AuditoriaLog
+
+    Usuario -[hidden]-> Rol
+    Rol -[hidden]-> Permiso
+    Permiso -[hidden]-> UsuarioRol
+    UsuarioRol -[hidden]-> RolPermiso
+    RolPermiso -[hidden]-> UsuarioPermisoOverride
+    UsuarioPermisoOverride -[hidden]-> SesionUsuario
+    SesionUsuario -[hidden]-> AuditoriaLog
+}
+
+package "Application" #F0FDF4 {
+    interface IRepositorioUsuario <<Interface>>
+    interface IRepositorioSesionUsuario <<Interface>>
+    interface IRepositorioPermiso <<Interface>>
+    interface IAuditoriaServicio <<Interface>>
+    class LoginUseCase <<UseCase>>
+    class CerrarSesionUseCase <<UseCase>>
+    class CrearUsuarioUseCase <<UseCase>>
+    class ActualizarUsuarioUseCase <<UseCase>>
+    class EliminarUsuarioUseCase <<UseCase>>
+    class ListarUsuariosUseCase <<UseCase>>
+    class ObtenerUsuarioUseCase <<UseCase>>
+    class ObtenerPermisosEfectivosUsuarioUseCase <<UseCase>>
+    class ActualizarPermisosUsuarioUseCase <<UseCase>>
+    class ConsultarAuditoriaUseCase <<UseCase>>
+
+    IRepositorioUsuario -[hidden]-> IRepositorioSesionUsuario
+    IRepositorioSesionUsuario -[hidden]-> IRepositorioPermiso
+    IRepositorioPermiso -[hidden]-> IAuditoriaServicio
+    IAuditoriaServicio -[hidden]-> LoginUseCase
+    LoginUseCase -[hidden]-> CerrarSesionUseCase
+    CerrarSesionUseCase -[hidden]-> CrearUsuarioUseCase
+    CrearUsuarioUseCase -[hidden]-> ActualizarUsuarioUseCase
+    ActualizarUsuarioUseCase -[hidden]-> ObtenerPermisosEfectivosUsuarioUseCase
+    ObtenerPermisosEfectivosUsuarioUseCase -[hidden]-> ConsultarAuditoriaUseCase
+}
+
+package "Infrastructure" #FFF7ED {
+    class RepositorioUsuario <<Repository>>
+    class RepositorioSesionUsuario <<Repository>>
+    class RepositorioPermiso <<Repository>>
+    class ServicioAuditoria <<Service>>
+
+    RepositorioUsuario -[hidden]-> RepositorioSesionUsuario
+    RepositorioSesionUsuario -[hidden]-> RepositorioPermiso
+    RepositorioPermiso -[hidden]-> ServicioAuditoria
+}
+
+package "Presentation" #FDF4FF {
+    class LoginViewModel <<ViewModel>>
+    class UsuariosViewModel <<ViewModel>>
+    class EditarUsuarioViewModel <<ViewModel>>
+    class AuditoriaViewModel <<ViewModel>>
+
+    LoginViewModel -[hidden]-> UsuariosViewModel
+    UsuariosViewModel -[hidden]-> EditarUsuarioViewModel
+    EditarUsuarioViewModel -[hidden]-> AuditoriaViewModel
+}
+
+Domain -[hidden]-> Application
+Application -[hidden]-> Infrastructure
+Infrastructure -[hidden]-> Presentation
+
+' Dominio
+Usuario "1" --> "0..*" UsuarioRol : tiene
+Rol "1" --> "0..*" UsuarioRol : tiene
+Rol "1" --> "0..*" RolPermiso : tiene
+Permiso "1" --> "0..*" RolPermiso : tiene
+Usuario "1" --> "0..*" UsuarioPermisoOverride : override
+Usuario "1" --> "0..*" SesionUsuario : tiene
+Usuario "1" --> "0..*" AuditoriaLog : genera
+
+' Implementaciones
+RepositorioUsuario ..|> IRepositorioUsuario : implementa
+RepositorioSesionUsuario ..|> IRepositorioSesionUsuario : implementa
+RepositorioPermiso ..|> IRepositorioPermiso : implementa
+ServicioAuditoria ..|> IAuditoriaServicio : implementa
+
+' Use cases → interfaces
+LoginUseCase --> IRepositorioUsuario : usa
+LoginUseCase --> IRepositorioSesionUsuario : usa
+LoginUseCase --> IRepositorioPermiso : usa
+LoginUseCase --> IAuditoriaServicio : usa
+CerrarSesionUseCase --> IRepositorioSesionUsuario : usa
+CerrarSesionUseCase --> IAuditoriaServicio : usa
+CrearUsuarioUseCase --> IRepositorioUsuario : usa
+ActualizarUsuarioUseCase --> IRepositorioUsuario : usa
+EliminarUsuarioUseCase --> IRepositorioUsuario : usa
+ListarUsuariosUseCase --> IRepositorioUsuario : usa
+ObtenerPermisosEfectivosUsuarioUseCase --> IRepositorioPermiso : usa
+ActualizarPermisosUsuarioUseCase --> IRepositorioPermiso : usa
+ConsultarAuditoriaUseCase --> IAuditoriaServicio : usa
+
+' Presentación
+LoginViewModel --> LoginUseCase : invoca
+LoginViewModel --> CerrarSesionUseCase : invoca
+UsuariosViewModel --> ListarUsuariosUseCase : invoca
+UsuariosViewModel --> CrearUsuarioUseCase : invoca
+UsuariosViewModel --> EliminarUsuarioUseCase : invoca
+EditarUsuarioViewModel --> ActualizarUsuarioUseCase : invoca
+EditarUsuarioViewModel --> ObtenerPermisosEfectivosUsuarioUseCase : invoca
+EditarUsuarioViewModel --> ActualizarPermisosUsuarioUseCase : invoca
+AuditoriaViewModel --> ConsultarAuditoriaUseCase : invoca
+@enduml

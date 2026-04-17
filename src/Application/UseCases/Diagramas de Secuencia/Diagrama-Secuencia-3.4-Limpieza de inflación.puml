@@ -1,0 +1,53 @@
+@startuml DS-03.4-Limpieza-Inflacion
+title <b><size:18>DS-03.4 — Limpieza de Inflación</size></b>
+
+skinparam participant {
+    FontSize 11
+    FontStyle normal
+}
+skinparam actor {
+    FontSize 11
+}
+skinparam note {
+    FontSize 11
+}
+skinparam sequenceMessageAlign center
+
+actor "Planificador"
+participant "InflacionViewModel"
+participant "LimpiarInflacionUseCase"
+participant "IRepositorioInflacionAnual"
+participant "IUnidadTrabajo"
+participant "IAuditoriaServicio"
+database "Base de Datos" as db
+
+note over "Planificador","db"
+Flujo: Eliminar TODOS los registros de inflación anual y proyectada
+Opera en transacción explícita — rollback automático ante error
+end note
+
+"Planificador" -> "InflacionViewModel" : Confirma limpieza total de inflación
+"InflacionViewModel" -> "LimpiarInflacionUseCase" : EjecutarAsync(ejecutadoPorUsuarioId)
+
+"LimpiarInflacionUseCase" -> "IUnidadTrabajo" : IniciarTransaccionAsync()
+"IUnidadTrabajo" -> "db" : BEGIN TRANSACTION
+
+"LimpiarInflacionUseCase" -> "IRepositorioInflacionAnual" : LimpiarTodoAsync()
+"IRepositorioInflacionAnual" -> "db" : DELETE FROM inflacion_anual (all)\nDELETE FROM inflacion_proyectada (all)
+"db" --> "IRepositorioInflacionAnual" : (anualesEliminados, proyectadasEliminadas)
+"IRepositorioInflacionAnual" --> "LimpiarInflacionUseCase" : (int anuales, int proyectadas)
+
+alt Éxito
+    "LimpiarInflacionUseCase" -> "IUnidadTrabajo" : ConfirmarTransaccionAsync()
+    "IUnidadTrabajo" -> "db" : COMMIT
+    "LimpiarInflacionUseCase" -> "IAuditoriaServicio" : RegistrarAsync("Inflacion", "Inflacion", "ALL", "LIMPIAR",\n"Anuales={anuales}, Proyectadas={proyectadas}", ...)
+    note right : Fire-and-forget — no bloquea si falla auditoría
+    "LimpiarInflacionUseCase" --> "InflacionViewModel" : LimpiarInflacionResultadoDto\n{ RegistrosAnualesEliminados, RegistrosProyectadosEliminados }
+    "InflacionViewModel" --> "Planificador" : Muestra confirmación con totales eliminados
+else Error en LimpiarTodoAsync
+    "LimpiarInflacionUseCase" -> "IUnidadTrabajo" : RevertirTransaccionAsync()
+    "IUnidadTrabajo" -> "db" : ROLLBACK
+    "LimpiarInflacionUseCase" --> "InflacionViewModel" : Exception propagada
+    "InflacionViewModel" --> "Planificador" : Muestra error — datos no modificados
+end
+@enduml

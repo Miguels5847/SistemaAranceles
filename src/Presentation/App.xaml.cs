@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.Options;
 using SistemaAranceles.Application.UseCases.Auditoria;
 using SistemaAranceles.Application.UseCases.Autenticacion;
+using SistemaAranceles.Application.UseCases.Inflacion;
 using SistemaAranceles.Application.UseCases.Usuarios;
 using SistemaAranceles.Application.UseCases.Permisos;
 using SistemaAranceles.Infrastructure.DI;
@@ -17,6 +18,7 @@ using SistemaAranceles.Presentation.Services;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.ViewModels;
 using SistemaAranceles.Presentation.ViewModels.Auditoria;
+using SistemaAranceles.Presentation.ViewModels.Inflacion;
 using SistemaAranceles.Presentation.ViewModels.Usuarios;
 using SistemaAranceles.Presentation.Views;
 
@@ -75,6 +77,8 @@ public partial class App
         // Configuración de sesión
         var timeoutMinutes = int.TryParse(config["Session:TimeoutMinutes"], out var t) ? t : 30;
         servicios.Configure<SesionOpciones>(opts => opts.TimeoutMinutes = timeoutMinutes);
+        servicios.Configure<InflacionOpciones>(opts =>
+            opts.MetodoProyeccion = config["Inflacion:MetodoProyeccion"] ?? "regresion-lineal");
 
         // Estado de sesión (singleton)
         servicios.AddSingleton<SesionActual>();
@@ -93,11 +97,21 @@ public partial class App
         servicios.AddTransient<ObtenerPermisosEfectivosUsuarioUseCase>();
         servicios.AddTransient<ActualizarPermisosUsuarioUseCase>();
         servicios.AddTransient<ConsultarAuditoriaUseCase>();
+        servicios.AddTransient<ListarInflacionAnualUseCase>();
+        servicios.AddTransient<CrearInflacionAnualUseCase>();
+        servicios.AddTransient<ActualizarInflacionAnualUseCase>();
+        servicios.AddTransient<EliminarInflacionAnualUseCase>();
+        servicios.AddTransient<ImportarInflacionUseCase>();
+        servicios.AddTransient<LimpiarInflacionUseCase>();
+        servicios.AddTransient<ImportarInflacionBceArchivoUseCase>();
+        servicios.AddTransient<ProyectarInflacionUseCase>();
+        servicios.AddTransient<ObtenerInflacionProyectadaParaDependientesUseCase>();
 
         // ViewModels
         servicios.AddTransient<LoginViewModel>();
         servicios.AddTransient<UsuariosViewModel>();
         servicios.AddTransient<AuditoriaViewModel>();
+        servicios.AddTransient<InflacionViewModel>();
         servicios.AddTransient<EditarUsuarioViewModel>();
         servicios.AddTransient<Func<EditarUsuarioViewModel>>(sp =>
             () => sp.GetRequiredService<EditarUsuarioViewModel>());
@@ -116,8 +130,9 @@ public partial class App
 
             var mainWindow = _proveedor!.GetRequiredService<MainWindow>();
 
-            // Resetear actividad ante cualquier movimiento o tecla en la ventana principal
-            mainWindow.PreviewMouseMove += (_, _) => _servicioInactividad?.ResetarActividad();
+            // Resetear actividad solo en interacciones intencionales (evita que el contador quede pegado en 44:59)
+            mainWindow.PreviewMouseDown += (_, _) => _servicioInactividad?.ResetarActividad();
+            mainWindow.PreviewMouseWheel += (_, _) => _servicioInactividad?.ResetarActividad();
             mainWindow.PreviewKeyDown += (_, _) => _servicioInactividad?.ResetarActividad();
 
             mainWindow.Show();

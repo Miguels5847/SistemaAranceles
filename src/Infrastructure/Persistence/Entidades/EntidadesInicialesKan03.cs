@@ -54,7 +54,7 @@ public sealed class UsuarioPermisoOverride
     public int UsuarioId { get; set; }
     public int PermisoId { get; set; }
     public bool Concedido { get; set; }
-    public string CreadoEn { get; set; } = string.Empty;
+    public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
     public int? CreadoPorUsuarioId { get; set; }
 
     public Usuario? Usuario { get; set; }

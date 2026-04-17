@@ -1,0 +1,74 @@
+@startuml
+title <b><size:18>DS-02.2 — Actualizar Usuario</size></b>
+
+' Configuración de estilos
+skinparam participantFontSize 11
+skinparam participantFontStyle normal
+skinparam actorFontSize 11
+skinparam noteFontSize 11
+skinparam sequenceMessageAlign center
+
+' Definición de participantes con alias
+actor "Admin" as admin
+participant "UsuariosViewModel" as vm
+participant "SesionActual" as sesion
+participant "ActualizarUsuarioUseCase" as uc
+participant "IRepositorioUsuario" as repoU
+participant "IRepositorioRol" as repoR
+participant "IUnidadTrabajo" as uow
+participant "IAuditoriaServicio" as audit
+database "Base de Datos" as db
+
+note over admin, db
+  Flujo: Actualizar usuario (estado, nombre, correo, rol, contraseña, permisos)
+  Estado: "Activo" | "Suspendido" | "Inactivo"
+  Permiso verificado en SesionActual (cargado en login — sin consulta a BD)
+  Código real: US.EDITAR
+end note
+
+admin -> vm : Edita usuario seleccionado
+vm -> sesion : TienePermiso("US.EDITAR")
+sesion --> vm : true | false
+
+vm -> uc : EjecutarAsync(ActualizarUsuarioDto, usuarioId, overrides?)
+
+uc -> repoU : ObtenerPorIdAsync(dto.Id)
+repoU -> db : SELECT * FROM usuario WHERE id = :id
+db --> repoU : entidad Usuario
+repoU --> uc : Usuario
+
+uc -> uc : Aplicar cambios de dominio\n(Nombre, Correo, Hash Pwd, Estado)
+
+uc -> repoR : ObtenerNombresDeRolesDelUsuarioAsync(dto.Id)
+repoR -> db : SELECT rol.nombre FROM rol JOIN usuario_rol...
+db --> repoR : roles actuales
+repoR --> uc : roles actuales
+
+uc -> uow : IniciarTransaccionAsync()
+uow -> db : BEGIN TRANSACTION
+
+alt Cambio de rol solicitado
+    uc -> repoR : QuitarRolDeUsuarioAsync + GuardarCambiosAsync
+    uc -> repoR : AsignarRolAUsuarioAsync(usuarioId, nuevoRolId)
+    repoR -> db : DELETE usuario_rol + INSERT usuario_rol
+end
+
+uc -> repoU : ActualizarAsync(usuario)
+repoU -> db : UPDATE usuario SET ... WHERE id = :id
+
+alt Overrides de permisos incluidos
+    uc -> repoR : ObtenerPermisoIdsDeRolAsync(rolId)
+    uc -> uow : GuardarOverridesAsync(usuarioId, overrides)
+    uow -> db : REPLACE INTO usuario_permiso_override
+end
+
+uc -> uow : ConfirmarTransaccionAsync()
+uow -> db : COMMIT
+db --> uow : OK
+
+uc -> audit : RegistrarAsync("ACTUALIZAR" + "CAMBIO_ROL"? + "CAMBIO_PERMISOS"?)
+note right : Fire-and-forget fuera de transacción
+
+uc --> vm : void (éxito)
+vm --> admin : Confirmación + recarga lista
+@enduml

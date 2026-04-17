@@ -22,9 +22,9 @@ participant "ActivoFijoRepository"
 participant "ResumenFinancieroRepository"
 participant "BalanceRepository"
 participant "ExportadorService"
-participant "Base de Datos"
+database "Base de Datos" as db
 
-note over "Admin","Base de Datos"
+note over "Admin","db"
 Flujo Principal - Balance proyectado e informe CES
 end note
 
@@ -32,18 +32,18 @@ end note
 "BalanceReporteViewModel" -> "GenerarBalanceUseCase": Ejecutar(escenarioId)
 
 "GenerarBalanceUseCase" -> "FinanciamientoRepository": ObtenerFinanciamiento(escenarioId)
-"FinanciamientoRepository" -> "Base de Datos": SELECT configuracion_financiamiento y amortizacion_cuota
-"Base de Datos" --> "FinanciamientoRepository": Financiamiento y cuotas
+"FinanciamientoRepository" -> "db": SELECT configuracion_financiamiento y amortizacion_cuota
+"db" --> "FinanciamientoRepository": Financiamiento y cuotas
 "FinanciamientoRepository" --> "GenerarBalanceUseCase": FinanciamientoDto
 
 "GenerarBalanceUseCase" -> "ActivoFijoRepository": ObtenerActivosFijos(escenarioId)
-"ActivoFijoRepository" -> "Base de Datos": SELECT activo_fijo con depreciacion acumulada
-"Base de Datos" --> "ActivoFijoRepository": Activos y depreciaciones
+"ActivoFijoRepository" -> "db": SELECT activo_fijo con depreciacion acumulada
+"db" --> "ActivoFijoRepository": Activos y depreciaciones
 "ActivoFijoRepository" --> "GenerarBalanceUseCase": ActivosDto
 
 "GenerarBalanceUseCase" -> "ResumenFinancieroRepository": ObtenerResumenPorAnio(escenarioId)
-"ResumenFinancieroRepository" -> "Base de Datos": SELECT resumen_proyeccion_financiera agrupado por anio
-"Base de Datos" --> "ResumenFinancieroRepository": Ingresos, costos y utilidades por año
+"ResumenFinancieroRepository" -> "db": SELECT resumen_proyeccion_financiera agrupado por anio
+"db" --> "ResumenFinancieroRepository": Ingresos, costos y utilidades por año
 "ResumenFinancieroRepository" --> "GenerarBalanceUseCase": ResumenAnualDto
 
 loop Por cada año del horizonte
@@ -57,7 +57,7 @@ loop Por cada año del horizonte
     end note
 
     "GenerarBalanceUseCase" -> "BalanceRepository": GuardarBalance(escenarioId, anio, activo, pasivo, patrimonio, cuadra)
-    "BalanceRepository" -> "Base de Datos": INSERT OR UPDATE balance_proyectado
+    "BalanceRepository" -> "db": INSERT ... ON CONFLICT DO UPDATE balance_proyectado
 end
 
 "GenerarBalanceUseCase" --> "BalanceReporteViewModel": BalanceDto por año con flag cuadraBalance
@@ -66,13 +66,13 @@ end
 "Admin" -> "BalanceReporteViewModel": Solicita generar informe CES
 "BalanceReporteViewModel" -> "GenerarReporteCESUseCase": Ejecutar(escenarioId)
 
-"GenerarReporteCESUseCase" -> "Base de Datos": SELECT datos de todos los módulos para el escenario
+"GenerarReporteCESUseCase" -> "db": SELECT datos de todos los módulos para el escenario
 
-note over "GenerarReporteCESUseCase","Base de Datos"
+note over "GenerarReporteCESUseCase","db"
 Consolida: estudiantes, docentes, costos, arancel, TIR, VAN, balance
 end note
 
-"Base de Datos" --> "GenerarReporteCESUseCase": Datos consolidados
+"db" --> "GenerarReporteCESUseCase": Datos consolidados
 
 "GenerarReporteCESUseCase" -> "GenerarReporteCESUseCase": EstructurarInformeCES(datos)
 
