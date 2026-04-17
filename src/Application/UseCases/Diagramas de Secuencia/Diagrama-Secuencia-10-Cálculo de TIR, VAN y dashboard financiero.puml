@@ -20,9 +20,9 @@ participant "ConfigTmrRepository"
 participant "CostoGastoRepository"
 participant "InversionRepository"
 participant "ResultadoAnalisisRepository"
-participant "Base de Datos"
+database "Base de Datos" as db
 
-note over "Planificador","Base de Datos"
+note over "Planificador","db"
 Flujo Principal - Cálculo de indicadores financieros
 end note
 
@@ -30,20 +30,20 @@ end note
 "DashboardFinancieroViewModel" -> "CalcularIndicadoresUseCase": Ejecutar(escenarioId)
 
 "CalcularIndicadoresUseCase" -> "ConfigTmrRepository": ObtenerTmr(escenarioId)
-"ConfigTmrRepository" -> "Base de Datos": SELECT configuracion_tmr
-"Base de Datos" --> "ConfigTmrRepository": Componentes TMR
+"ConfigTmrRepository" -> "db": SELECT configuracion_tmr
+"db" --> "ConfigTmrRepository": Componentes TMR
 "ConfigTmrRepository" --> "CalcularIndicadoresUseCase": TmrDto
 
 "CalcularIndicadoresUseCase" -> "CalcularIndicadoresUseCase": CalcularTMR(tasaBancaria, inflacion, premioRiesgo)
 
 "CalcularIndicadoresUseCase" -> "InversionRepository": ObtenerInversionInicial(escenarioId)
-"InversionRepository" -> "Base de Datos": SELECT configuracion_capital_trabajo y activo_fijo
-"Base de Datos" --> "InversionRepository": Inversión inicial
+"InversionRepository" -> "db": SELECT configuracion_capital_trabajo y activo_fijo
+"db" --> "InversionRepository": Inversión inicial
 "InversionRepository" --> "CalcularIndicadoresUseCase": InversionInicialDto
 
 "CalcularIndicadoresUseCase" -> "CostoGastoRepository": ObtenerFlujosAnuales(escenarioId)
-"CostoGastoRepository" -> "Base de Datos": SELECT costo_gasto_periodo agrupado por año
-"Base de Datos" --> "CostoGastoRepository": Ingresos y costos por año
+"CostoGastoRepository" -> "db": SELECT costo_gasto_periodo agrupado por año
+"db" --> "CostoGastoRepository": Ingresos y costos por año
 "CostoGastoRepository" --> "CalcularIndicadoresUseCase": FlujosDto
 
 "CalcularIndicadoresUseCase" -> "CalcularIndicadoresUseCase": ConstruirFlujoDeFondosNeto(inversionInicial, flujosAnuales)
@@ -79,7 +79,7 @@ end note
 "CalcularIndicadoresUseCase" -> "CalcularIndicadoresUseCase": EvaluarViabilidad(tir, tmr, van)
 
 "CalcularIndicadoresUseCase" -> "ResultadoAnalisisRepository": GuardarResultado(escenarioId, tir, van, pe, periodoRecup, esViable)
-"ResultadoAnalisisRepository" -> "Base de Datos": INSERT OR UPDATE resultado_analisis_financiero
+"ResultadoAnalisisRepository" -> "db": INSERT ... ON CONFLICT DO UPDATE resultado_analisis_financiero
 
 "CalcularIndicadoresUseCase" --> "DashboardFinancieroViewModel": IndicadoresDto (tir, van, pe, periodoRecup, esViable, arancelOptimo)
 "DashboardFinancieroViewModel" --> "Planificador": Muestra dashboard con semáforo verde/rojo por indicador

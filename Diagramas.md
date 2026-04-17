@@ -1157,17 +1157,43 @@ Documentación alineada con código real y validada por checklist final.
 
 ### Estado de avance de Fase 6
 
-| Lote   | Diagrama objetivo                                                           | Estado      | Observación             |
-| ------ | --------------------------------------------------------------------------- | ----------- | ----------------------- |
-| F6-L01 | `BD-03A-Costos operativos, activos y gastos.puml`                           | Planificado | Próximo lote a ejecutar |
-| F6-L02 | `DC-01 Dominio Transversal Seguridad y Auditoria.puml`                      | Planificado | Pendiente               |
-| F6-L03 | `Diagrama-Secuencia-3-Proyección de inflación.puml`                         | Planificado | Pendiente               |
-| F6-L04 | `Diagrama-Secuencia-2-Gestión de usuarios y control de acceso por rol.puml` | Planificado | Pendiente               |
-| F6-L05 | `DC-02.1 — Inflación.puml`                                                  | Planificado | Pendiente               |
-| F6-L06 | `BD-02 Persistencia Academico-Operativa.puml`                               | Planificado | Pendiente               |
-| F6-L07 | `BD-03B-Persistencia Financiera.puml`                                       | Planificado | Pendiente               |
-| F6-L08 | `Diagrama-Secuencia-1-Autenticación y gestión de sesión.puml`               | Planificado | Pendiente               |
-| F6-L09 | `BD-01 Persistencia Transversal y Académica Core.puml`                      | Planificado | Pendiente               |
+| Lote   | Diagrama objetivo                                                           | Estado     | Observación                                                             |
+| ------ | --------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------- |
+| F6-L01 | `BD-03A-Costos operativos, activos y gastos.puml`                           | ✅ Cerrado | Sincronizado con BD real (servicio_basico_mantenimiento añadido)        |
+| F6-L02 | `DC-01 Dominio Transversal Seguridad y Auditoria.puml`                      | ✅ Cerrado | Split en DC-01.1/.2/.3/.4; naming alineado al código                    |
+| F6-L03 | `Diagrama-Secuencia-3-Proyección de inflación.puml`                         | ✅ Cerrado | Split en DS-03.1/.2/.3/.4 (proyección, CRUD, importación BCE, limpieza) |
+| F6-L04 | `Diagrama-Secuencia-2-Gestión de usuarios y control de acceso por rol.puml` | ✅ Cerrado | Split en DS-02.1/.2/.3 con permisos `US.*` correctos                    |
+| F6-L05 | `DC-02.1 — Inflación.puml`                                                  | ✅ Cerrado | 9 use cases reales + 2 repositorios separados; consolidado con DC-02    |
+| F6-L06 | `BD-02 Persistencia Academico-Operativa.puml`                               | ✅ Cerrado | configuracion_arancel y carga_docente completos; bool aplicado          |
+| F6-L07 | `BD-03B-Persistencia Financiera.puml`                                       | ✅ Cerrado | balance_proyectado y resumen_proyeccion_financiera expandidos           |
+| F6-L08 | `Diagrama-Secuencia-1-Autenticación y gestión de sesión.puml`               | ✅ Cerrado | LoginUseCase + carga roles/permisos + RegistrarUltimoAcceso             |
+| F6-L09 | `BD-01 Persistencia Transversal y Académica Core.puml`                      | ✅ Cerrado | usuario_permiso_override añadida; auditoria_log completo; tipos OK      |
+
+### Actualización para capturas (2026-04-16)
+
+Se realizaron los siguientes ajustes de consistencia para cierre técnico de Fase 6:
+
+1. `src/Application/UseCases/Diagramas de Clase Dominio/DC-02 Vista General.puml`
+
+- Renombre de capa inflación: `IInflacionRepository` -> `IRepositorioInflacionAnual`.
+- Renombre de infraestructura: `InflacionRepository` -> `RepositorioInflacionAnual`.
+- Dependencias e implementaciones actualizadas al naming real del código.
+
+2. Consolidación DC-02 (sin duplicidad de vista general)
+
+- Se mantiene **solo** `DC-02 Vista General.puml` como overview oficial de dominio académico.
+- Se elimina `DC-02 Dominio Academico (Retencion, Estudiantes, Inflacion.puml` por duplicidad funcional.
+- El detalle se conserva en `DC-02.1 — Inflación`, `DC-02.2 — Retención` y `DC-02.3 — Estudiantes y Docentes`.
+
+3. `src/Application/UseCases/Diagramas de Secuencia/Diagrama-Secuencia-6-Cálculo de sueldos con inflación y peso proporcional.puml`
+
+- Participante de inflación actualizado a `IRepositorioInflacionAnual`.
+- Consulta de datos actualizada a `inflacion_anual`.
+
+4. `src/Application/UseCases/Diagramas de Secuencia/Diagrama-Secuencia-7-Registro de activos y cálculo de depreciación semestral.puml`
+
+- Participante de inflación actualizado a `IRepositorioInflacionAnual`.
+- Consulta de datos actualizada a `inflacion_anual`.
 
 ### Gate por lote documental (obligatorio antes del siguiente)
 
@@ -1175,6 +1201,38 @@ Documentación alineada con código real y validada por checklist final.
 2. No quedan métodos, permisos o nombres de clases/interfaces fantasma en el diagrama intervenido.
 3. Se actualiza este `Diagramas.md` con estado del lote: `Planificado` -> `En ejecución` -> `Cerrado`.
 4. Commit único del lote con mensaje trazable (`KAN14 Fase 6 Lote XX: ...`).
+
+### Cierre de Fase 6 (2026-04-16)
+
+1. Los 9 lotes documentales (F6-L01..L09) están cerrados con `.puml` sincronizado al código y a la BD real.
+2. Se eliminó el diagrama duplicado `DC-02 Dominio Academico (Retencion, Estudiantes, Inflacion.puml`.
+3. Quedan diagramas adicionales (DC-03, DC-04, DS-04..DS-11) cuya revisión se difiere a la implementación de cada épica correspondiente — no bloquean cierre de KAN-14.
+4. Fase 6 se considera **cerrada** para handoff a Épica 4.
+
+### 🎯 KAN-14 Cerrada — 2026-04-16 — LISTA PARA ÉPICA 4
+
+**Resumen de cierre KAN-14 (Infra + QA):**
+
+- ✅ 9 lotes documentales finalizados y validados (BD-01..BD-03B, DC-01..DC-02, DS-01/02/03 divididos en submódulos).
+- ✅ Eliminación de dead code: BCE API/URL import path, converters no implementados, plantillas Class1.cs, diagrama duplicado DC-02.
+- ✅ Build estable: 0 errores, 0 advertencias (post-cleanup, 2026-04-16 14:33 UTC).
+- ✅ BD migraciones críticas aplicadas: `esta_activo` INT→bool (Fase 4), timestamps TEXT→timestamptz (Fases 2-3), `usuario_permiso_override` agregado (Fase 5).
+- ✅ Entidades/Repositorios de Retención listos; tablas BD operativas con índices; diagramas CU-TR-01..03 documentados.
+- ⏳ Pendientes no bloqueadores: `resultado_analisis_financiero.es_viable` INT→bool (diferido a Épica 13), tablas huérfanas CRUD (Épicas 5-6), diagramas DC-03/DC-04/DS-04..11 (al implementar cada épica).
+
+**Arquitectura finalizada KAN-14:**
+
+1. **DC-02 consolidado:** mantener solo `DC-02 Vista General.puml` como overview; detalle modular en DC-02.1 Inflación, DC-02.2 Retención, DC-02.3 Estudiantes & Docentes.
+2. **DS divididos:** DS-02 → `2.1 Crear Usuario`, `2.2 Actualizar`, `2.3 Eliminar`; DS-03 → `3.1 Proyectar`, `3.2 CRUD`, `3.3 Importar BCE`, `3.4 Limpiar`.
+3. **Inflación importación:** solo archivo local (`.xlsx` con plantilla BCE); importación por URL/API eliminada.
+4. **PlantUML normalizado:** `@startuml <id>`, bloques `skinparam { ... }` multi-línea, leyendas y notas estructuradas, sin `;` inline.
+
+**Recomendaciones post-KAN-14 (roadmap Épica 4):**
+
+- ✅ Iniciar Épica 4 (Tasa Retención) inmediatamente: entidades + tablas + repositorios listos; diagramas CU-TR-01/02/03 documentados.
+- ✅ Ejecutar pruebas de integración TasaRetencion ↔ Inflación antes de UI.
+- ✅ Paralelizar integración de `ObtenerInflacionProyectadaParaDependientesUseCase` en Sueldos, Demanda, Mantenimiento, Costos & Gastos.
+- ✅ Pantallas placeholder (Carreras, Proyecciones, Análisis, Config, Reportes) — habilitar según permisos en Épicas 5+.
 
 ---
 
@@ -1215,6 +1273,8 @@ Documentación alineada con código real y validada por checklist final.
 > Fuente: comparación directa entre archivos `.puml`, BD real (Bloques A–E) y use cases `.cs`
 
 ---
+
+BD-03A → DC-01 → DS-03 → DS-02 → DC-02.1
 
 ## Diagrama ER: BD-01 — Persistencia Transversal y Académica Core
 
@@ -1269,6 +1329,12 @@ Sí.
 
 ---
 
+# Actualizado
+
+-Revisar archivo ; BD-01 Persistencia Transversal y Académica Core.puml
+
+---
+
 ## Diagrama ER: BD-02 — Persistencia Académico-Operativa
 
 ### Estado general
@@ -1311,6 +1377,12 @@ Sí.
 3. inflacion_proyectada.es_ajuste_manual: cambiar int -> bool (tras FIX_boolean)
 4. Nota al pie: "Columnas de auditoría (creado_en, actualizado_en, eliminado_en) omitidas por legibilidad"
 ```
+
+--
+
+# Actualizado
+
+- Revisar BD-02 Persistencia Academico-Operativa
 
 ---
 
@@ -1356,6 +1428,49 @@ Sí (múltiples correcciones críticas).
 4. presupuesto_institucional: agregar FK escenario_proyeccion_id y relación explícita
 5. Relación: escenario_proyeccion ||--o{ servicio_basico_mantenimiento
 ```
+
+---
+
+# Cambios aplicados
+
+# Cambios Aplicados en BD-03A
+
+## Registro de Modificaciones en Base de Datos
+
+| Tabla                               | Corrección / Adiciones                                                          |
+| :---------------------------------- | :------------------------------------------------------------------------------ |
+| **periodo_academico**               | `+etiqueta_periodo`, `+fecha_inicio` (date), `+fecha_fin` (date)                |
+| **cargo_facultad**                  | `+tipo_cargo` (text), `+es_cargo_docente` (bool)                                |
+| **proyeccion_cargo_facultad**       | `+cantidad_personas` (numeric), `+factor_ponderacion` (numeric)                 |
+| **proyeccion_cargo_planta_central** | `+proporcion_asignacion` (numeric)                                              |
+| **item_material_insumo**            | `+categoria_nombre` (text), `+unidad_nombre` (text), `+es_cantidad_fija` (bool) |
+| **proyeccion_material_insumo**      | `+factor_inflacion` (numeric)                                                   |
+| **presupuesto_institucional**       | `+ajustable_por_inflacion` (bool)                                               |
+| **configuracion_arancel**           | Tabla añadida (sincronización con EF Core)                                      |
+| **servicio_basico_mantenimiento**   | Tabla añadida con columnas de diseño según DC-03.2                              |
+
+---
+
+## Observaciones de Gestión
+
+### Sección de Comentarios
+
+- **Gestión de Entidades:** Se aplicó una separación explícita entre las entidades gestionadas por **EF-managed** y las **no-EF**.
+- **Deuda Técnica:** Se incluyó una nota formal sobre la discrepancia actual para seguimiento en futuras iteraciones.
+
+### Gap Arquitectónico Documentado
+
+Las siguientes entidades han sido diseñadas (DC-03.2/DC-04.1) pero **no cuentan** actualmente con una entidad C# ni migración en EF Core:
+
+- `categoria_activo`
+- `activo_fijo`
+- `activo_diferido`
+- `servicio_basico_mantenimiento`
+- `configuracion_capital_trabajo`
+- `costo_gasto_periodo`
+
+> [!IMPORTANT]  
+> **Estado:** Pendiente de implementación. Se requiere la creación de un **ticket KAN** para priorizar su desarrollo en el sprint correspondiente.
 
 ---
 
@@ -1405,6 +1520,12 @@ Sí.
 4. resumen_proyeccion_financiera: agregar columnas faltantes (ejecutar A1 para lista completa)
 5. Cambiar cuadra_balance int -> bool y es_viable int -> bool (tras FIX_boolean)
 ```
+
+---
+
+# Realizado
+
+- Revisar el archivo BD-03B-Persistencia Financiera — Análisis y Financiamiento
 
 ---
 
@@ -1467,6 +1588,54 @@ Sí (cambios críticos de naming y estructura).
 
 ---
 
+# Cambios aplicados
+
+# Hallazgos y Correcciones de Refactorización
+
+| ID / Categoría   | Hallazgo                         | Corrección                                                                                                                                                                                                                      |
+| :--------------- | :------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **H1**           | Naming interfaces                | `IUsuarioRepository` → `IRepositorioUsuario`<br>`ISesionRepository` → `IRepositorioSesionUsuario`<br>`IAuditoriaRepository` → `IAuditoriaServicio`                                                                              |
+| **H2**           | Use cases consolidados           | `AutenticarUsuarioUseCase` → `LoginUseCase` + `CerrarSesionUseCase`<br>`GestionUsuarioUseCase` → `CrearUsuarioUseCase`, `ActualizarUsuarioUseCase`, `EliminarUsuarioUseCase`, `ListarUsuariosUseCase` y `ObtenerUsuarioUseCase` |
+| **H3**           | `VerificarPermisoUseCase`        | Reemplazado por `ObtenerPermisosEfectivosUsuarioUseCase` + `ActualizarPermisosUsuarioUseCase` (firmas reales del código)                                                                                                        |
+| **H4**           | `AuditoriaLog.Evento`            | Cambio de tipo: `string` → `DateTime`                                                                                                                                                                                           |
+| **H5**           | `UsuarioPermisoOverride` ausente | Entidad añadida con sus 5 campos; relaciones con `Usuario` y `Permiso`                                                                                                                                                          |
+| **H6**           | `UsuarioViewModel` incompleto    | Expandido a `UsuariosViewModel` (CRUD) + `EditarUsuarioViewModel` (permisos) + `AuditoriaViewModel`                                                                                                                             |
+| **Infra naming** | Nomenclatura de Infraestructura  | `UsuarioRepository` → `RepositorioUsuario`<br>`SesionRepository` → `RepositorioSesionUsuario`<br>`AuditoriaRepository` → `ServicioAuditoria <<Service>>`                                                                        |
+| **Firmas**       | Firmas de métodos                | Actualizadas con signaturas **async** reales (`EjecutarAsync`, `CancellationToken`, tipos de retorno correctos)                                                                                                                 |
+| **Casos de Uso** | `ConsultarAuditoriaUseCase`      | Caso de uso añadido (existía en código, pero estaba ausente en el diseño previo)                                                                                                                                                |
+
+---
+
+## Notas de Implementación
+
+- **Estandarización:** Se ha unificado el idioma a español para los nombres de las clases y métodos de negocio.
+- **Patrón Repository:** Las interfaces de repositorio ahora siguen una nomenclatura descriptiva en el dominio.
+- **Asincronía:** Se incorporó el soporte para `CancellationToken` y tareas asíncronas en todas las firmas del núcleo.
+
+# Inventario de Diagramas PlantUML
+
+## Resumen de Archivos y Cobertura
+
+| Archivo                                | Scope / Alcance                 | Clases Dominio                                                         | Use Cases                                              | Infraestructura                                |
+| :------------------------------------- | :------------------------------ | :--------------------------------------------------------------------- | :----------------------------------------------------- | :--------------------------------------------- |
+| **DC-01 Vista General.puml**           | Índice completo (sin atributos) | 8                                                                      | 10                                                     | 4                                              |
+| **DC-01.1 — Autenticación.puml**       | Login/Logout + Sesión           | `Usuario`, `SesionUsuario`                                             | `LoginUseCase`, `CerrarSesionUseCase`                  | `RepositorioSesionUsuario`, `ServicioHash`     |
+| **DC-01.2 — Gestión de Usuarios.puml** | CRUD de usuarios                | `Usuario`                                                              | `Crear`, `Actualizar`, `Eliminar`, `Listar`, `Obtener` | `RepositorioUsuario`                           |
+| **DC-01.3 — RBAC y Permisos.puml**     | Roles, permisos y overrides     | `Rol`, `Permiso`, `UsuarioRol`, `RolPermiso`, `UsuarioPermisoOverride` | `ObtenerPermisosEfectivos`, `ActualizarPermisos`       | `RepositorioPermiso`                           |
+| **DC-01.4 — Auditoría.puml**           | Trazabilidad del sistema        | `AuditoriaLog`                                                         | `ConsultarAuditoria`                                   | `ServicioAuditoria`, `RepositorioAuditoriaLog` |
+
+---
+
+## Trazabilidad entre Diagramas
+
+Para garantizar la consistencia técnica, cada sub-diagrama implementa las siguientes reglas de referencia:
+
+1.  **Referencias Cruzadas:** Los títulos incluyen la nota `ver DC-01.X` para indicar la ubicación de las clases relacionadas y evitar duplicidad de definiciones.
+2.  **Consumo de Auditoría:** La interfaz `IAuditoriaServicio` se encuentra referenciada en los diagramas **DC-01.1** y **DC-01.2** mediante una nota que identifica a los consumidores del servicio.
+3.  **Stubs de Dependencia:** La entidad `Usuario` aparece representada como un **stub** en los diagramas de Permisos (**DC-01.3**) y Auditoría (**DC-01.4**), incluyendo la leyenda `' ver DC-01.2` para remitir al diagrama donde se detalla su estructura completa.
+
+---
+
 ## Diagrama de Clases: DC-02.1 — Inflación
 
 ### Estado general
@@ -1477,7 +1646,7 @@ Parcialmente correcto — dominio correcto; Application layer subestimado (1 use
 
 **H1 — Solo 1 use case vs 10 implementados**
 
-- Evidencia: DC-02.1 muestra solo `ProyectarInflacionUseCase`; código real tiene: `CrearInflacionAnualUseCase`, `ActualizarInflacionAnualUseCase`, `EliminarInflacionAnualUseCase`, `ListarInflacionAnualUseCase`, `ProyectarInflacionUseCase`, `ObtenerInflacionProyectadaParaDependientesUseCase`, `ImportarInflacionUseCase`, `ImportarInflacionBceUseCase`, `ImportarInflacionBceArchivoUseCase`, `LimpiarInflacionUseCase`.
+- Evidencia: DC-02.1 muestra solo `ProyectarInflacionUseCase`; código real tiene: `CrearInflacionAnualUseCase`, `ActualizarInflacionAnualUseCase`, `EliminarInflacionAnualUseCase`, `ListarInflacionAnualUseCase`, `ProyectarInflacionUseCase`, `ObtenerInflacionProyectadaParaDependientesUseCase`, `ImportarInflacionUseCase`, `ImportarInflacionBceArchivoUseCase`, `LimpiarInflacionUseCase`.
 - Impacto: 🔴 ALTO — 9 use cases implementados sin representación en el diagrama.
 
 **H2 — `IInflacionRepository` único vs dos repositorios reales**
@@ -1504,10 +1673,16 @@ Sí.
 ```
 1. Separar IInflacionRepository en IRepositorioInflacionAnual + IRepositorioInflacionProyectada
 2. Eliminar método AjustarManual de ProyectarInflacionUseCase
-3. Agregar use cases implementados: CrearInflacionAnualUseCase, ActualizarInflacionAnualUseCase, EliminarInflacionAnualUseCase, ListarInflacionAnualUseCase, ObtenerInflacionProyectadaParaDependientesUseCase, ImportarInflacionUseCase, ImportarInflacionBceUseCase, ImportarInflacionBceArchivoUseCase, LimpiarInflacionUseCase
+3. Agregar use cases implementados: CrearInflacionAnualUseCase, ActualizarInflacionAnualUseCase, EliminarInflacionAnualUseCase, ListarInflacionAnualUseCase, ObtenerInflacionProyectadaParaDependientesUseCase, ImportarInflacionUseCase, ImportarInflacionBceArchivoUseCase, LimpiarInflacionUseCase
 4. Renombrar InflacionRepository -> RepositorioInflacionAnual + RepositorioInflacionProyectada
 5. Marcar ICarreraRepository e IEscenarioRepository como "pendiente de implementar"
 ```
+
+---
+
+# Cambios realizados
+
+- Analizar el archivo : DC-02.1 — Inflación
 
 ---
 
@@ -1603,6 +1778,42 @@ Sí.
 
 ---
 
+# Cambios realizados
+
+# Refactorización de Seguridad y Casos de Uso (Módulo Usuarios)
+
+## Hallazgos y Correcciones Técnicas
+
+| ID       | Hallazgo                                 | Corrección Aplicada                                                                                 |
+| :------- | :--------------------------------------- | :-------------------------------------------------------------------------------------------------- |
+| **H1**   | Permisos genéricos (`USUARIOS.ESCRIBIR`) | Refactorizado a permisos granulares: `US.CREAR`, `US.EDITAR` y `US.ELIMINAR`.                       |
+| **H1.1** | Verificación costosa vía DB              | Implementado `SesionActual.TienePermiso()` para validación local en memoria (cargados en login).    |
+| **H2**   | `GestionUsuarioUseCase` monolítico       | Separado en 3 clases: `CrearUsuarioUseCase`, `ActualizarUsuarioUseCase` y `EliminarUsuarioUseCase`. |
+| **H3**   | Falta de validación de integridad        | Se añadió `IRepositorioRol.ObtenerPorNombreAsync()` como paso previo obligatorio a la creación.     |
+| **H4**   | `IServicioHash` oculto                   | Se definió como participante explícito (`IServicioHash.Hashear()`) en los diagramas de flujo.       |
+
+---
+
+## Funcionalidades Extra Implementadas
+
+### 1. Gestión de Estados (Suspensión)
+
+- **Lógica:** Integrada en `ActualizarUsuarioUseCase`.
+- **Implementación:** Uso de `ActualizarUsuarioDto { Estado: "Suspendido" }` bajo una **transacción explícita** para asegurar la consistencia del cambio de estado.
+
+### 2. Estrategia de Eliminación Robusta
+
+El caso de uso `EliminarUsuarioUseCase` ahora soporta un flujo complejo con tres pilares:
+
+- **Soft Delete:** Marcado lógico para preservación de integridad histórica.
+- **Hard Delete:** Eliminación física (opcional/admin).
+- **Revocación de Sesiones:** Proceso automático de invalidación de tokens/sesiones activas tras la eliminación.
+
+> [!TIP]
+> La verificación local de permisos mediante `SesionActual` reduce la latencia al evitar saltos innecesarios a la base de datos en cada validación de acción.
+
+---
+
 ## Diagrama de Secuencia: DS-03 — Proyección de inflación
 
 ### Estado general
@@ -1628,8 +1839,8 @@ Incorrecto — flujo mayoritariamente desactualizado respecto al código real im
 
 **H4 — Faltan flujos de importación**
 
-- Evidencia: `ImportarInflacionBceUseCase`, `ImportarInflacionBceArchivoUseCase`, `ImportarInflacionUseCase` implementados; sin diagrama de secuencia.
-- Impacto: 🟡 MEDIO.
+- Evidencia: la importación vigente en programa es por archivo BCE (`ImportarInflacionBceArchivoUseCase`) y carga manual (`ImportarInflacionUseCase`).
+- Impacto: 🟡 MEDIO — el diagrama debe reflejar exclusivamente los flujos implementados.
 
 **H5 — `INSERT OR UPDATE` es sintaxis SQLite, no PostgreSQL**
 
@@ -1646,8 +1857,7 @@ Sí (revisión completa del diagrama).
 1. Actualizar firma: Ejecutar(solicitud: ProyeccionInflacionSolicitudDto) donde solicitud incluye metodoProyeccion
 2. Eliminar flujo AjustarManual — reemplazar por flujo de ActualizarInflacionAnualUseCase con cambio a tipo_fuente="Ajuste manual"
 3. Agregar flujo CRUD: Crear/Actualizar/Eliminar/Listar inflación anual
-4. Agregar flujo Importar desde BCE (ImportarInflacionBceUseCase)
-5. Agregar flujo Importar desde archivo (ImportarInflacionBceArchivoUseCase + ImportarInflacionUseCase)
+4. Agregar flujo Importar desde archivo BCE (ImportarInflacionBceArchivoUseCase) y carga manual (`ImportarInflacionUseCase`)
 6. Agregar flujo LimpiarInflacionUseCase
 7. Cambiar "INSERT OR UPDATE" -> "INSERT ... ON CONFLICT DO UPDATE"
 8. Renombrar InflacionProyectadaRepository -> IRepositorioInflacionProyectada
@@ -1655,18 +1865,52 @@ Sí (revisión completa del diagrama).
 
 ---
 
-## Resumen ejecutivo de diagramas
+# Correciión
 
-| Diagrama | Estado                | Hallazgos críticos                                                                            | Requiere cambio |
-| -------- | --------------------- | --------------------------------------------------------------------------------------------- | --------------- |
-| BD-01    | Parcialmente correcto | `usuario_permiso_override` ausente; `auditoria_log` incompleto                                | Sí              |
-| BD-02    | Parcialmente correcto | `configuracion_arancel` y `configuracion_carga_docente` incompletos                           | Sí              |
-| BD-03A   | Incorrecto            | `servicio_basico_mantenimiento` ausente; `cargo_facultad` y `costo_gasto_periodo` incompletos | Sí (crítico)    |
-| BD-03B   | Parcialmente correcto | `balance_proyectado` muy resumido; `amortizacion_cuota` incompleto                            | Sí              |
-| DC-01    | Incorrecto            | Naming interfaces/use cases diferente al código; `UsuarioPermisosOverride` ausente            | Sí (crítico)    |
-| DC-02.1  | Parcialmente correcto | 9 use cases no documentados; método fantasma `AjustarManual`                                  | Sí (crítico)    |
-| DS-01    | Parcialmente correcto | Roles/permisos no cargados en login; naming incorrecto                                        | Sí              |
-| DS-02    | Parcialmente correcto | Permiso `USUARIOS.ESCRIBIR` inexistente en BD                                                 | Sí (crítico)    |
-| DS-03    | Incorrecto            | Firma incorrecta; flujo fantasma; 6 flujos implementados sin diagrama                         | Sí (crítico)    |
+# Inventario de Diagramas de Secuencia (DS-03)
 
-> **Prioridad de actualización:** BD-03A → DC-01 → DS-03 → DS-02 → DC-02.1 → BD-02 → BD-03B → DS-01 → BD-01
+## Detalle de Archivos de Diseño
+
+| Archivo                   | Scope / Alcance                        | Actores / Participants | Flujos y Lógica Clave                                                           |
+| :------------------------ | :------------------------------------- | :--------------------: | :------------------------------------------------------------------------------ |
+| **DS-03.1 — Proyección**  | `ProyectarInflacionUseCase`            |           7            | Comparativa `regresion-lineal` vs `promedio-suave`; Upsert por `tipo_fuente`.   |
+| **DS-03.2 — CRUD**        | Crear / Actualizar / Eliminar / Listar |           8            | 4 flujos secuenciales detallados con anotaciones técnicas.                      |
+| **DS-03.3 — Importación** | `ImportarInflacionBceArchivoUseCase`   |           8            | Flujo único por archivo BCE; validación para saltar registros si el año existe. |
+| **DS-03.4 — Limpieza**    | `LimpiarInflacionUseCase`              |           6            | Implementación de transacción explícita con soporte para rollback.              |
+
+---
+
+## Correcciones Críticas Aplicadas (Sincronización Código-Diseño)
+
+Se han actualizado los diagramas para reflejar fielmente la implementación técnica actual:
+
+- **Firmas Asíncronas:** \* `Ejecutar(escenarioId, aniosAProyectar)` → `EjecutarAsync(ProyeccionInflacionSolicitudDto, ejecutadoPorUsuarioId)`.
+- **Refactorización de Ajustes:**
+  - Se eliminó el método `AjustarManual()`. Ahora se utiliza el flujo de `ActualizarInflacionAnualUseCase` donde la lógica de negocio marca el `tipo_fuente` como `"Ajuste manual"`.
+- **Persistencia (SQLite):**
+  - Se desagregó la instrucción lógica `INSERT OR UPDATE` en operaciones `INSERT INTO` y `UPDATE` separadas, siguiendo el flujo real de control de la aplicación.
+- **Alineación de Repositorios:**
+  - `InflacionProyectadaRepository` → `IRepositorioInflacionAnual`.
+  - _Nota:_ Las proyecciones se persisten en la tabla `inflacion_anual` bajo el `tipo_fuente = "Estimacion"`.
+- **Trazabilidad y Rendimiento:**
+  - `IAuditoriaServicio` se ha marcado explícitamente como **fire-and-forget** en todos los flujos de secuencia, garantizando que el registro de logs no bloquee la ejecución principal.
+
+---
+
+---
+
+## Resumen ejecutivo de diagramas (cierre 2026-04-16)
+
+| Diagrama | Estado inicial        | Acción aplicada                                                                                      | Estado final |
+| -------- | --------------------- | ---------------------------------------------------------------------------------------------------- | ------------ |
+| BD-01    | Parcialmente correcto | `usuario_permiso_override` añadida; `auditoria_log` completo; tipos timestamp/bool corregidos        | ✅ Cerrado   |
+| BD-02    | Parcialmente correcto | `configuracion_arancel` (+4 cols) y `configuracion_carga_docente` (+horas_tecnico) sincronizados     | ✅ Cerrado   |
+| BD-03A   | Incorrecto            | `servicio_basico_mantenimiento` añadida; `cargo_facultad` y `costo_gasto_periodo` completados        | ✅ Cerrado   |
+| BD-03B   | Parcialmente correcto | `balance_proyectado` (+10 cols), `resumen_proyeccion_financiera` (+11 cols), `amortizacion_cuota` OK | ✅ Cerrado   |
+| DC-01    | Incorrecto            | Split en DC-01.1/.2/.3/.4; naming alineado al código; `UsuarioPermisoOverride` añadido               | ✅ Cerrado   |
+| DC-02.1  | Parcialmente correcto | 9 use cases reales documentados; `AjustarManual` removido; repos separados                           | ✅ Cerrado   |
+| DS-01    | Parcialmente correcto | LoginUseCase + carga roles/permisos + `RegistrarUltimoAccesoAsync`                                   | ✅ Cerrado   |
+| DS-02    | Parcialmente correcto | Split en DS-02.1/.2/.3 con permisos `US.CREAR`/`US.EDITAR`/`US.ELIMINAR`                             | ✅ Cerrado   |
+| DS-03    | Incorrecto            | Split en DS-03.1/.2/.3/.4; firma `ProyeccionInflacionSolicitudDto`; `AjustarManual` removido         | ✅ Cerrado   |
+
+> **Prioridad de actualización ejecutada:** BD-03A → DC-01 → DS-03 → DS-02 → DC-02.1 → BD-02 → BD-03B → DS-01 → BD-01 — **todos cerrados**.

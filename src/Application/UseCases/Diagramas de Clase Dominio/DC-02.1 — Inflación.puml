@@ -1,21 +1,36 @@
-@startuml
+@startuml DC-02.1-Inflacion
 top to bottom direction
-scale 0.88
+scale 0.85
 
 skinparam classAttributeIconSize 0
-skinparam classFontSize 12
+skinparam classFontSize 11
 skinparam classBackgroundColor White
 skinparam classBorderColor Black
 skinparam arrowColor Black
 skinparam linetype ortho
 skinparam shadowing false
 skinparam packageStyle rectangle
-skinparam nodesep 16
-skinparam ranksep 24
+skinparam nodesep 12
+skinparam ranksep 20
 
 title DC-02.1: Inflación
 
 package "Domain" #EFF6FF {
+    class InflacionAnual {
+        +int Id
+        +int Anio
+        +decimal PorcentajeInflacion
+        +string FuenteNombre
+        +string TipoFuente
+    }
+    class InflacionProyectada {
+        +int Id
+        +int EscenarioProyeccionId
+        +int Anio
+        +decimal PorcentajeInflacion
+        +string MetodoProyeccion
+        +bool EsAjusteManual
+    }
     class Carrera {
         +int Id
         +string Codigo
@@ -32,75 +47,107 @@ package "Domain" #EFF6FF {
         +bool EsPredeterminado
         +bool EstaActivo
     }
-    class InflacionAnual {
-        +int Id
-        +int Anio
-        +decimal PorcentajeInflacion
-        +string FuenteNombre
-        +string TipoFuente
-    }
-    class InflacionProyectada {
-        +int Id
-        +int EscenarioProyeccionId
-        +int Anio
-        +decimal PorcentajeInflacion
-        +string MetodoProyeccion
-        +bool EsAjusteManual
-    }
 
-    Carrera -[hidden]-> EscenarioProyeccion
-    EscenarioProyeccion -[hidden]-> InflacionAnual
     InflacionAnual -[hidden]-> InflacionProyectada
+    Carrera -[hidden]-> EscenarioProyeccion
 }
 
 package "Application" #F0FDF4 {
+    interface IRepositorioInflacionAnual <<Interface>> {
+        +ListarAsync() : List~InflacionAnual~
+        +ObtenerPorAnioAsync(anio: int) : InflacionAnual?
+        +AgregarAsync(entidad, usuarioId) : void
+        +ActualizarAsync(entidad, usuarioId) : void
+        +EliminarPorIdAsync(id: int) : void
+        +LimpiarTodoAsync() : (int anuales, int proyectadas)
+    }
+    interface IRepositorioInflacionProyectada <<Interface>> {
+        +ListarPorEscenarioAsync(escenarioId: int) : List~InflacionProyectada~
+        +ObtenerPorAnioYEscenarioAsync(anio, escId) : InflacionProyectada?
+        +AgregarAsync(entidad) : void
+        +EliminarTodoAsync() : int
+    }
     interface ICarreraRepository <<Interface>> {
-        +ObtenerPorId(id: int) : Carrera
-        +Listar() : List~Carrera~
-        +Guardar(carrera: Carrera) : void
+        +ObtenerPorIdAsync(id: int) : Carrera?
+        +ListarAsync() : List~Carrera~
+        +AgregarAsync(entidad, usuarioId) : void
+        +ActualizarAsync(entidad, usuarioId) : void
+        +EliminarAsync(id: int, usuarioId) : void
     }
     interface IEscenarioRepository <<Interface>> {
-        +ObtenerPorCarrera(carreraId: int) : List~EscenarioProyeccion~
-        +Guardar(escenario: EscenarioProyeccion) : void
-    }
-    interface IInflacionRepository <<Interface>> {
-        +ObtenerHistorico() : List~InflacionAnual~
-        +ObtenerProyectada(escenarioId: int) : List~InflacionProyectada~
-        +GuardarProyectada(inflacion: InflacionProyectada) : void
-    }
-    class ProyectarInflacionUseCase <<UseCase>> {
-        -IInflacionRepository _inflacionRepo
-        +Ejecutar(escenarioId: int, aniosAProyectar: int) : void
-        +AjustarManual(escenarioId: int, anio: int, valor: decimal) : void
+        +ObtenerPorCarreraAsync(carreraId: int) : List~EscenarioProyeccion~
+        +ObtenerPorIdAsync(id: int) : EscenarioProyeccion?
+        +AgregarAsync(entidad, usuarioId) : void
+        +ActualizarAsync(entidad, usuarioId) : void
+        +EliminarAsync(id: int, usuarioId) : void
     }
 
+    class CrearInflacionAnualUseCase <<UseCase>> {
+        +EjecutarAsync(dto, usuarioId) : void
+    }
+    class ActualizarInflacionAnualUseCase <<UseCase>> {
+        +EjecutarAsync(dto, usuarioId) : void
+    }
+    class EliminarInflacionAnualUseCase <<UseCase>> {
+        +EjecutarAsync(id, usuarioId) : void
+    }
+    class ListarInflacionAnualUseCase <<UseCase>> {
+        +EjecutarAsync() : List~InflacionAnualDto~
+    }
+    class ProyectarInflacionUseCase <<UseCase>> {
+        +EjecutarAsync(solicitud: ProyeccionInflacionSolicitudDto, usuarioId) : ProyeccionInflacionResultadoDto
+    }
+    class ObtenerInflacionProyectadaParaDependientesUseCase <<UseCase>> {
+        +EjecutarAsync(anioDesde, anioHasta) : List~InflacionProyectadaDto~
+    }
+    class ImportarInflacionBceArchivoUseCase <<UseCase>> {
+        +EjecutarAsync(solicitud: ImportacionBceArchivoSolicitudDto, usuarioId) : ImportacionInflacionResultadoDto
+    }
+    class LimpiarInflacionUseCase <<UseCase>> {
+        +EjecutarAsync(usuarioId) : LimpiarInflacionResultadoDto
+    }
+
+    IRepositorioInflacionAnual -[hidden]-> IRepositorioInflacionProyectada
     ICarreraRepository -[hidden]-> IEscenarioRepository
-    IEscenarioRepository -[hidden]-> IInflacionRepository
-    IInflacionRepository -[hidden]-> ProyectarInflacionUseCase
+    CrearInflacionAnualUseCase -[hidden]-> ActualizarInflacionAnualUseCase
+    ActualizarInflacionAnualUseCase -[hidden]-> EliminarInflacionAnualUseCase
+    EliminarInflacionAnualUseCase -[hidden]-> ListarInflacionAnualUseCase
+    ListarInflacionAnualUseCase -[hidden]-> ProyectarInflacionUseCase
+    ProyectarInflacionUseCase -[hidden]-> ObtenerInflacionProyectadaParaDependientesUseCase
+    ObtenerInflacionProyectadaParaDependientesUseCase -[hidden]-> ImportarInflacionBceArchivoUseCase
+    ImportarInflacionBceArchivoUseCase -[hidden]-> LimpiarInflacionUseCase
 }
 
 package "Infrastructure" #FFF7ED {
-    class CarreraRepository <<Repository>> {
+    class RepositorioInflacionAnual <<Repository>> {
         -AppDbContext _context
-        +ObtenerPorId(id: int) : Carrera
-        +Listar() : List~Carrera~
-        +Guardar(carrera: Carrera) : void
+        +ListarAsync() : List~InflacionAnual~
+        +ObtenerPorAnioAsync(anio: int) : InflacionAnual?
+        +AgregarAsync(entidad, usuarioId) : void
+        +ActualizarAsync(entidad, usuarioId) : void
+        +EliminarPorIdAsync(id: int) : void
+        +LimpiarTodoAsync() : (int, int)
     }
-    class InflacionRepository <<Repository>> {
+    class RepositorioInflacionProyectada <<Repository>> {
         -AppDbContext _context
-        +ObtenerHistorico() : List~InflacionAnual~
-        +ObtenerProyectada(escenarioId: int) : List~InflacionProyectada~
-        +GuardarProyectada(inflacion: InflacionProyectada) : void
+        +ListarPorEscenarioAsync(escenarioId) : List~InflacionProyectada~
+        +ObtenerPorAnioYEscenarioAsync(anio, escId) : InflacionProyectada?
+        +AgregarAsync(entidad) : void
+        +EliminarTodoAsync() : int
     }
 
-    CarreraRepository -[hidden]-> InflacionRepository
+    RepositorioInflacionAnual -[hidden]-> RepositorioInflacionProyectada
 }
 
 package "Presentation" #FDF4FF {
     class InflacionViewModel <<ViewModel>> {
         +ICommand ProyectarCommand
-        +ICommand AjustarManualCommand
-        +CargarHistorico() : void
+        +ICommand CrearCommand
+        +ICommand ActualizarCommand
+        +ICommand EliminarCommand
+        +ICommand ImportarBceArchivoCommand
+        +ICommand LimpiarCommand
+        +CargarListaAsync() : void
     }
 }
 
@@ -113,12 +160,25 @@ Carrera "1" --> "0..*" EscenarioProyeccion : tiene
 EscenarioProyeccion "1" --> "0..*" InflacionProyectada : genera
 
 ' Implementaciones
-CarreraRepository ..|> ICarreraRepository : implementa
-InflacionRepository ..|> IInflacionRepository : implementa
+RepositorioInflacionAnual ..|> IRepositorioInflacionAnual : implementa
+RepositorioInflacionProyectada ..|> IRepositorioInflacionProyectada : implementa
 
-' Dependencias de casos de uso
-ProyectarInflacionUseCase --> IInflacionRepository : usa
+' Dependencias use cases → repositorios
+CrearInflacionAnualUseCase --> IRepositorioInflacionAnual : usa
+ActualizarInflacionAnualUseCase --> IRepositorioInflacionAnual : usa
+EliminarInflacionAnualUseCase --> IRepositorioInflacionAnual : usa
+ListarInflacionAnualUseCase --> IRepositorioInflacionAnual : usa
+ProyectarInflacionUseCase --> IRepositorioInflacionAnual : usa
+ObtenerInflacionProyectadaParaDependientesUseCase --> IRepositorioInflacionProyectada : usa
+ImportarInflacionBceArchivoUseCase --> IRepositorioInflacionAnual : usa
+LimpiarInflacionUseCase --> IRepositorioInflacionAnual : usa
 
-' Dependencias de presentación
+' Dependencias presentación
+InflacionViewModel --> CrearInflacionAnualUseCase : invoca
+InflacionViewModel --> ActualizarInflacionAnualUseCase : invoca
+InflacionViewModel --> EliminarInflacionAnualUseCase : invoca
+InflacionViewModel --> ListarInflacionAnualUseCase : invoca
 InflacionViewModel --> ProyectarInflacionUseCase : invoca
+InflacionViewModel --> ImportarInflacionBceArchivoUseCase : invoca
+InflacionViewModel --> LimpiarInflacionUseCase : invoca
 @enduml

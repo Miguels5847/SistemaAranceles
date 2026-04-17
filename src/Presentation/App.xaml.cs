@@ -104,7 +104,6 @@ public partial class App
         servicios.AddTransient<ImportarInflacionUseCase>();
         servicios.AddTransient<LimpiarInflacionUseCase>();
         servicios.AddTransient<ImportarInflacionBceArchivoUseCase>();
-        servicios.AddTransient<ImportarInflacionBceUseCase>();
         servicios.AddTransient<ProyectarInflacionUseCase>();
         servicios.AddTransient<ObtenerInflacionProyectadaParaDependientesUseCase>();
 

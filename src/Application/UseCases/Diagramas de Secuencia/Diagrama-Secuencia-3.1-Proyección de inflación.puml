@@ -1,0 +1,74 @@
+@startuml DS-03.1-Proyeccion-Inflacion
+title <b><size:18>DS-03.1 — Proyección de Inflación</size></b>
+
+skinparam participant {
+    FontSize 11
+    FontStyle normal
+}
+skinparam actor {
+    FontSize 11
+}
+skinparam note {
+    FontSize 11
+}
+skinparam sequenceMessageAlign center
+
+actor "Planificador"
+participant "InflacionViewModel"
+participant "ProyectarInflacionUseCase"
+participant "IServicioProyeccion"
+participant "IRepositorioInflacionAnual"
+participant "IUnidadTrabajo"
+participant "IAuditoriaServicio"
+database "Base de Datos" as db
+
+note over "Planificador",db
+Flujo: Generar proyección de inflación
+ProyeccionInflacionSolicitudDto { AnioDesde, AnioHasta }
+Método configurado en InflacionOpciones (regresion-lineal | promedio-suave)
+end note
+
+"Planificador" -> "InflacionViewModel" : Configura AnioDesde, AnioHasta y solicita proyectar
+"InflacionViewModel" -> "ProyectarInflacionUseCase" : EjecutarAsync(solicitud: ProyeccionInflacionSolicitudDto, ejecutadoPorUsuarioId)
+
+"ProyectarInflacionUseCase" -> "ProyectarInflacionUseCase" : Validar rango (2000–2100, desde ≤ hasta)
+
+"ProyectarInflacionUseCase" -> "IRepositorioInflacionAnual" : ListarAsync()
+"IRepositorioInflacionAnual" -> "db" : SELECT * FROM inflacion_anual ORDER BY anio
+"db" --> "IRepositorioInflacionAnual" : Lista completa
+"IRepositorioInflacionAnual" --> "ProyectarInflacionUseCase" : historicos (excluye tipo_fuente = 'Estimacion')
+
+alt metodo = "regresion-lineal" (requiere ≥ 2 históricos)
+    "ProyectarInflacionUseCase" -> "IServicioProyeccion" : ProyectarRegresionLineal(historicos, anioDesde, anioHasta)
+    "IServicioProyeccion" --> "ProyectarInflacionUseCase" : proyecciones[(anio, porcentaje)]
+else metodo = "promedio-suave" (requiere ≥ 3 históricos)
+    "ProyectarInflacionUseCase" -> "IServicioProyeccion" : ProyectarPromedioSuave(historicos, anioDesde, anioHasta)
+    "IServicioProyeccion" --> "ProyectarInflacionUseCase" : proyecciones[(anio, porcentaje)]
+end
+
+loop Por cada (anio, porcentaje) proyectado
+    "ProyectarInflacionUseCase" -> "IRepositorioInflacionAnual" : ObtenerPorAnioAsync(anio)
+    "IRepositorioInflacionAnual" -> "db" : SELECT * FROM inflacion_anual WHERE anio = :anio
+    "db" --> "IRepositorioInflacionAnual" : existente | null
+
+    alt existente es null
+        "ProyectarInflacionUseCase" -> "IRepositorioInflacionAnual" : AgregarAsync(new InflacionAnual(anio, %, fuente, "Estimacion"), usuarioId)
+        "IRepositorioInflacionAnual" -> "db" : INSERT INTO inflacion_anual ...
+    else tipo_fuente = "Ajuste manual" o "Dato historico"
+        note over "ProyectarInflacionUseCase" : Omitido — no se sobreescribe
+    else tipo_fuente = "Estimacion"
+        "ProyectarInflacionUseCase" -> "IRepositorioInflacionAnual" : ActualizarAsync(existente con nuevo %, usuarioId)
+        "IRepositorioInflacionAnual" -> "db" : UPDATE inflacion_anual SET porcentaje_inflacion, fuente_nombre WHERE id = :id
+    end
+end
+
+"ProyectarInflacionUseCase" -> "IUnidadTrabajo" : GuardarCambiosAsync()
+"IUnidadTrabajo" -> "db" : COMMIT
+"db" --> "IUnidadTrabajo" : OK
+
+"ProyectarInflacionUseCase" -> "IAuditoriaServicio" : RegistrarAsync("Inflacion", "ProyeccionInflacion", "PROYECCION_GENERADA", ...)
+note right : Fire-and-forget — no bloquea si falla
+
+"ProyectarInflacionUseCase" --> "InflacionViewModel" : ProyeccionInflacionResultadoDto\n{ RegistrosCreados, RegistrosActualizados, RegistrosOmitidos }
+"InflacionViewModel" --> "Planificador" : Muestra resumen de proyección
+@enduml

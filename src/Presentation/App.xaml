@@ -14,7 +14,6 @@
             <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
             <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
             <conv:InverseBoolConverter x:Key="InverseBoolConverter"/>
-            <conv:BoolToEyeSymbolConverter x:Key="BoolToEyeSymbolConverter"/>
             <conv:UtcToEcuadorDateTimeConverter x:Key="UtcToEcuadorDateTimeConverter"/>
         </ResourceDictionary>
     </Application.Resources>

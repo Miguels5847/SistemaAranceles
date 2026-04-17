@@ -1,77 +1,97 @@
-@startuml
-title <b><size:20>Diagrama de Secuencia - Autenticación y gestión de sesión</size></b>
+@startuml DS-01-Autenticacion
+title <b><size:18>DS-01 — Autenticación y Gestión de Sesión</size></b>
 
-' Ajuste de tamaños para que los nombres se vean más pequeños (similar a Mermaid)
-skinparam participant {
-    FontSize 12
-    FontStyle normal
-}
-skinparam actor {
-    FontSize 12
-    FontStyle normal
-}
-skinparam note {
-    FontSize 12
-}
+skinparam participantFontSize 11
+skinparam participantFontStyle normal
+skinparam actorFontSize 11
+skinparam noteFontSize 11
+skinparam sequenceMessageAlign center
 
-actor "Usuario"
-participant "LoginViewModel"
-participant "AutenticarUsuarioUseCase"
-participant "UsuarioRepository"
-participant "SesionRepository"
-participant "AuditoriaRepository"
-participant "Base de Datos"
+actor "Usuario" as user
+participant "LoginViewModel" as vm
+participant "LoginUseCase" as login
+participant "CerrarSesionUseCase" as logout
+participant "IRepositorioUsuario" as repoU
+participant "IRepositorioRol" as repoR
+participant "IRepositorioPermiso" as repoP
+participant "IRepositorioSesionUsuario" as repoS
+participant "IServicioHash" as hash
+participant "IAuditoriaServicio" as audit
+database "Base de Datos" as db
 
-note over "Usuario","Base de Datos"
-Flujo Principal - Autenticación
+note over user, db
+Flujo 1: Login
 end note
 
-"Usuario" -> "LoginViewModel": Ingresa correo y contraseña
-"LoginViewModel" -> "LoginViewModel": Valida campos no vacíos
-"LoginViewModel" -> "AutenticarUsuarioUseCase": Ejecutar(correo, contraseña)
+user -> vm : Ingresa correo y contraseña
+vm -> vm : Valida campos no vacíos
+vm -> login : EjecutarAsync(correo, contraseña)
 
-"AutenticarUsuarioUseCase" -> "UsuarioRepository": ObtenerPorCorreo(correo)
-"UsuarioRepository" -> "Base de Datos": SELECT usuario WHERE correo
-"Base de Datos" --> "UsuarioRepository": Usuario o null
-"UsuarioRepository" --> "AutenticarUsuarioUseCase": Usuario o null
+login -> repoU : ObtenerPorCorreoAsync(correo)
+repoU -> db : SELECT * FROM usuario WHERE correo_institucional = :correo
+db --> repoU : Usuario o null
+repoU --> login : Usuario o null
 
 alt Usuario no existe
-    "AutenticarUsuarioUseCase" --> "LoginViewModel": Error credenciales
-    "LoginViewModel" --> "Usuario": Muestra mensaje de error
-else Usuario suspendido
-    "AutenticarUsuarioUseCase" --> "LoginViewModel": Error cuenta suspendida
-    "LoginViewModel" --> "Usuario": Muestra mensaje de error
+    login --> vm : UnauthorizedAccessException (credenciales)
+    vm --> user : Muestra mensaje de error
+else Usuario suspendido o inactivo
+    login --> vm : UnauthorizedAccessException (cuenta suspendida)
+    vm --> user : Muestra mensaje de error
 else Credenciales válidas
-    "AutenticarUsuarioUseCase" -> "AutenticarUsuarioUseCase": VerificarHash(contraseña, hash)
-    "AutenticarUsuarioUseCase" -> "SesionRepository": CrearSesion(usuarioId, expiraEn)
-    "SesionRepository" -> "Base de Datos": INSERT sesion_usuario
-    "Base de Datos" --> "SesionRepository": Sesión creada
+    login -> hash : VerificarHash(contraseña, usuario.PasswordHash)
+    hash --> login : bool válido
 
-    "AutenticarUsuarioUseCase" -> "AuditoriaRepository": RegistrarEvento(login, usuarioId)
-    "AuditoriaRepository" -> "Base de Datos": INSERT auditoria_log
+    alt Hash inválido
+        login --> vm : UnauthorizedAccessException (credenciales)
+        vm --> user : Muestra mensaje de error
+    else Hash válido
+        login -> repoU : RegistrarUltimoAccesoAsync(usuarioId)
+        repoU -> db : UPDATE usuario SET ultimo_acceso_en = now() WHERE id = :id
 
-    "AutenticarUsuarioUseCase" --> "LoginViewModel": SesionDto (token, rol)
-    "LoginViewModel" --> "Usuario": Redirige según rol
+        login -> repoR : ObtenerRolesDelUsuarioAsync(usuarioId)
+        repoR -> db : SELECT rol.* FROM rol JOIN usuario_rol WHERE usuario_id = :id
+        db --> login : roles[]
+
+        login -> repoP : ObtenerPermisosEfectivosAsync(usuarioId)
+        repoP -> db : SELECT permiso.codigo FROM permiso\nJOIN rol_permiso / usuario_permiso_override WHERE usuario_id = :id
+        db --> login : permisos[]
+
+        login -> repoS : CrearAsync(usuarioId, expiraEn)
+        repoS -> db : INSERT INTO sesion_usuario ...
+        db --> login : token: string
+
+        login -> audit : RegistrarAsync("Sesion", "SesionUsuario", "LOGIN", ...)
+        note right : Fire-and-forget
+
+        login --> vm : SesionDto { Token, UsuarioId, Rol, PermisosEfectivos[] }
+        vm --> user : Redirige a menú según rol y permisos
+    end
 end
 
-note over "LoginViewModel","Base de Datos"
-Expiración por inactividad
+note over vm, db
+Flujo 2: Validar sesión activa (expiración por inactividad)
 end note
 
-"LoginViewModel" -> "SesionRepository": ValidarSesionActiva(token)
-"SesionRepository" -> "Base de Datos": SELECT sesion WHERE token
-"Base de Datos" --> "SesionRepository": Sesión
+vm -> repoS : ValidarSesionActivaAsync(token)
+repoS -> db : SELECT * FROM sesion_usuario WHERE token = :token
+db --> repoS : sesion | null
 
-alt Sesión expirada
-    "SesionRepository" --> "LoginViewModel": Sesión inválida
-    "LoginViewModel" --> "Usuario": Redirige al login
+alt Sesión expirada o revocada
+    repoS --> vm : null / inválida
+    vm --> user : Redirige al login
 end
 
-"Usuario" -> "LoginViewModel": Cierra sesión manualmente
-"LoginViewModel" -> "AutenticarUsuarioUseCase": CerrarSesion(token)
-"AutenticarUsuarioUseCase" -> "SesionRepository": RevocarSesion(token)
-"SesionRepository" -> "Base de Datos": UPDATE sesion SET revocado_en
-"AutenticarUsuarioUseCase" -> "AuditoriaRepository": RegistrarEvento(logout, usuarioId)
-"AuditoriaRepository" -> "Base de Datos": INSERT auditoria_log
-"LoginViewModel" --> "Usuario": Redirige al login
+note over user, db
+Flujo 3: Cierre de sesión manual
+end note
+
+user -> vm : Cierra sesión
+vm -> logout : EjecutarAsync(token, usuarioId)
+logout -> repoS : RevocarAsync(token)
+repoS -> db : UPDATE sesion_usuario SET revocado_en = now() WHERE token = :token
+logout -> audit : RegistrarAsync("Sesion", "SesionUsuario", "LOGOUT", ...)
+note right : Fire-and-forget
+logout --> vm : void (éxito)
+vm --> user : Redirige al login
 @enduml
