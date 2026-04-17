@@ -1,4 +1,5 @@
 erDiagram
+    %% ── EF CORE MANAGED (tienen entidad C# + migración) ──────────────────────
     carrera {
         int id PK
         text codigo
@@ -14,18 +15,25 @@ erDiagram
         int id PK
         int anio
         int numero_periodo
+        text etiqueta_periodo
+        date fecha_inicio
+        date fecha_fin
     }
 
     cargo_facultad {
         int id PK
         int carrera_id FK
         text nombre_cargo
+        text tipo_cargo
         numeric sueldo_base_mensual
+        bool es_cargo_docente
     }
     proyeccion_cargo_facultad {
         int id PK
         int cargo_facultad_id FK
         int periodo_academico_id FK
+        numeric cantidad_personas
+        numeric factor_ponderacion
         numeric factor_inflacion
         numeric costo_total_semestre
     }
@@ -40,8 +48,48 @@ erDiagram
         int cargo_planta_central_id FK
         int carrera_id FK
         int periodo_academico_id FK
+        numeric proporcion_asignacion
         numeric costo_total_semestre
     }
+
+    item_material_insumo {
+        int id PK
+        int carrera_id FK
+        text nombre_item
+        text categoria_nombre
+        text unidad_nombre
+        numeric cantidad_base
+        numeric precio_unitario
+        bool es_cantidad_fija
+    }
+    proyeccion_material_insumo {
+        int id PK
+        int item_material_insumo_id FK
+        int periodo_academico_id FK
+        numeric cantidad_proyectada
+        numeric factor_inflacion
+        numeric costo_total_proyectado
+    }
+
+    configuracion_arancel {
+        int id PK
+        int carrera_id FK
+        int escenario_proyeccion_id FK
+        numeric valor_arancel
+        numeric valor_matricula
+        text tipo_origen
+    }
+
+    presupuesto_institucional {
+        int id PK
+        text tipo_presupuesto
+        numeric valor_anual_base
+        bool ajustable_por_inflacion
+    }
+
+    %% ── NO IMPLEMENTADAS en EF Core (sin entidad C# ni migración) ─────────────
+    %% Nota: las tablas siguientes están diseñadas en diagramas DC-03.2 y DC-04.1
+    %% pero carecen de entidad C# y DbSet en ContextoAplicacion. Pendiente KAN.
 
     categoria_activo {
         int id PK
@@ -65,22 +113,12 @@ erDiagram
         numeric valor
         numeric tasa_amortizacion_anual
     }
-
-    item_material_insumo {
+    servicio_basico_mantenimiento {
         int id PK
-        int carrera_id FK
-        text nombre_item
-        numeric cantidad_base
-        numeric precio_unitario
+        text tipo_rubro
+        text nombre_rubro
+        numeric costo_anual_universidad
     }
-    proyeccion_material_insumo {
-        int id PK
-        int item_material_insumo_id FK
-        int periodo_academico_id FK
-        numeric cantidad_proyectada
-        numeric costo_total_proyectado
-    }
-
     configuracion_capital_trabajo {
         int id PK
         int escenario_proyeccion_id FK
@@ -88,7 +126,6 @@ erDiagram
         numeric porcentaje_imprevistos
         int total_estudiantes_universidad
     }
-
     costo_gasto_periodo {
         int id PK
         int escenario_proyeccion_id FK
@@ -99,22 +136,28 @@ erDiagram
         numeric arancel_propuesto
     }
 
+    %% ── Relaciones EF Core ────────────────────────────────────────────────────
     carrera ||--o{ cargo_facultad : ""
     carrera ||--o{ item_material_insumo : ""
     carrera ||--o{ proyeccion_cargo_planta_central : ""
+    carrera ||--o{ configuracion_arancel : ""
 
     cargo_facultad ||--o{ proyeccion_cargo_facultad : ""
     cargo_planta_central ||--o{ proyeccion_cargo_planta_central : ""
 
-    categoria_activo ||--o{ activo_fijo : ""
     item_material_insumo ||--o{ proyeccion_material_insumo : ""
 
-    escenario_proyeccion ||--o{ activo_fijo : ""
-    escenario_proyeccion ||--o{ activo_diferido : ""
-    escenario_proyeccion ||--o{ configuracion_capital_trabajo : ""
-    escenario_proyeccion ||--o{ costo_gasto_periodo : ""
+    escenario_proyeccion ||--o{ configuracion_arancel : ""
 
     periodo_academico ||--o{ proyeccion_cargo_facultad : ""
     periodo_academico ||--o{ proyeccion_cargo_planta_central : ""
     periodo_academico ||--o{ proyeccion_material_insumo : ""
+
+    %% ── Relaciones tablas no-EF (diseño) ─────────────────────────────────────
+    categoria_activo ||--o{ activo_fijo : ""
+    escenario_proyeccion ||--o{ activo_fijo : ""
+    escenario_proyeccion ||--o{ activo_diferido : ""
+    escenario_proyeccion ||--o{ configuracion_capital_trabajo : ""
+    escenario_proyeccion ||--o{ costo_gasto_periodo : ""
+    periodo_academico ||--o{ activo_fijo : ""
     periodo_academico ||--o{ costo_gasto_periodo : ""

@@ -23,6 +23,7 @@ public static class InfrastructureExtensions
         services.AddTransient(typeof(IRepositorioGenerico<>), typeof(RepositorioGenerico<>));
         services.AddTransient<IRepositorioUsuario, RepositorioUsuario>();
         services.AddTransient<IRepositorioCarrera, RepositorioCarrera>();
+        services.AddTransient<IRepositorioInflacionAnual, RepositorioInflacionAnual>();
         services.AddTransient<IRepositorioRol, RepositorioRol>();
         services.AddTransient<IRepositorioPermiso, RepositorioPermiso>();
         services.AddTransient<IRepositorioSesionUsuario, RepositorioSesionUsuario>();
@@ -32,6 +33,9 @@ public static class InfrastructureExtensions
         // Servicios
         services.AddTransient<IServicioHash, ServicioHash>();
         services.AddTransient<IAuditoriaServicio, ServicioAuditoria>();
+        services.AddTransient<IServicioImportacionExcel, ServicioImportacionExcel>();
+        services.AddTransient<IServicioImportacionBceArchivo, ServicioImportacionBceArchivo>();
+        services.AddTransient<IServicioProyeccion, ServicioProyeccion>();
 
         return services;
     }

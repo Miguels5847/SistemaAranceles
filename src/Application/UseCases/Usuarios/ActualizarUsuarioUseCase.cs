@@ -63,19 +63,54 @@ public sealed class ActualizarUsuarioUseCase(
         var cambioRolSolicitado = !string.IsNullOrWhiteSpace(rolNuevoSolicitado)
             && !string.Equals(rolAnterior, rolNuevoSolicitado, StringComparison.OrdinalIgnoreCase);
 
-        var overridesLista = overrides?.ToList() ?? [];
-        var cambioPermisosSolicitado = overridesLista.Count > 0;
+        // Overrides recibidos desde UI representan el estado deseado final por permiso.
+        // Se normalizan contra los permisos base del rol objetivo para persistir solo diferencias reales.
+        var overridesDeseados = overrides?.ToList();
+        var overridesLista = new List<PermisoOverrideDto>();
+        var cambioPermisosSolicitado = overridesDeseados is not null;
+
+        (int Id, string Nombre)? rolNuevo = null;
+        if (!string.IsNullOrWhiteSpace(dto.RolNombre))
+        {
+            rolNuevo = await repositorioRol.ObtenerPorNombreAsync(dto.RolNombre, cancellationToken);
+            if (!rolNuevo.HasValue)
+                throw new InvalidOperationException($"El rol '{dto.RolNombre}' no existe.");
+        }
+
+        if (overridesDeseados is not null)
+        {
+            var rolParaComparar = rolNuevo;
+            if (!rolParaComparar.HasValue)
+            {
+                var nombreRolActual = rolesActualesAntes.FirstOrDefault();
+                if (!string.IsNullOrWhiteSpace(nombreRolActual))
+                    rolParaComparar = await repositorioRol.ObtenerPorNombreAsync(nombreRolActual, cancellationToken);
+            }
+
+            var permisosBaseRol = rolParaComparar.HasValue
+                ? await repositorioPermiso.ObtenerPermisoIdsDeRolAsync(rolParaComparar.Value.Id, cancellationToken)
+                : new HashSet<int>();
+
+            foreach (var permisoDeseado in overridesDeseados)
+            {
+                var esBaseRol = permisosBaseRol.Contains(permisoDeseado.PermisoId);
+                if (permisoDeseado.Concedido != esBaseRol)
+                {
+                    overridesLista.Add(new PermisoOverrideDto
+                    {
+                        PermisoId = permisoDeseado.PermisoId,
+                        Concedido = permisoDeseado.Concedido
+                    });
+                }
+            }
+        }
 
         // Iniciar transacción única para usuario + rol + overrides
         await unidadTrabajo.IniciarTransaccionAsync(cancellationToken);
         try
         {
-            if (!string.IsNullOrWhiteSpace(dto.RolNombre))
+            if (cambioRolSolicitado && !string.IsNullOrWhiteSpace(dto.RolNombre))
             {
-                var rolNuevo = await repositorioRol.ObtenerPorNombreAsync(dto.RolNombre, cancellationToken);
-                if (!rolNuevo.HasValue)
-                    throw new InvalidOperationException($"El rol '{dto.RolNombre}' no existe.");
-
                 foreach (var nombreRol in rolesActualesAntes)
                 {
                     var rolActual = await repositorioRol.ObtenerPorNombreAsync(nombreRol, cancellationToken);
@@ -83,14 +118,18 @@ public sealed class ActualizarUsuarioUseCase(
                         await repositorioRol.QuitarRolDeUsuarioAsync(dto.Id, rolActual.Value.Id, cancellationToken);
                 }
 
-                await repositorioRol.AsignarRolAUsuarioAsync(dto.Id, rolNuevo.Value.Id, cancellationToken);
+                // Persistir eliminación de roles anteriores antes de asignar el nuevo
+                // para evitar falsos positivos de existencia en el mismo contexto.
+                await unidadTrabajo.GuardarCambiosAsync(cancellationToken);
+
+                await repositorioRol.AsignarRolAUsuarioAsync(dto.Id, rolNuevo!.Value.Id, cancellationToken);
             }
 
             await repositorioUsuario.ActualizarAsync(usuario, cancellationToken);
             await unidadTrabajo.GuardarCambiosAsync(cancellationToken);
 
             // Overrides dentro de la misma transacción (GuardarOverridesAsync detecta CurrentTransaction)
-            if (overridesLista.Count > 0)
+            if (overridesDeseados is not null)
             {
                 await repositorioPermiso.GuardarOverridesAsync(
                     dto.Id, overridesLista, actualizadoPorUsuarioId ?? 0, cancellationToken);

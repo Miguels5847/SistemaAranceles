@@ -1,0 +1,139 @@
+@startuml
+top to bottom direction
+scale 0.88
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+skinparam arrowColor Black
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 16
+skinparam ranksep 24
+
+title DC-01.1: Autenticación\n(ver DC-01.2 para gestión de usuarios · DC-01.3 para RBAC)
+
+package "Domain" #EFF6FF {
+    class Usuario {
+        +int Id
+        +string NombreCompleto
+        +string CorreoInstitucional
+        +string HashContrasena
+        +string Estado
+        +DateTime? UltimoAccesoEn
+        +bool EstaActivo
+    }
+    class SesionUsuario {
+        +int Id
+        +int UsuarioId
+        +string TokenSesion
+        +DateTime EmitidoEn
+        +DateTime ExpiraEn
+        +DateTime? RevocadoEn
+    }
+
+    Usuario -[hidden]-> SesionUsuario
+}
+
+package "Application" #F0FDF4 {
+    interface IRepositorioUsuario <<Interface>> {
+        +ObtenerPorCorreoInstitucionalAsync(correo: string) : Usuario?
+        +RegistrarUltimoAccesoAsync(id: int, ultimoAccesoEn: DateTime) : void
+        +ObtenerRolesDelUsuarioAsync(id: int) : List~string~
+    }
+    interface IRepositorioSesionUsuario <<Interface>> {
+        +CrearAsync(usuarioId: int, tokenSesion: string, expiraEn: DateTime) : int
+        +RevocarAsync(tokenSesion: string) : void
+        +RevocarTodasDelUsuarioAsync(usuarioId: int) : void
+    }
+    interface IRepositorioPermiso <<Interface>> {
+        ' ver DC-01.3
+        +ObtenerPermisosEfectivosAsync(usuarioId: int) : IReadOnlySet~string~
+    }
+    interface IServicioHash <<Interface>> {
+        +Generar(contrasena: string) : string
+        +Verificar(contrasena: string, hash: string) : bool
+    }
+    interface IAuditoriaServicio <<Interface>> {
+        ' ver DC-01.4
+        +RegistrarAsync(moduloNombre: string, entidadNombre: string, entidadId: string, accionNombre: string, resumenTexto: string, ejecutadoPorUsuarioId: int?) : void
+    }
+
+    class LoginUseCase <<UseCase>> {
+        -IRepositorioUsuario _repositorioUsuario
+        -IRepositorioSesionUsuario _repositorioSesion
+        -IRepositorioPermiso _repositorioPermiso
+        -IServicioHash _servicioHash
+        -IAuditoriaServicio _auditoriaServicio
+        +EjecutarAsync(correo: string, contrasena: string) : SesionDto
+    }
+    class CerrarSesionUseCase <<UseCase>> {
+        -IRepositorioSesionUsuario _repositorioSesion
+        -IAuditoriaServicio _auditoriaServicio
+        +EjecutarAsync(usuarioId: int, tokenSesion: string) : void
+    }
+
+    IRepositorioUsuario -[hidden]-> IRepositorioSesionUsuario
+    IRepositorioSesionUsuario -[hidden]-> IRepositorioPermiso
+    IRepositorioPermiso -[hidden]-> IServicioHash
+    IServicioHash -[hidden]-> IAuditoriaServicio
+    IAuditoriaServicio -[hidden]-> LoginUseCase
+    LoginUseCase -[hidden]-> CerrarSesionUseCase
+}
+
+package "Infrastructure" #FFF7ED {
+    class RepositorioSesionUsuario <<Repository>> {
+        -AppDbContext _context
+        +CrearAsync(usuarioId: int, tokenSesion: string, expiraEn: DateTime) : int
+        +RevocarAsync(tokenSesion: string) : void
+        +RevocarTodasDelUsuarioAsync(usuarioId: int) : void
+    }
+    class ServicioHash <<Service>> {
+        +Generar(contrasena: string) : string
+        +Verificar(contrasena: string, hash: string) : bool
+    }
+
+    note right of ServicioHash
+        Implementado con BCrypt.Net
+    end note
+
+    RepositorioSesionUsuario -[hidden]-> ServicioHash
+}
+
+package "Presentation" #FDF4FF {
+    class LoginViewModel <<ViewModel>> {
+        +string Correo
+        +string Contrasena
+        +string MensajeError
+        +ICommand LoginCommand
+        +ICommand LogoutCommand
+        +EjecutarLoginAsync() : void
+    }
+}
+
+Domain -[hidden]-> Application
+Application -[hidden]-> Infrastructure
+Infrastructure -[hidden]-> Presentation
+
+' Dominio
+Usuario "1" --> "0..*" SesionUsuario : tiene
+
+' Implementaciones
+RepositorioSesionUsuario ..|> IRepositorioSesionUsuario : implementa
+ServicioHash ..|> IServicioHash : implementa
+
+' Use cases
+LoginUseCase --> IRepositorioUsuario : usa
+LoginUseCase --> IRepositorioSesionUsuario : usa
+LoginUseCase --> IRepositorioPermiso : usa
+LoginUseCase --> IServicioHash : usa
+LoginUseCase --> IAuditoriaServicio : usa
+CerrarSesionUseCase --> IRepositorioSesionUsuario : usa
+CerrarSesionUseCase --> IAuditoriaServicio : usa
+
+' Presentación
+LoginViewModel --> LoginUseCase : invoca
+LoginViewModel --> CerrarSesionUseCase : invoca
+@enduml

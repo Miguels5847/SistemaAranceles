@@ -1,0 +1,151 @@
+@startuml
+top to bottom direction
+scale 0.88
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+skinparam arrowColor Black
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 16
+skinparam ranksep 24
+
+title DC-01.2: Gestión de Usuarios\n(ver DC-01.1 para autenticación · DC-01.3 para RBAC)
+
+package "Domain" #EFF6FF {
+    class Usuario {
+        +int Id
+        +string NombreCompleto
+        +string CorreoInstitucional
+        +string HashContrasena
+        +string Estado
+        +DateTime? UltimoAccesoEn
+        +bool EstaActivo
+    }
+
+    note right of Usuario
+        Estado: "Activo" | "Inactivo" | "Suspendido"
+        EliminarAsync → estado = "Inactivo" (soft delete)
+    end note
+}
+
+package "Application" #F0FDF4 {
+    interface IRepositorioUsuario <<Interface>> {
+        +ListarAsync() : List~Usuario~
+        +ObtenerPorIdAsync(id: int) : Usuario?
+        +ObtenerPorCorreoInstitucionalAsync(correo: string) : Usuario?
+        +ExisteCorreoInstitucionalAsync(correo: string) : bool
+        +AgregarAsync(usuario: Usuario) : void
+        +AgregarConRolAsync(usuario: Usuario, rolId: int) : int
+        +ActualizarAsync(usuario: Usuario) : void
+        +EliminarAsync(id: int, eliminadoPorUsuarioId: int) : void
+        +ObtenerRolesDelUsuarioAsync(id: int) : List~string~
+    }
+    interface IAuditoriaServicio <<Interface>> {
+        ' ver DC-01.4
+        +RegistrarAsync(moduloNombre: string, entidadNombre: string, entidadId: string, accionNombre: string, resumenTexto: string, ejecutadoPorUsuarioId: int?) : void
+    }
+    interface IServicioHash <<Interface>> {
+        ' ver DC-01.1
+        +Generar(contrasena: string) : string
+    }
+
+    class CrearUsuarioUseCase <<UseCase>> {
+        -IRepositorioUsuario _repositorioUsuario
+        -IServicioHash _servicioHash
+        -IAuditoriaServicio _auditoriaServicio
+        +EjecutarAsync(dto: CrearUsuarioDto) : UsuarioDto
+    }
+    class ActualizarUsuarioUseCase <<UseCase>> {
+        -IRepositorioUsuario _repositorioUsuario
+        -IAuditoriaServicio _auditoriaServicio
+        +EjecutarAsync(dto: ActualizarUsuarioDto) : void
+    }
+    class EliminarUsuarioUseCase <<UseCase>> {
+        -IRepositorioUsuario _repositorioUsuario
+        -IAuditoriaServicio _auditoriaServicio
+        +EjecutarAsync(id: int, eliminadoPorUsuarioId: int) : void
+    }
+    class ListarUsuariosUseCase <<UseCase>> {
+        -IRepositorioUsuario _repositorioUsuario
+        +EjecutarAsync() : List~UsuarioDto~
+    }
+    class ObtenerUsuarioUseCase <<UseCase>> {
+        -IRepositorioUsuario _repositorioUsuario
+        +EjecutarAsync(id: int) : UsuarioDto
+    }
+
+    IRepositorioUsuario -[hidden]-> IAuditoriaServicio
+    IAuditoriaServicio -[hidden]-> IServicioHash
+    IServicioHash -[hidden]-> CrearUsuarioUseCase
+    CrearUsuarioUseCase -[hidden]-> ActualizarUsuarioUseCase
+    ActualizarUsuarioUseCase -[hidden]-> EliminarUsuarioUseCase
+    EliminarUsuarioUseCase -[hidden]-> ListarUsuariosUseCase
+    ListarUsuariosUseCase -[hidden]-> ObtenerUsuarioUseCase
+}
+
+package "Infrastructure" #FFF7ED {
+    class RepositorioUsuario <<Repository>> {
+        -AppDbContext _context
+        +ListarAsync() : List~Usuario~
+        +ObtenerPorIdAsync(id: int) : Usuario?
+        +ObtenerPorCorreoInstitucionalAsync(correo: string) : Usuario?
+        +ExisteCorreoInstitucionalAsync(correo: string) : bool
+        +AgregarConRolAsync(usuario: Usuario, rolId: int) : int
+        +ActualizarAsync(usuario: Usuario) : void
+        +EliminarAsync(id: int, eliminadoPorUsuarioId: int) : void
+        +ObtenerRolesDelUsuarioAsync(id: int) : List~string~
+    }
+}
+
+package "Presentation" #FDF4FF {
+    class UsuariosViewModel <<ViewModel>> {
+        +ObservableCollection~UsuarioDto~ Usuarios
+        +UsuarioDto? UsuarioSeleccionado
+        +ICommand CrearCommand
+        +ICommand EditarCommand
+        +ICommand EliminarCommand
+        +CargarUsuariosAsync() : void
+    }
+    class EditarUsuarioViewModel <<ViewModel>> {
+        +ICommand GuardarCommand
+        +ICommand CancelarCommand
+        +GuardarAsync() : void
+    }
+
+    note right of EditarUsuarioViewModel
+        También gestiona overrides de permisos
+        (ver DC-01.3 para RBAC)
+    end note
+
+    UsuariosViewModel -[hidden]-> EditarUsuarioViewModel
+}
+
+Domain -[hidden]-> Application
+Application -[hidden]-> Infrastructure
+Infrastructure -[hidden]-> Presentation
+
+' Implementaciones
+RepositorioUsuario ..|> IRepositorioUsuario : implementa
+
+' Use cases
+CrearUsuarioUseCase --> IRepositorioUsuario : usa
+CrearUsuarioUseCase --> IServicioHash : usa
+CrearUsuarioUseCase --> IAuditoriaServicio : usa
+ActualizarUsuarioUseCase --> IRepositorioUsuario : usa
+ActualizarUsuarioUseCase --> IAuditoriaServicio : usa
+EliminarUsuarioUseCase --> IRepositorioUsuario : usa
+EliminarUsuarioUseCase --> IAuditoriaServicio : usa
+ListarUsuariosUseCase --> IRepositorioUsuario : usa
+ObtenerUsuarioUseCase --> IRepositorioUsuario : usa
+
+' Presentación
+UsuariosViewModel --> ListarUsuariosUseCase : invoca
+UsuariosViewModel --> CrearUsuarioUseCase : invoca
+UsuariosViewModel --> EliminarUsuarioUseCase : invoca
+EditarUsuarioViewModel --> ActualizarUsuarioUseCase : invoca
+EditarUsuarioViewModel --> ObtenerUsuarioUseCase : invoca
+@enduml

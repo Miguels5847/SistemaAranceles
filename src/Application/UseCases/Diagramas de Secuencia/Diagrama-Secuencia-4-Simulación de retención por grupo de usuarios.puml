@@ -19,9 +19,9 @@ participant "SimularRetencionUseCase"
 participant "ConfigRetencionRepository"
 participant "SimulacionRepository"
 participant "DetalleSimulacionRepository"
-participant "Base de Datos"
+database "Base de Datos" as db
 
-note over "Planificador","Base de Datos"
+note over "Planificador","db"
 Flujo Principal - Simulación de retención por cohorte
 end note
 
@@ -29,13 +29,13 @@ end note
 "RetencionViewModel" -> "SimularRetencionUseCase": Ejecutar(configuracionRetencionId)
 
 "SimularRetencionUseCase" -> "ConfigRetencionRepository": ObtenerConfiguracion(id)
-"ConfigRetencionRepository" -> "Base de Datos": SELECT configuracion_retencion
-"Base de Datos" --> "ConfigRetencionRepository": Configuración (tasas, ciclos, paralelos)
+"ConfigRetencionRepository" -> "db": SELECT configuracion_retencion
+"db" --> "ConfigRetencionRepository": Configuración (tasas, ciclos, paralelos)
 "ConfigRetencionRepository" --> "SimularRetencionUseCase": ConfiguracionRetencionDto
 
 "SimularRetencionUseCase" -> "SimulacionRepository": CrearSimulacion(configuracionId, fechaEjecucion)
-"SimulacionRepository" -> "Base de Datos": INSERT simulacion_retencion
-"Base de Datos" --> "SimulacionRepository": simulacionId
+"SimulacionRepository" -> "db": INSERT simulacion_retencion
+"db" --> "SimulacionRepository": simulacionId
 
 loop Por cada ciclo de retención (1 a totalCiclosRetencion)
     "SimularRetencionUseCase" -> "SimularRetencionUseCase": AplicarTasaRetencion(estudiantesActuales)
@@ -45,7 +45,7 @@ loop Por cada ciclo de retención (1 a totalCiclosRetencion)
     end note
 
     "SimularRetencionUseCase" -> "DetalleSimulacionRepository": GuardarDetalle(simulacionId, ciclo, estudiantes, tasa, zona=retencion)
-    "DetalleSimulacionRepository" -> "Base de Datos": INSERT detalle_simulacion_retencion
+    "DetalleSimulacionRepository" -> "db": INSERT detalle_simulacion_retencion
 end
 
 loop Por cada ciclo de graduación (ciclosRetencion+1 a totalCiclos)
@@ -56,7 +56,7 @@ loop Por cada ciclo de graduación (ciclosRetencion+1 a totalCiclos)
     end note
 
     "SimularRetencionUseCase" -> "DetalleSimulacionRepository": GuardarDetalle(simulacionId, ciclo, estudiantes, tasa, zona=graduacion)
-    "DetalleSimulacionRepository" -> "Base de Datos": INSERT detalle_simulacion_retencion
+    "DetalleSimulacionRepository" -> "db": INSERT detalle_simulacion_retencion
 end
 
 "SimularRetencionUseCase" -> "SimularRetencionUseCase": CalcularIndicadores(retencionFinal, graduacionFinal)

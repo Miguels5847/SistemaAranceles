@@ -1,0 +1,60 @@
+@startuml
+title <b><size:18>DS-02.3 — Eliminar Usuario</size></b>
+
+' Configuración de estilos
+skinparam participantFontSize 11
+skinparam participantFontStyle normal
+skinparam actorFontSize 11
+skinparam noteFontSize 11
+skinparam sequenceMessageAlign center
+
+' Definición de participantes con alias
+actor "Admin" as admin
+participant "UsuariosViewModel" as vm
+participant "SesionActual" as sesion
+participant "EliminarUsuarioUseCase" as uc
+participant "IRepositorioUsuario" as repoU
+participant "IRepositorioSesionUsuario" as repoS
+participant "IUnidadTrabajo" as uow
+participant "IAuditoriaServicio" as audit
+database "Base de Datos" as db
+
+note over admin, db
+  Flujo: Eliminar usuario
+  Estado = "Inactivo" -> DELETE definitivo
+  Estado != "Inactivo" -> Baja lógica (soft delete)
+  Permiso verificado en SesionActual (US.ELIMINAR)
+end note
+
+admin -> vm : Eliminar usuario seleccionado
+vm -> sesion : TienePermiso("US.ELIMINAR")
+sesion --> vm : true | false
+
+vm -> uc : EjecutarAsync(id, eliminadoPorUsuarioId)
+
+uc -> repoU : ObtenerPorIdAsync(id)
+repoU -> db : SELECT * FROM usuario WHERE id = :id
+db --> repoU : entidad Usuario
+repoU --> uc : Usuario
+
+uc -> repoS : RevocarTodasDelUsuarioAsync(id)
+repoS -> db : UPDATE sesion_usuario SET revocado_en = now() WHERE usuario_id = :id
+
+alt Estado = "Inactivo" (eliminación definitiva)
+    uc -> repoU : EliminarDefinitivamenteAsync(id)
+    repoU -> db : DELETE FROM usuario WHERE id = :id
+else Estado != "Inactivo" (baja lógica)
+    uc -> repoU : EliminarAsync(id, eliminadoPorUsuarioId)
+    repoU -> db : UPDATE usuario SET esta_activo=false,\neliminado_en=now(), eliminado_por_uid=:uid
+end
+
+uc -> uow : GuardarCambiosAsync()
+uow -> db : COMMIT
+db --> uow : OK
+
+uc -> audit : RegistrarAsync("Usuarios", "Usuario", "ELIMINAR", ...)
+note right : Fire-and-forget
+
+uc --> vm : void (éxito)
+vm --> admin : Confirmación + recarga lista
+@enduml

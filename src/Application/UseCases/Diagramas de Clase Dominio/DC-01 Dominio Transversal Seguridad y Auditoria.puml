@@ -1,5 +1,4 @@
-@startuml DC-01 Dominio Transversal
-
+@startuml
 top to bottom direction
 scale 0.88
 
@@ -23,7 +22,7 @@ package "Domain" #EFF6FF {
         +string CorreoInstitucional
         +string HashContrasena
         +string Estado
-        +DateTime UltimoAccesoEn
+        +DateTime? UltimoAccesoEn
         +bool EstaActivo
     }
 
@@ -53,149 +52,266 @@ package "Domain" #EFF6FF {
         +int PermisoId
     }
 
+    class UsuarioPermisoOverride {
+        +int UsuarioId
+        +int PermisoId
+        +bool Concedido
+        +DateTime CreadoEn
+        +int? CreadoPorUsuarioId
+    }
+
     class SesionUsuario {
         +int Id
         +int UsuarioId
         +string TokenSesion
         +DateTime EmitidoEn
         +DateTime ExpiraEn
-        +DateTime RevocadoEn
+        +DateTime? RevocadoEn
     }
 
     class AuditoriaLog {
         +int Id
-        +string EventoEn
+        +DateTime EventoEn
         +string ModuloNombre
         +string EntidadNombre
         +string EntidadId
         +string AccionNombre
         +string ResumenTexto
-        +int EjecutadoPorUsuarioId
+        +int? EjecutadoPorUsuarioId
     }
 
     Usuario -[hidden]-> Rol
     Rol -[hidden]-> Permiso
     Permiso -[hidden]-> UsuarioRol
     UsuarioRol -[hidden]-> RolPermiso
-    RolPermiso -[hidden]-> SesionUsuario
+    RolPermiso -[hidden]-> UsuarioPermisoOverride
+    UsuarioPermisoOverride -[hidden]-> SesionUsuario
     SesionUsuario -[hidden]-> AuditoriaLog
 }
 
 package "Application" #F0FDF4 {
-    interface IUsuarioRepository <<Interface>> {
-        +ObtenerPorCorreo(correo: string) : Usuario
-        +ObtenerPorId(id: int) : Usuario
-        +Guardar(usuario: Usuario) : void
-        +ActualizarEstado(id: int, estado: string) : void
+    interface IRepositorioUsuario <<Interface>> {
+        +ListarAsync() : List~Usuario~
+        +ObtenerPorIdAsync(id: int) : Usuario?
+        +ObtenerPorCorreoInstitucionalAsync(correo: string) : Usuario?
+        +ExisteCorreoInstitucionalAsync(correo: string) : bool
+        +AgregarAsync(usuario: Usuario) : void
+        +AgregarConRolAsync(usuario: Usuario, rolId: int) : int
+        +ActualizarAsync(usuario: Usuario) : void
+        +EliminarAsync(id: int, eliminadoPorUsuarioId: int) : void
+        +RegistrarUltimoAccesoAsync(id: int, ultimoAccesoEn: DateTime) : void
+        +ObtenerRolesDelUsuarioAsync(id: int) : List~string~
     }
 
-    interface ISesionRepository <<Interface>> {
-        +CrearSesion(usuarioId: int, expiraEn: DateTime) : SesionUsuario
-        +ObtenerPorToken(token: string) : SesionUsuario
-        +RevocarSesion(token: string) : void
+    interface IRepositorioSesionUsuario <<Interface>> {
+        +CrearAsync(usuarioId: int, tokenSesion: string, expiraEn: DateTime) : int
+        +RevocarAsync(tokenSesion: string) : void
+        +RevocarTodasDelUsuarioAsync(usuarioId: int) : void
     }
 
-    interface IAuditoriaRepository <<Interface>> {
-        +RegistrarEvento(log: AuditoriaLog) : void
-        +ObtenerPorFiltros(usuarioId: int, modulo: string) : List~AuditoriaLog~
+    interface IRepositorioPermiso <<Interface>> {
+        +ObtenerPermisosEfectivosAsync(usuarioId: int) : IReadOnlySet~string~
+        +ObtenerTodosConEstadoParaUsuarioAsync(usuarioId: int) : List~PermisoConEstadoDto~
+        +ObtenerPermisoIdsDeRolAsync(rolId: int) : IReadOnlySet~int~
+        +GuardarOverridesAsync(usuarioId: int, overrides: IEnumerable~PermisoOverrideDto~, creadoPorUsuarioId: int) : void
     }
 
-    class AutenticarUsuarioUseCase <<UseCase>> {
-        -IUsuarioRepository _usuarioRepo
-        -ISesionRepository _sesionRepo
-        -IAuditoriaRepository _auditoriaRepo
-        +Ejecutar(correo: string, contrasena: string) : SesionDto
-        +CerrarSesion(token: string) : void
+    interface IAuditoriaServicio <<Interface>> {
+        +RegistrarAsync(moduloNombre: string, entidadNombre: string, entidadId: string, accionNombre: string, resumenTexto: string, ejecutadoPorUsuarioId: int?) : void
+        +ConsultarAsync(filtros: AuditoriaFiltroDto) : AuditoriaConsultaResultadoDto
     }
 
-    class GestionUsuarioUseCase <<UseCase>> {
-        -IUsuarioRepository _usuarioRepo
-        -IAuditoriaRepository _auditoriaRepo
-        +CrearUsuario(dto: CrearUsuarioDto) : UsuarioDto
-        +SuspenderUsuario(id: int) : void
-        +AsignarRol(usuarioId: int, rolId: int) : void
+    class LoginUseCase <<UseCase>> {
+        -IRepositorioUsuario _repositorioUsuario
+        -IRepositorioSesionUsuario _repositorioSesion
+        -IRepositorioPermiso _repositorioPermiso
+        -IServicioHash _servicioHash
+        -IAuditoriaServicio _auditoriaServicio
+        +EjecutarAsync(correo: string, contrasena: string) : SesionDto
     }
 
-    class VerificarPermisoUseCase <<UseCase>> {
-        -IUsuarioRepository _usuarioRepo
-        +TienePermiso(token: string, permiso: string) : bool
+    class CerrarSesionUseCase <<UseCase>> {
+        -IRepositorioSesionUsuario _repositorioSesion
+        -IAuditoriaServicio _auditoriaServicio
+        +EjecutarAsync(usuarioId: int, tokenSesion: string) : void
     }
 
-    IUsuarioRepository -[hidden]-> ISesionRepository
-    ISesionRepository -[hidden]-> IAuditoriaRepository
-    IAuditoriaRepository -[hidden]-> AutenticarUsuarioUseCase
-    AutenticarUsuarioUseCase -[hidden]-> GestionUsuarioUseCase
-    GestionUsuarioUseCase -[hidden]-> VerificarPermisoUseCase
+    class CrearUsuarioUseCase <<UseCase>> {
+        -IRepositorioUsuario _repositorioUsuario
+        -IServicioHash _servicioHash
+        -IAuditoriaServicio _auditoriaServicio
+        +EjecutarAsync(dto: CrearUsuarioDto) : UsuarioDto
+    }
+
+    class ActualizarUsuarioUseCase <<UseCase>> {
+        -IRepositorioUsuario _repositorioUsuario
+        -IAuditoriaServicio _auditoriaServicio
+        +EjecutarAsync(dto: ActualizarUsuarioDto) : void
+    }
+
+    class EliminarUsuarioUseCase <<UseCase>> {
+        -IRepositorioUsuario _repositorioUsuario
+        -IAuditoriaServicio _auditoriaServicio
+        +EjecutarAsync(id: int, eliminadoPorUsuarioId: int) : void
+    }
+
+    class ListarUsuariosUseCase <<UseCase>> {
+        -IRepositorioUsuario _repositorioUsuario
+        +EjecutarAsync() : List~UsuarioDto~
+    }
+
+    class ObtenerUsuarioUseCase <<UseCase>> {
+        -IRepositorioUsuario _repositorioUsuario
+        +EjecutarAsync(id: int) : UsuarioDto
+    }
+
+    class ObtenerPermisosEfectivosUsuarioUseCase <<UseCase>> {
+        -IRepositorioPermiso _repositorioPermiso
+        +EjecutarAsync(usuarioId: int) : List~PermisoConEstadoDto~
+    }
+
+    class ActualizarPermisosUsuarioUseCase <<UseCase>> {
+        -IRepositorioPermiso _repositorioPermiso
+        +EjecutarAsync(usuarioId: int, overrides: IEnumerable~PermisoOverrideDto~, ejecutadoPorUsuarioId: int) : void
+    }
+
+    class ConsultarAuditoriaUseCase <<UseCase>> {
+        -IAuditoriaServicio _auditoriaServicio
+        +EjecutarAsync(filtros: AuditoriaFiltroDto) : AuditoriaConsultaResultadoDto
+    }
+
+    IRepositorioUsuario -[hidden]-> IRepositorioSesionUsuario
+    IRepositorioSesionUsuario -[hidden]-> IRepositorioPermiso
+    IRepositorioPermiso -[hidden]-> IAuditoriaServicio
+    IAuditoriaServicio -[hidden]-> LoginUseCase
+    LoginUseCase -[hidden]-> CerrarSesionUseCase
+    CerrarSesionUseCase -[hidden]-> CrearUsuarioUseCase
+    CrearUsuarioUseCase -[hidden]-> ActualizarUsuarioUseCase
+    ActualizarUsuarioUseCase -[hidden]-> EliminarUsuarioUseCase
+    EliminarUsuarioUseCase -[hidden]-> ObtenerPermisosEfectivosUsuarioUseCase
+    ObtenerPermisosEfectivosUsuarioUseCase -[hidden]-> ActualizarPermisosUsuarioUseCase
 }
 
 package "Infrastructure" #FFF7ED {
-    class UsuarioRepository <<Repository>> {
+    class RepositorioUsuario <<Repository>> {
         -AppDbContext _context
-        +ObtenerPorCorreo(correo: string) : Usuario
-        +ObtenerPorId(id: int) : Usuario
-        +Guardar(usuario: Usuario) : void
-        +ActualizarEstado(id: int, estado: string) : void
+        +ListarAsync() : List~Usuario~
+        +ObtenerPorIdAsync(id: int) : Usuario?
+        +ObtenerPorCorreoInstitucionalAsync(correo: string) : Usuario?
+        +AgregarConRolAsync(usuario: Usuario, rolId: int) : int
+        +ActualizarAsync(usuario: Usuario) : void
+        +EliminarAsync(id: int, eliminadoPorUsuarioId: int) : void
+        +ObtenerRolesDelUsuarioAsync(id: int) : List~string~
     }
 
-    class SesionRepository <<Repository>> {
+    class RepositorioSesionUsuario <<Repository>> {
         -AppDbContext _context
-        +CrearSesion(usuarioId: int, expiraEn: DateTime) : SesionUsuario
-        +ObtenerPorToken(token: string) : SesionUsuario
-        +RevocarSesion(token: string) : void
+        +CrearAsync(usuarioId: int, tokenSesion: string, expiraEn: DateTime) : int
+        +RevocarAsync(tokenSesion: string) : void
+        +RevocarTodasDelUsuarioAsync(usuarioId: int) : void
     }
 
-    class AuditoriaRepository <<Repository>> {
+    class RepositorioPermiso <<Repository>> {
         -AppDbContext _context
-        +RegistrarEvento(log: AuditoriaLog) : void
-        +ObtenerPorFiltros(usuarioId: int, modulo: string) : List~AuditoriaLog~
+        +ObtenerPermisosEfectivosAsync(usuarioId: int) : IReadOnlySet~string~
+        +ObtenerTodosConEstadoParaUsuarioAsync(usuarioId: int) : List~PermisoConEstadoDto~
+        +GuardarOverridesAsync(usuarioId: int, overrides: IEnumerable~PermisoOverrideDto~, creadoPorUsuarioId: int) : void
     }
 
-    UsuarioRepository -[hidden]-> SesionRepository
-    SesionRepository -[hidden]-> AuditoriaRepository
+    class ServicioAuditoria <<Service>> {
+        -IRepositorioAuditoriaLog _repositorioAuditoria
+        +RegistrarAsync(moduloNombre: string, entidadNombre: string, entidadId: string, accionNombre: string, resumenTexto: string, ejecutadoPorUsuarioId: int?) : void
+        +ConsultarAsync(filtros: AuditoriaFiltroDto) : AuditoriaConsultaResultadoDto
+    }
+
+    RepositorioUsuario -[hidden]-> RepositorioSesionUsuario
+    RepositorioSesionUsuario -[hidden]-> RepositorioPermiso
+    RepositorioPermiso -[hidden]-> ServicioAuditoria
 }
 
 package "Presentation" #FDF4FF {
     class LoginViewModel <<ViewModel>> {
         +string Correo
         +string Contrasena
+        +string MensajeError
         +ICommand LoginCommand
         +ICommand LogoutCommand
-        +EjecutarLogin() : void
+        +EjecutarLoginAsync() : void
     }
 
-    class UsuarioViewModel <<ViewModel>> {
-        +ICommand CrearUsuarioCommand
-        +ICommand SuspenderCommand
-        +CargarUsuarios() : void
+    class UsuariosViewModel <<ViewModel>> {
+        +ObservableCollection~UsuarioDto~ Usuarios
+        +UsuarioDto? UsuarioSeleccionado
+        +ICommand CrearCommand
+        +ICommand EditarCommand
+        +ICommand EliminarCommand
+        +CargarUsuariosAsync() : void
     }
 
-    LoginViewModel -[hidden]-> UsuarioViewModel
+    class EditarUsuarioViewModel <<ViewModel>> {
+        +ICommand GuardarCommand
+        +ICommand CancelarCommand
+        +ObservableCollection~PermisoConEstadoDto~ Permisos
+        +GuardarAsync() : void
+    }
+
+    class AuditoriaViewModel <<ViewModel>> {
+        +ICommand ConsultarCommand
+        +CargarRegistrosAsync() : void
+    }
+
+    LoginViewModel -[hidden]-> UsuariosViewModel
+    UsuariosViewModel -[hidden]-> EditarUsuarioViewModel
+    EditarUsuarioViewModel -[hidden]-> AuditoriaViewModel
 }
 
 Domain -[hidden]-> Application
 Application -[hidden]-> Infrastructure
 Infrastructure -[hidden]-> Presentation
 
+' Relaciones de dominio
 Usuario "1" --> "0..*" UsuarioRol : tiene
 Rol "1" --> "0..*" UsuarioRol : tiene
 Rol "1" --> "0..*" RolPermiso : tiene
 Permiso "1" --> "0..*" RolPermiso : tiene
+Usuario "1" --> "0..*" UsuarioPermisoOverride : override
+Permiso "1" --> "0..*" UsuarioPermisoOverride : override
 Usuario "1" --> "0..*" SesionUsuario : tiene
 Usuario "1" --> "0..*" AuditoriaLog : genera
 
-UsuarioRepository ..|> IUsuarioRepository : implementa
-SesionRepository ..|> ISesionRepository : implementa
-AuditoriaRepository ..|> IAuditoriaRepository : implementa
+' Implementaciones
+RepositorioUsuario ..|> IRepositorioUsuario : implementa
+RepositorioSesionUsuario ..|> IRepositorioSesionUsuario : implementa
+RepositorioPermiso ..|> IRepositorioPermiso : implementa
+ServicioAuditoria ..|> IAuditoriaServicio : implementa
 
-AutenticarUsuarioUseCase --> IUsuarioRepository : usa
-AutenticarUsuarioUseCase --> ISesionRepository : usa
-AutenticarUsuarioUseCase --> IAuditoriaRepository : usa
-GestionUsuarioUseCase --> IUsuarioRepository : usa
-GestionUsuarioUseCase --> IAuditoriaRepository : usa
-VerificarPermisoUseCase --> IUsuarioRepository : usa
+' Dependencias de use cases
+LoginUseCase --> IRepositorioUsuario : usa
+LoginUseCase --> IRepositorioSesionUsuario : usa
+LoginUseCase --> IRepositorioPermiso : usa
+LoginUseCase --> IAuditoriaServicio : usa
+CerrarSesionUseCase --> IRepositorioSesionUsuario : usa
+CerrarSesionUseCase --> IAuditoriaServicio : usa
+CrearUsuarioUseCase --> IRepositorioUsuario : usa
+CrearUsuarioUseCase --> IAuditoriaServicio : usa
+ActualizarUsuarioUseCase --> IRepositorioUsuario : usa
+ActualizarUsuarioUseCase --> IAuditoriaServicio : usa
+EliminarUsuarioUseCase --> IRepositorioUsuario : usa
+EliminarUsuarioUseCase --> IAuditoriaServicio : usa
+ListarUsuariosUseCase --> IRepositorioUsuario : usa
+ObtenerUsuarioUseCase --> IRepositorioUsuario : usa
+ObtenerPermisosEfectivosUsuarioUseCase --> IRepositorioPermiso : usa
+ActualizarPermisosUsuarioUseCase --> IRepositorioPermiso : usa
+ConsultarAuditoriaUseCase --> IAuditoriaServicio : usa
 
-LoginViewModel --> AutenticarUsuarioUseCase : invoca
-UsuarioViewModel --> GestionUsuarioUseCase : invoca
-UsuarioViewModel --> VerificarPermisoUseCase : invoca
-
+' Dependencias de presentación
+LoginViewModel --> LoginUseCase : invoca
+LoginViewModel --> CerrarSesionUseCase : invoca
+UsuariosViewModel --> ListarUsuariosUseCase : invoca
+UsuariosViewModel --> EliminarUsuarioUseCase : invoca
+UsuariosViewModel --> CrearUsuarioUseCase : invoca
+EditarUsuarioViewModel --> ActualizarUsuarioUseCase : invoca
+EditarUsuarioViewModel --> ObtenerPermisosEfectivosUsuarioUseCase : invoca
+EditarUsuarioViewModel --> ActualizarPermisosUsuarioUseCase : invoca
+AuditoriaViewModel --> ConsultarAuditoriaUseCase : invoca
 @enduml

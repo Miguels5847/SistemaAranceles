@@ -1,0 +1,102 @@
+@startuml DS-03.2-CRUD-Inflacion-Anual
+title <b><size:18>DS-03.2 — CRUD Inflación Anual</size></b>
+
+skinparam participant {
+    FontSize 11
+    FontStyle normal
+}
+skinparam actor {
+    FontSize 11
+}
+skinparam note {
+    FontSize 11
+}
+skinparam sequenceMessageAlign center
+
+actor "Planificador"
+participant "InflacionViewModel"
+participant "CrearInflacionAnualUseCase"
+participant "ActualizarInflacionAnualUseCase"
+participant "EliminarInflacionAnualUseCase"
+participant "ListarInflacionAnualUseCase"
+participant "IRepositorioInflacionAnual"
+participant "IUnidadTrabajo"
+participant "IAuditoriaServicio"
+database "Base de Datos" as db
+
+note over "Planificador","db"
+Flujo 1: Listar inflación anual
+end note
+
+"Planificador" -> "InflacionViewModel" : Abre módulo inflación
+"InflacionViewModel" -> "ListarInflacionAnualUseCase" : EjecutarAsync()
+"ListarInflacionAnualUseCase" -> "IRepositorioInflacionAnual" : ListarAsync()
+"IRepositorioInflacionAnual" -> "db" : SELECT * FROM inflacion_anual ORDER BY anio
+"db" --> "IRepositorioInflacionAnual" : Registros
+"IRepositorioInflacionAnual" --> "ListarInflacionAnualUseCase" : List<InflacionAnual>
+"ListarInflacionAnualUseCase" --> "InflacionViewModel" : List<InflacionAnualDto>
+"InflacionViewModel" --> "Planificador" : Tabla de inflaciones
+
+note over "Planificador","db"
+Flujo 2: Crear registro de inflación anual
+TipoFuente: "Dato historico" | "Estimacion" | "Ajuste manual"
+end note
+
+"Planificador" -> "InflacionViewModel" : Ingresa anio, porcentaje, fuente
+"InflacionViewModel" -> "CrearInflacionAnualUseCase" : EjecutarAsync(CrearInflacionAnualDto, ejecutadoPorUsuarioId)
+"CrearInflacionAnualUseCase" -> "CrearInflacionAnualUseCase" : Validar rango (anio 2000–2100, porcentaje -10 a +20%)
+"CrearInflacionAnualUseCase" -> "IRepositorioInflacionAnual" : ExisteAnioAsync(anio, null)
+"IRepositorioInflacionAnual" -> "db" : SELECT COUNT(*) WHERE anio = :anio
+"db" --> "IRepositorioInflacionAnual" : existe / no existe
+
+alt Año ya existe
+    "CrearInflacionAnualUseCase" --> "InflacionViewModel" : InvalidOperationException (año ya registrado)
+    "InflacionViewModel" --> "Planificador" : Muestra error
+else Año disponible
+    "CrearInflacionAnualUseCase" -> "IRepositorioInflacionAnual" : AgregarAsync(new InflacionAnual(...), usuarioId)
+    "IRepositorioInflacionAnual" -> "db" : INSERT INTO inflacion_anual ...
+    "CrearInflacionAnualUseCase" -> "IUnidadTrabajo" : GuardarCambiosAsync()
+    "IUnidadTrabajo" -> "db" : COMMIT
+    "CrearInflacionAnualUseCase" -> "IAuditoriaServicio" : RegistrarAsync("CREAR", ...)
+    "CrearInflacionAnualUseCase" --> "InflacionViewModel" : void (éxito)
+    "InflacionViewModel" --> "Planificador" : Confirmación + recarga tabla
+end
+
+note over "Planificador","db"
+Flujo 3: Actualizar (incl. ajuste manual — cambia tipo_fuente a "Ajuste manual" si era "Estimacion")
+end note
+
+"Planificador" -> "InflacionViewModel" : Edita fila — cambia porcentaje
+"InflacionViewModel" -> "ActualizarInflacionAnualUseCase" : EjecutarAsync(ActualizarInflacionAnualDto { Id, Anio, PorcentajeInflacion, FuenteNombre, TipoFuente }, ejecutadoPorUsuarioId)
+"ActualizarInflacionAnualUseCase" -> "IRepositorioInflacionAnual" : ObtenerPorIdAsync(dto.Id)
+"IRepositorioInflacionAnual" -> "db" : SELECT * FROM inflacion_anual WHERE id = :id
+"db" --> "IRepositorioInflacionAnual" : entidad | null
+"ActualizarInflacionAnualUseCase" -> "IRepositorioInflacionAnual" : ExisteAnioAsync(dto.Anio, dto.Id)
+
+note right of "ActualizarInflacionAnualUseCase"
+    Si era "Estimacion" → nuevo tipo_fuente = "Ajuste manual"
+    Si era "Dato historico" → mantiene tipo según dto.TipoFuente
+end note
+
+"ActualizarInflacionAnualUseCase" -> "IRepositorioInflacionAnual" : ActualizarAsync(entidad modificada, usuarioId)
+"IRepositorioInflacionAnual" -> "db" : UPDATE inflacion_anual SET porcentaje_inflacion, fuente_nombre, tipo_fuente WHERE id = :id
+"ActualizarInflacionAnualUseCase" -> "IUnidadTrabajo" : GuardarCambiosAsync()
+"IUnidadTrabajo" -> "db" : COMMIT
+"ActualizarInflacionAnualUseCase" -> "IAuditoriaServicio" : RegistrarAsync("ACTUALIZAR", ...)
+"ActualizarInflacionAnualUseCase" --> "InflacionViewModel" : void (éxito)
+"InflacionViewModel" --> "Planificador" : Fila actualizada con indicador de fuente
+
+note over "Planificador","db"
+Flujo 4: Eliminar registro de inflación anual
+end note
+
+"Planificador" -> "InflacionViewModel" : Eliminar fila seleccionada
+"InflacionViewModel" -> "EliminarInflacionAnualUseCase" : EjecutarAsync(id, ejecutadoPorUsuarioId)
+"EliminarInflacionAnualUseCase" -> "IRepositorioInflacionAnual" : EliminarPorIdAsync(id)
+"IRepositorioInflacionAnual" -> "db" : DELETE FROM inflacion_anual WHERE id = :id
+"EliminarInflacionAnualUseCase" -> "IUnidadTrabajo" : GuardarCambiosAsync()
+"IUnidadTrabajo" -> "db" : COMMIT
+"EliminarInflacionAnualUseCase" -> "IAuditoriaServicio" : RegistrarAsync("ELIMINAR", ...)
+"EliminarInflacionAnualUseCase" --> "InflacionViewModel" : void (éxito)
+"InflacionViewModel" --> "Planificador" : Fila eliminada
+@enduml

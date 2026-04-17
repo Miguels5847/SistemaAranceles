@@ -110,10 +110,33 @@
                   CanUserAddRows="False"
                   GridLinesVisibility="Horizontal"
                   BorderBrush="#C5CAE9"
-                  AlternatingRowBackground="#F8F9FF">
+                  AlternatingRowBackground="#F8F9FF"
+                  EnableRowVirtualization="False">
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Setter Property="Background"
+                            Value="White"/>
+                    <Setter Property="Foreground"
+                            Value="#1A237E"/>
+                    <Setter Property="SnapsToDevicePixels"
+                            Value="True"/>
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver"
+                                 Value="True">
+                            <Setter Property="Background"
+                                    Value="#E8EAF6"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected"
+                                 Value="True">
+                            <Setter Property="Background"
+                                    Value="#C5CAE9"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Fecha"
-                                    Binding="{Binding EventoEnUtc, StringFormat=\{0:dd/MM/yyyy HH:mm:ss\}}"
+                                    Binding="{Binding EventoEnUtc, Converter={StaticResource UtcToEcuadorDateTimeConverter}, StringFormat=\{0:dd/MM/yyyy HH:mm:ss\}}"
                                     Width="170"/>
                 <DataGridTextColumn Header="Usuario"
                                     Binding="{Binding EjecutadoPorUsuarioNombre}"

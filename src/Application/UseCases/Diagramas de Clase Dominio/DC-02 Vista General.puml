@@ -47,7 +47,7 @@ package "Domain" #EFF6FF {
 package "Application" #F0FDF4 {
     interface ICarreraRepository <<Interface>>
     interface IEscenarioRepository <<Interface>>
-    interface IInflacionRepository <<Interface>>
+    interface IRepositorioInflacionAnual <<Interface>>
     interface IRetencionRepository <<Interface>>
     interface ISimulacionRetencionRepository <<Interface>>
     interface IProyeccionEstudiantesRepository <<Interface>>
@@ -56,8 +56,8 @@ package "Application" #F0FDF4 {
     class SimularRetencionUseCase <<UseCase>>
     class ProyectarEstudiantesUseCase <<UseCase>>
 
-    ICarreraRepository -[hidden]-> IInflacionRepository
-    IInflacionRepository -[hidden]-> IRetencionRepository
+    ICarreraRepository -[hidden]-> IRepositorioInflacionAnual
+    IRepositorioInflacionAnual -[hidden]-> IRetencionRepository
     IRetencionRepository -[hidden]-> IProyeccionEstudiantesRepository
     IProyeccionEstudiantesRepository -[hidden]-> ProyectarInflacionUseCase
     ProyectarInflacionUseCase -[hidden]-> SimularRetencionUseCase
@@ -66,14 +66,14 @@ package "Application" #F0FDF4 {
 
 package "Infrastructure" #FFF7ED {
     class CarreraRepository <<Repository>>
-    class InflacionRepository <<Repository>>
+    class RepositorioInflacionAnual <<Repository>>
     class RetencionRepository <<Repository>>
     class SimulacionRetencionRepository <<Repository>>
     class ProyeccionEstudiantesRepository <<Repository>>
     class RequerimientoDocenteRepository <<Repository>>
 
-    CarreraRepository -[hidden]-> InflacionRepository
-    InflacionRepository -[hidden]-> RetencionRepository
+    CarreraRepository -[hidden]-> RepositorioInflacionAnual
+    RepositorioInflacionAnual -[hidden]-> RetencionRepository
     RetencionRepository -[hidden]-> SimulacionRetencionRepository
     SimulacionRetencionRepository -[hidden]-> ProyeccionEstudiantesRepository
     ProyeccionEstudiantesRepository -[hidden]-> RequerimientoDocenteRepository
@@ -105,14 +105,14 @@ ConfiguracionCargaDocente "1" --> "0..*" ProyeccionRequerimientoDocente : genera
 
 ' Implementaciones
 CarreraRepository ..|> ICarreraRepository : implementa
-InflacionRepository ..|> IInflacionRepository : implementa
+RepositorioInflacionAnual ..|> IRepositorioInflacionAnual : implementa
 RetencionRepository ..|> IRetencionRepository : implementa
 SimulacionRetencionRepository ..|> ISimulacionRetencionRepository : implementa
 ProyeccionEstudiantesRepository ..|> IProyeccionEstudiantesRepository : implementa
 RequerimientoDocenteRepository ..|> IRequerimientoDocenteRepository : implementa
 
 ' Dependencias de casos de uso
-ProyectarInflacionUseCase --> IInflacionRepository : usa
+ProyectarInflacionUseCase --> IRepositorioInflacionAnual : usa
 SimularRetencionUseCase --> IRetencionRepository : usa
 SimularRetencionUseCase --> ISimulacionRetencionRepository : usa
 ProyectarEstudiantesUseCase --> IProyeccionEstudiantesRepository : usa

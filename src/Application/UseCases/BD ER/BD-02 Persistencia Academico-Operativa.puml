@@ -24,7 +24,7 @@ erDiagram
         int anio
         numeric porcentaje_inflacion
         text metodo_proyeccion
-        int es_ajuste_manual
+        bool es_ajuste_manual
     }
     configuracion_retencion {
         int id PK
@@ -73,6 +73,7 @@ erDiagram
         int id PK
         int proyeccion_estudiantes_id FK
         numeric horas_docencia_estandar
+        numeric horas_tecnico_estandar
         numeric proporcion_phd_porcentaje
         numeric proporcion_mgs_porcentaje
     }
@@ -89,8 +90,12 @@ erDiagram
         int carrera_id FK
         int escenario_proyeccion_id FK
         numeric valor_arancel
+        numeric valor_matricula
         numeric arancel_optimo
         text tipo_origen
+        bool calculado_automaticamente
+        numeric margen_tolerancia
+        text fecha_calculo
     }
 
     escenario_proyeccion ||--o{ inflacion_proyectada : ""
@@ -105,3 +110,5 @@ erDiagram
     configuracion_carga_docente ||--o{ proyeccion_requerimiento_docente : ""
     periodo_academico ||--o{ detalle_proyeccion_estudiantes : ""
     periodo_academico ||--o{ proyeccion_requerimiento_docente : ""
+
+%%note: Columnas de auditoría (creado_en, actualizado_en, eliminado_en) omitidas por legibilidad

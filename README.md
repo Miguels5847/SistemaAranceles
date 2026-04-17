@@ -1,70 +1,114 @@
 # SistemaAranceles
 
-## Descripcion del proyecto
+Aplicación de escritorio WPF para simulación y análisis de aranceles en apertura de nuevas carreras universitarias. Proyecto de tesis con arquitectura limpia, persistencia en PostgreSQL (Supabase) y RBAC granular.
 
-SistemaAranceles es un proyecto de tesis orientado al desarrollo de una aplicacion de escritorio para la simulacion y analisis de aranceles en procesos de apertura de nuevas carreras.
+## Stack
 
-El objetivo tecnico es construir una solucion mantenible y escalable, con separacion de responsabilidades entre capas, trazabilidad respecto a requerimientos funcionales y capacidad de validacion progresiva por modulos.
+- **.NET 8** + **WPF** (MVVM)
+- **EF Core** + **PostgreSQL (Supabase pooler 6543)**
+- **CommunityToolkit.Mvvm** · **FluentValidation** · **BCrypt.Net-Next**
+- **ClosedXML** (XLSX) · **QuestPDF** (PDF)
 
-## Arquitectura aplicada
+## Arquitectura
 
-Se adopta una Clean Architecture simplificada para entorno WPF, con las siguientes capas:
+Clean Architecture 4 capas:
 
-- Domain: entidades, reglas de negocio puras, value objects, enums e interfaces del dominio.
-- Application: casos de uso, DTOs, contratos de servicios y validaciones.
-- Infrastructure: persistencia con Entity Framework Core, repositorios, exportaciones y adaptadores externos.
-- Presentation: interfaz WPF con patron MVVM (Views, ViewModels y Commands).
+```
+Domain          ← Entidades, VOs, enums, contratos puros
+Application     ← Use cases (1 archivo = 1 caso), DTOs, interfaces servicios
+Infrastructure  ← EF Core, repositorios, servicios externos (BCE, hash, auditoría)
+Presentation    ← WPF Views/ViewModels/State (SesionActual)
+```
 
-Esta estructura permite aislar la logica de negocio del framework de interfaz y de los detalles de infraestructura.
+## Estado por épica
 
-## Stack tecnologico
+| # | Épica | KANs | Estado |
+|---|---|---|---|
+| 1 | Setup & Arquitectura | 01–05 | ✅ |
+| 2 | Usuarios (CRUD + Login + Menú dinámico + AuditLog) | 06–09 | ✅ |
+| 3 | Inflación (CRUD + Proyección + Solo lectura) | 10–12 | ✅ |
+| — | Infra/RBAC/QA (KAN-13/14, multi-fase) | 13–14 | 🟡 Fase 6 en curso |
+| 4 | Tasa Retención | 13–16* | ⏳ |
+| 5–13 | Estudiantes / Sueldos / Recursos / … / Reportes | 17–49 | ⏳ |
+| 14 | Cierre & Validación | 50–53 | ⏳ |
 
-- .NET 8
-- WPF
-- Entity Framework Core + PostgreSQL (Supabase)
-- CommunityToolkit.Mvvm
-- FluentValidation
-- BCrypt.Net-Next
-- ClosedXML
-- QuestPDF
+\* KANs 13/14 originales (Épica 4) renombrados internamente; los KAN-13/14 ejecutados son tareas de infraestructura.
 
-## Estado actual
+## Funcionalidades implementadas
 
-Fase 1 (requerimientos funcionales): completada.
+- Login con BCrypt + retry/timeout + toggle visibilidad contraseña
+- Sesión por inactividad (30 min con countdown)
+- CRUD usuarios (soft/hard delete, validación correo único, hash)
+- RBAC con `rol`, `permiso`, `rol_permiso` y `usuario_permiso_override` por usuario
+- Permisos efectivos en memoria (`SesionActual.TienePermiso("MOD.ACCION")`)
+- Auditoría fire-and-forget desacoplada (no bloquea ni revierte)
+- Inflación: 9 use cases (CRUD anual + proyectar + importar BCE + limpiar)
+- Métodos proyección: regresión lineal (default) y promedio suave
+- RLS progresivo (Admin bypass; Analista/Visualizador restringidos)
 
-Epic 1:
+## Estructura del repo
 
-- KAN-01 Crear solucion WPF + 4 proyectos Clean Architecture: completado.
-- KAN-02 Instalar paquetes base de la solucion: completado.
-- KAN-03 Diseno de base de datos y migraciones: completado.
-- KAN-04 Entidades de dominio base: completado.
-- KAN-05 DbContext y repositorio generico: completado.
+```
+src/
+  Domain/         Entities/  ValueObjects/  Enums/  Interfaces/  Common/
+  Application/    UseCases/  DTOs/  Interfaces/
+  Infrastructure/ Persistence/  Servicios/  Export/  DI/
+  Presentation/   Views/  ViewModels/  Converters/  State/  Mensajes/  Services/
+sql/              # Scripts versionados KAN03..KAN14 (precheck/apply/postcheck/rollback)
+docs/             # Informes épicas + DB
+```
 
-Epic 2:
+## Quick start
 
-- KAN-06 CRUD Usuarios: implementado y separado en rama `feature/KAN-06-CRUD-Usuarios`.
-- KAN-07 Login + BCrypt + sesion por rol: implementado y separado en rama `feature/KAN-07-login-sesion-rol`.
-- KAN-08 Menu dinamico por rol + permisos: implementado y separado en rama `feature/KAN-08-menu-dinamico-permisos`.
-- KAN-09 AuditLog acciones criticas: implementado y separado en rama `feature/KAN-09-auditlog-acciones-criticas`.
+```bash
+# Compilar
+dotnet build src/Presentation/SistemaAranceles.Presentation.csproj
 
-Notas tecnicas recientes:
+# Ejecutar
+dotnet run --project src/Presentation/SistemaAranceles.Presentation.csproj
+```
 
-- Se aplicaron scripts de soporte para Supabase y sincronizacion de migraciones EF Core.
-- Se ejecuto seed inicial de roles, permisos y usuario administrador.
-- Se corrigio la rehidratacion de Id en creacion de usuario antes de asignar rol.
+Configurar `src/Presentation/appsettings.Local.json` con cadena Supabase (`Maximum Pool Size=10`, `Minimum Pool Size=2`).
 
-## Roadmap inmediato
+## GitFlow
 
-1. Publicar ramas de Epic 2 a origin y abrir PRs secuenciales hacia develop (KAN-06 -> KAN-07 -> KAN-08 -> KAN-09).
-2. Validar pruebas funcionales de usuarios/login/menu/auditoria sobre base Supabase.
-3. Cerrar merges de Epic 2 y preparar inicio de Epic 3.
+- `main` — estable
+- `develop` — integración
+- `feature/KAN-xx` — desarrollo por historia técnica → merge a `develop`
 
-## Estrategia de ramas
+## Documentación
 
-Se aplicara una estrategia GitFlow simple:
+- **`contexto.md`** — snapshot maestro (leer primero en cualquier chat nuevo)
+- **`Diagramas.md`** — diagnóstico BD vs diagramas (hallazgos H1–H7)
+- **`ANALISIS_COMPLETO_RENDIMIENTO.md`** — fixes críticos rendimiento
+- **`docs/EPICA-2-Informe-KAN06-KAN09.md`** — cierre Épica 2
+- **`docs/conexion-supabase-postgresql.md`** — guía conexión
 
-- main: rama estable.
-- develop: rama de integracion.
-- feature/KAN-xx: desarrollo por historia tecnica.
+### Diagramas (`src/Application/UseCases/`)
 
-Cada avance se integra primero en develop y posteriormente en main cuando cumpla los criterios de cierre del hito.
+- `BD ER/BD-01..BD-03B.puml` — ER tablas core/académico/financiero
+- `Diagramas de Clase Dominio/DC-01..DC-04.puml` (DC-01 dividido en 4, DC-02.1 corregido)
+- `Diagramas de Secuencia/DS-01..DS-11.puml` (DS-02 dividido en 3, DS-03 dividido en 4)
+
+## Optimizaciones aplicadas
+
+- DbContext **Scoped** + scope manual en VMs async → evita pool exhausted
+- INSERT booleanos con `TRUE` literal (no `1`) → fix SqlState 42804
+- Batch loading `ANY(@ids)` → elimina N+1 en listado usuarios+roles
+- `RevocarAsync` reutiliza conexión del scope → respeta pool
+- Timeouts realistas con pooler: roles 15s · session 8s · login 25s
+- Precarga automática lista usuarios si Admin
+
+## Restricciones de trabajo
+
+- ❌ Sin commit automático
+- ❌ No romper login ni degradar tiempos
+- ❌ No introducir N+1
+- ❌ No skip hooks (`--no-verify`) sin pedir
+- ✅ Mantener Clean Architecture + 1 caso por archivo
+- ✅ Confirmar antes de destructivos (drop, force-push, delete branch)
+
+## Restore Supabase (referencia)
+
+**Backup:** Custom · Solo schema `public` · No owner · No privileges · Sin realtime/storage/auth/extensions internas
+**Restore:** Pre-data + Data + Post-data · No owner · No privileges · `Clean before restore` solo en pruebas
