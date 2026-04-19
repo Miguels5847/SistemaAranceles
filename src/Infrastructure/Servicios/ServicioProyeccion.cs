@@ -37,7 +37,7 @@ public sealed class ServicioProyeccion : IServicioProyeccion
         for (var anio = anioDesde; anio <= anioHasta; anio++)
         {
             var estimado = interseccion + (pendiente * anio);
-            var normalizado = decimal.Round(Math.Clamp(estimado, -10m, 20m), 4);
+            var normalizado = decimal.Round(Math.Max(estimado, 0.0m), 4);
             resultado.Add((anio, normalizado));
         }
 
@@ -71,5 +71,26 @@ public sealed class ServicioProyeccion : IServicioProyeccion
         }
 
         return resultado;
+    }
+
+    public decimal ObtenerInflacionFallback(
+        IReadOnlyList<(int anio, decimal porcentaje)> historicos,
+        decimal porcentajeProyectado)
+    {
+        // Si proyección es válida (≥ 0%), retornar como está
+        if (porcentajeProyectado >= 0m)
+            return porcentajeProyectado;
+
+        // Buscar histórico válido (≥ 0%) ordenado descendentemente por año (más reciente primero)
+        var historicoValido = historicos
+            .Where(x => x.porcentaje >= 0m)
+            .OrderByDescending(x => x.anio)
+            .FirstOrDefault();
+
+        if (historicoValido != default)
+            return historicoValido.porcentaje;
+
+        // Fallback: 0.5% si no hay histórico válido
+        return 0.50m;
     }
 }

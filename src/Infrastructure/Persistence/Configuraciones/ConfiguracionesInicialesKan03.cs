@@ -293,8 +293,6 @@ internal sealed class InflacionAnualConfiguracion : IEntityTypeConfiguration<Inf
         builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
         builder.Property(x => x.EstaActivo)
             .HasColumnName("esta_activo")
-            .HasColumnType("integer")
-            .HasConversion<int>()
             .IsRequired();
         builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
         builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
@@ -331,8 +329,6 @@ internal sealed class InflacionProyectadaConfiguracion : IEntityTypeConfiguratio
         builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
         builder.Property(x => x.EstaActivo)
             .HasColumnName("esta_activo")
-            .HasColumnType("integer")
-            .HasConversion<int>()
             .IsRequired();
         builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
         builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");

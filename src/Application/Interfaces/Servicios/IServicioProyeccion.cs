@@ -11,4 +11,8 @@ public interface IServicioProyeccion
         IReadOnlyList<(int anio, decimal porcentaje)> historicos,
         int anioDesde,
         int anioHasta);
+
+    decimal ObtenerInflacionFallback(
+        IReadOnlyList<(int anio, decimal porcentaje)> historicos,
+        decimal porcentajeProyectado);
 }
