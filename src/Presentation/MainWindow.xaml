@@ -5,12 +5,14 @@
         xmlns:vmU="clr-namespace:SistemaAranceles.Presentation.ViewModels.Usuarios"
         xmlns:vmA="clr-namespace:SistemaAranceles.Presentation.ViewModels.Auditoria"
         xmlns:vmI="clr-namespace:SistemaAranceles.Presentation.ViewModels.Inflacion"
+        xmlns:vmT="clr-namespace:SistemaAranceles.Presentation.ViewModels.TasaRetencion"
         xmlns:vU="clr-namespace:SistemaAranceles.Presentation.Views.Usuarios"
         xmlns:vA="clr-namespace:SistemaAranceles.Presentation.Views.Auditoria"
         xmlns:vI="clr-namespace:SistemaAranceles.Presentation.Views.Inflacion"
+        xmlns:vT="clr-namespace:SistemaAranceles.Presentation.Views.TasaRetencion"
         Title="Sistema de Aranceles Universitarios"
-        Height="680"
-        Width="1100"
+        Height="720"
+        Width="1280"
         WindowStartupLocation="CenterScreen"
         Background="#F4F6FB">
 
@@ -26,6 +28,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmI:InflacionViewModel}">
             <vI:InflacionView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmT:ConfiguracionRetencionViewModel}">
+            <vT:ConfiguracionRetencionView/>
         </DataTemplate>
     </Window.Resources>
 
@@ -55,7 +60,7 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="🎓 Aranceles"
+                            <TextBlock Text="Aranceles"
                                        FontSize="18"
                                        FontWeight="Bold"
                                        Foreground="White"
@@ -83,7 +88,7 @@
                                 Padding="10,6"
                                 VerticalAlignment="Top">
                             <StackPanel Orientation="Vertical">
-                                <TextBlock Text="⏱️ Sesión"
+                                <TextBlock Text="Sesion"
                                            FontSize="9"
                                            Foreground="White"
                                            FontWeight="SemiBold"
