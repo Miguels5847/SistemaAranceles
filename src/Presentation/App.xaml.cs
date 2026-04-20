@@ -117,6 +117,8 @@ public partial class App
         servicios.AddTransient<IValidator<CrearConfiguracionRetencionDto>, CrearConfiguracionRetencionDtoValidador>();
         servicios.AddTransient<IValidator<ActualizarConfiguracionRetencionDto>, ActualizarConfiguracionRetencionDtoValidador>();
         servicios.AddTransient<IValidator<GuardarCriterioReferenciaRetencionDto>, GuardarCriterioReferenciaRetencionDtoValidador>();
+        servicios.AddTransient<IValidator<CrearSimulacionRetencionDto>, CrearSimulacionRetencionDtoValidador>();
+        servicios.AddTransient<IValidator<ActualizarSimulacionRetencionDto>, ActualizarSimulacionRetencionDtoValidador>();
         servicios.AddTransient<ListarConfiguracionesRetencionUseCase>();
         servicios.AddTransient<ObtenerConfiguracionRetencionUseCase>();
         servicios.AddTransient<CrearConfiguracionRetencionUseCase>();
@@ -124,6 +126,12 @@ public partial class App
         servicios.AddTransient<EliminarConfiguracionRetencionUseCase>();
         servicios.AddTransient<CrearCriterioReferenciaRetencionUseCase>();
         servicios.AddTransient<ActualizarCriterioReferenciaRetencionUseCase>();
+        servicios.AddTransient<CrearSimulacionRetencionUseCase>();
+        servicios.AddTransient<ActualizarSimulacionRetencionUseCase>();
+        servicios.AddTransient<ListarSimulacionesRetencionUseCase>();
+        servicios.AddTransient<ObtenerSimulacionRetencionUseCase>();
+        servicios.AddTransient<EliminarSimulacionRetencionUseCase>();
+        servicios.AddTransient<LimpiarSimulacionesRetencionUseCase>();
         servicios.AddScoped<ObtenerValoresSugeridosParaEscenarioUseCase>();
 
         // ViewModels
@@ -132,6 +140,7 @@ public partial class App
         servicios.AddTransient<AuditoriaViewModel>();
         servicios.AddTransient<InflacionViewModel>();
         servicios.AddTransient<ConfiguracionRetencionViewModel>();
+        servicios.AddTransient<SimulacionRetencionViewModel>();
         servicios.AddTransient<EditarUsuarioViewModel>();
         servicios.AddTransient<Func<EditarUsuarioViewModel>>(sp =>
             () => sp.GetRequiredService<EditarUsuarioViewModel>());

@@ -8,6 +8,7 @@ namespace SistemaAranceles.Application.UseCases.TasaRetencion;
 
 public sealed class ActualizarConfiguracionRetencionUseCase(
     IRepositorioConfiguracionRetencion repositorioConfiguracion,
+    IRepositorioSimulacionRetencion repositorioSimulacion,
     IRepositorioCarrera repositorioCarrera,
     IRepositorioEscenarioProyeccion repositorioEscenario,
     IValidator<ActualizarConfiguracionRetencionDto> validador,
@@ -27,6 +28,10 @@ public sealed class ActualizarConfiguracionRetencionUseCase(
 
         var entidad = await repositorioConfiguracion.ObtenerDominioPorIdAsync(dto.Id, cancellationToken)
             ?? throw new KeyNotFoundException($"No se encontró la configuración de retención con Id {dto.Id}.");
+
+        var tieneSimulaciones = await repositorioSimulacion.ExisteActivaPorConfiguracionAsync(dto.Id, cancellationToken);
+        if (tieneSimulaciones)
+            throw new InvalidOperationException("No se puede editar la configuración porque tiene simulaciones activas asociadas.");
 
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(dto.CarreraId, cancellationToken)
             ?? throw new InvalidOperationException($"La carrera con Id {dto.CarreraId} no existe.");

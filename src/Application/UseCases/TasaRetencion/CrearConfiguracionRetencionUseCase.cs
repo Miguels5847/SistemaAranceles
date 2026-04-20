@@ -65,12 +65,22 @@ public sealed class CrearConfiguracionRetencionUseCase(
             throw new InvalidOperationException($"No se pudo guardar la configuración de retención. Detalle: {detalle}");
         }
 
+        var creada = await repositorioConfiguracion.ObtenerActivoPorCarreraYEscenarioNombreAsync(
+            dto.CarreraId,
+            escenario.Nombre,
+            cancellationToken);
+
+        if (creada is null || creada.Id <= 0)
+            throw new InvalidOperationException("No se pudo recuperar el identificador de la configuración creada.");
+
+        var configuracionId = creada.Id;
+
         try
         {
             await auditoriaServicio.RegistrarAsync(
                 moduloNombre: "TasaRetencion",
                 entidadNombre: "ConfiguracionRetencion",
-                entidadId: entidad.Id.ToString(),
+                entidadId: configuracionId.ToString(),
                 accionNombre: "CREAR",
                 resumenTexto: $"Configuración de retención creada. Carrera={carrera.Codigo}, Escenario={dto.EscenarioProyeccionId}, Ciclos={dto.TotalCiclos}.",
                 ejecutadoPorUsuarioId: usuarioId,
@@ -80,7 +90,7 @@ public sealed class CrearConfiguracionRetencionUseCase(
         {
         }
 
-        return entidad.Id;
+        return configuracionId;
     }
 
     private static int? NormalizarUsuarioId(int? usuarioId)

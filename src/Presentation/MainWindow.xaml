@@ -11,8 +11,10 @@
         xmlns:vI="clr-namespace:SistemaAranceles.Presentation.Views.Inflacion"
         xmlns:vT="clr-namespace:SistemaAranceles.Presentation.Views.TasaRetencion"
         Title="Sistema de Aranceles Universitarios"
-        Height="720"
-        Width="1280"
+        Width="1400"
+        Height="850"
+        MinWidth="1200"
+        MinHeight="750"
         WindowStartupLocation="CenterScreen"
         Background="#F4F6FB">
 
@@ -31,6 +33,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmT:ConfiguracionRetencionViewModel}">
             <vT:ConfiguracionRetencionView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmT:SimulacionRetencionViewModel}">
+            <vT:SimulacionRetencionView/>
         </DataTemplate>
     </Window.Resources>
 

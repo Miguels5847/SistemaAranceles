@@ -77,12 +77,13 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
     {
         if (!PuedeVer)
         {
-            MensajeError = "Acceso denegado al módulo de Tasa de Retención.";
+            MensajeError = "Acceso denegado al modulo de Tasa de Retencion.";
             return;
         }
 
         if (EstaCargando) return;
         EstaCargando = true;
+        MensajeExito = string.Empty;
         MensajeError = string.Empty;
 
         try
@@ -97,7 +98,7 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
             var lista = await listar.EjecutarAsync();
 
             Carreras = new ObservableCollection<OpcionCarrera>(
-                carreras.Select(c => new OpcionCarrera { Id = c.Id, Descripcion = $"{c.Codigo} — {c.Nombre}" }));
+                carreras.Select(c => new OpcionCarrera { Id = c.Id, Descripcion = $"{c.Codigo} - {c.Nombre}" }));
             _catalogoEscenarios = escenarios
                 .Select(e => new OpcionEscenario
                 {
@@ -137,7 +138,7 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
 
         if (ConfiguracionSeleccionada is null)
         {
-            MensajeError = "Seleccione una configuración para editar.";
+            MensajeError = "Seleccione una configuracion para editar.";
             return;
         }
 
@@ -204,13 +205,13 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
             await CargarAsync();
             LimpiarFormulario();
             MensajeExito = fueActualizacion
-                ? "Configuración actualizada correctamente."
-                : "Configuración creada correctamente.";
+                ? "Configuracion actualizada correctamente."
+                : "Configuracion creada correctamente.";
         }
         catch (Exception ex)
         {
             MensajeExito = string.Empty;
-            MensajeError = $"Error al guardar configuración: {ObtenerDetalle(ex)}";
+            MensajeError = $"Error al guardar configuracion: {ObtenerDetalle(ex)}";
         }
         finally
         {
@@ -229,15 +230,15 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
         if (CarreraSeleccionada is null) { MensajeError = "Seleccione una carrera."; return false; }
         if (EscenarioSeleccionado is null) { MensajeError = "Seleccione un escenario."; return false; }
         if (!int.TryParse(TotalCiclos, NumberStyles.Integer, CultureInfo.InvariantCulture, out var ciclos))
-        { MensajeError = "Total de ciclos inválido."; return false; }
-        if (!TryDecimal(TasaRetencion, out var tasaRet)) { MensajeError = "Tasa de retención inválida."; return false; }
-        if (!TryDecimal(TasaGraduacion, out var tasaGrad)) { MensajeError = "Tasa de graduación inválida."; return false; }
-        if (!TryDecimal(EstudiantesPeriodo1, out var est1)) { MensajeError = "Estudiantes período 1 inválido."; return false; }
-        if (!TryDecimal(EstudiantesPeriodo2, out var est2)) { MensajeError = "Estudiantes período 2 inválido."; return false; }
+        { MensajeError = "Total de ciclos invalido."; return false; }
+        if (!TryDecimal(TasaRetencion, out var tasaRet)) { MensajeError = "Tasa de retencion invalida."; return false; }
+        if (!TryDecimal(TasaGraduacion, out var tasaGrad)) { MensajeError = "Tasa de graduacion invalida."; return false; }
+        if (!TryDecimal(EstudiantesPeriodo1, out var est1)) { MensajeError = "Estudiantes periodo 1 invalido."; return false; }
+        if (!TryDecimal(EstudiantesPeriodo2, out var est2)) { MensajeError = "Estudiantes periodo 2 invalido."; return false; }
         if (!int.TryParse(ParalelosPeriodo1, NumberStyles.Integer, CultureInfo.InvariantCulture, out var par1))
-        { MensajeError = "Paralelos período 1 inválido."; return false; }
+        { MensajeError = "Paralelos periodo 1 invalido."; return false; }
         if (!int.TryParse(ParalelosPeriodo2, NumberStyles.Integer, CultureInfo.InvariantCulture, out var par2))
-        { MensajeError = "Paralelos período 2 inválido."; return false; }
+        { MensajeError = "Paralelos periodo 2 invalido."; return false; }
 
         datos = new DatosFormulario(ciclos, tasaRet, tasaGrad, est1, est2, par1, par2);
         return true;
@@ -320,13 +321,13 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
 
         if (ConfiguracionSeleccionada is null)
         {
-            MensajeError = "Seleccione una configuración para eliminar.";
+            MensajeError = "Seleccione una configuracion para eliminar.";
             return;
         }
 
         var respuesta = MessageBox.Show(
-            $"¿Eliminar la configuración de '{ConfiguracionSeleccionada.CarreraNombre}' / '{ConfiguracionSeleccionada.EscenarioNombre}'?",
-            "Confirmar eliminación",
+            $"Eliminar la configuracion de '{ConfiguracionSeleccionada.CarreraNombre}' / '{ConfiguracionSeleccionada.EscenarioNombre}'?",
+            "Confirmar eliminacion",
             MessageBoxButton.YesNo,
             MessageBoxImage.Warning);
 
@@ -338,13 +339,13 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
             using var scope = _serviceProvider.CreateScope();
             var uc = scope.ServiceProvider.GetRequiredService<EliminarConfiguracionRetencionUseCase>();
             await uc.EjecutarAsync(ConfiguracionSeleccionada.Id, _sesionActual.UsuarioId);
-            MensajeExito = "Configuración eliminada correctamente.";
+            MensajeExito = "Configuracion eliminada correctamente.";
             await CargarAsync();
             LimpiarFormulario();
         }
         catch (Exception ex)
         {
-            MensajeError = $"Error al eliminar configuración: {ObtenerDetalle(ex)}";
+            MensajeError = $"Error al eliminar configuracion: {ObtenerDetalle(ex)}";
         }
     }
 
@@ -352,9 +353,9 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
     {
         TextoInformativoEscenario = value?.Descripcion switch
         {
-            "Histórico" => "Escenario base. Ingrese los valores reales de la carrera tomados del Excel institucional. Este escenario sirve como referencia para los demás.",
-            "Optimista" => "Escenario derivado del histórico. Sube la retención 5% y la graduación 8%, y aumenta los estudiantes un 20%. Proyecta mayores ingresos por mejor permanencia y titulación.",
-            "Pesimista" => "Escenario derivado del histórico. Baja la retención 10% y la graduación 15%, y reduce los estudiantes un 20%. Proyecta menor ingreso y exige mayor provisión presupuestaria.",
+            "Historico" => "Escenario base. Ingrese los valores reales de la carrera tomados del Excel institucional. Este escenario sirve como referencia para los demas.",
+            "Optimista" => "Escenario derivado del historico. Sube la retencion 5% y la graduacion 8%, y aumenta los estudiantes un 20%. Proyecta mayores ingresos por mejor permanencia y titulacion.",
+            "Pesimista" => "Escenario derivado del historico. Baja la retencion 10% y la graduacion 15%, y reduce los estudiantes un 20%. Proyecta menor ingreso y exige mayor provision presupuestaria.",
             _ => string.Empty
         };
 
@@ -373,7 +374,7 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
         Escenarios = new ObservableCollection<OpcionEscenario>(
             _catalogoEscenarios
                 .Where(e => e.CarreraId == carreraId.Value)
-                .OrderByDescending(e => e.Descripcion == "Histórico")
+                .OrderByDescending(e => e.Descripcion == "Historico" || e.Descripcion == "Histórico")
                 .ThenBy(e => e.Descripcion));
     }
 
@@ -381,7 +382,7 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
     {
         if (EstaEditando) return;
         if (CarreraSeleccionada is null || EscenarioSeleccionado is null) return;
-        if (EscenarioSeleccionado.Descripcion == "Histórico") return;
+        if (EscenarioSeleccionado.Descripcion == "Historico" || EscenarioSeleccionado.Descripcion == "Histórico") return;
 
         try
         {
@@ -400,7 +401,7 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
         }
         catch
         {
-            MensajeError = "No se puede precargar valores: primero registre el escenario Histórico de esta carrera.";
+            MensajeError = "No se puede precargar valores: primero registre el escenario Historico de esta carrera.";
         }
     }
 
@@ -419,6 +420,7 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
         ParalelosPeriodo2 = "0";
         MetaRetencion = "0";
         MetaGraduacion = "0";
+        MensajeExito = string.Empty;
         MensajeError = string.Empty;
         OnPropertyChanged(nameof(TituloFormulario));
     }

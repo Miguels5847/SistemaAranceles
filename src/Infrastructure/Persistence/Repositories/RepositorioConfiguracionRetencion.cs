@@ -122,8 +122,7 @@ public sealed class RepositorioConfiguracionRetencion(ContextoAplicacion context
         };
 
         await contextoAplicacion.ConfiguracionesRetencion.AddAsync(entidad, cancellationToken);
-        configuracion.RehidratarId(entidad.Id);
-        Trace.TraceInformation($"[{DateTime.UtcNow:O}] ConfRetDB: agregado id={entidad.Id}");
+        Trace.TraceInformation($"[{DateTime.UtcNow:O}] ConfRetDB: agregado pendiente id-temp={entidad.Id}");
     }
 
     public async Task ActualizarAsync(ConfiguracionRetencionDominio configuracion, int? actualizadoPorUsuarioId = null, CancellationToken cancellationToken = default)
