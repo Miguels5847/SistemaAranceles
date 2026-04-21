@@ -22,15 +22,15 @@ Presentation    ← WPF Views/ViewModels/State (SesionActual)
 
 ## Estado por épica
 
-| # | Épica | KANs | Estado |
-|---|---|---|---|
-| 1 | Setup & Arquitectura | 01–05 | ✅ |
-| 2 | Usuarios (CRUD + Login + Menú dinámico + AuditLog) | 06–09 | ✅ |
-| 3 | Inflación (CRUD + Proyección + Solo lectura) | 10–12 | ✅ |
-| — | Infra/RBAC/QA (KAN-13/14, multi-fase) | 13–14 | 🟡 Fase 6 en curso |
-| 4 | Tasa Retención | 13–16* | ⏳ |
-| 5–13 | Estudiantes / Sueldos / Recursos / … / Reportes | 17–49 | ⏳ |
-| 14 | Cierre & Validación | 50–53 | ⏳ |
+| #    | Épica                                              | KANs    | Estado                                   |
+| ---- | -------------------------------------------------- | ------- | ---------------------------------------- |
+| 1    | Setup & Arquitectura                               | 01–05   | ✅                                       |
+| 2    | Usuarios (CRUD + Login + Menú dinámico + AuditLog) | 06–09   | ✅                                       |
+| 3    | Inflación (CRUD + Proyección + Solo lectura)       | 10–12   | ✅                                       |
+| —    | Infra/RBAC/QA (KAN-13/14, multi-fase)              | 13–14   | ✅ Cerrada                               |
+| 4    | Tasa Retención                                     | 13–16\* | 🟡 KAN-14 validado; KAN-15/16 pendientes |
+| 5–13 | Estudiantes / Sueldos / Recursos / … / Reportes    | 17–49   | ⏳                                       |
+| 14   | Cierre & Validación                                | 50–53   | ⏳                                       |
 
 \* KANs 13/14 originales (Épica 4) renombrados internamente; los KAN-13/14 ejecutados son tareas de infraestructura.
 
@@ -45,6 +45,7 @@ Presentation    ← WPF Views/ViewModels/State (SesionActual)
 - Inflación: 9 use cases (CRUD anual + proyectar + importar BCE + limpiar)
 - Métodos proyección: regresión lineal (default) y promedio suave
 - RLS progresivo (Admin bypass; Analista/Visualizador restringidos)
+- Tasa Retención: configuración de carrera/cohorte, simulación ciclo a ciclo, listado/selección/eliminación de simulaciones y UI validada para la rama `feature/KAN-14-simulacion-cohorte`
 
 ## Estructura del repo
 
@@ -74,6 +75,9 @@ Configurar `src/Presentation/appsettings.Local.json` con cadena Supabase (`Maxim
 
 - `main` — estable
 - `develop` — integración
+- `feature/KAN-14-simulacion-cohorte` — simulación de retención y graduación validada
+- `feature/KAN-15-indicadores-retencion` — siguiente rama
+- `feature/KAN-16-edicion-trazabilidad` — siguiente rama
 - `feature/KAN-xx` — desarrollo por historia técnica → merge a `develop`
 
 ## Documentación
