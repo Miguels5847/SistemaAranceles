@@ -139,8 +139,8 @@ public partial class App
         servicios.AddTransient<UsuariosViewModel>();
         servicios.AddTransient<AuditoriaViewModel>();
         servicios.AddTransient<InflacionViewModel>();
-        servicios.AddTransient<ConfiguracionRetencionViewModel>();
-        servicios.AddTransient<SimulacionRetencionViewModel>();
+        servicios.AddSingleton<ConfiguracionRetencionViewModel>();
+        servicios.AddSingleton<SimulacionRetencionViewModel>();
         servicios.AddTransient<EditarUsuarioViewModel>();
         servicios.AddTransient<Func<EditarUsuarioViewModel>>(sp =>
             () => sp.GetRequiredService<EditarUsuarioViewModel>());

@@ -33,7 +33,6 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly AuditoriaViewModel _auditoriaViewModel;
     private readonly InflacionViewModel _inflacionViewModel;
     private readonly ConfiguracionRetencionViewModel _configuracionRetencionViewModel;
-    private readonly SimulacionRetencionViewModel _simulacionRetencionViewModel;
     private readonly Func<EditarUsuarioViewModel> _editarUsuarioViewModelFactory;
     private int _cerrandoSesion;
     private int _cargandoUsuarios;
@@ -46,7 +45,6 @@ public sealed partial class MainViewModel : ObservableObject
         AuditoriaViewModel auditoriaViewModel,
         InflacionViewModel inflacionViewModel,
         ConfiguracionRetencionViewModel configuracionRetencionViewModel,
-        SimulacionRetencionViewModel simulacionRetencionViewModel,
         Func<EditarUsuarioViewModel> editarUsuarioViewModelFactory)
     {
         _serviceProvider = serviceProvider;
@@ -56,7 +54,6 @@ public sealed partial class MainViewModel : ObservableObject
         _auditoriaViewModel = auditoriaViewModel;
         _inflacionViewModel = inflacionViewModel;
         _configuracionRetencionViewModel = configuracionRetencionViewModel;
-        _simulacionRetencionViewModel = simulacionRetencionViewModel;
         _editarUsuarioViewModelFactory = editarUsuarioViewModelFactory;
 
         // Subscribirse a actualizaciones de tiempo restante
@@ -156,12 +153,6 @@ public sealed partial class MainViewModel : ObservableObject
                 Comando = new AsyncRelayCommand(() => MostrarTasaRetencionAsync())
             });
 
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Simulación de Retención",
-                Icono = string.Empty,
-                Comando = new AsyncRelayCommand(() => MostrarSimulacionRetencionAsync())
-            });
         }
 
         if (_sesionActual.TienePermiso("AF.VER"))
@@ -232,9 +223,6 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private Task MostrarTasaRetencion() => MostrarTasaRetencionAsync();
 
-    [RelayCommand]
-    private Task MostrarSimulacionRetencion() => MostrarSimulacionRetencionAsync();
-
     private async Task MostrarTasaRetencionAsync()
     {
         var puede = _sesionActual.TienePermiso("TRE.VER") || _sesionActual.TienePermiso("PR.VER") || _sesionActual.EsAdministrador;
@@ -247,20 +235,6 @@ public sealed partial class MainViewModel : ObservableObject
         MensajePagina = string.Empty;
         PaginaActual = _configuracionRetencionViewModel;
         await _configuracionRetencionViewModel.CargarCommand.ExecuteAsync(null);
-    }
-
-    private async Task MostrarSimulacionRetencionAsync()
-    {
-        var puede = _sesionActual.TienePermiso("TRE.VER") || _sesionActual.TienePermiso("PR.VER") || _sesionActual.EsAdministrador;
-        if (!puede)
-        {
-            MensajePagina = "Acceso denegado al módulo de Simulación de Retención.";
-            return;
-        }
-
-        MensajePagina = string.Empty;
-        PaginaActual = _simulacionRetencionViewModel;
-        await _simulacionRetencionViewModel.CargarCommand.ExecuteAsync(null);
     }
 
     private async Task MostrarUsuariosAsync(string? mensajeExito = null)

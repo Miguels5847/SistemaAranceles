@@ -32,10 +32,24 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
     private readonly SesionActual _sesionActual;
     private List<OpcionEscenario> _catalogoEscenarios = new List<OpcionEscenario>();
 
-    public ConfiguracionRetencionViewModel(IServiceProvider serviceProvider, SesionActual sesionActual)
+    public SimulacionRetencionViewModel SimulacionVm { get; }
+
+    public ConfiguracionRetencionViewModel(IServiceProvider serviceProvider, SesionActual sesionActual, SimulacionRetencionViewModel simulacionVm)
     {
         _serviceProvider = serviceProvider;
         _sesionActual = sesionActual;
+        SimulacionVm = simulacionVm;
+    }
+
+    private int _tabInternoIndice;
+    public int TabInternoIndice
+    {
+        get => _tabInternoIndice;
+        set
+        {
+            if (SetProperty(ref _tabInternoIndice, value) && value == 1)
+                _ = SimulacionVm.CargarCommand.ExecuteAsync(null);
+        }
     }
 
     [ObservableProperty] private ObservableCollection<ConfiguracionRetencionDto> _configuraciones = [];
@@ -110,6 +124,8 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
 
             ActualizarEscenariosPorCarrera(CarreraSeleccionada?.Id);
             Configuraciones = new ObservableCollection<ConfiguracionRetencionDto>(lista);
+
+            await SimulacionVm.CargarCommand.ExecuteAsync(null);
         }
         catch (Exception ex)
         {
