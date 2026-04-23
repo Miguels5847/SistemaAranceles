@@ -22,6 +22,14 @@ public interface IRepositorioPermiso
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Retorna los IDs de permisos base asignados a un rol.
+    /// Usado para calcular deltas reales de overrides al cambiar de rol.
+    /// </summary>
+    Task<IReadOnlySet<int>> ObtenerPermisoIdsDeRolAsync(
+        int rolId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Reemplaza todos los overrides del usuario.
     /// Solo se guardan los permisos donde el estado deseado difiere del rol base.
     /// </summary>

@@ -35,7 +35,7 @@ VALUES
   ('CA.EDITAR', 'Carreras', 'EDITAR',   'Editar carreras',                NOW(), 1),
   -- Inflación
   ('INF.VER',   'Inflacion', 'VER',     'Ver datos de inflación',         NOW(), 1),
-  ('INF.ED',    'Inflacion', 'EDITAR',  'Editar parámetros de inflación', NOW(), 1),
+    ('INF.EDITAR','Inflacion', 'EDITAR',  'Editar parámetros de inflación', NOW(), 1),
   -- Proyecciones
   ('PR.VER',    'Proyecciones', 'VER',       'Ver proyecciones',          NOW(), 1),
   ('PR.EJEC',   'Proyecciones', 'EJECUTAR',  'Ejecutar proyecciones',     NOW(), 1),

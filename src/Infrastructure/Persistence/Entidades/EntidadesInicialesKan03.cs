@@ -54,7 +54,7 @@ public sealed class UsuarioPermisoOverride
     public int UsuarioId { get; set; }
     public int PermisoId { get; set; }
     public bool Concedido { get; set; }
-    public string CreadoEn { get; set; } = string.Empty;
+    public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
     public int? CreadoPorUsuarioId { get; set; }
 
     public Usuario? Usuario { get; set; }
@@ -181,7 +181,14 @@ public sealed class SimulacionRetencion : EntidadBase
 {
     public int ConfiguracionRetencionId { get; set; }
     public DateTime EjecutadoEn { get; set; } = DateTime.UtcNow;
-    public string? Notas { get; set; }
+    public int CohorteAnio { get; set; }
+    public DateTime FechaSimulacion { get; set; } = DateTime.UtcNow;
+    public decimal RetencionPorcentajeFinal { get; set; }
+    public decimal GraduacionPorcentajeFinal { get; set; }
+    public decimal EstudiantesTotalesInicio { get; set; }
+    public decimal EstudiantesRetenidos { get; set; }
+    public decimal EstudiantesGraduados { get; set; }
+    public decimal CostoMatriculaPromedio { get; set; }
 
     public ConfiguracionRetencion? ConfiguracionRetencion { get; set; }
     public ICollection<DetalleSimulacionRetencion> DetallesSimulacionRetencion { get; set; } = new List<DetalleSimulacionRetencion>();
@@ -195,6 +202,13 @@ public sealed class DetalleSimulacionRetencion : EntidadBase
     public decimal ValorEstudiantes { get; set; }
     public decimal TasaAplicadaPorcentaje { get; set; }
     public string TipoZona { get; set; } = string.Empty;
+    public int Ciclo { get; set; }
+    public decimal EstudiantesInicio { get; set; }
+    public decimal EstudiantesRetenidos { get; set; }
+    public decimal EstudiantesReprobados { get; set; }
+    public decimal EstudiantesGraduados { get; set; }
+    public decimal CostoMatriculaProyectado { get; set; }
+    public int AnioAcademico { get; set; }
 
     public SimulacionRetencion? SimulacionRetencion { get; set; }
 }

@@ -23,13 +23,17 @@ erDiagram
         int escenario_proyeccion_id FK
         numeric tasa_bancaria_porcentaje
         numeric premio_riesgo_porcentaje
+        numeric inflacion_promedio_porcentaje
         numeric tmr_calculada_porcentaje
+        text metodo_calculo
     }
 
     configuracion_financiamiento {
         int id PK
         int escenario_proyeccion_id FK
         numeric porcentaje_recursos_propios
+        numeric porcentaje_credito
+        numeric monto_propio
         numeric monto_credito
         numeric tasa_interes_anual
         int plazo_anios
@@ -40,7 +44,9 @@ erDiagram
         int configuracion_financiamiento_id FK
         int numero_cuota
         numeric saldo_capital
+        numeric amortizacion_capital
         numeric interes_cuota
+        numeric interes_acumulado
         numeric cuota_total
     }
 
@@ -51,17 +57,27 @@ erDiagram
         numeric van_valor
         numeric punto_equilibrio_estudiantes
         numeric periodo_recuperacion_anios
-        int es_viable
+        bool es_viable
     }
 
     balance_proyectado {
         int id PK
         int escenario_proyeccion_id FK
         int anio
+        numeric caja_bancos
+        numeric inventario_materiales
+        numeric activos_fijos_brutos
+        numeric depreciacion_acumulada
+        numeric activos_fijos_netos
         numeric total_activo
+        numeric prestamos_por_pagar
+        numeric intereses_por_pagar
         numeric total_pasivo
+        numeric capital_propio
+        numeric utilidad_acumulada
         numeric total_patrimonio
-        int cuadra_balance
+        numeric total_pasivo_patrimonio
+        bool cuadra_balance
     }
 
     resumen_proyeccion_financiera {
@@ -70,7 +86,17 @@ erDiagram
         int escenario_proyeccion_id FK
         int periodo_academico_id FK
         numeric ingreso_total
+        numeric costo_total
+        numeric gasto_total
+        numeric resultado_operacional
         numeric resultado_neto_total
+        numeric flujo_caja_operacional
+        numeric flujo_caja_inversion
+        numeric flujo_caja_financiamiento
+        numeric flujo_caja_neto
+        numeric arancel_promedio
+        numeric estudiantes_totales
+        numeric punto_equilibrio
     }
 
     escenario_proyeccion ||--o{ configuracion_tmr : ""
@@ -83,3 +109,5 @@ erDiagram
 
     carrera ||--o{ resumen_proyeccion_financiera : ""
     periodo_academico ||--o{ resumen_proyeccion_financiera : ""
+
+%%note: Columnas de auditoría (creado_en, actualizado_en, eliminado_en) omitidas por legibilidad

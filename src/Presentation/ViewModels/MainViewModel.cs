@@ -6,8 +6,12 @@ using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.DTOs.Usuarios;
 using SistemaAranceles.Application.UseCases.Autenticacion;
 using SistemaAranceles.Presentation.Mensajes;
+using SistemaAranceles.Presentation.Services;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.ViewModels.Auditoria;
+using SistemaAranceles.Presentation.ViewModels.Carreras;
+using SistemaAranceles.Presentation.ViewModels.Inflacion;
+using SistemaAranceles.Presentation.ViewModels.TasaRetencion;
 using SistemaAranceles.Presentation.ViewModels.Usuarios;
 using System.Diagnostics;
 
@@ -25,8 +29,12 @@ public sealed partial class MainViewModel : ObservableObject
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
+    private readonly ServicioInactividad _servicioInactividad;
     private readonly UsuariosViewModel _usuariosViewModel;
     private readonly AuditoriaViewModel _auditoriaViewModel;
+    private readonly CarrerasViewModel _carrerasViewModel;
+    private readonly InflacionViewModel _inflacionViewModel;
+    private readonly ConfiguracionRetencionViewModel _configuracionRetencionViewModel;
     private readonly Func<EditarUsuarioViewModel> _editarUsuarioViewModelFactory;
     private int _cerrandoSesion;
     private int _cargandoUsuarios;
@@ -34,15 +42,29 @@ public sealed partial class MainViewModel : ObservableObject
     public MainViewModel(
         IServiceProvider serviceProvider,
         SesionActual sesionActual,
+        ServicioInactividad servicioInactividad,
         UsuariosViewModel usuariosViewModel,
         AuditoriaViewModel auditoriaViewModel,
+        CarrerasViewModel carrerasViewModel,
+        InflacionViewModel inflacionViewModel,
+        ConfiguracionRetencionViewModel configuracionRetencionViewModel,
         Func<EditarUsuarioViewModel> editarUsuarioViewModelFactory)
     {
         _serviceProvider = serviceProvider;
         _sesionActual = sesionActual;
+        _servicioInactividad = servicioInactividad;
         _usuariosViewModel = usuariosViewModel;
         _auditoriaViewModel = auditoriaViewModel;
+        _carrerasViewModel = carrerasViewModel;
+        _inflacionViewModel = inflacionViewModel;
+        _configuracionRetencionViewModel = configuracionRetencionViewModel;
         _editarUsuarioViewModelFactory = editarUsuarioViewModelFactory;
+
+        // Subscribirse a actualizaciones de tiempo restante
+        _servicioInactividad.TiempoRestanteActualizado += (_, tiempoRestante) =>
+        {
+            TiempoRestanteSesion = FormatearTiempoRestante(tiempoRestante);
+        };
 
         WeakReferenceMessenger.Default.Register<NavegarAMensaje>(this, (_, msg) =>
         {
@@ -61,6 +83,11 @@ public sealed partial class MainViewModel : ObservableObject
             PaginaActual = _usuariosViewModel;
             _ = MostrarUsuariosAsync();
         }
+        else if (_sesionActual.TienePermiso("INF.VER"))
+        {
+            PaginaActual = _inflacionViewModel;
+            _ = MostrarInflacionAsync();
+        }
         else
         {
             PaginaActual = null;
@@ -75,11 +102,17 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _mensajePagina = string.Empty;
     [ObservableProperty] private bool _estaCerrandoSesion;
     [ObservableProperty] private string _mensajeCierreSesion = "Cerrando sesión...";
+    [ObservableProperty] private string _tiempoRestanteSesion = "45:00";
 
     public ObservableCollection<ItemMenu> MenuItems { get; } = [];
 
     public string NombreUsuario => _sesionActual.NombreCompleto;
     public string RolUsuario => _sesionActual.RolNombre;
+
+    private static string FormatearTiempoRestante(TimeSpan tiempo)
+    {
+        return $"{(int)tiempo.TotalMinutes}:{tiempo.Seconds:D2}";
+    }
 
     private void ConstruirMenu()
     {
@@ -90,7 +123,7 @@ public sealed partial class MainViewModel : ObservableObject
             MenuItems.Add(new ItemMenu
             {
                 Titulo = "Usuarios",
-                Icono = "👤",
+                Icono = string.Empty,
                 Comando = new AsyncRelayCommand(() => MostrarUsuariosAsync())
             });
         }
@@ -100,8 +133,8 @@ public sealed partial class MainViewModel : ObservableObject
             MenuItems.Add(new ItemMenu
             {
                 Titulo = "Carreras",
-                Icono = "🎓",
-                Comando = new RelayCommand(() => MensajePagina = "Módulo Carreras — disponible en Épica 3")
+                Icono = string.Empty,
+                Comando = new AsyncRelayCommand(() => MostrarCarrerasAsync())
             });
         }
 
@@ -110,19 +143,20 @@ public sealed partial class MainViewModel : ObservableObject
             MenuItems.Add(new ItemMenu
             {
                 Titulo = "Inflación",
-                Icono = "📈",
-                Comando = new RelayCommand(() => MensajePagina = "Módulo Inflación — disponible en Épica 3")
+                Icono = string.Empty,
+                Comando = new AsyncRelayCommand(() => MostrarInflacionAsync())
             });
         }
 
-        if (_sesionActual.TienePermiso("PR.VER"))
+        if (_sesionActual.TienePermiso("TRE.VER") || _sesionActual.TienePermiso("PR.VER") || _sesionActual.EsAdministrador)
         {
             MenuItems.Add(new ItemMenu
             {
-                Titulo = "Proyecciones",
-                Icono = "📊",
-                Comando = new RelayCommand(() => MensajePagina = "Módulo Proyecciones — disponible en Épica 4")
+                Titulo = "Tasa de Retención y Graduación",
+                Icono = string.Empty,
+                Comando = new AsyncRelayCommand(() => MostrarTasaRetencionAsync())
             });
+
         }
 
         if (_sesionActual.TienePermiso("AF.VER"))
@@ -130,8 +164,28 @@ public sealed partial class MainViewModel : ObservableObject
             MenuItems.Add(new ItemMenu
             {
                 Titulo = "Análisis Financiero",
-                Icono = "💰",
-                Comando = new RelayCommand(() => MensajePagina = "Módulo Análisis Financiero — disponible en Épica 5")
+                Icono = string.Empty,
+                Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Análisis Financiero", "Épica 5"))
+            });
+        }
+
+        if (_sesionActual.TienePermiso("CFG.VER"))
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Configuración",
+                Icono = string.Empty,
+                Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Configuración", "Pendiente"))
+            });
+        }
+
+        if (_sesionActual.TienePermiso("REP.VER"))
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Reportes",
+                Icono = string.Empty,
+                Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Reportes", "Pendiente"))
             });
         }
 
@@ -140,7 +194,7 @@ public sealed partial class MainViewModel : ObservableObject
             MenuItems.Add(new ItemMenu
             {
                 Titulo = "Auditoría",
-                Icono = "🧾",
+                Icono = string.Empty,
                 Comando = new AsyncRelayCommand(() => MostrarAuditoriaAsync())
             });
         }
@@ -148,11 +202,17 @@ public sealed partial class MainViewModel : ObservableObject
         MenuItems.Add(new ItemMenu
         {
             Titulo = "Cerrar Sesión",
-            Icono = "🚪",
+            Icono = string.Empty,
             Comando = new RelayCommand(() => _ = CerrarSesionAsync())
         });
 
         Bienvenida = $"Bienvenido, {_sesionActual.NombreCompleto}  |  Rol: {_sesionActual.RolNombre}";
+    }
+
+    private void MostrarModuloEnDesarrollo(string modulo, string epica)
+    {
+        PaginaActual = null;
+        MensajePagina = $"Módulo {modulo} — en desarrollo ({epica}). Se habilitó menú por permisos para pruebas de acceso por rol.";
     }
 
     [RelayCommand]
@@ -160,6 +220,42 @@ public sealed partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private Task MostrarAuditoria() => MostrarAuditoriaAsync();
+
+    [RelayCommand]
+    private Task MostrarInflacion() => MostrarInflacionAsync();
+
+    [RelayCommand]
+    private Task MostrarCarreras() => MostrarCarrerasAsync();
+
+    [RelayCommand]
+    private Task MostrarTasaRetencion() => MostrarTasaRetencionAsync();
+
+    private async Task MostrarCarrerasAsync()
+    {
+        if (!(_sesionActual.TienePermiso("CA.VER") || _sesionActual.EsAdministrador))
+        {
+            MensajePagina = "Acceso denegado al módulo de Carreras.";
+            return;
+        }
+
+        MensajePagina = string.Empty;
+        PaginaActual = _carrerasViewModel;
+        await _carrerasViewModel.CargarCommand.ExecuteAsync(null);
+    }
+
+    private async Task MostrarTasaRetencionAsync()
+    {
+        var puede = _sesionActual.TienePermiso("TRE.VER") || _sesionActual.TienePermiso("PR.VER") || _sesionActual.EsAdministrador;
+        if (!puede)
+        {
+            MensajePagina = "Acceso denegado al módulo de Tasa de Retención.";
+            return;
+        }
+
+        MensajePagina = string.Empty;
+        PaginaActual = _configuracionRetencionViewModel;
+        await _configuracionRetencionViewModel.CargarCommand.ExecuteAsync(null);
+    }
 
     private async Task MostrarUsuariosAsync(string? mensajeExito = null)
     {
@@ -203,6 +299,19 @@ public sealed partial class MainViewModel : ObservableObject
         MensajePagina = string.Empty;
         PaginaActual = _auditoriaViewModel;
         return Task.CompletedTask;
+    }
+
+    private async Task MostrarInflacionAsync()
+    {
+        if (!_sesionActual.TienePermiso("INF.VER"))
+        {
+            MensajePagina = "Acceso denegado al módulo de Inflación.";
+            return;
+        }
+
+        MensajePagina = string.Empty;
+        PaginaActual = _inflacionViewModel;
+        await _inflacionViewModel.CargarCommand.ExecuteAsync(null);
     }
 
     [RelayCommand]

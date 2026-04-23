@@ -147,6 +147,40 @@ public sealed class RepositorioPermiso(ContextoAplicacion contextoAplicacion) : 
         return [];
     }
 
+    public async Task<IReadOnlySet<int>> ObtenerPermisoIdsDeRolAsync(
+        int rolId,
+        CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            SELECT DISTINCT rp.permiso_id
+            FROM rol_permiso rp
+            INNER JOIN permiso p ON p.id = rp.permiso_id
+            WHERE rp.rol_id = @rol_id
+              AND p.esta_activo = true
+            """;
+
+        var ids = new HashSet<int>();
+        var (connection, _) = await ObtenerConexionAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.CommandTimeout = 12;
+
+        var pRol = command.CreateParameter();
+        pRol.ParameterName = "@rol_id";
+        pRol.Value = rolId;
+        command.Parameters.Add(pRol);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            if (!await reader.IsDBNullAsync(0, cancellationToken))
+                ids.Add(reader.GetInt32(0));
+        }
+
+        return ids;
+    }
+
     public async Task GuardarOverridesAsync(
         int usuarioId,
         IEnumerable<PermisoOverrideDto> overrides,
@@ -170,7 +204,7 @@ public sealed class RepositorioPermiso(ContextoAplicacion contextoAplicacion) : 
             var listaOverrides = overrides.ToList();
             if (listaOverrides.Count > 0)
             {
-                var creadoEn = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss");
+                var creadoEn = DateTime.UtcNow;
                 foreach (var ov in listaOverrides)
                 {
                     contextoAplicacion.UsuariosPermisosOverride.Add(new UsuarioPermisoOverride

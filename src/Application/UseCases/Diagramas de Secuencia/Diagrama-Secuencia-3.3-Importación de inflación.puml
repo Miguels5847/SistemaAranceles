@@ -1,0 +1,54 @@
+@startuml DS-03.3-Importacion-Inflacion
+title <b><size:18>DS-03.3 — Importación de Inflación</size></b>
+
+skinparam participant {
+    FontSize 11
+    FontStyle normal
+}
+skinparam actor {
+    FontSize 11
+}
+skinparam note {
+    FontSize 11
+}
+skinparam sequenceMessageAlign center
+
+actor "Planificador"
+participant "InflacionViewModel"
+participant "ImportarInflacionBceArchivoUseCase"
+participant "IServicioImportacionBceArchivo"
+participant "IRepositorioInflacionAnual"
+participant "IUnidadTrabajo"
+participant "IAuditoriaServicio"
+database "Base de Datos" as db
+
+note over "Planificador","db"
+Flujo único: Importar desde archivo BCE (ImportacionBceArchivoSolicitudDto { RutaArchivo, TipoSerie })
+Registros existentes NO se sobreescriben (skip)
+end note
+
+"Planificador" -> "InflacionViewModel" : Selecciona archivo BCE y solicita importar
+"InflacionViewModel" -> "ImportarInflacionBceArchivoUseCase" : EjecutarAsync(ImportacionBceArchivoSolicitudDto, ejecutadoPorUsuarioId)
+
+"ImportarInflacionBceArchivoUseCase" -> "IServicioImportacionBceArchivo" : LeerArchivoAsync(solicitud)
+"IServicioImportacionBceArchivo" --> "ImportarInflacionBceArchivoUseCase" : ImportacionInflacionLecturaResultadoDto\n{ Filas, Errores }
+
+loop Por cada fila válida
+    "ImportarInflacionBceArchivoUseCase" -> "IRepositorioInflacionAnual" : ObtenerPorAnioAsync(fila.Anio)
+    "IRepositorioInflacionAnual" -> "db" : SELECT * FROM inflacion_anual WHERE anio = :anio
+    "db" --> "IRepositorioInflacionAnual" : existente | null
+
+    alt existente no es null
+        note over "ImportarInflacionBceArchivoUseCase" : Omitido — año ya registrado
+    else existente es null
+        "ImportarInflacionBceArchivoUseCase" -> "IRepositorioInflacionAnual" : AgregarAsync(new InflacionAnual(anio, %, "BCE", "Dato historico"), usuarioId)
+        "IRepositorioInflacionAnual" -> "db" : INSERT INTO inflacion_anual ...
+    end
+end
+
+"ImportarInflacionBceArchivoUseCase" -> "IUnidadTrabajo" : GuardarCambiosAsync()
+"IUnidadTrabajo" -> "db" : COMMIT
+"ImportarInflacionBceArchivoUseCase" -> "IAuditoriaServicio" : RegistrarAsync("IMPORTAR_BCE_ARCHIVO", ...)
+"ImportarInflacionBceArchivoUseCase" --> "InflacionViewModel" : ImportacionInflacionResultadoDto
+"InflacionViewModel" --> "Planificador" : Muestra resumen de importación
+@enduml
