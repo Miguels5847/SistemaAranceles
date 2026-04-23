@@ -150,6 +150,12 @@
                                 Command="{Binding SeleccionarParaEditarCommand}"
                                 Padding="8,5"
                                 Margin="0,0,6,0"/>
+                        <Button Content="Eliminar selección"
+                            Command="{Binding EliminarSeleccionadaCommand}"
+                            Padding="8,5"
+                            Margin="0,0,6,0"
+                            Background="#C62828"
+                            Foreground="White"/>
                         <Button Content="Guardar"
                                 Command="{Binding GuardarCommand}"
                                 Padding="10,5"

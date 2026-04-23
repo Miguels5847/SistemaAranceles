@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,11 +41,13 @@ public sealed partial class CarrerasViewModel : ObservableObject
     [ObservableProperty] private bool _estaEditando;
     [ObservableProperty] private bool _estaCargando;
     [ObservableProperty] private bool _estaGuardando;
+    [ObservableProperty] private bool _estaEliminando;
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
 
     public bool PuedeVer => _sesionActual.TienePermiso("CA.VER") || _sesionActual.EsAdministrador;
     public bool PuedeEditar => _sesionActual.TienePermiso("CA.CREAR") || _sesionActual.TienePermiso("CA.EDITAR") || _sesionActual.EsAdministrador;
+    public bool PuedeEliminar => _sesionActual.TienePermiso("CA.ELIMINAR") || _sesionActual.EsAdministrador;
 
     public string TituloFormulario => EstaEditando ? "Editar carrera" : "Nueva carrera";
 
@@ -99,7 +102,6 @@ public sealed partial class CarrerasViewModel : ObservableObject
         FacultadNombre = string.Empty;
         TotalCiclos = "9";
         MensajeError = string.Empty;
-        MensajeExito = string.Empty;
         OnPropertyChanged(nameof(TituloFormulario));
     }
 
@@ -184,6 +186,8 @@ public sealed partial class CarrerasViewModel : ObservableObject
                 entidad.CambiarTotalCiclos(ciclos);
                 await repo.ActualizarAsync(entidad);
                 await unidadTrabajo.GuardarCambiosAsync();
+                await CargarAsync();
+                LimpiarFormulario(mantenerMensajes: true);
                 MensajeExito = "Carrera actualizada correctamente.";
             }
             else
@@ -195,11 +199,10 @@ public sealed partial class CarrerasViewModel : ObservableObject
                 var nueva = new Carrera(Codigo, Nombre, FacultadNombre, ciclos);
                 await repo.AgregarAsync(nueva);
                 await unidadTrabajo.GuardarCambiosAsync();
+                await CargarAsync();
+                LimpiarFormulario(mantenerMensajes: true);
                 MensajeExito = "Carrera creada correctamente.";
             }
-
-            await CargarAsync();
-            Nuevo();
         }
         catch (Exception ex)
         {
@@ -209,6 +212,78 @@ public sealed partial class CarrerasViewModel : ObservableObject
         {
             EstaGuardando = false;
         }
+    }
+
+    [RelayCommand]
+    private async Task EliminarSeleccionadaAsync()
+    {
+        if (!PuedeEliminar)
+        {
+            MensajeError = "No tiene permiso para eliminar carreras.";
+            return;
+        }
+
+        if (CarreraSeleccionada is null)
+        {
+            MensajeError = "Seleccione una carrera para eliminar.";
+            return;
+        }
+
+        var confirmacion = MessageBox.Show(
+            $"¿Desea eliminar la carrera '{CarreraSeleccionada.Codigo} - {CarreraSeleccionada.Nombre}'?",
+            "Confirmar eliminación",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (confirmacion != MessageBoxResult.Yes)
+            return;
+
+        if (EstaEliminando) return;
+
+        EstaEliminando = true;
+        MensajeError = string.Empty;
+        MensajeExito = string.Empty;
+
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var repo = scope.ServiceProvider.GetRequiredService<IRepositorioCarrera>();
+            var unidadTrabajo = scope.ServiceProvider.GetRequiredService<IUnidadTrabajo>();
+
+            var usuarioId = _sesionActual.UsuarioId > 0 ? _sesionActual.UsuarioId : (int?)null;
+            await repo.EliminarPorIdAsync(CarreraSeleccionada.Id, usuarioId);
+            await unidadTrabajo.GuardarCambiosAsync();
+
+            await CargarAsync();
+            LimpiarFormulario(mantenerMensajes: true);
+            MensajeExito = "Carrera eliminada correctamente.";
+        }
+        catch (Exception ex)
+        {
+            MensajeError = $"Error al eliminar carrera: {ObtenerDetalle(ex)}";
+        }
+        finally
+        {
+            EstaEliminando = false;
+        }
+    }
+
+    private void LimpiarFormulario(bool mantenerMensajes)
+    {
+        CarreraSeleccionada = null;
+        EstaEditando = false;
+        Codigo = string.Empty;
+        Nombre = string.Empty;
+        FacultadNombre = string.Empty;
+        TotalCiclos = "9";
+
+        if (!mantenerMensajes)
+        {
+            MensajeError = string.Empty;
+            MensajeExito = string.Empty;
+        }
+
+        OnPropertyChanged(nameof(TituloFormulario));
     }
 
     private static string ObtenerDetalle(Exception ex)
