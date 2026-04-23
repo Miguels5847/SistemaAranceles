@@ -325,7 +325,7 @@
                                             Margin="0,0,8,8">
                                         <StackPanel>
                                             <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="RET final: "/>
+                                                <TextBlock Text="Retención final: "/>
                                                 <TextBlock Text="{Binding RetencionResumenTexto}"
                                                            FontWeight="Bold"/>
                                             </StackPanel>
@@ -340,7 +340,7 @@
                                             Margin="0,0,8,8">
                                         <StackPanel>
                                             <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="GRAD final: "/>
+                                                <TextBlock Text="Titulación final: "/>
                                                 <TextBlock Text="{Binding GraduacionResumenTexto}"
                                                            FontWeight="Bold"/>
                                             </StackPanel>
