@@ -21,9 +21,9 @@ participant "ProyeccionEstudiantesRepository"
 participant "DetalleEstudiantesRepository"
 participant "ConfigCargaDocenteRepository"
 participant "RequerimientoDocenteRepository"
-participant "Base de Datos"
+database "Base de Datos" as db
 
-note over "Planificador","Base de Datos"
+note over "Planificador","db"
 Flujo Principal - Proyección de estudiantes y docentes
 end note
 
@@ -31,13 +31,13 @@ end note
 "EstudiantesViewModel" -> "ProyectarEstudiantesUseCase": Ejecutar(carreraId, escenarioId)
 
 "ProyectarEstudiantesUseCase" -> "ConfigRetencionRepository": ObtenerConfiguracion(carreraId, escenarioId)
-"ConfigRetencionRepository" -> "Base de Datos": SELECT configuracion_retencion
-"Base de Datos" --> "ConfigRetencionRepository": Tasas y paralelos por período
+"ConfigRetencionRepository" -> "db": SELECT configuracion_retencion
+"db" --> "ConfigRetencionRepository": Tasas y paralelos por período
 "ConfigRetencionRepository" --> "ProyectarEstudiantesUseCase": ConfiguracionRetencionDto
 
 "ProyectarEstudiantesUseCase" -> "ProyeccionEstudiantesRepository": CrearProyeccion(carreraId, escenarioId, anioBase)
-"ProyeccionEstudiantesRepository" -> "Base de Datos": INSERT proyeccion_estudiantes
-"Base de Datos" --> "ProyeccionEstudiantesRepository": proyeccionId
+"ProyeccionEstudiantesRepository" -> "db": INSERT proyeccion_estudiantes
+"db" --> "ProyeccionEstudiantesRepository": proyeccionId
 
 loop Por cada período académico
     "ProyectarEstudiantesUseCase" -> "ProyectarEstudiantesUseCase": CalcularParalelosPorPeriodo(numeroPeriodo)
@@ -48,12 +48,12 @@ loop Por cada período académico
     end note
 
     "ProyectarEstudiantesUseCase" -> "DetalleEstudiantesRepository": GuardarDetalle(proyeccionId, periodoId, ciclo, paralelos, totalEst)
-    "DetalleEstudiantesRepository" -> "Base de Datos": INSERT detalle_proyeccion_estudiantes
+    "DetalleEstudiantesRepository" -> "db": INSERT detalle_proyeccion_estudiantes
 end
 
 "ProyectarEstudiantesUseCase" -> "ConfigCargaDocenteRepository": ObtenerConfigCarga(proyeccionId)
-"ConfigCargaDocenteRepository" -> "Base de Datos": SELECT configuracion_carga_docente
-"Base de Datos" --> "ConfigCargaDocenteRepository": Horas y proporciones
+"ConfigCargaDocenteRepository" -> "db": SELECT configuracion_carga_docente
+"db" --> "ConfigCargaDocenteRepository": Horas y proporciones
 "ConfigCargaDocenteRepository" --> "ProyectarEstudiantesUseCase": ConfigCargaDto
 
 loop Por cada período académico
@@ -65,7 +65,7 @@ loop Por cada período académico
     end note
 
     "ProyectarEstudiantesUseCase" -> "RequerimientoDocenteRepository": GuardarRequerimiento(periodoId, docentes)
-    "RequerimientoDocenteRepository" -> "Base de Datos": INSERT proyeccion_requerimiento_docente
+    "RequerimientoDocenteRepository" -> "db": INSERT proyeccion_requerimiento_docente
 end
 
 "ProyectarEstudiantesUseCase" --> "EstudiantesViewModel": ProyeccionDto completa

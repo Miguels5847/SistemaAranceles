@@ -1,61 +1,70 @@
 @startuml
-title <b><size:20>Diagrama de Secuencia - Proyección de inflación</size></b>
+title <b><size:18>DS-03 — Módulo de Inflación (Vista General)</size></b>
 
-skinparam participant {
-    FontSize 12
-    FontStyle normal
-}
-skinparam actor {
-    FontSize 12
-    FontStyle normal
-}
-skinparam note {
-    FontSize 12
-}
+' Configuración de estilos
+skinparam participantFontSize 11
+skinparam participantFontStyle normal
+skinparam actorFontSize 11
+skinparam noteFontSize 11
+skinparam sequenceMessageAlign center
+skinparam sequenceBoxBackgroundColor #F8F8F8
+skinparam sequenceBoxBorderColor #AAAAAA
 
-actor "Planificador"
-participant "InflacionViewModel"
-participant "ProyectarInflacionUseCase"
-participant "InflacionAnualRepository"
-participant "InflacionProyectadaRepository"
-participant "Base de Datos"
+' Definición de participantes con alias para mayor comodidad
+actor "Planificador" as P
+participant "InflacionViewModel" as VM
+participant "Use Cases\n(Inflación)" as UC
+participant "IRepositorioInflacionAnual" as Repo
+database "Base de Datos" as DB
 
-note over "Planificador","Base de Datos"
-Flujo Principal - Proyección de inflación
+note over P, DB
+  Vista general del módulo de Inflación.
+  Para flujos detallados ver los diagramas específicos:
+    · DS-03.1 — Proyección de inflación
+    · DS-03.2 — CRUD Inflación Anual
+    · DS-03.3 — Importación (archivo BCE)
+    · DS-03.4 — Limpieza de datos
 end note
 
-"Planificador" -> "InflacionViewModel": Solicita proyectar inflación para escenario
-"InflacionViewModel" -> "ProyectarInflacionUseCase": Ejecutar(escenarioId, aniosAProyectar)
+' --- BOX 1: Proyección ---
+box "DS-03.1 — Proyección" #EFF6FF
+    P -> VM : Configura AnioDesde / AnioHasta y proyectar
+    VM -> UC : ProyectarInflacionUseCase\n.EjecutarAsync(solicitud, usuarioId)
+    UC -> Repo : ListarAsync() + ObtenerPorAnioAsync()\n+ AgregarAsync() | ActualizarAsync()
+    Repo -> DB : SELECT / INSERT / UPDATE inflacion_anual
+    DB --> VM : ProyeccionInflacionResultadoDto\n{ RegistrosCreados, Actualizados, Omitidos }
+end box
 
-"ProyectarInflacionUseCase" -> "InflacionAnualRepository": ObtenerHistorico()
-"InflacionAnualRepository" -> "Base de Datos": SELECT inflacion_anual ORDER BY anio
-"Base de Datos" --> "InflacionAnualRepository": Lista de inflaciones históricas
-"InflacionAnualRepository" --> "ProyectarInflacionUseCase": Datos históricos
+' --- BOX 2: CRUD ---
+box "DS-03.2 — CRUD Inflación Anual" #F0FDF4
+    P -> VM : Crear / Editar / Eliminar / Listar registro
+    VM -> UC : Crear|Actualizar|Eliminar|ListarInflacionAnualUseCase\n.EjecutarAsync(dto, usuarioId)
+    UC -> Repo : AgregarAsync() | ActualizarAsync()\n| EliminarPorIdAsync() | ListarAsync()
+    Repo -> DB : INSERT / UPDATE / DELETE / SELECT inflacion_anual
+    DB --> VM : Confirmación / List<InflacionAnualDto>
+end box
 
-"ProyectarInflacionUseCase" -> "ProyectarInflacionUseCase": EjecutarRegresionLineal(datos)
+' --- BOX 3: Importación ---
+box "DS-03.3 — Importación" #FFF7ED
+    P -> VM : Importar desde archivo BCE
+    VM -> UC : ImportarInflacionBceArchivoUseCase\n.EjecutarAsync(solicitud, usuarioId)
+    UC -> Repo : ObtenerPorAnioAsync() + AgregarAsync()\n(skip si año ya existe)
+    Repo -> DB : SELECT / INSERT inflacion_anual
+    DB --> VM : ImportacionInflacionResultadoDto\n{ Correctas, Omitidas, Errores }
+end box
 
-note over "ProyectarInflacionUseCase"
-y = a + b*x donde x=año, y=inflación
+' --- BOX 4: Limpieza ---
+box "DS-03.4 — Limpieza" #FDF4FF
+    P -> VM : Confirma limpieza total
+    VM -> UC : LimpiarInflacionUseCase\n.EjecutarAsync(usuarioId)
+    UC -> Repo : LimpiarTodoAsync()\n(dentro de transacción explícita)
+    Repo -> DB : DELETE inflacion_anual + inflacion_proyectada\nCOMMIT | ROLLBACK
+    DB --> VM : LimpiarInflacionResultadoDto\n{ AnualesEliminados, ProyectadosEliminados }
+end box
+
+note over UC
+    Todos los use cases invocan
+    IAuditoriaServicio.RegistrarAsync(...)
+    de forma fire-and-forget (no bloquea flujo principal)
 end note
-
-"ProyectarInflacionUseCase" -> "ProyectarInflacionUseCase": CalcularPendienteEIntercepcion()
-"ProyectarInflacionUseCase" -> "ProyectarInflacionUseCase": GenerarProyeccionPorAnio()
-
-loop Por cada año proyectado
-    "ProyectarInflacionUseCase" -> "InflacionProyectadaRepository": GuardarOActualizar(escenarioId, anio, porcentaje, metodo)
-    "InflacionProyectadaRepository" -> "Base de Datos": INSERT OR UPDATE inflacion_proyectada
-end
-
-"ProyectarInflacionUseCase" --> "InflacionViewModel": Lista inflaciones proyectadas
-"InflacionViewModel" --> "Planificador": Muestra tabla de proyección
-
-alt Planificador ajusta manualmente un año
-    "Planificador" -> "InflacionViewModel": Edita valor de inflación de un año
-    "InflacionViewModel" -> "ProyectarInflacionUseCase": AjustarManual(escenarioId, anio, nuevoValor)
-    "ProyectarInflacionUseCase" -> "InflacionProyectadaRepository": Actualizar(escenarioId, anio, nuevoValor, esAjusteManual=true)
-    "InflacionProyectadaRepository" -> "Base de Datos": UPDATE inflacion_proyectada SET porcentaje, es_ajuste_manual=1
-    "Base de Datos" --> "InflacionProyectadaRepository": OK
-    "ProyectarInflacionUseCase" --> "InflacionViewModel": Inflación actualizada
-    "InflacionViewModel" --> "Planificador": Muestra valor ajustado con indicador manual
-end
 @enduml

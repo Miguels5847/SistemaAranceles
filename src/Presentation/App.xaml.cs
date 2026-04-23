@@ -1,5 +1,6 @@
 using System.IO;
 using System.Diagnostics;
+using System.Globalization;
 using Npgsql;
 using System.Windows;
 using CommunityToolkit.Mvvm.Messaging;
@@ -8,8 +9,13 @@ using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.Options;
 using SistemaAranceles.Application.UseCases.Auditoria;
 using SistemaAranceles.Application.UseCases.Autenticacion;
+using SistemaAranceles.Application.UseCases.Inflacion;
+using SistemaAranceles.Application.UseCases.TasaRetencion;
+using SistemaAranceles.Application.UseCases.TasaRetencion.Validadores;
 using SistemaAranceles.Application.UseCases.Usuarios;
 using SistemaAranceles.Application.UseCases.Permisos;
+using SistemaAranceles.Application.DTOs.TasaRetencion;
+using FluentValidation;
 using SistemaAranceles.Infrastructure.DI;
 using SistemaAranceles.Infrastructure.Persistence;
 using SistemaAranceles.Presentation.Mensajes;
@@ -17,6 +23,9 @@ using SistemaAranceles.Presentation.Services;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.ViewModels;
 using SistemaAranceles.Presentation.ViewModels.Auditoria;
+using SistemaAranceles.Presentation.ViewModels.Carreras;
+using SistemaAranceles.Presentation.ViewModels.Inflacion;
+using SistemaAranceles.Presentation.ViewModels.TasaRetencion;
 using SistemaAranceles.Presentation.ViewModels.Usuarios;
 using SistemaAranceles.Presentation.Views;
 
@@ -27,6 +36,8 @@ public partial class App
     private ServiceProvider? _proveedor;
     private TextWriterTraceListener? _traceListener;
     private ServicioInactividad? _servicioInactividad;
+    private DateTime _lastWindowDeactivated = DateTime.MinValue;
+    private bool _ignorarPrimerInputTrasActivacion;
 
     private void OnStartup(object sender, StartupEventArgs e)
     {
@@ -75,6 +86,28 @@ public partial class App
         // Configuración de sesión
         var timeoutMinutes = int.TryParse(config["Session:TimeoutMinutes"], out var t) ? t : 30;
         servicios.Configure<SesionOpciones>(opts => opts.TimeoutMinutes = timeoutMinutes);
+        servicios.Configure<InflacionOpciones>(opts =>
+        {
+            opts.MetodoProyeccion = config["Inflacion:MetodoProyeccion"] ?? "promedio-suave";
+
+            if (TryParseDecimalInvariant(config["Inflacion:PisoMinimoProyeccion"], out var piso))
+                opts.PisoMinimoProyeccion = piso;
+
+            if (TryParseDecimalInvariant(config["Inflacion:TechoEstableSinHistorial"], out var techo))
+                opts.TechoEstableSinHistorial = techo;
+
+            if (int.TryParse(config["Inflacion:VentanaAniosRecientes"], out var ventana))
+                opts.VentanaAniosRecientes = ventana;
+
+            if (TryParseDecimalInvariant(config["Inflacion:ValorObjetivoConvergencia"], out var objetivo))
+                opts.ValorObjetivoConvergencia = objetivo;
+
+            if (TryParseDecimalInvariant(config["Inflacion:FactorConvergenciaAnual"], out var factor))
+                opts.FactorConvergenciaAnual = factor;
+
+            if (TryParseDecimalInvariant(config["Inflacion:TechoMaximoProyeccion"], out var techoMaximo))
+                opts.TechoMaximoProyeccion = techoMaximo;
+        });
 
         // Estado de sesión (singleton)
         servicios.AddSingleton<SesionActual>();
@@ -93,11 +126,45 @@ public partial class App
         servicios.AddTransient<ObtenerPermisosEfectivosUsuarioUseCase>();
         servicios.AddTransient<ActualizarPermisosUsuarioUseCase>();
         servicios.AddTransient<ConsultarAuditoriaUseCase>();
+        servicios.AddTransient<ListarInflacionAnualUseCase>();
+        servicios.AddTransient<CrearInflacionAnualUseCase>();
+        servicios.AddTransient<ActualizarInflacionAnualUseCase>();
+        servicios.AddTransient<EliminarInflacionAnualUseCase>();
+        servicios.AddTransient<ImportarInflacionUseCase>();
+        servicios.AddTransient<LimpiarInflacionUseCase>();
+        servicios.AddTransient<ImportarInflacionBceArchivoUseCase>();
+        servicios.AddTransient<ProyectarInflacionUseCase>();
+        servicios.AddTransient<ObtenerInflacionProyectadaParaDependientesUseCase>();
+
+        // KAN-13: Tasa de Retención — Configuración
+        servicios.AddTransient<IValidator<CrearConfiguracionRetencionDto>, CrearConfiguracionRetencionDtoValidador>();
+        servicios.AddTransient<IValidator<ActualizarConfiguracionRetencionDto>, ActualizarConfiguracionRetencionDtoValidador>();
+        servicios.AddTransient<IValidator<GuardarCriterioReferenciaRetencionDto>, GuardarCriterioReferenciaRetencionDtoValidador>();
+        servicios.AddTransient<IValidator<CrearSimulacionRetencionDto>, CrearSimulacionRetencionDtoValidador>();
+        servicios.AddTransient<IValidator<ActualizarSimulacionRetencionDto>, ActualizarSimulacionRetencionDtoValidador>();
+        servicios.AddTransient<ListarConfiguracionesRetencionUseCase>();
+        servicios.AddTransient<ObtenerConfiguracionRetencionUseCase>();
+        servicios.AddTransient<CrearConfiguracionRetencionUseCase>();
+        servicios.AddTransient<ActualizarConfiguracionRetencionUseCase>();
+        servicios.AddTransient<EliminarConfiguracionRetencionUseCase>();
+        servicios.AddTransient<CrearCriterioReferenciaRetencionUseCase>();
+        servicios.AddTransient<ActualizarCriterioReferenciaRetencionUseCase>();
+        servicios.AddTransient<CrearSimulacionRetencionUseCase>();
+        servicios.AddTransient<ActualizarSimulacionRetencionUseCase>();
+        servicios.AddTransient<ListarSimulacionesRetencionUseCase>();
+        servicios.AddTransient<ObtenerSimulacionRetencionUseCase>();
+        servicios.AddTransient<EliminarSimulacionRetencionUseCase>();
+        servicios.AddTransient<LimpiarSimulacionesRetencionUseCase>();
+        servicios.AddScoped<ObtenerValoresSugeridosParaEscenarioUseCase>();
 
         // ViewModels
         servicios.AddTransient<LoginViewModel>();
         servicios.AddTransient<UsuariosViewModel>();
         servicios.AddTransient<AuditoriaViewModel>();
+        servicios.AddTransient<CarrerasViewModel>();
+        servicios.AddTransient<InflacionViewModel>();
+        servicios.AddSingleton<ConfiguracionRetencionViewModel>();
+        servicios.AddSingleton<SimulacionRetencionViewModel>();
         servicios.AddTransient<EditarUsuarioViewModel>();
         servicios.AddTransient<Func<EditarUsuarioViewModel>>(sp =>
             () => sp.GetRequiredService<EditarUsuarioViewModel>());
@@ -108,6 +175,9 @@ public partial class App
         servicios.AddTransient<MainWindow>();
     }
 
+    private static bool TryParseDecimalInvariant(string? value, out decimal result)
+        => decimal.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
+
     private void RegistrarMensajes()
     {
         WeakReferenceMessenger.Default.Register<LoginExitosoMensaje>(this, (_, _) =>
@@ -116,9 +186,50 @@ public partial class App
 
             var mainWindow = _proveedor!.GetRequiredService<MainWindow>();
 
-            // Resetear actividad ante cualquier movimiento o tecla en la ventana principal
-            mainWindow.PreviewMouseMove += (_, _) => _servicioInactividad?.ResetarActividad();
-            mainWindow.PreviewKeyDown += (_, _) => _servicioInactividad?.ResetarActividad();
+            // Rastrear pérdida de foco para evitar resetear el timer durante la transición
+            mainWindow.Deactivated += (_, _) =>
+            {
+                _lastWindowDeactivated = DateTime.UtcNow;
+                Trace.TraceInformation($"[{DateTime.UtcNow:O}] App: MainWindow perdió foco.");
+            };
+
+            mainWindow.Activated += (_, _) =>
+            {
+                // El primer click/tecla tras recuperar foco suele ser sólo para activar ventana.
+                _ignorarPrimerInputTrasActivacion = true;
+                Trace.TraceInformation($"[{DateTime.UtcNow:O}] App: MainWindow recuperó foco. Se ignorará el primer input para no resetear timer.");
+            };
+
+            void RegistrarActividadSiCorresponde()
+            {
+                if (!mainWindow.IsActive)
+                    return;
+
+                if (_ignorarPrimerInputTrasActivacion)
+                {
+                    _ignorarPrimerInputTrasActivacion = false;
+                    return;
+                }
+
+                _servicioInactividad?.ResetarActividad();
+            }
+
+            // Resetear actividad solo en interacciones intencionales después de que la ventana esté enfocada
+            // Si la ventana perdió el foco hace menos de 300ms, no resetear (es solo la transición de foco)
+            mainWindow.PreviewMouseDown += (_, _) =>
+            {
+                RegistrarActividadSiCorresponde();
+            };
+
+            mainWindow.PreviewMouseWheel += (_, _) =>
+            {
+                RegistrarActividadSiCorresponde();
+            };
+
+            mainWindow.PreviewKeyDown += (_, _) =>
+            {
+                RegistrarActividadSiCorresponde();
+            };
 
             mainWindow.Show();
             loginView?.Close();

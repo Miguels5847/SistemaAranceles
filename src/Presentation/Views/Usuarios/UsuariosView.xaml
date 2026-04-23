@@ -63,16 +63,24 @@
 
                         <DataGrid.RowStyle>
                                 <Style TargetType="DataGridRow">
-                                        <Setter Property="Foreground" Value="#1A237E"/>
-                                        <Setter Property="Background" Value="White"/>
+                                        <Setter Property="Foreground"
+                                                        Value="#1A237E"/>
+                                        <Setter Property="Background"
+                                                        Value="White"/>
                                         <Style.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Background" Value="#E8EAF6"/>
-                                                        <Setter Property="Foreground" Value="#1A237E"/>
+                                                <Trigger Property="IsMouseOver"
+                                                                Value="True">
+                                                        <Setter Property="Background"
+                                                                        Value="#E8EAF6"/>
+                                                        <Setter Property="Foreground"
+                                                                        Value="#1A237E"/>
                                                 </Trigger>
-                                                <Trigger Property="IsSelected" Value="True">
-                                                        <Setter Property="Background" Value="#C5CAE9"/>
-                                                        <Setter Property="Foreground" Value="#1A237E"/>
+                                                <Trigger Property="IsSelected"
+                                                                Value="True">
+                                                        <Setter Property="Background"
+                                                                        Value="#C5CAE9"/>
+                                                        <Setter Property="Foreground"
+                                                                        Value="#1A237E"/>
                                                 </Trigger>
                                         </Style.Triggers>
                                 </Style>
@@ -80,10 +88,13 @@
 
                         <DataGrid.CellStyle>
                                 <Style TargetType="DataGridCell">
-                                        <Setter Property="Foreground" Value="#1A237E"/>
+                                        <Setter Property="Foreground"
+                                                        Value="#1A237E"/>
                                         <Style.Triggers>
-                                                <Trigger Property="IsSelected" Value="True">
-                                                        <Setter Property="Foreground" Value="#1A237E"/>
+                                                <Trigger Property="IsSelected"
+                                                                Value="True">
+                                                        <Setter Property="Foreground"
+                                                                        Value="#1A237E"/>
                                                 </Trigger>
                                         </Style.Triggers>
                                 </Style>
@@ -105,7 +116,7 @@
                                                     Binding="{Binding Roles[0]}"
                                                     Width="120"/>
                                 <DataGridTextColumn Header="Último Acceso"
-                                                    Binding="{Binding UltimoAccesoEn, StringFormat=\{0:dd/MM/yyyy HH:mm\}}"
+                                                    Binding="{Binding UltimoAccesoEn, Converter={StaticResource UtcToEcuadorDateTimeConverter}, StringFormat=\{0:dd/MM/yyyy HH:mm\}}"
                                                     Width="150"/>
                         </DataGrid.Columns>
                 </DataGrid>

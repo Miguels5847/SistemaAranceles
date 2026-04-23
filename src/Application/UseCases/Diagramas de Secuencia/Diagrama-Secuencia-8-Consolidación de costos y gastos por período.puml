@@ -22,9 +22,9 @@ participant "DepreciacionRepository"
 participant "MaterialesRepository"
 participant "PresupuestoRepository"
 participant "CostoGastoPeriodoRepository"
-participant "Base de Datos"
+database "Base de Datos" as db
 
-note over "Planificador","Base de Datos"
+note over "Planificador","db"
 Flujo Principal - Consolidación de costos y gastos
 end note
 
@@ -32,28 +32,28 @@ end note
 "CostosGastosViewModel" -> "ConsolidarCostosUseCase": Ejecutar(escenarioId)
 
 "ConsolidarCostosUseCase" -> "SueldosRepository": ObtenerTotalSueldosFacultad(escenarioId, periodoId)
-"SueldosRepository" -> "Base de Datos": SELECT SUM proyeccion_cargo_facultad
-"Base de Datos" --> "SueldosRepository": TotalSueldosFacultad
+"SueldosRepository" -> "db": SELECT SUM proyeccion_cargo_facultad
+"db" --> "SueldosRepository": TotalSueldosFacultad
 
 "ConsolidarCostosUseCase" -> "SueldosRepository": ObtenerTotalPlantaCentral(escenarioId, periodoId)
-"SueldosRepository" -> "Base de Datos": SELECT SUM proyeccion_cargo_planta_central
-"Base de Datos" --> "SueldosRepository": TotalPlantaCentral
+"SueldosRepository" -> "db": SELECT SUM proyeccion_cargo_planta_central
+"db" --> "SueldosRepository": TotalPlantaCentral
 
 "ConsolidarCostosUseCase" -> "MantenimientoRepository": ObtenerTotalMantenimiento(escenarioId, periodoId)
-"MantenimientoRepository" -> "Base de Datos": Calcula desde servicio_basico_mantenimiento
-"Base de Datos" --> "MantenimientoRepository": TotalMantenimiento
+"MantenimientoRepository" -> "db": Calcula desde servicio_basico_mantenimiento
+"db" --> "MantenimientoRepository": TotalMantenimiento
 
 "ConsolidarCostosUseCase" -> "DepreciacionRepository": ObtenerDepreciacionPeriodo(escenarioId, periodoId)
-"DepreciacionRepository" -> "Base de Datos": Calcula desde activo_fijo y categoria_activo
-"Base de Datos" --> "DepreciacionRepository": TotalDepreciacion
+"DepreciacionRepository" -> "db": Calcula desde activo_fijo y categoria_activo
+"db" --> "DepreciacionRepository": TotalDepreciacion
 
 "ConsolidarCostosUseCase" -> "MaterialesRepository": ObtenerTotalMateriales(escenarioId, periodoId)
-"MaterialesRepository" -> "Base de Datos": SELECT SUM proyeccion_material_insumo
-"Base de Datos" --> "MaterialesRepository": TotalMateriales
+"MaterialesRepository" -> "db": SELECT SUM proyeccion_material_insumo
+"db" --> "MaterialesRepository": TotalMateriales
 
 "ConsolidarCostosUseCase" -> "PresupuestoRepository": ObtenerTotalPresupuestos(periodoId)
-"PresupuestoRepository" -> "Base de Datos": SELECT presupuesto_institucional con inflación
-"Base de Datos" --> "PresupuestoRepository": TotalPresupuestos
+"PresupuestoRepository" -> "db": SELECT presupuesto_institucional con inflación
+"db" --> "PresupuestoRepository": TotalPresupuestos
 
 "ConsolidarCostosUseCase" -> "ConsolidarCostosUseCase": CalcularSubtotal(sueldos, planta, mant, dep, mat, presup)
 "ConsolidarCostosUseCase" -> "ConsolidarCostosUseCase": AplicarImprevistos(subtotal, factorImprevistos)
@@ -66,8 +66,8 @@ end note
 "ConsolidarCostosUseCase" -> "ConsolidarCostosUseCase": CalcularArancelPropuesto(costoPorEstudiante)
 
 "ConsolidarCostosUseCase" -> "CostoGastoPeriodoRepository": GuardarConsolidado(escenarioId, periodoId, totales)
-"CostoGastoPeriodoRepository" -> "Base de Datos": INSERT OR UPDATE costo_gasto_periodo
-"Base de Datos" --> "CostoGastoPeriodoRepository": OK
+"CostoGastoPeriodoRepository" -> "db": INSERT ... ON CONFLICT DO UPDATE costo_gasto_periodo
+"db" --> "CostoGastoPeriodoRepository": OK
 
 "ConsolidarCostosUseCase" --> "CostosGastosViewModel": CostoGastoDto
 "CostosGastosViewModel" --> "Planificador": Muestra resumen consolidado por período

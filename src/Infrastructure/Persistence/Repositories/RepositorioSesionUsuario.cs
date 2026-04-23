@@ -40,12 +40,12 @@ public sealed class RepositorioSesionUsuario(ContextoAplicacion contextoAplicaci
 
         var pEmitido = command.CreateParameter();
         pEmitido.ParameterName = "@emitido_en";
-        pEmitido.Value = DateTime.UtcNow;
+        pEmitido.Value = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
         command.Parameters.Add(pEmitido);
 
         var pExpira = command.CreateParameter();
         pExpira.ParameterName = "@expira_en";
-        pExpira.Value = expiraEn;
+        pExpira.Value = DateTime.SpecifyKind(expiraEn.ToUniversalTime(), DateTimeKind.Utc);
         command.Parameters.Add(pExpira);
 
         var result = await command.ExecuteScalarAsync(cancellationToken);
@@ -61,11 +61,16 @@ public sealed class RepositorioSesionUsuario(ContextoAplicacion contextoAplicaci
         await using var command = connection.CreateCommand();
         command.CommandText = """
             UPDATE sesion_usuario
-            SET revocado_en = NOW()
+                        SET revocado_en = @revocado_en
             WHERE token_sesion = @token_sesion
               AND revocado_en IS NULL
             """;
         command.CommandTimeout = 8;
+
+        var pRevocado = command.CreateParameter();
+        pRevocado.ParameterName = "@revocado_en";
+        pRevocado.Value = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+        command.Parameters.Add(pRevocado);
 
         var parameter = command.CreateParameter();
         parameter.ParameterName = "@token_sesion";

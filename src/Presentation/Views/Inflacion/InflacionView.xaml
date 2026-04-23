@@ -1,0 +1,539 @@
+<UserControl x:Class="SistemaAranceles.Presentation.Views.Inflacion.InflacionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:oxy="http://oxyplot.org/wpf">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="Módulo Inflación"
+                   FontSize="20"
+                   FontWeight="Bold"
+                   Foreground="#1A237E"
+                   Margin="0,0,0,12"/>
+
+        <StackPanel Grid.Row="1"
+                    Orientation="Vertical"
+                    Margin="0,0,0,10">
+            <TextBlock Text="{Binding MensajeError}"
+                       Foreground="#C62828"
+                       FontSize="12"
+                       Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding MensajeExito}"
+                       Foreground="#2E7D32"
+                       FontSize="12"
+                       Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
+        </StackPanel>
+
+        <TabControl Grid.Row="2"
+                    SelectedIndex="{Binding PestaniaSeleccionada, Mode=TwoWay}">
+            <TabItem Header="Modificar inflación">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0"
+                            BorderBrush="#C5CAE9"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="12"
+                            Background="White"
+                            Margin="0,0,0,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0"
+                                       Grid.ColumnSpan="2"
+                                       Text="{Binding TituloFormulario}"
+                                       FontSize="14"
+                                       FontWeight="SemiBold"
+                                       Foreground="#283593"
+                                       Margin="0,0,0,8"/>
+
+                            <StackPanel Grid.Row="1"
+                                        Grid.Column="0"
+                                        Margin="0,0,8,0">
+                                <TextBlock Text="Año"
+                                           FontSize="11"
+                                           Foreground="#546E7A"/>
+                                <TextBox Text="{Binding Anio, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="1"
+                                        Grid.Column="1"
+                                        Margin="0,0,0,0">
+                                <TextBlock Text="Inflación (%)"
+                                           FontSize="11"
+                                           Foreground="#546E7A"/>
+                                <TextBox Text="{Binding PorcentajeInflacion, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2"
+                                        Grid.Column="0"
+                                        Margin="0,0,8,0">
+                                <TextBlock Text="Fuente"
+                                           FontSize="11"
+                                           Foreground="#546E7A"/>
+                                <TextBox Text="{Binding FuenteNombre, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2"
+                                        Grid.Column="1"
+                                        Margin="0,0,0,0">
+                                <TextBlock Text="Tipo"
+                                           FontSize="11"
+                                           Foreground="#546E7A"/>
+                                <ComboBox ItemsSource="{Binding TiposFuente}"
+                                          SelectedItem="{Binding TipoFuenteSeleccionado, Mode=TwoWay}"
+                                          IsEditable="False"/>
+                            </StackPanel>
+
+                            <WrapPanel Grid.Row="3"
+                                       Grid.ColumnSpan="2"
+                                       Orientation="Horizontal"
+                                       VerticalAlignment="Bottom"
+                                       Margin="0,10,0,0">
+                                <Button Content="Nuevo"
+                                        Command="{Binding NuevoCommand}"
+                                        Padding="10,6"
+                                        Margin="0,0,8,0"
+                                        Background="#ECEFF1"
+                                        BorderBrush="#CFD8DC"/>
+                                <Button Content="Guardar"
+                                        Command="{Binding GuardarCommand}"
+                                        Padding="12,6"
+                                        Background="#3949AB"
+                                        Foreground="White"
+                                        BorderThickness="0"
+                                        Margin="0,0,8,0"
+                                        Visibility="{Binding PuedeEditar, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                <Button Content="Editar seleccionado"
+                                        Command="{Binding SeleccionarParaEditarCommand}"
+                                        Padding="12,6"
+                                        Background="#0277BD"
+                                        Foreground="White"
+                                        BorderThickness="0"
+                                        Margin="0,0,8,0"
+                                        Visibility="{Binding PuedeEditar, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                <Button Content="Eliminar seleccionado"
+                                        Command="{Binding EliminarSeleccionadoCommand}"
+                                        Padding="12,6"
+                                        Background="#B71C1C"
+                                        Foreground="White"
+                                        BorderThickness="0"
+                                        Visibility="{Binding PuedeEditar, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                            </WrapPanel>
+                        </Grid>
+                    </Border>
+
+                    <TextBlock Grid.Row="1"
+                               Text="Ejemplo: 5.70"
+                               FontSize="12"
+                               Foreground="#5C6BC0"
+                               Margin="2,0,0,8"/>
+
+                    <Grid Grid.Row="2">
+                        <DataGrid ItemsSource="{Binding Registros}"
+                                  SelectedItem="{Binding RegistroSeleccionado}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  CanUserAddRows="False"
+                                  SelectionMode="Single"
+                                  GridLinesVisibility="Horizontal"
+                                  HeadersVisibility="Column"
+                                  BorderBrush="#C5CAE9"
+                                  AlternatingRowBackground="#F8F9FF"
+                                  EnableRowVirtualization="False">
+                            <DataGrid.Resources>
+                                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
+                                        Color="#C5CAE9"/>
+                                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
+                                        Color="#C5CAE9"/>
+                                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
+                                        Color="#1A237E"/>
+                                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
+                                        Color="#1A237E"/>
+                            </DataGrid.Resources>
+                            <DataGrid.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="Foreground"
+                                            Value="#1A237E"/>
+                                    <Setter Property="Background"
+                                            Value="Transparent"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver"
+                                                 Value="True">
+                                            <Setter Property="Background"
+                                                    Value="#E8EAF6"/>
+                                            <Setter Property="Foreground"
+                                                    Value="#1A237E"/>
+                                            <Setter Property="FontWeight"
+                                                    Value="SemiBold"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected"
+                                                 Value="True">
+                                            <Setter Property="Background"
+                                                    Value="#C5CAE9"/>
+                                            <Setter Property="Foreground"
+                                                    Value="#1A237E"/>
+                                            <Setter Property="FontWeight"
+                                                    Value="SemiBold"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.CellStyle>
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow">
+                                    <Setter Property="Background"
+                                            Value="White"/>
+                                    <Setter Property="Foreground"
+                                            Value="#1A237E"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver"
+                                                 Value="True">
+                                            <Setter Property="Background"
+                                                    Value="#E8EAF6"/>
+                                            <Setter Property="Foreground"
+                                                    Value="#1A237E"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected"
+                                                 Value="True">
+                                            <Setter Property="Background"
+                                                    Value="#C5CAE9"/>
+                                            <Setter Property="Foreground"
+                                                    Value="#1A237E"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Año"
+                                                    Binding="{Binding Anio}"
+                                                    Width="120"/>
+                                <DataGridTextColumn Header="Inflación (%)"
+                                                    Binding="{Binding PorcentajeInflacion, StringFormat={}{0:N2}}"
+                                                    Width="170"/>
+                                <DataGridTextColumn Header="Fuente"
+                                                    Binding="{Binding FuenteNombre}"
+                                                    Width="*"/>
+                                <DataGridTextColumn Header="Tipo"
+                                                    Binding="{Binding TipoFuente}"
+                                                    Width="160"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <Grid Background="#55000000"
+                              Visibility="{Binding EstaCargando, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Border Width="280"
+                                    Padding="16"
+                                    CornerRadius="8"
+                                    Background="White"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center">
+                                <StackPanel>
+                                    <TextBlock Text="Cargando inflación..."
+                                               FontSize="14"
+                                               FontWeight="SemiBold"
+                                               Foreground="#1A237E"
+                                               TextAlignment="Center"
+                                               Margin="0,0,0,10"/>
+                                    <ProgressBar IsIndeterminate="True"
+                                                 Height="6"
+                                                 Foreground="#0277BD"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Importar inflación">
+                <ScrollViewer Margin="8"
+                              VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <Border BorderBrush="#C5CAE9"
+                                BorderThickness="2"
+                                CornerRadius="8"
+                                Padding="12"
+                                Background="#EEF4FF"
+                                Margin="0,0,0,12">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0"
+                                           Text="Importación manual"
+                                           FontWeight="SemiBold"
+                                           Foreground="#1E3A8A"
+                                           Margin="0,0,0,8"/>
+                                <TextBlock Grid.Row="1"
+                                           Text="Archivo Excel preparado por el equipo: una sola hoja, Año, Inflación anual y Fuente opcional."
+                                           Foreground="#37474F"
+                                           FontSize="12"
+                                           Margin="0,0,0,8"
+                                           TextWrapping="Wrap"/>
+                                <StackPanel Grid.Row="2"
+                                            Orientation="Horizontal"
+                                            Margin="0,0,0,10">
+                                    <Button Content="Seleccionar e importar Excel manual"
+                                            Command="{Binding ImportarArchivoCommand}"
+                                            Width="280"
+                                            Padding="10,6"
+                                            Background="#3949AB"
+                                            Foreground="White"
+                                            BorderThickness="0"
+                                            Visibility="{Binding PuedeEditar, Converter={StaticResource BoolToVisibilityConverter}}"
+                                            Margin="0,0,8,0"/>
+                                    <Button Content="Limpiar inflación"
+                                            Command="{Binding LimpiarInflacionCommand}"
+                                            Width="180"
+                                            Padding="10,6"
+                                            Background="#B71C1C"
+                                            Foreground="White"
+                                            BorderThickness="0"
+                                            Visibility="{Binding PuedeEditar, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                </StackPanel>
+
+                                <Grid Grid.Row="3">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0"
+                                               Text="{Binding ResumenImportacionManual}"
+                                               Foreground="#1A237E"
+                                               Margin="2,0,0,6"/>
+                                    <TextBlock Grid.Row="1"
+                                               Text="{Binding MensajeImportacionManual}"
+                                               Foreground="#2E7D32"
+                                               Margin="2,0,0,6"
+                                               TextWrapping="Wrap"/>
+
+                                    <Grid Grid.Row="2"
+                                          Background="#55000000"
+                                          Visibility="{Binding EstaImportandoManual, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <Border Width="280"
+                                                Padding="16"
+                                                CornerRadius="8"
+                                                Background="White"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center">
+                                            <StackPanel>
+                                                <TextBlock Text="Procesando Excel manual..."
+                                                           FontSize="14"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="#1A237E"
+                                                           TextAlignment="Center"
+                                                           Margin="0,0,0,10"/>
+                                                <ProgressBar IsIndeterminate="True"
+                                                             Height="6"
+                                                             Foreground="#0277BD"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <Border BorderBrush="#C5CAE9"
+                                BorderThickness="2"
+                                CornerRadius="8"
+                                Padding="12"
+                                Background="#ECFEF3"
+                                Margin="0,0,0,12">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0"
+                                           Text="Importación BCE por archivo"
+                                           FontWeight="SemiBold"
+                                           Foreground="#065F46"
+                                           Margin="0,0,0,8"/>
+                                <TextBlock Grid.Row="1"
+                                           Text="Archivo descargado desde BCE. El sistema toma internamente los valores de diciembre por año."
+                                           Foreground="#37474F"
+                                           FontSize="12"
+                                           Margin="0,0,0,8"
+                                           TextWrapping="Wrap"/>
+
+                                <Grid Grid.Row="2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Button Grid.Column="0"
+                                            Content="Seleccionar e importar archivo BCE"
+                                            Command="{Binding ImportarDesdeBceCommand}"
+                                            Padding="10,6"
+                                            Background="#0277BD"
+                                            Foreground="White"
+                                            BorderThickness="0"
+                                            VerticalAlignment="Bottom"
+                                            Visibility="{Binding PuedeEditar, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                </Grid>
+
+                                <StackPanel Grid.Row="3"
+                                            Margin="0,10,0,6">
+                                    <TextBlock Text="{Binding ResumenImportacionBce}"
+                                               Foreground="#1A237E"
+                                               Margin="2,0,0,6"/>
+                                    <TextBlock Text="{Binding MensajeImportacionBce}"
+                                               Foreground="#2E7D32"
+                                               Margin="2,0,0,6"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+
+                                <Grid Grid.Row="4"
+                                      Background="#55000000"
+                                      Visibility="{Binding EstaImportandoBce, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <Border Width="280"
+                                            Padding="16"
+                                            CornerRadius="8"
+                                            Background="White"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center">
+                                        <StackPanel>
+                                            <TextBlock Text="Procesando archivo BCE..."
+                                                       FontSize="14"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="#1A237E"
+                                                       TextAlignment="Center"
+                                                       Margin="0,0,0,10"/>
+                                            <ProgressBar IsIndeterminate="True"
+                                                         Height="6"
+                                                         Foreground="#0277BD"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <Border BorderBrush="#C5CAE9"
+                                BorderThickness="2"
+                                CornerRadius="8"
+                                Padding="12"
+                                Background="#FFF8E8">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0"
+                                           Text="Proyección"
+                                           FontWeight="SemiBold"
+                                           Foreground="#9A3412"
+                                           Margin="0,0,0,8"/>
+
+                                <Grid Grid.Row="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="130"/>
+                                        <ColumnDefinition Width="130"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <StackPanel Grid.Row="0"
+                                                Grid.Column="0"
+                                                Margin="0,0,8,0">
+                                        <TextBlock Text="Año desde"
+                                                   FontSize="11"
+                                                   Foreground="#546E7A"/>
+                                        <TextBox Text="{Binding ProyeccionAnioDesde, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="0"
+                                                Grid.Column="1"
+                                                Margin="0,0,8,0">
+                                        <TextBlock Text="Año hasta"
+                                                   FontSize="11"
+                                                   Foreground="#546E7A"/>
+                                        <TextBox Text="{Binding ProyeccionAnioHasta, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+
+                                    <Button Grid.Row="0"
+                                            Grid.Column="2"
+                                            Content="Generar proyección"
+                                            Command="{Binding GenerarProyeccionCommand}"
+                                            Padding="12,6"
+                                            Margin="0,18,8,0"
+                                            Background="#3949AB"
+                                            Foreground="White"
+                                            BorderThickness="0"
+                                            Visibility="{Binding PuedeEditar, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+                                    <TextBlock Grid.Row="1"
+                                               Grid.ColumnSpan="4"
+                                               Text="{Binding ResumenProyeccion}"
+                                               Foreground="#1A237E"
+                                               Margin="2,10,0,0"/>
+
+                                    <Grid Grid.RowSpan="2"
+                                          Grid.ColumnSpan="4"
+                                          Background="#55000000"
+                                          Visibility="{Binding EstaProyectando, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <Border Width="280"
+                                                Padding="16"
+                                                CornerRadius="8"
+                                                Background="White"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center">
+                                            <StackPanel>
+                                                <TextBlock Text="Calculando proyección..."
+                                                           FontSize="14"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="#1A237E"
+                                                           TextAlignment="Center"
+                                                           Margin="0,0,0,10"/>
+                                                <ProgressBar IsIndeterminate="True"
+                                                             Height="6"
+                                                             Foreground="#0277BD"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+                                </Grid>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Gráfico inflación">
+                <Grid Margin="8">
+                    <oxy:PlotView Model="{Binding GraficoInflacion}"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

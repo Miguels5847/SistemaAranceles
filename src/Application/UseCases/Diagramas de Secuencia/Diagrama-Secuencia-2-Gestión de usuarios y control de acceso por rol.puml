@@ -1,75 +1,62 @@
-@startuml
-title <b><size:20>Diagrama de Secuencia - Gestión de usuarios y control de acceso por rol</size></b>
+@startuml DS-02-Gestion-Usuarios-Vista-General
+title <b><size:18>DS-02 — Gestión de Usuarios y Control de Acceso por Rol (Vista General)</size></b>
 
 skinparam participant {
-    FontSize 12
+    FontSize 11
     FontStyle normal
 }
 skinparam actor {
-    FontSize 12
-    FontStyle normal
+    FontSize 11
 }
 skinparam note {
-    FontSize 12
+    FontSize 11
 }
+skinparam sequenceMessageAlign center
+skinparam sequenceBoxBackgroundColor #F8F8F8
+skinparam sequenceBoxBorderColor #AAAAAA
 
 actor "Admin"
-participant "UsuarioViewModel"
-participant "GestionUsuarioUseCase"
-participant "VerificarPermisoUseCase"
-participant "UsuarioRepository"
-participant "RolRepository"
-participant "AuditoriaRepository"
-participant "Base de Datos"
+participant "UsuariosViewModel"
+participant "Use Cases\n(Usuarios)"
+participant "IRepositorioUsuario"
+database "Base de Datos" as db
 
-note over "Admin","Base de Datos"
-Flujo Principal - Gestión de usuarios
+note over "Admin","db"
+Vista general del módulo de Gestión de Usuarios.
+Para flujos detallados ver los diagramas específicos:
+  · DS-02.1 — Crear Usuario
+  · DS-02.2 — Actualizar Usuario
+  · DS-02.3 — Eliminar Usuario
+Permiso verificado desde SesionActual (cargado en login — sin consulta a BD)
 end note
 
-"Admin" -> "UsuarioViewModel": Solicita crear usuario
-"UsuarioViewModel" -> "VerificarPermisoUseCase": TienePermiso(token, USUARIOS.ESCRIBIR)
-"VerificarPermisoUseCase" -> "Base de Datos": SELECT rol_permiso WHERE usuario
-"Base de Datos" --> "VerificarPermisoUseCase": Permisos del rol
+box "DS-02.1 — Crear Usuario" #EFF6FF
+    "Admin" -> "UsuariosViewModel" : Solicita crear usuario
+    "UsuariosViewModel" -> "Use Cases\n(Usuarios)" : CrearUsuarioUseCase\n.EjecutarAsync(CrearUsuarioDto, creadoPorUsuarioId)
+    "Use Cases\n(Usuarios)" -> "IRepositorioUsuario" : ExisteCorreoInstitucionalAsync()\n+ AgregarConRolAsync()
+    "IRepositorioUsuario" -> "db" : SELECT COUNT(*) + INSERT usuario + INSERT usuario_rol
+    "db" --> "UsuariosViewModel" : usuarioId: int
+end box
 
-alt Sin permiso
-    "VerificarPermisoUseCase" --> "UsuarioViewModel": Acceso denegado
-    "UsuarioViewModel" --> "Admin": Muestra error de autorización
-else Con permiso
-    "UsuarioViewModel" -> "GestionUsuarioUseCase": CrearUsuario(dto)
-    "GestionUsuarioUseCase" -> "UsuarioRepository": ExisteCorreo(correo)
-    "UsuarioRepository" -> "Base de Datos": SELECT usuario WHERE correo
-    "Base de Datos" --> "UsuarioRepository": Resultado
+box "DS-02.2 — Actualizar Usuario" #F0FDF4
+    "Admin" -> "UsuariosViewModel" : Edita usuario seleccionado
+    "UsuariosViewModel" -> "Use Cases\n(Usuarios)" : ActualizarUsuarioUseCase\n.EjecutarAsync(ActualizarUsuarioDto, actualizadoPorUsuarioId, overrides?)
+    "Use Cases\n(Usuarios)" -> "IRepositorioUsuario" : ObtenerPorIdAsync() + ActualizarAsync()\n(transacción explícita — cambio de rol y overrides opcionales)
+    "IRepositorioUsuario" -> "db" : SELECT + UPDATE usuario\n+ DELETE/INSERT usuario_rol + REPLACE usuario_permiso_override
+    "db" --> "UsuariosViewModel" : void (éxito)
+end box
 
-    alt Correo duplicado
-        "GestionUsuarioUseCase" --> "UsuarioViewModel": Error correo ya registrado
-    else Correo disponible
-        "GestionUsuarioUseCase" -> "GestionUsuarioUseCase": GenerarHash(contraseña)
-        "GestionUsuarioUseCase" -> "UsuarioRepository": Guardar(usuario)
-        "UsuarioRepository" -> "Base de Datos": INSERT usuario
+box "DS-02.3 — Eliminar Usuario" #FFF7ED
+    "Admin" -> "UsuariosViewModel" : Eliminar usuario seleccionado
+    "UsuariosViewModel" -> "Use Cases\n(Usuarios)" : EliminarUsuarioUseCase\n.EjecutarAsync(id, eliminadoPorUsuarioId)
+    "Use Cases\n(Usuarios)" -> "IRepositorioUsuario" : ObtenerPorIdAsync()\n+ EliminarDefinitivamenteAsync() | EliminarAsync()
+    "IRepositorioUsuario" -> "db" : DELETE FROM usuario | UPDATE esta_activo=false
+    "db" --> "UsuariosViewModel" : void (éxito)
+end box
 
-        "GestionUsuarioUseCase" -> "RolRepository": AsignarRol(usuarioId, rolId)
-        "RolRepository" -> "Base de Datos": INSERT usuario_rol
-
-        "GestionUsuarioUseCase" -> "AuditoriaRepository": RegistrarEvento(crear_usuario)
-        "AuditoriaRepository" -> "Base de Datos": INSERT auditoria_log
-
-        "GestionUsuarioUseCase" --> "UsuarioViewModel": UsuarioDto creado
-        "UsuarioViewModel" --> "Admin": Muestra confirmación
-    end
-end
-
-"Admin" -> "UsuarioViewModel": Suspende usuario
-"UsuarioViewModel" -> "VerificarPermisoUseCase": TienePermiso(token, USUARIOS.ESCRIBIR)
-"VerificarPermisoUseCase" -> "Base de Datos": SELECT rol_permiso WHERE usuario
-"Base de Datos" --> "VerificarPermisoUseCase": Permisos
-
-"UsuarioViewModel" -> "GestionUsuarioUseCase": SuspenderUsuario(usuarioId)
-"GestionUsuarioUseCase" -> "UsuarioRepository": ActualizarEstado(usuarioId, Suspendido)
-"UsuarioRepository" -> "Base de Datos": UPDATE usuario SET estado
-
-"GestionUsuarioUseCase" -> "AuditoriaRepository": RegistrarEvento(suspender_usuario)
-"AuditoriaRepository" -> "Base de Datos": INSERT auditoria_log
-
-"GestionUsuarioUseCase" --> "UsuarioViewModel": Confirmación
-"UsuarioViewModel" --> "Admin": Usuario suspendido
+note over "Use Cases\n(Usuarios)"
+    Todos los use cases invocan
+    IAuditoriaServicio.RegistrarAsync(...)
+    de forma fire-and-forget (no bloquea flujo principal)
+end note
 @enduml

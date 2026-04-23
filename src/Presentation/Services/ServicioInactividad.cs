@@ -15,7 +15,11 @@ public sealed class ServicioInactividad : IDisposable
     private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
     private readonly TimeSpan _timeout;
-    private readonly DispatcherTimer _timer;
+    private readonly DispatcherTimer _timerCountdown;
+    private DateTime _ultimaActividad;
+    private int _cerrandoPorInactividad;
+
+    public event EventHandler<TimeSpan>? TiempoRestanteActualizado;
 
     public ServicioInactividad(
         IServiceProvider serviceProvider,
@@ -25,35 +29,60 @@ public sealed class ServicioInactividad : IDisposable
         _serviceProvider = serviceProvider;
         _sesionActual = sesionActual;
         _timeout = TimeSpan.FromMinutes(opciones.Value.TimeoutMinutes);
-        _timer = new DispatcherTimer { Interval = _timeout };
-        _timer.Tick += OnTick;
+        _ultimaActividad = DateTime.UtcNow;
+
+        // Timer de actualización de countdown (cada segundo)
+        _timerCountdown = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _timerCountdown.Tick += OnTickCountdown;
     }
 
     public void Iniciar()
     {
-        _timer.Stop();
-        _timer.Start();
+        _ultimaActividad = DateTime.UtcNow;
+        Interlocked.Exchange(ref _cerrandoPorInactividad, 0);
+        _timerCountdown.Stop();
+        _timerCountdown.Start();
         Trace.WriteLine($"[{DateTime.UtcNow:O}] ServicioInactividad: timer iniciado. Timeout={_timeout.TotalMinutes}min.");
     }
 
     public void Detener()
     {
-        _timer.Stop();
+        _timerCountdown.Stop();
         Trace.WriteLine($"[{DateTime.UtcNow:O}] ServicioInactividad: timer detenido.");
     }
 
     public void ResetarActividad()
     {
-        if (_timer.IsEnabled)
-        {
-            _timer.Stop();
-            _timer.Start();
-        }
+        _ultimaActividad = DateTime.UtcNow;
     }
 
-    private async void OnTick(object? sender, EventArgs e)
+    private void OnTickCountdown(object? sender, EventArgs e)
     {
-        _timer.Stop();
+        if (!_sesionActual.EstaAutenticado)
+        {
+            _timerCountdown.Stop();
+            return;
+        }
+
+        var ahora = DateTime.UtcNow;
+        var expiracion = _ultimaActividad.Add(_timeout);
+        var tiempoRestante = expiracion - ahora;
+
+        if (tiempoRestante.TotalSeconds <= 0)
+        {
+            tiempoRestante = TimeSpan.Zero;
+            _ = CerrarSesionPorInactividadAsync();
+        }
+
+        TiempoRestanteActualizado?.Invoke(this, tiempoRestante);
+    }
+
+    private async Task CerrarSesionPorInactividadAsync()
+    {
+        if (Interlocked.Exchange(ref _cerrandoPorInactividad, 1) == 1)
+            return;
+
+        _timerCountdown.Stop();
         Trace.WriteLine($"[{DateTime.UtcNow:O}] ServicioInactividad: inactividad detectada tras {_timeout.TotalMinutes}min. Iniciando cierre de sesión.");
 
         if (!_sesionActual.EstaAutenticado)
@@ -75,6 +104,7 @@ public sealed class ServicioInactividad : IDisposable
         finally
         {
             _sesionActual.CerrarSesion();
+            _timerCountdown.Stop();
             WeakReferenceMessenger.Default.Send(new CerrarSesionMensaje(PorInactividad: true));
             Trace.WriteLine($"[{DateTime.UtcNow:O}] ServicioInactividad: CerrarSesionMensaje(PorInactividad=true) enviado.");
         }
@@ -82,7 +112,7 @@ public sealed class ServicioInactividad : IDisposable
 
     public void Dispose()
     {
-        _timer.Stop();
-        _timer.Tick -= OnTick;
+        _timerCountdown.Stop();
+        _timerCountdown.Tick -= OnTickCountdown;
     }
 }

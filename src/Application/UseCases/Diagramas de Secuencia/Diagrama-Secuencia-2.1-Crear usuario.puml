@@ -1,0 +1,74 @@
+@startuml
+title <b><size:18>DS-02.1 — Crear Usuario</size></b>
+
+' Configuración de estilos
+skinparam participantFontSize 11
+skinparam participantFontStyle normal
+skinparam actorFontSize 11
+skinparam noteFontSize 11
+skinparam sequenceMessageAlign center
+
+' Definición de participantes con alias
+actor "Admin" as admin
+participant "UsuariosViewModel" as vm
+participant "SesionActual" as sesion
+participant "CrearUsuarioUseCase" as uc
+participant "IRepositorioUsuario" as repoU
+participant "IRepositorioRol" as repoR
+participant "IServicioHash" as hash
+participant "IAuditoriaServicio" as audit
+database "Base de Datos" as db
+
+note over admin, db
+  Flujo: Crear usuario
+  Permiso verificado en SesionActual (cargado en login — sin consulta a BD)
+  Código real: US.CREAR
+end note
+
+admin -> vm : Solicita crear usuario
+vm -> sesion : TienePermiso("US.CREAR")
+sesion --> vm : true | false
+
+alt Sin permiso US.CREAR
+    vm --> admin : Botón deshabilitado / acceso denegado
+else Con permiso US.CREAR
+    admin -> vm : Ingresa NombreCompleto, Correo,\nContrasena (>=8 chars), RolNombre
+    vm -> uc : EjecutarAsync(CrearUsuarioDto, creadoPorUsuarioId)
+
+    uc -> uc : Validar campos obligatorios
+
+    uc -> repoU : ExisteCorreoInstitucionalAsync(correo)
+    repoU -> db : SELECT COUNT(*) FROM usuario WHERE correo = :correo
+    db --> repoU : existe: bool
+    repoU --> uc : existe
+
+    alt Correo duplicado
+        uc --> vm : InvalidOperationException
+        vm --> admin : Muestra error
+    else Correo disponible
+        uc -> repoR : ObtenerPorNombreAsync(dto.RolNombre)
+        repoR -> db : SELECT id, nombre FROM rol WHERE nombre = :nombre
+        db --> repoR : (Id, Nombre)?
+        repoR --> uc : rol?
+
+        alt Rol no existe
+            uc --> vm : InvalidOperationException (rol no existe)
+            vm --> admin : Muestra error
+        else Rol válido
+            uc -> hash : Hashear(dto.Contrasena)
+            hash --> uc : hash (BCrypt)
+
+            uc -> repoU : AgregarConRolAsync(usuario, rol.Id)
+            repoU -> db : INSERT usuario + INSERT usuario_rol
+            db --> repoU : usuarioId: int
+            repoU --> uc : usuarioId
+
+            uc -> audit : RegistrarAsync("Usuarios", "Usuario", "CREAR", ...)
+            note right : Fire-and-forget
+
+            uc --> vm : usuarioId: int
+            vm --> admin : Confirmación + recarga lista
+        end
+    end
+end
+@enduml
