@@ -9,7 +9,9 @@ using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.Services;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.ViewModels.Auditoria;
+using SistemaAranceles.Presentation.ViewModels.Carreras;
 using SistemaAranceles.Presentation.ViewModels.Inflacion;
+using SistemaAranceles.Presentation.ViewModels.TasaRetencion;
 using SistemaAranceles.Presentation.ViewModels.Usuarios;
 using System.Diagnostics;
 
@@ -30,7 +32,9 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ServicioInactividad _servicioInactividad;
     private readonly UsuariosViewModel _usuariosViewModel;
     private readonly AuditoriaViewModel _auditoriaViewModel;
+    private readonly CarrerasViewModel _carrerasViewModel;
     private readonly InflacionViewModel _inflacionViewModel;
+    private readonly ConfiguracionRetencionViewModel _configuracionRetencionViewModel;
     private readonly Func<EditarUsuarioViewModel> _editarUsuarioViewModelFactory;
     private int _cerrandoSesion;
     private int _cargandoUsuarios;
@@ -41,7 +45,9 @@ public sealed partial class MainViewModel : ObservableObject
         ServicioInactividad servicioInactividad,
         UsuariosViewModel usuariosViewModel,
         AuditoriaViewModel auditoriaViewModel,
+        CarrerasViewModel carrerasViewModel,
         InflacionViewModel inflacionViewModel,
+        ConfiguracionRetencionViewModel configuracionRetencionViewModel,
         Func<EditarUsuarioViewModel> editarUsuarioViewModelFactory)
     {
         _serviceProvider = serviceProvider;
@@ -49,7 +55,9 @@ public sealed partial class MainViewModel : ObservableObject
         _servicioInactividad = servicioInactividad;
         _usuariosViewModel = usuariosViewModel;
         _auditoriaViewModel = auditoriaViewModel;
+        _carrerasViewModel = carrerasViewModel;
         _inflacionViewModel = inflacionViewModel;
+        _configuracionRetencionViewModel = configuracionRetencionViewModel;
         _editarUsuarioViewModelFactory = editarUsuarioViewModelFactory;
 
         // Subscribirse a actualizaciones de tiempo restante
@@ -115,7 +123,7 @@ public sealed partial class MainViewModel : ObservableObject
             MenuItems.Add(new ItemMenu
             {
                 Titulo = "Usuarios",
-                Icono = "👤",
+                Icono = string.Empty,
                 Comando = new AsyncRelayCommand(() => MostrarUsuariosAsync())
             });
         }
@@ -125,8 +133,8 @@ public sealed partial class MainViewModel : ObservableObject
             MenuItems.Add(new ItemMenu
             {
                 Titulo = "Carreras",
-                Icono = "🎓",
-                Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Carreras", "Épica 3"))
+                Icono = string.Empty,
+                Comando = new AsyncRelayCommand(() => MostrarCarrerasAsync())
             });
         }
 
@@ -135,19 +143,20 @@ public sealed partial class MainViewModel : ObservableObject
             MenuItems.Add(new ItemMenu
             {
                 Titulo = "Inflación",
-                Icono = "📈",
+                Icono = string.Empty,
                 Comando = new AsyncRelayCommand(() => MostrarInflacionAsync())
             });
         }
 
-        if (_sesionActual.TienePermiso("PR.VER"))
+        if (_sesionActual.TienePermiso("TRE.VER") || _sesionActual.TienePermiso("PR.VER") || _sesionActual.EsAdministrador)
         {
             MenuItems.Add(new ItemMenu
             {
-                Titulo = "Proyecciones",
-                Icono = "📊",
-                Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Proyecciones", "Épica 4"))
+                Titulo = "Tasa de Retención y Graduación",
+                Icono = string.Empty,
+                Comando = new AsyncRelayCommand(() => MostrarTasaRetencionAsync())
             });
+
         }
 
         if (_sesionActual.TienePermiso("AF.VER"))
@@ -155,7 +164,7 @@ public sealed partial class MainViewModel : ObservableObject
             MenuItems.Add(new ItemMenu
             {
                 Titulo = "Análisis Financiero",
-                Icono = "💰",
+                Icono = string.Empty,
                 Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Análisis Financiero", "Épica 5"))
             });
         }
@@ -165,7 +174,7 @@ public sealed partial class MainViewModel : ObservableObject
             MenuItems.Add(new ItemMenu
             {
                 Titulo = "Configuración",
-                Icono = "⚙️",
+                Icono = string.Empty,
                 Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Configuración", "Pendiente"))
             });
         }
@@ -175,7 +184,7 @@ public sealed partial class MainViewModel : ObservableObject
             MenuItems.Add(new ItemMenu
             {
                 Titulo = "Reportes",
-                Icono = "📄",
+                Icono = string.Empty,
                 Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Reportes", "Pendiente"))
             });
         }
@@ -185,7 +194,7 @@ public sealed partial class MainViewModel : ObservableObject
             MenuItems.Add(new ItemMenu
             {
                 Titulo = "Auditoría",
-                Icono = "🧾",
+                Icono = string.Empty,
                 Comando = new AsyncRelayCommand(() => MostrarAuditoriaAsync())
             });
         }
@@ -193,7 +202,7 @@ public sealed partial class MainViewModel : ObservableObject
         MenuItems.Add(new ItemMenu
         {
             Titulo = "Cerrar Sesión",
-            Icono = "🚪",
+            Icono = string.Empty,
             Comando = new RelayCommand(() => _ = CerrarSesionAsync())
         });
 
@@ -214,6 +223,39 @@ public sealed partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private Task MostrarInflacion() => MostrarInflacionAsync();
+
+    [RelayCommand]
+    private Task MostrarCarreras() => MostrarCarrerasAsync();
+
+    [RelayCommand]
+    private Task MostrarTasaRetencion() => MostrarTasaRetencionAsync();
+
+    private async Task MostrarCarrerasAsync()
+    {
+        if (!(_sesionActual.TienePermiso("CA.VER") || _sesionActual.EsAdministrador))
+        {
+            MensajePagina = "Acceso denegado al módulo de Carreras.";
+            return;
+        }
+
+        MensajePagina = string.Empty;
+        PaginaActual = _carrerasViewModel;
+        await _carrerasViewModel.CargarCommand.ExecuteAsync(null);
+    }
+
+    private async Task MostrarTasaRetencionAsync()
+    {
+        var puede = _sesionActual.TienePermiso("TRE.VER") || _sesionActual.TienePermiso("PR.VER") || _sesionActual.EsAdministrador;
+        if (!puede)
+        {
+            MensajePagina = "Acceso denegado al módulo de Tasa de Retención.";
+            return;
+        }
+
+        MensajePagina = string.Empty;
+        PaginaActual = _configuracionRetencionViewModel;
+        await _configuracionRetencionViewModel.CargarCommand.ExecuteAsync(null);
+    }
 
     private async Task MostrarUsuariosAsync(string? mensajeExito = null)
     {
