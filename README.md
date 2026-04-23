@@ -84,6 +84,7 @@ Configurar `src/Presentation/appsettings.Local.json` con cadena Supabase (`Maxim
 
 - **`contexto.md`** — snapshot maestro (leer primero en cualquier chat nuevo)
 - **`Diagramas.md`** — diagnóstico BD vs diagramas (hallazgos H1–H7)
+- **`docs/EPICA-3-Informe-KAN10-KAN12.md`** — cierre Épica 3 (Inflación)
 - **`ANALISIS_COMPLETO_RENDIMIENTO.md`** — fixes críticos rendimiento
 - **`docs/EPICA-2-Informe-KAN06-KAN09.md`** — cierre Épica 2
 - **`docs/conexion-supabase-postgresql.md`** — guía conexión

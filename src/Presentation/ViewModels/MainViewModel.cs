@@ -9,6 +9,7 @@ using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.Services;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.ViewModels.Auditoria;
+using SistemaAranceles.Presentation.ViewModels.Carreras;
 using SistemaAranceles.Presentation.ViewModels.Inflacion;
 using SistemaAranceles.Presentation.ViewModels.TasaRetencion;
 using SistemaAranceles.Presentation.ViewModels.Usuarios;
@@ -31,6 +32,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ServicioInactividad _servicioInactividad;
     private readonly UsuariosViewModel _usuariosViewModel;
     private readonly AuditoriaViewModel _auditoriaViewModel;
+    private readonly CarrerasViewModel _carrerasViewModel;
     private readonly InflacionViewModel _inflacionViewModel;
     private readonly ConfiguracionRetencionViewModel _configuracionRetencionViewModel;
     private readonly Func<EditarUsuarioViewModel> _editarUsuarioViewModelFactory;
@@ -43,6 +45,7 @@ public sealed partial class MainViewModel : ObservableObject
         ServicioInactividad servicioInactividad,
         UsuariosViewModel usuariosViewModel,
         AuditoriaViewModel auditoriaViewModel,
+        CarrerasViewModel carrerasViewModel,
         InflacionViewModel inflacionViewModel,
         ConfiguracionRetencionViewModel configuracionRetencionViewModel,
         Func<EditarUsuarioViewModel> editarUsuarioViewModelFactory)
@@ -52,6 +55,7 @@ public sealed partial class MainViewModel : ObservableObject
         _servicioInactividad = servicioInactividad;
         _usuariosViewModel = usuariosViewModel;
         _auditoriaViewModel = auditoriaViewModel;
+        _carrerasViewModel = carrerasViewModel;
         _inflacionViewModel = inflacionViewModel;
         _configuracionRetencionViewModel = configuracionRetencionViewModel;
         _editarUsuarioViewModelFactory = editarUsuarioViewModelFactory;
@@ -130,7 +134,7 @@ public sealed partial class MainViewModel : ObservableObject
             {
                 Titulo = "Carreras",
                 Icono = string.Empty,
-                Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Carreras", "Épica 3"))
+                Comando = new AsyncRelayCommand(() => MostrarCarrerasAsync())
             });
         }
 
@@ -221,7 +225,23 @@ public sealed partial class MainViewModel : ObservableObject
     private Task MostrarInflacion() => MostrarInflacionAsync();
 
     [RelayCommand]
+    private Task MostrarCarreras() => MostrarCarrerasAsync();
+
+    [RelayCommand]
     private Task MostrarTasaRetencion() => MostrarTasaRetencionAsync();
+
+    private async Task MostrarCarrerasAsync()
+    {
+        if (!(_sesionActual.TienePermiso("CA.VER") || _sesionActual.EsAdministrador))
+        {
+            MensajePagina = "Acceso denegado al módulo de Carreras.";
+            return;
+        }
+
+        MensajePagina = string.Empty;
+        PaginaActual = _carrerasViewModel;
+        await _carrerasViewModel.CargarCommand.ExecuteAsync(null);
+    }
 
     private async Task MostrarTasaRetencionAsync()
     {

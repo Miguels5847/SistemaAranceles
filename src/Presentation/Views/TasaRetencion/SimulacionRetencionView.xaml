@@ -94,7 +94,7 @@
                                             CornerRadius="6"
                                             Background="#FFF8E1">
                                         <StackPanel>
-                                            <TextBlock Text="Año de ingreso"
+                                            <TextBlock Text="Grupo de ingreso"
                                                        Foreground="#455A64"
                                                        FontSize="10"/>
                                             <TextBlock Text="{Binding ResumenAnioIngreso}"
@@ -145,7 +145,7 @@
                                     </StackPanel>
                                     <StackPanel Margin="0,0,10,6"
                                                 Width="120">
-                                        <TextBlock Text="Año de ingreso"
+                                        <TextBlock Text="Grupo de ingreso"
                                                    FontSize="10"
                                                    Foreground="#546E7A"/>
                                         <TextBox MinHeight="26"
@@ -191,17 +191,52 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="0"
-                                           Text="Simulaciones registradas"
-                                           FontWeight="Bold"
-                                           FontSize="14"
-                                           Margin="0,0,0,6"/>
+                                <Grid Grid.Row="0"
+                                      Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
 
-                                <Grid Grid.Row="1"
+                                    <TextBlock Grid.Column="0"
+                                               Text="Simulaciones registradas"
+                                               FontWeight="Bold"
+                                               FontSize="14"
+                                               VerticalAlignment="Center"/>
+
+                                    <Button Grid.Column="1"
+                                            Margin="8,0,0,0"
+                                            Padding="10,4"
+                                            VerticalAlignment="Center"
+                                            Background="#F4F7FF"
+                                            BorderBrush="#C5CAE9"
+                                            BorderThickness="1"
+                                            Cursor="Hand"
+                                            Content="ⓘ Información"
+                                            Foreground="#1A237E"
+                                            FontWeight="SemiBold"
+                                            ToolTip="Estos valores son el resultado final de la simulación, no las tasas configuradas."/>
+                                </Grid>
+
+                                <Border Grid.Row="1"
+                                        Margin="0,0,0,8"
+                                        Padding="8"
+                                        Background="#F4F7FF"
+                                        BorderBrush="#C5CAE9"
+                                        BorderThickness="1"
+                                        CornerRadius="8">
+                                    <TextBlock Text="Estos valores son el resultado final de la simulación, no las tasas configuradas. Muestran el resultado acumulado del grupo de ingreso tras aplicar todos los ciclos."
+                                               Foreground="#546E7A"
+                                               FontSize="11"
+                                               TextWrapping="Wrap"/>
+                                </Border>
+
+                                <Grid Grid.Row="2"
                                       Margin="0,0,0,10">
                                     <DataGrid x:Name="SimulacionesGrid"
                                               MinHeight="180"
@@ -250,14 +285,8 @@
                                             <DataGridTextColumn Header="Escenario"
                                                                 Binding="{Binding EscenarioNombre}"
                                                                 Width="*"/>
-                                            <DataGridTextColumn Header="Año ingreso"
+                                            <DataGridTextColumn Header="Grupo ingreso"
                                                                 Binding="{Binding CohorteAnio}"
-                                                                Width="Auto"/>
-                                            <DataGridTextColumn Header="Ret %"
-                                                                Binding="{Binding RetencionPorcentajeFinal, StringFormat={}{0:N2}}"
-                                                                Width="Auto"/>
-                                            <DataGridTextColumn Header="Grad %"
-                                                                Binding="{Binding GraduacionPorcentajeFinal, StringFormat={}{0:N2}}"
                                                                 Width="Auto"/>
                                         </DataGrid.Columns>
                                     </DataGrid>
@@ -288,33 +317,37 @@
                                     </Border>
                                 </Grid>
 
-                                <TextBlock Grid.Row="2"
-                                           Text="Resultado de simulación por ciclos (estructura semestral)"
-                                           FontWeight="Bold"
-                                           FontSize="15"
-                                           Margin="0,0,0,8"/>
-
                                 <WrapPanel Grid.Row="3"
                                            Margin="0,0,0,10">
                                     <Border Background="#E3F2FD"
                                             CornerRadius="6"
                                             Padding="10,6"
                                             Margin="0,0,8,8">
-                                        <TextBlock>
-                                        <Run Text="Retención: "/>
-                                        <Run Text="{Binding RetencionResumenTexto}"
-                                             FontWeight="Bold"/>
-                                        </TextBlock>
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="RET final: "/>
+                                                <TextBlock Text="{Binding RetencionResumenTexto}"
+                                                           FontWeight="Bold"/>
+                                            </StackPanel>
+                                            <TextBlock Text="Resultado final"
+                                                       FontSize="10"
+                                                       Foreground="#546E7A"/>
+                                        </StackPanel>
                                     </Border>
                                     <Border Background="#FCE4EC"
                                             CornerRadius="6"
                                             Padding="10,6"
                                             Margin="0,0,8,8">
-                                        <TextBlock>
-                                        <Run Text="Graduación: "/>
-                                        <Run Text="{Binding GraduacionResumenTexto}"
-                                             FontWeight="Bold"/>
-                                        </TextBlock>
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="GRAD final: "/>
+                                                <TextBlock Text="{Binding GraduacionResumenTexto}"
+                                                           FontWeight="Bold"/>
+                                            </StackPanel>
+                                            <TextBlock Text="Resultado final"
+                                                       FontSize="10"
+                                                       Foreground="#546E7A"/>
+                                        </StackPanel>
                                     </Border>
                                     <Border Background="#F1F8E9"
                                             CornerRadius="6"

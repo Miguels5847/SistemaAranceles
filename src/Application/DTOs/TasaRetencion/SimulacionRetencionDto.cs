@@ -9,6 +9,8 @@ public sealed class SimulacionRetencionDto
     public string CarreraCodigo { get; init; } = string.Empty;
     public int EscenarioProyeccionId { get; init; }
     public string EscenarioNombre { get; init; } = string.Empty;
+    public decimal TasaRetencionConfigurada { get; init; }
+    public decimal TasaGraduacionConfigurada { get; init; }
     public int CohorteAnio { get; init; }
     public DateTime FechaSimulacion { get; init; }
     public decimal RetencionPorcentajeFinal { get; init; }

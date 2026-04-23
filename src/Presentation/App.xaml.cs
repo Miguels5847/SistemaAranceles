@@ -1,5 +1,6 @@
 using System.IO;
 using System.Diagnostics;
+using System.Globalization;
 using Npgsql;
 using System.Windows;
 using CommunityToolkit.Mvvm.Messaging;
@@ -22,6 +23,7 @@ using SistemaAranceles.Presentation.Services;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.ViewModels;
 using SistemaAranceles.Presentation.ViewModels.Auditoria;
+using SistemaAranceles.Presentation.ViewModels.Carreras;
 using SistemaAranceles.Presentation.ViewModels.Inflacion;
 using SistemaAranceles.Presentation.ViewModels.TasaRetencion;
 using SistemaAranceles.Presentation.ViewModels.Usuarios;
@@ -35,6 +37,7 @@ public partial class App
     private TextWriterTraceListener? _traceListener;
     private ServicioInactividad? _servicioInactividad;
     private DateTime _lastWindowDeactivated = DateTime.MinValue;
+    private bool _ignorarPrimerInputTrasActivacion;
 
     private void OnStartup(object sender, StartupEventArgs e)
     {
@@ -84,7 +87,27 @@ public partial class App
         var timeoutMinutes = int.TryParse(config["Session:TimeoutMinutes"], out var t) ? t : 30;
         servicios.Configure<SesionOpciones>(opts => opts.TimeoutMinutes = timeoutMinutes);
         servicios.Configure<InflacionOpciones>(opts =>
-            opts.MetodoProyeccion = config["Inflacion:MetodoProyeccion"] ?? "regresion-lineal");
+        {
+            opts.MetodoProyeccion = config["Inflacion:MetodoProyeccion"] ?? "promedio-suave";
+
+            if (TryParseDecimalInvariant(config["Inflacion:PisoMinimoProyeccion"], out var piso))
+                opts.PisoMinimoProyeccion = piso;
+
+            if (TryParseDecimalInvariant(config["Inflacion:TechoEstableSinHistorial"], out var techo))
+                opts.TechoEstableSinHistorial = techo;
+
+            if (int.TryParse(config["Inflacion:VentanaAniosRecientes"], out var ventana))
+                opts.VentanaAniosRecientes = ventana;
+
+            if (TryParseDecimalInvariant(config["Inflacion:ValorObjetivoConvergencia"], out var objetivo))
+                opts.ValorObjetivoConvergencia = objetivo;
+
+            if (TryParseDecimalInvariant(config["Inflacion:FactorConvergenciaAnual"], out var factor))
+                opts.FactorConvergenciaAnual = factor;
+
+            if (TryParseDecimalInvariant(config["Inflacion:TechoMaximoProyeccion"], out var techoMaximo))
+                opts.TechoMaximoProyeccion = techoMaximo;
+        });
 
         // Estado de sesión (singleton)
         servicios.AddSingleton<SesionActual>();
@@ -138,6 +161,7 @@ public partial class App
         servicios.AddTransient<LoginViewModel>();
         servicios.AddTransient<UsuariosViewModel>();
         servicios.AddTransient<AuditoriaViewModel>();
+        servicios.AddTransient<CarrerasViewModel>();
         servicios.AddTransient<InflacionViewModel>();
         servicios.AddSingleton<ConfiguracionRetencionViewModel>();
         servicios.AddSingleton<SimulacionRetencionViewModel>();
@@ -150,6 +174,9 @@ public partial class App
         servicios.AddTransient<LoginView>();
         servicios.AddTransient<MainWindow>();
     }
+
+    private static bool TryParseDecimalInvariant(string? value, out decimal result)
+        => decimal.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
 
     private void RegistrarMensajes()
     {
@@ -166,33 +193,42 @@ public partial class App
                 Trace.TraceInformation($"[{DateTime.UtcNow:O}] App: MainWindow perdió foco.");
             };
 
+            mainWindow.Activated += (_, _) =>
+            {
+                // El primer click/tecla tras recuperar foco suele ser sólo para activar ventana.
+                _ignorarPrimerInputTrasActivacion = true;
+                Trace.TraceInformation($"[{DateTime.UtcNow:O}] App: MainWindow recuperó foco. Se ignorará el primer input para no resetear timer.");
+            };
+
+            void RegistrarActividadSiCorresponde()
+            {
+                if (!mainWindow.IsActive)
+                    return;
+
+                if (_ignorarPrimerInputTrasActivacion)
+                {
+                    _ignorarPrimerInputTrasActivacion = false;
+                    return;
+                }
+
+                _servicioInactividad?.ResetarActividad();
+            }
+
             // Resetear actividad solo en interacciones intencionales después de que la ventana esté enfocada
             // Si la ventana perdió el foco hace menos de 300ms, no resetear (es solo la transición de foco)
             mainWindow.PreviewMouseDown += (_, _) =>
             {
-                var tiempoDesdeDeactivated = DateTime.UtcNow - _lastWindowDeactivated;
-                if (tiempoDesdeDeactivated.TotalMilliseconds > 300)
-                {
-                    _servicioInactividad?.ResetarActividad();
-                }
+                RegistrarActividadSiCorresponde();
             };
 
             mainWindow.PreviewMouseWheel += (_, _) =>
             {
-                var tiempoDesdeDeactivated = DateTime.UtcNow - _lastWindowDeactivated;
-                if (tiempoDesdeDeactivated.TotalMilliseconds > 300)
-                {
-                    _servicioInactividad?.ResetarActividad();
-                }
+                RegistrarActividadSiCorresponde();
             };
 
             mainWindow.PreviewKeyDown += (_, _) =>
             {
-                var tiempoDesdeDeactivated = DateTime.UtcNow - _lastWindowDeactivated;
-                if (tiempoDesdeDeactivated.TotalMilliseconds > 300)
-                {
-                    _servicioInactividad?.ResetarActividad();
-                }
+                RegistrarActividadSiCorresponde();
             };
 
             mainWindow.Show();

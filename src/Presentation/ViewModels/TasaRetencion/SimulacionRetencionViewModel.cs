@@ -203,7 +203,7 @@ public sealed partial class SimulacionRetencionViewModel : ObservableObject
 
         if (!int.TryParse(CohorteAnio, NumberStyles.Integer, CultureInfo.InvariantCulture, out var cohorte))
         {
-            MensajeError = "Año de ingreso invalido.";
+            MensajeError = "Grupo de ingreso invalido.";
             return;
         }
 
@@ -285,7 +285,7 @@ public sealed partial class SimulacionRetencionViewModel : ObservableObject
         }
 
         var respuesta = MessageBox.Show(
-            $"¿Eliminar la simulacion del año de ingreso {simulacionObjetivo.CohorteAnio}?",
+            $"¿Eliminar la simulacion del grupo de ingreso {simulacionObjetivo.CohorteAnio}?",
             "Confirmar eliminación",
             MessageBoxButton.YesNo,
             MessageBoxImage.Warning);
@@ -419,8 +419,8 @@ public sealed partial class SimulacionRetencionViewModel : ObservableObject
             ResumenCarrera = string.IsNullOrWhiteSpace(simulacion.CarreraCodigo) ? "-" : simulacion.CarreraCodigo;
             ResumenEscenario = string.IsNullOrWhiteSpace(simulacion.EscenarioNombre) ? "-" : simulacion.EscenarioNombre;
             ResumenAnioIngreso = simulacion.CohorteAnio.ToString(CultureInfo.InvariantCulture);
-            ResumenRetencion = FormatearPorcentaje(simulacion.RetencionPorcentajeFinal);
-            ResumenGraduacion = FormatearPorcentaje(simulacion.GraduacionPorcentajeFinal);
+            ResumenRetencion = FormatearPorcentaje(simulacion.TasaRetencionConfigurada);
+            ResumenGraduacion = FormatearPorcentaje(simulacion.TasaGraduacionConfigurada);
             return;
         }
 
