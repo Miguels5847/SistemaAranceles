@@ -15,4 +15,6 @@ public interface IRepositorioCarrera
     Task AgregarAsync(Carrera carrera, CancellationToken cancellationToken = default);
 
     Task ActualizarAsync(Carrera carrera, CancellationToken cancellationToken = default);
+
+    Task EliminarPorIdAsync(int id, int? eliminadoPorUsuarioId = null, CancellationToken cancellationToken = default);
 }

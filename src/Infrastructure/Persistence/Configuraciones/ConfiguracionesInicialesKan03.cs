@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SistemaAranceles.Infrastructure.Persistence.Entidades;
+using System.Globalization;
 
 namespace SistemaAranceles.Infrastructure.Persistence.Configuraciones;
 
@@ -293,8 +295,6 @@ internal sealed class InflacionAnualConfiguracion : IEntityTypeConfiguration<Inf
         builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
         builder.Property(x => x.EstaActivo)
             .HasColumnName("esta_activo")
-            .HasColumnType("integer")
-            .HasConversion<int>()
             .IsRequired();
         builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
         builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
@@ -331,8 +331,6 @@ internal sealed class InflacionProyectadaConfiguracion : IEntityTypeConfiguratio
         builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
         builder.Property(x => x.EstaActivo)
             .HasColumnName("esta_activo")
-            .HasColumnType("integer")
-            .HasConversion<int>()
             .IsRequired();
         builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
         builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
@@ -416,21 +414,35 @@ internal sealed class CriterioReferenciaRetencionConfiguracion : IEntityTypeConf
 
 internal sealed class SimulacionRetencionConfiguracion : IEntityTypeConfiguration<SimulacionRetencion>
 {
+    private static readonly ValueConverter<DateTime, string> DateTimeUtcToTextConverter = new(
+        valor => DateTime.SpecifyKind(valor, DateTimeKind.Utc).ToString("O", CultureInfo.InvariantCulture),
+        valor => ParseDateTimeUtc(valor));
+
     public void Configure(EntityTypeBuilder<SimulacionRetencion> builder)
     {
         builder.ToTable("simulacion_retencion");
         ConfigurarCamposAuditoria(builder);
 
         builder.Property(x => x.ConfiguracionRetencionId).HasColumnName("configuracion_retencion_id").IsRequired();
-        builder.Property(x => x.EjecutadoEn).HasColumnName("ejecutado_en").IsRequired();
-        builder.Property(x => x.Notas).HasColumnName("notas").HasMaxLength(500);
+        builder.Property(x => x.EjecutadoEn)
+            .HasColumnName("ejecutado_en")
+            .HasConversion(DateTimeUtcToTextConverter)
+            .IsRequired();
+        builder.Property(x => x.CohorteAnio).HasColumnName("cohorte_anio").IsRequired();
+        builder.Property(x => x.FechaSimulacion).HasColumnName("fecha_simulacion").IsRequired();
+        builder.Property(x => x.RetencionPorcentajeFinal).HasColumnName("retencion_porcentaje_final").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.GraduacionPorcentajeFinal).HasColumnName("graduacion_porcentaje_final").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.EstudiantesTotalesInicio).HasColumnName("estudiantes_totales_inicio").HasColumnType("decimal(14,4)").IsRequired();
+        builder.Property(x => x.EstudiantesRetenidos).HasColumnName("estudiantes_retenidos").HasColumnType("decimal(14,4)").IsRequired();
+        builder.Property(x => x.EstudiantesGraduados).HasColumnName("estudiantes_graduados").HasColumnType("decimal(14,4)").IsRequired();
+        builder.Property(x => x.CostoMatriculaPromedio).HasColumnName("costo_matricula_promedio").HasColumnType("decimal(18,2)").IsRequired();
 
         builder.HasOne(x => x.ConfiguracionRetencion)
             .WithMany(x => x.SimulacionesRetencion)
             .HasForeignKey(x => x.ConfiguracionRetencionId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(x => new { x.ConfiguracionRetencionId, x.EjecutadoEn });
+        builder.HasIndex(x => new { x.ConfiguracionRetencionId, x.CohorteAnio }).IsUnique();
     }
 
     private static void ConfigurarCamposAuditoria(EntityTypeBuilder<SimulacionRetencion> builder)
@@ -443,6 +455,21 @@ internal sealed class SimulacionRetencionConfiguracion : IEntityTypeConfiguratio
         builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
         builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
         builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+    }
+
+    private static DateTime ParseDateTimeUtc(string valor)
+    {
+        if (DateTime.TryParse(valor, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var parsed))
+        {
+            return parsed.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(parsed, DateTimeKind.Utc)
+                : parsed.ToUniversalTime();
+        }
+
+        if (DateTime.TryParse(valor, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out parsed))
+            return DateTime.SpecifyKind(parsed, DateTimeKind.Utc);
+
+        throw new InvalidOperationException($"No se pudo convertir la fecha UTC '{valor}' desde texto.");
     }
 }
 
@@ -459,13 +486,20 @@ internal sealed class DetalleSimulacionRetencionConfiguracion : IEntityTypeConfi
         builder.Property(x => x.ValorEstudiantes).HasColumnName("valor_estudiantes").HasColumnType("decimal(9,4)").IsRequired();
         builder.Property(x => x.TasaAplicadaPorcentaje).HasColumnName("tasa_aplicada_porcentaje").HasColumnType("decimal(9,4)").IsRequired();
         builder.Property(x => x.TipoZona).HasColumnName("tipo_zona").HasMaxLength(30).IsRequired();
+        builder.Property(x => x.Ciclo).HasColumnName("ciclo").IsRequired();
+        builder.Property(x => x.EstudiantesInicio).HasColumnName("estudiantes_inicio").HasColumnType("decimal(14,4)").IsRequired();
+        builder.Property(x => x.EstudiantesRetenidos).HasColumnName("estudiantes_retenidos").HasColumnType("decimal(14,4)").IsRequired();
+        builder.Property(x => x.EstudiantesReprobados).HasColumnName("estudiantes_reprobados").HasColumnType("decimal(14,4)").IsRequired();
+        builder.Property(x => x.EstudiantesGraduados).HasColumnName("estudiantes_graduados").HasColumnType("decimal(14,4)").IsRequired();
+        builder.Property(x => x.CostoMatriculaProyectado).HasColumnName("costo_matricula_proyectado").HasColumnType("decimal(18,2)").IsRequired();
+        builder.Property(x => x.AnioAcademico).HasColumnName("anio_academico").IsRequired();
 
         builder.HasOne(x => x.SimulacionRetencion)
             .WithMany(x => x.DetallesSimulacionRetencion)
             .HasForeignKey(x => x.SimulacionRetencionId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(x => new { x.SimulacionRetencionId, x.NumeroCiclo, x.NumeroPeriodo }).IsUnique();
+        builder.HasIndex(x => new { x.SimulacionRetencionId, x.Ciclo }).IsUnique();
     }
 
     private static void ConfigurarCamposAuditoria(EntityTypeBuilder<DetalleSimulacionRetencion> builder)

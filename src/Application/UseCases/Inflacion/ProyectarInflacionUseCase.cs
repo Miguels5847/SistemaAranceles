@@ -39,6 +39,21 @@ public sealed class ProyectarInflacionUseCase(
         var metodoConfigurado = (inflacionOpciones.Value.MetodoProyeccion ?? MetodoRegresionLineal)
             .Trim()
             .ToLowerInvariant();
+        var pisoMinimo = inflacionOpciones.Value.PisoMinimoProyeccion <= 0m
+            ? 0.50m
+            : inflacionOpciones.Value.PisoMinimoProyeccion;
+        var techoEstable = inflacionOpciones.Value.TechoEstableSinHistorial < pisoMinimo
+            ? 1.00m
+            : inflacionOpciones.Value.TechoEstableSinHistorial;
+        var techoMaximo = inflacionOpciones.Value.TechoMaximoProyeccion <= pisoMinimo
+            ? 5.00m
+            : inflacionOpciones.Value.TechoMaximoProyeccion;
+        var ventanaRecientes = inflacionOpciones.Value.VentanaAniosRecientes;
+        var objetivoConvergencia = Math.Clamp(
+            inflacionOpciones.Value.ValorObjetivoConvergencia ?? techoEstable,
+            pisoMinimo,
+            techoMaximo);
+        var factorConvergencia = inflacionOpciones.Value.FactorConvergenciaAnual;
 
         IReadOnlyList<(int anio, decimal porcentaje)> proyecciones;
         var fuenteProyeccion = "Proyeccion lineal";
@@ -46,17 +61,40 @@ public sealed class ProyectarInflacionUseCase(
         if (metodoConfigurado == MetodoPromedioSuave)
         {
             if (historicos.Count < 3)
-                throw new InvalidOperationException("Se requieren al menos 3 datos históricos para proyectar con promedio suave.");
-
-            proyecciones = servicioProyeccion.ProyectarPromedioSuave(historicos, solicitud.AnioDesde, solicitud.AnioHasta);
-            fuenteProyeccion = "Proyeccion promedio suave";
+            {
+                var baseEstable = historicos
+                    .OrderByDescending(x => x.Anio)
+                    .Select(x => x.PorcentajeInflacion)
+                    .FirstOrDefault();
+                var valorEstable = decimal.Round(Math.Clamp(baseEstable, pisoMinimo, techoEstable), 4);
+                proyecciones = GenerarProyeccionEstable(solicitud.AnioDesde, solicitud.AnioHasta, valorEstable);
+                fuenteProyeccion = "Proyeccion estable";
+            }
+            else
+            {
+                proyecciones = servicioProyeccion.ProyectarPromedioSuave(
+                    historicos,
+                    solicitud.AnioDesde,
+                    solicitud.AnioHasta,
+                    pisoMinimo,
+                    ventanaRecientes,
+                    objetivoConvergencia,
+                    factorConvergencia,
+                    techoMaximo);
+                fuenteProyeccion = "Proyeccion promedio suave";
+            }
         }
         else
         {
             if (historicos.Count < 2)
                 throw new InvalidOperationException("Se requieren al menos 2 datos históricos para proyectar con regresión lineal.");
 
-            proyecciones = servicioProyeccion.ProyectarRegresionLineal(historicos, solicitud.AnioDesde, solicitud.AnioHasta);
+            proyecciones = servicioProyeccion.ProyectarRegresionLineal(
+                historicos,
+                solicitud.AnioDesde,
+                solicitud.AnioHasta,
+                pisoMinimo,
+                techoMaximo);
             metodoConfigurado = MetodoRegresionLineal;
         }
 
@@ -66,12 +104,13 @@ public sealed class ProyectarInflacionUseCase(
 
         foreach (var (anio, porcentaje) in proyecciones)
         {
+            var porcentajeNormalizado = decimal.Round(Math.Clamp(porcentaje, pisoMinimo, techoMaximo), 4);
             var existente = await repositorioInflacionAnual.ObtenerPorAnioAsync(anio, cancellationToken);
 
             if (existente is null)
             {
                 await repositorioInflacionAnual.AgregarAsync(
-                    new InflacionAnual(anio, porcentaje, fuenteProyeccion, "Estimacion"),
+                    new InflacionAnual(anio, porcentajeNormalizado, fuenteProyeccion, "Estimacion"),
                     usuarioId,
                     cancellationToken);
                 creados++;
@@ -85,7 +124,7 @@ public sealed class ProyectarInflacionUseCase(
                 continue;
             }
 
-            existente.CambiarPorcentajeInflacion(porcentaje);
+            existente.CambiarPorcentajeInflacion(porcentajeNormalizado);
             existente.CambiarFuente(fuenteProyeccion, "Estimacion");
             await repositorioInflacionAnual.ActualizarAsync(existente, usuarioId, cancellationToken);
             actualizados++;
@@ -126,5 +165,17 @@ public sealed class ProyectarInflacionUseCase(
             RegistrosActualizados = actualizados,
             RegistrosOmitidos = omitidos
         };
+    }
+
+    private static IReadOnlyList<(int anio, decimal porcentaje)> GenerarProyeccionEstable(
+        int anioDesde,
+        int anioHasta,
+        decimal valor)
+    {
+        var resultado = new List<(int anio, decimal porcentaje)>();
+        for (var anio = anioDesde; anio <= anioHasta; anio++)
+            resultado.Add((anio, valor));
+
+        return resultado;
     }
 }
