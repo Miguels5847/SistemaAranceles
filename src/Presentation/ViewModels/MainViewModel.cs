@@ -10,6 +10,7 @@ using SistemaAranceles.Presentation.Services;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.ViewModels.Auditoria;
 using SistemaAranceles.Presentation.ViewModels.Carreras;
+using SistemaAranceles.Presentation.ViewModels.Estudiantes;
 using SistemaAranceles.Presentation.ViewModels.Inflacion;
 using SistemaAranceles.Presentation.ViewModels.TasaRetencion;
 using SistemaAranceles.Presentation.ViewModels.Usuarios;
@@ -33,6 +34,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly UsuariosViewModel _usuariosViewModel;
     private readonly AuditoriaViewModel _auditoriaViewModel;
     private readonly CarrerasViewModel _carrerasViewModel;
+    private readonly EstudiantesViewModel _estudiantesViewModel;
     private readonly InflacionViewModel _inflacionViewModel;
     private readonly ConfiguracionRetencionViewModel _configuracionRetencionViewModel;
     private readonly Func<EditarUsuarioViewModel> _editarUsuarioViewModelFactory;
@@ -46,6 +48,7 @@ public sealed partial class MainViewModel : ObservableObject
         UsuariosViewModel usuariosViewModel,
         AuditoriaViewModel auditoriaViewModel,
         CarrerasViewModel carrerasViewModel,
+        EstudiantesViewModel estudiantesViewModel,
         InflacionViewModel inflacionViewModel,
         ConfiguracionRetencionViewModel configuracionRetencionViewModel,
         Func<EditarUsuarioViewModel> editarUsuarioViewModelFactory)
@@ -56,6 +59,7 @@ public sealed partial class MainViewModel : ObservableObject
         _usuariosViewModel = usuariosViewModel;
         _auditoriaViewModel = auditoriaViewModel;
         _carrerasViewModel = carrerasViewModel;
+        _estudiantesViewModel = estudiantesViewModel;
         _inflacionViewModel = inflacionViewModel;
         _configuracionRetencionViewModel = configuracionRetencionViewModel;
         _editarUsuarioViewModelFactory = editarUsuarioViewModelFactory;
@@ -156,7 +160,16 @@ public sealed partial class MainViewModel : ObservableObject
                 Icono = string.Empty,
                 Comando = new AsyncRelayCommand(() => MostrarTasaRetencionAsync())
             });
+        }
 
+        if (_sesionActual.TienePermiso("ES.VER") || _sesionActual.EsAdministrador)
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Proyección de Estudiantes",
+                Icono = string.Empty,
+                Comando = new AsyncRelayCommand(() => MostrarEstudiantesAsync())
+            });
         }
 
         if (_sesionActual.TienePermiso("AF.VER"))
@@ -229,6 +242,19 @@ public sealed partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private Task MostrarTasaRetencion() => MostrarTasaRetencionAsync();
+
+    private async Task MostrarEstudiantesAsync()
+    {
+        if (!(_sesionActual.TienePermiso("ES.VER") || _sesionActual.EsAdministrador))
+        {
+            MensajePagina = "Acceso denegado al módulo de Proyección de Estudiantes.";
+            return;
+        }
+
+        MensajePagina = string.Empty;
+        PaginaActual = _estudiantesViewModel;
+        await _estudiantesViewModel.CargarCommand.ExecuteAsync(null);
+    }
 
     private async Task MostrarCarrerasAsync()
     {

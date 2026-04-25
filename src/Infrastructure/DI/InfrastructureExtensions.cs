@@ -29,6 +29,7 @@ public static class InfrastructureExtensions
         services.AddTransient<IRepositorioSimulacionRetencion, RepositorioSimulacionRetencion>();
         services.AddTransient<IRepositorioDetalleSimulacionRetencion, RepositorioDetalleSimulacionRetencion>();
         services.AddTransient<IRepositorioEscenarioProyeccion, RepositorioEscenarioProyeccion>();
+        services.AddTransient<IRepositorioProyeccionEstudiantes, RepositorioProyeccionEstudiantes>();
         services.AddTransient<IRepositorioRol, RepositorioRol>();
         services.AddTransient<IRepositorioPermiso, RepositorioPermiso>();
         services.AddTransient<IRepositorioSesionUsuario, RepositorioSesionUsuario>();
