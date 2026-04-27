@@ -34,10 +34,7 @@ public partial class EstudiantesView : UserControl
         }
     }
 
-    // ─── Tabla 1: Matrícula por período ────────────────────────────────────
-    /// <summary>
-    /// Columna fija CICLO + una columna por período con encabezado "AAAA\nABR/SEP\npar:N" + TOTAL.
-    /// </summary>
+    // ─── Tab 1: Matrícula por período ────────────────────────────────────────
     private void GenerarColumnasMatricula(ProyeccionConsolidadaDto? detalle)
     {
         if (!Dispatcher.CheckAccess())
@@ -49,6 +46,7 @@ public partial class EstudiantesView : UserControl
         var paralelos     = detalle.ParalelosPorPeriodo;
         var totalPeriodos = paralelos.Length;
 
+        // Columna fija: CICLO
         dgMatriculaPeriodo.Columns.Add(new DataGridTextColumn
         {
             Header  = "CICLO",
@@ -56,6 +54,7 @@ public partial class EstudiantesView : UserControl
             Width   = new DataGridLength(110)
         });
 
+        // Una columna por período: "AAAA\nABR/SEP\npar:N"
         for (var p = 0; p < totalPeriodos; p++)
         {
             var periodo  = detalle.TablaPeriodos.Count > p ? detalle.TablaPeriodos[p] : null;
@@ -71,6 +70,7 @@ public partial class EstudiantesView : UserControl
             });
         }
 
+        // Columna fija: TOTAL
         dgMatriculaPeriodo.Columns.Add(new DataGridTextColumn
         {
             Header  = "TOTAL",
@@ -79,11 +79,7 @@ public partial class EstudiantesView : UserControl
         });
     }
 
-    // ─── Tabla 2: Docentes por período (misma estructura que Matrícula) ────
-    /// <summary>
-    /// Columna fija TIPO + una columna por período "AAAA\nABR/SEP" + TOTAL.
-    /// Valores enteros (Math.Ceiling) — no existen fracciones de docente.
-    /// </summary>
+    // ─── Tab 2: Docentes por período (columnas dinámicas, valores enteros) ───
     private void GenerarColumnasDocentes(ProyeccionConsolidadaDto? detalle)
     {
         if (!Dispatcher.CheckAccess())
@@ -102,7 +98,7 @@ public partial class EstudiantesView : UserControl
             Width   = new DataGridLength(160)
         });
 
-        // Una columna por período
+        // Una columna por período: "AAAA\nABR/SEP"
         for (var p = 0; p < totalPeriodos; p++)
         {
             var periodo  = detalle.TablaPeriodos.Count > p ? detalle.TablaPeriodos[p] : null;
@@ -117,7 +113,7 @@ public partial class EstudiantesView : UserControl
             });
         }
 
-        // Columna fija: TOTAL (máximo acumulado)
+        // Columna fija: TOTAL (máximo acumulado del período final)
         dgDocentesPeriodo.Columns.Add(new DataGridTextColumn
         {
             Header  = "TOTAL",
