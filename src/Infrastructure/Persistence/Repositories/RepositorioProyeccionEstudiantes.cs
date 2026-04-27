@@ -68,22 +68,38 @@ public sealed class RepositorioProyeccionEstudiantes(ContextoAplicacion contexto
         if (cabecera is null)
             return null;
 
-        var detalles = await (from d in contexto.DetallesProyeccionEstudiantes.AsNoTracking()
-                              where d.ProyeccionEstudiantesId == id && d.EstaActivo
-                              join per in contexto.PeriodosAcademicos.AsNoTracking() on d.PeriodoAcademicoId equals per.Id
-                              orderby per.Anio, per.NumeroPeriodo, d.NumeroCiclo
-                              select new DetalleProyeccionEstudiantesDto
-                              {
-                                  Id = d.Id,
-                                  PeriodoAcademicoId = d.PeriodoAcademicoId,
-                                  Anio = per.Anio,
-                                  NumeroPeriodo = per.NumeroPeriodo,
-                                  EtiquetaPeriodo = per.EtiquetaPeriodo,
-                                  NumeroCiclo = d.NumeroCiclo,
-                                  CantidadParalelos = d.CantidadParalelos,
-                                  TotalEstudiantes = d.TotalEstudiantes
-                              })
-                             .ToListAsync(cancellationToken);
+        var detallesRaw = await (from d in contexto.DetallesProyeccionEstudiantes.AsNoTracking()
+                                 where d.ProyeccionEstudiantesId == id && d.EstaActivo
+                                 join per in contexto.PeriodosAcademicos.AsNoTracking() on d.PeriodoAcademicoId equals per.Id
+                                 orderby per.Anio, per.NumeroPeriodo, d.NumeroCiclo
+                                 select new
+                                 {
+                                     d.Id,
+                                     d.PeriodoAcademicoId,
+                                     per.Anio,
+                                     per.NumeroPeriodo,
+                                     per.EtiquetaPeriodo,
+                                     d.NumeroCiclo,
+                                     d.CantidadParalelos,
+                                     d.TotalEstudiantes
+                                 })
+                                .ToListAsync(cancellationToken);
+
+        var detalles = detallesRaw
+            .Select(x => new DetalleProyeccionEstudiantesDto
+            {
+                Id = x.Id,
+                PeriodoAcademicoId = x.PeriodoAcademicoId,
+                Anio = x.Anio,
+                NumeroPeriodo = ((x.Anio - cabecera.AnioBase) * 2) + x.NumeroPeriodo,
+                EtiquetaPeriodo = x.EtiquetaPeriodo,
+                NumeroCiclo = x.NumeroCiclo,
+                CantidadParalelos = x.CantidadParalelos,
+                TotalEstudiantes = x.TotalEstudiantes
+            })
+            .OrderBy(x => x.NumeroPeriodo)
+            .ThenBy(x => x.NumeroCiclo)
+            .ToList();
 
         return new ProyeccionEstudiantesDto
         {
@@ -160,6 +176,7 @@ public sealed class RepositorioProyeccionEstudiantes(ContextoAplicacion contexto
                 CreadoPorUsuarioId = usuarioId,
                 EstaActivo = true
             };
+
             await contexto.ProyeccionesEstudiantes.AddAsync(nueva, cancellationToken);
             await contexto.SaveChangesAsync(cancellationToken);
             proyeccionId = nueva.Id;
@@ -211,6 +228,7 @@ public sealed class RepositorioProyeccionEstudiantes(ContextoAplicacion contexto
         }
 
         var anios = necesarios.Select(x => x.Anio).Distinct().ToList();
+
         var existentes = await contexto.PeriodosAcademicos
             .Where(per => anios.Contains(per.Anio))
             .ToListAsync(cancellationToken);
@@ -221,6 +239,7 @@ public sealed class RepositorioProyeccionEstudiantes(ContextoAplicacion contexto
         foreach (var (numPeriodo, anio, numPer, etiqueta) in necesarios)
         {
             var existente = existentes.FirstOrDefault(e => e.Anio == anio && e.NumeroPeriodo == numPer);
+
             if (existente is not null)
             {
                 resultado[numPeriodo] = existente.Id;
@@ -236,8 +255,10 @@ public sealed class RepositorioProyeccionEstudiantes(ContextoAplicacion contexto
                     CreadoPorUsuarioId = usuarioId,
                     EstaActivo = true
                 };
+
                 await contexto.PeriodosAcademicos.AddAsync(nuevo, cancellationToken);
                 await contexto.SaveChangesAsync(cancellationToken);
+
                 resultado[numPeriodo] = nuevo.Id;
                 existentes.Add(nuevo);
             }
