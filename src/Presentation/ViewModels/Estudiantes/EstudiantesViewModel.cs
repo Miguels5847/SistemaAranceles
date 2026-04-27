@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.DTOs.Estudiantes;
+using SistemaAranceles.Application.DTOs.TasaRetencion;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.Estudiantes;
 using SistemaAranceles.Presentation.State;
@@ -54,8 +55,8 @@ public sealed partial class EstudiantesViewModel : ObservableObject
     private IReadOnlyList<EscenarioOpcion> _todosLosEscenarios = [];
 
     // Guardamos el último contexto de cálculo para poder recalcular sin ir a la BD
-    private ProyeccionEstudiantesDto?       _ultimaProyeccion;
-    private ConfiguracionRetencionResumenDto? _ultimaConfig;
+    private ProyeccionEstudiantesDto?     _ultimaProyeccion;
+    private ConfiguracionRetencionDto?    _ultimaConfig;
 
     public EstudiantesViewModel(IServiceProvider serviceProvider, SesionActual sesionActual)
     {
