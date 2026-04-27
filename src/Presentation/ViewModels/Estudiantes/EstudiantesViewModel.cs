@@ -11,7 +11,6 @@ using SistemaAranceles.Presentation.State;
 namespace SistemaAranceles.Presentation.ViewModels.Estudiantes;
 
 // ── Opciones para ComboBoxes ──────────────────────────────────────────────────
-
 public sealed class CarreraOpcion
 {
     public int    Id          { get; init; }
@@ -32,21 +31,21 @@ public sealed class SimulacionOpcion
     public string Descripcion { get; init; } = string.Empty;
 }
 
-// ── Ítem de la lista de proyecciones ─────────────────────────────────────────
-
+// ── Ítem de la lista de proyecciones ────────────────────────────────────────────
 public sealed class ProyeccionEstudiantesItemViewModel
 {
-    public int    Id                { get; init; }
-    public string CarreraNombre     { get; init; } = string.Empty;
-    public string CarreraCodigo     { get; init; } = string.Empty;
-    public string EscenarioNombre   { get; init; } = string.Empty;
-    public int    AnioBase          { get; init; }
-    public int    SemanasPorSemestre{ get; init; }
-    public string CreadoEnTexto     { get; init; } = string.Empty;
+    public int    Id                 { get; init; }
+    public int    CarreraId          { get; init; }
+    public int    EscenarioId        { get; init; }
+    public int    AnioBase           { get; init; }
+    public string CarreraNombre      { get; init; } = string.Empty;
+    public string CarreraCodigo      { get; init; } = string.Empty;
+    public string EscenarioNombre    { get; init; } = string.Empty;
+    public int    SemanasPorSemestre { get; init; }
+    public string CreadoEnTexto      { get; init; } = string.Empty;
 }
 
-// ── ViewModel principal ────────────────────────────────────────────────────────
-
+// ── ViewModel principal ──────────────────────────────────────────────────────────
 public sealed partial class EstudiantesViewModel : ObservableObject
 {
     private readonly IServiceProvider _serviceProvider;
@@ -60,13 +59,12 @@ public sealed partial class EstudiantesViewModel : ObservableObject
         _sesionActual    = sesionActual;
     }
 
-    // ── Listas ────────────────────────────────────────────────────────────────
-
+    // ── Listas ─────────────────────────────────────────────────────────────────
     [ObservableProperty] private ObservableCollection<ProyeccionEstudiantesItemViewModel> _proyecciones = [];
     [ObservableProperty] private ProyeccionEstudiantesItemViewModel? _proyeccionSeleccionada;
 
-    [ObservableProperty] private ObservableCollection<CarreraOpcion>  _carreras   = [];
-    [ObservableProperty] private CarreraOpcion?                       _carreraSeleccionada;
+    [ObservableProperty] private ObservableCollection<CarreraOpcion>   _carreras   = [];
+    [ObservableProperty] private CarreraOpcion?                        _carreraSeleccionada;
 
     [ObservableProperty] private ObservableCollection<EscenarioOpcion> _escenarios = [];
     [ObservableProperty] private EscenarioOpcion?                      _escenarioSeleccionado;
@@ -74,12 +72,10 @@ public sealed partial class EstudiantesViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<SimulacionOpcion> _simulaciones = [];
     [ObservableProperty] private SimulacionOpcion?                      _simulacionSeleccionada;
 
-    // ── Formulario ────────────────────────────────────────────────────────────
-
+    // ── Formulario ───────────────────────────────────────────────────────────
     [ObservableProperty] private string _semanasPorSemestre = "16";
 
     // ── Estado ────────────────────────────────────────────────────────────────
-
     [ObservableProperty] private bool   _estaCargando;
     [ObservableProperty] private bool   _estaGenerando;
     [ObservableProperty] private bool   _estaEliminando;
@@ -87,8 +83,7 @@ public sealed partial class EstudiantesViewModel : ObservableObject
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
 
-    // ── Consolidado (5 tablas) ────────────────────────────────────────────────
-
+    // ── Consolidado (5 tablas) ──────────────────────────────────────────────────
     [ObservableProperty] private ProyeccionConsolidadaDto? _detalleConsolidado;
 
     public bool TieneDetalleConsolidado => DetalleConsolidado is not null;
@@ -100,27 +95,26 @@ public sealed partial class EstudiantesViewModel : ObservableObject
     }
 
     // ── Permisos ──────────────────────────────────────────────────────────────
-
     public bool PuedeVer      => _sesionActual.TienePermiso("ES.VER")      || _sesionActual.EsAdministrador;
     public bool PuedeGenerar  => _sesionActual.TienePermiso("ES.CREAR")    || _sesionActual.EsAdministrador;
     public bool PuedeEliminar => _sesionActual.TienePermiso("ES.ELIMINAR") || _sesionActual.EsAdministrador;
 
-    // ── Cascada: Carrera → Escenarios ─────────────────────────────────────────
-
+    // ── Cascada: Carrera → Escenarios ─────────────────────────────────────────────
+public
     partial void OnCarreraSeleccionadaChanged(CarreraOpcion? value)
     {
-        EscenarioSeleccionado = null;
+        EscenarioSeleccionado  = null;
         SimulacionSeleccionada = null;
         Simulaciones.Clear();
         MensajeError = string.Empty;
 
         Escenarios = value is null
             ? new ObservableCollection<EscenarioOpcion>(_todosLosEscenarios)
-            : new ObservableCollection<EscenarioOpcion>(_todosLosEscenarios.Where(e => e.CarreraId == value.Id));
+            : new ObservableCollection<EscenarioOpcion>(
+                _todosLosEscenarios.Where(e => e.CarreraId == value.Id));
     }
 
-    // ── Cascada: Escenario → Simulaciones ─────────────────────────────────────
-
+    // ── Cascada: Escenario → Simulaciones ─────────────────────────────────────────
     partial void OnEscenarioSeleccionadoChanged(EscenarioOpcion? value)
     {
         SimulacionSeleccionada = null;
@@ -131,17 +125,22 @@ public sealed partial class EstudiantesViewModel : ObservableObject
             _ = CargarSimulacionesAsync(CarreraSeleccionada.Id, value.Id);
     }
 
-    // ── Selección de proyección → cargar consolidado ──────────────────────────
-
+    // ── Selección de proyección → cargar consolidado ───────────────────────────
     partial void OnProyeccionSeleccionadaChanged(ProyeccionEstudiantesItemViewModel? value)
     {
         DetalleConsolidado = null;
-        MensajeError = string.Empty;
+        MensajeError       = string.Empty;
         if (value is not null)
-            _ = CargarDetalleConsolidadoAsync(value.Id);
+            _ = CargarDetalleConsolidadoAsync(value);
     }
 
-    private async Task CargarDetalleConsolidadoAsync(int proyeccionId)
+    // ─────────────────────────────────────────────────────────────────────────
+    // FIX-1: recibe el ViewModel directamente para tener CarreraId y EscenarioId
+    //        sin depender de que ListarDtoAsync devuelva el match correcto.
+    // FIX-2: busca config por Id de carrera + Id de escenario (no por nombre).
+    // FIX-3: fallback a TasaRetencion/TasaGraduacion cuando no hay CriterioReferencia.
+    // ─────────────────────────────────────────────────────────────────────────
+    private async Task CargarDetalleConsolidadoAsync(ProyeccionEstudiantesItemViewModel item)
     {
         EstaCargandoDetalle = true;
         try
@@ -150,22 +149,47 @@ public sealed partial class EstudiantesViewModel : ObservableObject
             var ucObtener     = scope.ServiceProvider.GetRequiredService<ObtenerProyeccionEstudiantesUseCase>();
             var repoConfig    = scope.ServiceProvider.GetRequiredService<IRepositorioConfiguracionRetencion>();
 
-            var proyeccion = await ucObtener.EjecutarAsync(proyeccionId);
-            if (proyeccion is null) return;
+            // Carga la proyección con sus Detalles (NumeroPeriodo, NumeroCiclo, TotalEstudiantes)
+            var proyeccion = await ucObtener.EjecutarAsync(item.Id);
+            if (proyeccion is null)
+            {
+                MensajeError = "No se encontró la proyección seleccionada.";
+                return;
+            }
 
+            // Diagnóstico: sin detalles no hay nada que mostrar
+            if (proyeccion.Detalles is null || proyeccion.Detalles.Count == 0)
+            {
+                MensajeError = "La proyección no tiene datos de estudiantes guardados. "
+                             + "Elimine y vuelva a generar la proyección.";
+                return;
+            }
+
+            // FIX-1: busca la config usando CarreraId + EscenarioId del item
+            //        (el item ya tiene ambos IDs, no depende del DTO de proyección)
             var configs = await repoConfig.ListarDtoAsync();
             var config  = configs.FirstOrDefault(c =>
-                c.CarreraId           == proyeccion.CarreraId &&
-                c.EscenarioProyeccionId == proyeccion.EscenarioProyeccionId);
+                c.CarreraId            == item.CarreraId &&
+                c.EscenarioProyeccionId == item.EscenarioId);
 
-            if (config is null) return;
+            if (config is null)
+            {
+                MensajeError = $"No existe configuración de retención activa para "
+                             + $"'{item.CarreraCodigo} — {item.EscenarioNombre}'. "
+                             + "Cree la configuración antes de ver el análisis.";
+                return;
+            }
+
+            // FIX-3: fallback cuando no hay CriterioReferencia
+            var tasaRetencion  = config.MetaRetencionPorcentaje  ?? config.TasaRetencionPorcentaje;
+            var tasaGraduacion = config.MetaGraduacionPorcentaje ?? config.TasaGraduacionPorcentaje;
 
             DetalleConsolidado = ConsolidadorProyeccionEstudiantes.Calcular(
                 proyeccion,
                 config.ParalelosPeriodo1,
                 config.ParalelosPeriodo2,
-                config.MetaRetencionPorcentaje  ?? config.TasaRetencionPorcentaje,
-                config.MetaGraduacionPorcentaje ?? config.TasaGraduacionPorcentaje);
+                tasaRetencion,
+                tasaGraduacion);
         }
         catch (Exception ex)
         {
@@ -178,7 +202,6 @@ public sealed partial class EstudiantesViewModel : ObservableObject
     }
 
     // ── Comandos ──────────────────────────────────────────────────────────────
-
     [RelayCommand]
     private async Task CargarAsync()
     {
@@ -193,6 +216,9 @@ public sealed partial class EstudiantesViewModel : ObservableObject
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
 
+        // FIX-4: guarda el Id seleccionado antes de recargar la lista
+        var idSeleccionadoAntes = ProyeccionSeleccionada?.Id;
+
         try
         {
             using var scope    = _serviceProvider.CreateScope();
@@ -200,9 +226,9 @@ public sealed partial class EstudiantesViewModel : ObservableObject
             var repoEscenario  = scope.ServiceProvider.GetRequiredService<IRepositorioEscenarioProyeccion>();
             var ucListar       = scope.ServiceProvider.GetRequiredService<ListarProyeccionesEstudiantesUseCase>();
 
-            var carreras    = await repoCarrera.ListarAsync();
-            var escenarios  = await repoEscenario.ListarAsync();
-            var proyecciones= await ucListar.EjecutarAsync();
+            var carreras     = await repoCarrera.ListarAsync();
+            var escenarios   = await repoEscenario.ListarAsync();
+            var proyecciones = await ucListar.EjecutarAsync();
 
             Carreras = new ObservableCollection<CarreraOpcion>(
                 carreras.OrderBy(c => c.Codigo)
@@ -216,8 +242,8 @@ public sealed partial class EstudiantesViewModel : ObservableObject
                 .OrderBy(e => e.Nombre)
                 .Select(e => new EscenarioOpcion
                 {
-                    Id        = e.Id,
-                    CarreraId = e.CarreraId,
+                    Id          = e.Id,
+                    CarreraId   = e.CarreraId,
                     Descripcion = e.Nombre
                 })
                 .ToList();
@@ -228,13 +254,23 @@ public sealed partial class EstudiantesViewModel : ObservableObject
                 proyecciones.Select(p => new ProyeccionEstudiantesItemViewModel
                 {
                     Id                 = p.Id,
+                    CarreraId          = p.CarreraId,
+                    EscenarioId        = p.EscenarioProyeccionId,
+                    AnioBase           = p.AnioBase,
                     CarreraNombre      = p.CarreraNombre,
                     CarreraCodigo      = p.CarreraCodigo,
                     EscenarioNombre    = p.EscenarioNombre,
-                    AnioBase           = p.AnioBase,
                     SemanasPorSemestre = p.SemanasPorSemestre,
                     CreadoEnTexto      = p.CreadoEn.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
                 }));
+
+            // FIX-4: re-selecciona la misma proyección para que el consolidado
+            //        se recargue automáticamente tras Generar o Refrescar
+            if (idSeleccionadoAntes.HasValue)
+            {
+                ProyeccionSeleccionada = Proyecciones
+                    .FirstOrDefault(p => p.Id == idSeleccionadoAntes.Value);
+            }
         }
         catch (Exception ex)
         {
@@ -279,6 +315,12 @@ public sealed partial class EstudiantesViewModel : ObservableObject
                 SemanasPorSemestre    = semanas
             }, _sesionActual.UsuarioId);
 
+            // Recarga la lista; FIX-4 se encarga de re-seleccionar la nueva proyección
+            // Para auto-seleccionar la recién generada, forzamos su id antes de recargar
+            // (CargarAsync guarda idSeleccionadoAntes = ProyeccionSeleccionada?.Id)
+            // No necesitamos nada extra: basta con poner un item temporal con el id nuevo
+            // y dejar que CargarAsync haga el match.
+            ProyeccionSeleccionada = new ProyeccionEstudiantesItemViewModel { Id = id };
             await CargarAsync();
             MensajeExito = $"Proyección generada correctamente (Id = {id}).";
         }
@@ -331,7 +373,6 @@ public sealed partial class EstudiantesViewModel : ObservableObject
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
-
     private async Task CargarSimulacionesAsync(int carreraId, int escenarioProyeccionId)
     {
         try
