@@ -7,26 +7,27 @@ public sealed class ProyeccionConsolidadaDto
     public string LabelAnio3 { get; init; } = string.Empty;
     public string LabelAnio4 { get; init; } = string.Empty;
 
-    // ── Vista nueva: por período (como el Excel) ─────────────────────────
     public int[]                                     ParalelosPorPeriodo { get; init; } = [];
     public IReadOnlyList<FilaMatriculaPeriodoDto>    MatriculaPorPeriodo { get; init; } = [];
-
-    // ── Vista legada: por año (se mantiene por compatibilidad) ───────────
     public IReadOnlyList<FilaMatriculaAnualDto>      MatriculaPorAnio    { get; init; } = [];
 
-    // ── Tabla 2: docentes/técnicos por PERÍODO (columnas dinámicas) ──────
+    /// <summary>Tabla 2 — Docentes/Técnicos por PERÍODO (columnas dinámicas, valores enteros).</summary>
     public IReadOnlyList<FilaDocentePeriodoDto>      DocentesPorPeriodo  { get; init; } = [];
 
-    // ── Tabla 2 legada (por año, se mantiene por compatibilidad) ─────────
+    /// <summary>Legado — por año (4 columnas fijas).</summary>
     public IReadOnlyList<FilaDocenteAnualDto>        DocentesPorAnio     { get; init; } = [];
+
+    /// <summary>Tabla de horas: filas 15, 16, 17, 19, 20, 21 del Excel.</summary>
+    public IReadOnlyList<FilaHorasDto>               TablaHoras          { get; init; } = [];
 
     public decimal TotalHorasDocencia  { get; init; }
     public decimal TotalHorasPractica  { get; init; }
     public decimal TotalHorasCombinado { get; init; }
+
     public IndicadoresProyeccionDto              Indicadores   { get; init; } = new();
     public IReadOnlyList<FilaConsumoPeriodicDto> TablaPeriodos { get; init; } = [];
 
-    // ── Inputs editables para recalcular (fila 16, fila 20, J24, J30) ───
+    // Inputs editables (J24, J30, fila 16, fila 20)
     public decimal[] HorasDocenciaSemestral { get; init; } = [];
     public decimal[] HorasPracticaSemestral { get; init; } = [];
     public decimal   HorasDocenteSemana     { get; init; } = 18m;
@@ -34,8 +35,20 @@ public sealed class ProyeccionConsolidadaDto
 }
 
 /// <summary>
-/// Fila de la tabla 1 — matrícula por período (columnas dinámicas).
-/// Periodos[0] = período 1, Periodos[1] = período 2, … Periodos[n-1] = período n.
+/// Fila de la tabla de horas (filas 15–17 y 19–21 del Excel).
+/// Valores[p] = valor de la celda en el período p (0-based).
+/// </summary>
+public sealed class FilaHorasDto
+{
+    /// <summary>Etiqueta de la fila, p.ej. "Nº Horas Clase Docencia Asistida x semana Acumuladas"</summary>
+    public string    Etiqueta  { get; init; } = string.Empty;
+    /// <summary>true = celda amarilla (input manual), false = fórmula</summary>
+    public bool      EsInput   { get; init; }
+    public decimal[] Valores   { get; init; } = [];
+}
+
+/// <summary>
+/// Tabla 1 — matrícula por período (columnas dinámicas).
 /// </summary>
 public sealed class FilaMatriculaPeriodoDto
 {
@@ -61,19 +74,21 @@ public sealed class FilaParalelosDto
 }
 
 /// <summary>
-/// Tabla 2 — Docentes requeridos por PERÍODO (columnas dinámicas, igual que Matrícula).
-/// Periodos[0] = período 1 (p.ej. 2023 ABR), Periodos[1] = período 2 (2023 SEP), …
-/// Los valores son enteros (Math.Ceiling) porque no existen fracciones de docente.
+/// Tabla 2 — Docentes requeridos por PERÍODO (columnas dinámicas, enteros).
+/// Periodos[p] = número de personas requeridas en el período p (0-based).
+/// Total = valor del último período (máximo acumulado).
+/// INVARIANTE: PhD + Mgs + Parcial == TOTAL en cada período.
+/// INVARIANTE: ningún valor es negativo.
 /// </summary>
 public sealed class FilaDocentePeriodoDto
 {
     public string  Tipo     { get; init; } = string.Empty;
-    /// <summary>Valores enteros (Ceiling) por período — array 0-based.</summary>
     public int[]   Periodos { get; init; } = [];
+    /// <summary>Valor del período final (no suma, sino último acumulado).</summary>
     public int     Total    { get; init; }
 }
 
-/// <summary>Legado — por año (4 columnas fijas). Se mantiene por compatibilidad.</summary>
+/// <summary>Legado — por año (4 columnas fijas).</summary>
 public sealed class FilaDocenteAnualDto
 {
     public string  Tipo  { get; init; } = string.Empty;

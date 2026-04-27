@@ -31,10 +31,11 @@ public partial class EstudiantesView : UserControl
             var detalle = _vm?.DetalleConsolidado;
             GenerarColumnasMatricula(detalle);
             GenerarColumnasDocentes(detalle);
+            GenerarColumnasHoras(detalle);
         }
     }
 
-    // ─── Tab 1: Matrícula por período ────────────────────────────────────────
+    // ─── Tab 1: Matrícula por período ───────────────────────────────────
     private void GenerarColumnasMatricula(ProyeccionConsolidadaDto? detalle)
     {
         if (!Dispatcher.CheckAccess())
@@ -46,7 +47,6 @@ public partial class EstudiantesView : UserControl
         var paralelos     = detalle.ParalelosPorPeriodo;
         var totalPeriodos = paralelos.Length;
 
-        // Columna fija: CICLO
         dgMatriculaPeriodo.Columns.Add(new DataGridTextColumn
         {
             Header  = "CICLO",
@@ -54,7 +54,6 @@ public partial class EstudiantesView : UserControl
             Width   = new DataGridLength(110)
         });
 
-        // Una columna por período: "AAAA\nABR/SEP\npar:N"
         for (var p = 0; p < totalPeriodos; p++)
         {
             var periodo  = detalle.TablaPeriodos.Count > p ? detalle.TablaPeriodos[p] : null;
@@ -70,7 +69,6 @@ public partial class EstudiantesView : UserControl
             });
         }
 
-        // Columna fija: TOTAL
         dgMatriculaPeriodo.Columns.Add(new DataGridTextColumn
         {
             Header  = "TOTAL",
@@ -79,7 +77,7 @@ public partial class EstudiantesView : UserControl
         });
     }
 
-    // ─── Tab 2: Docentes por período (columnas dinámicas, valores enteros) ───
+    // ─── Tab 2: Docentes por período ───────────────────────────────────
     private void GenerarColumnasDocentes(ProyeccionConsolidadaDto? detalle)
     {
         if (!Dispatcher.CheckAccess())
@@ -90,15 +88,13 @@ public partial class EstudiantesView : UserControl
 
         var totalPeriodos = detalle.ParalelosPorPeriodo.Length;
 
-        // Columna fija: TIPO DE DOCENTE
         dgDocentesPeriodo.Columns.Add(new DataGridTextColumn
         {
             Header  = "Tipo",
             Binding = new Binding("Tipo"),
-            Width   = new DataGridLength(160)
+            Width   = new DataGridLength(180)
         });
 
-        // Una columna por período: "AAAA\nABR/SEP"
         for (var p = 0; p < totalPeriodos; p++)
         {
             var periodo  = detalle.TablaPeriodos.Count > p ? detalle.TablaPeriodos[p] : null;
@@ -113,12 +109,47 @@ public partial class EstudiantesView : UserControl
             });
         }
 
-        // Columna fija: TOTAL (máximo acumulado del período final)
+        // Columna TOTAL = valor del período final (acumulado máximo)
         dgDocentesPeriodo.Columns.Add(new DataGridTextColumn
         {
             Header  = "TOTAL",
             Binding = new Binding("Total") { StringFormat = "N0" },
             Width   = new DataGridLength(70)
         });
+    }
+
+    // ─── Tab 3: Horas por período (filas 15–17 y 19–21) ──────────────────
+    private void GenerarColumnasHoras(ProyeccionConsolidadaDto? detalle)
+    {
+        if (!Dispatcher.CheckAccess())
+        { Dispatcher.Invoke(() => GenerarColumnasHoras(detalle)); return; }
+
+        dgHorasPeriodo.Columns.Clear();
+        if (detalle is null || detalle.TablaHoras.Count == 0) return;
+
+        var totalPeriodos = detalle.ParalelosPorPeriodo.Length;
+
+        // Columna fija: DESCRIPCIÓN (etiqueta de fila)
+        dgHorasPeriodo.Columns.Add(new DataGridTextColumn
+        {
+            Header  = "Concepto",
+            Binding = new Binding("Etiqueta"),
+            Width   = new DataGridLength(280)
+        });
+
+        // Una columna por período: "AAAA\nABR/SEP"
+        for (var p = 0; p < totalPeriodos; p++)
+        {
+            var periodo  = detalle.TablaPeriodos.Count > p ? detalle.TablaPeriodos[p] : null;
+            var anio     = periodo?.Anio.ToString() ?? string.Empty;
+            var semestre = periodo?.Semestre ?? (p % 2 == 0 ? "ABR" : "SEP");
+
+            dgHorasPeriodo.Columns.Add(new DataGridTextColumn
+            {
+                Header  = $"{anio}\n{semestre}",
+                Binding = new Binding($"Valores[{p}]") { StringFormat = "N0" },
+                Width   = new DataGridLength(1, DataGridLengthUnitType.Star)
+            });
+        }
     }
 }
