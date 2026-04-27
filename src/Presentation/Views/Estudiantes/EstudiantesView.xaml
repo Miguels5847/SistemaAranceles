@@ -168,30 +168,30 @@
                     </Grid>
                 </TabItem>
 
-                <!-- TAB 2: Docentes por período (columnas dinámicas + J24/J30 al lado) -->
+                <!-- TAB 2: Docentes por período -->
                 <TabItem Header="2. Docentes por período">
                     <Grid Margin="8">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>  <!-- título + inputs J24/J30 -->
-                            <RowDefinition Height="*"/>     <!-- DataGrid -->
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <!-- Header: título a la izquierda, inputs J24/J30 a la derecha -->
+                        <!-- Header: título + inputs Horas Docente / Horas Técnico -->
                         <Grid Grid.Row="0" Margin="0,0,0,6">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0"
-                                       Text="Docentes requeridos por período (número de personas — enteros)"
+                                       Text="Docentes requeridos por período"
                                        FontWeight="Bold" FontSize="12" Foreground="#1A237E"
                                        VerticalAlignment="Center"/>
-                            <!-- Inputs editables J24 y J30 -->
+                            <!-- Inputs editables: recalculan en tiempo real -->
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,0,0">
                                 <Border Background="#FFF9C4" BorderBrush="#F9A825" BorderThickness="1"
                                         CornerRadius="4" Padding="6,3" Margin="0,0,8,0">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Horas Docente (J24): " FontSize="11"
+                                        <TextBlock Text="Horas Docente: " FontSize="11"
                                                    Foreground="#5D4037" VerticalAlignment="Center"/>
                                         <TextBox Width="40" FontSize="11" FontWeight="Bold"
                                                  Text="{Binding HorasDocenteSemana, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -202,7 +202,7 @@
                                 <Border Background="#FFF9C4" BorderBrush="#F9A825" BorderThickness="1"
                                         CornerRadius="4" Padding="6,3">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Horas Técnico (J30): " FontSize="11"
+                                        <TextBlock Text="Horas Técnico: " FontSize="11"
                                                    Foreground="#5D4037" VerticalAlignment="Center"/>
                                         <TextBox Width="40" FontSize="11" FontWeight="Bold"
                                                  Text="{Binding HorasTecnicoSemana, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -246,7 +246,7 @@
                     </Grid>
                 </TabItem>
 
-                <!-- TAB 3: Horas por período (Filas 15, 16, 17 y 19, 20, 21) -->
+                <!-- TAB 3: Horas por período (Filas 15–17 y 19–21) -->
                 <TabItem Header="3. Horas por período">
                     <Grid Margin="8">
                         <Grid.RowDefinitions>
@@ -256,7 +256,6 @@
                         <TextBlock Grid.Row="0"
                                    Text="Horas docencia asistida y aplicación práctica por período (filas 15–17 y 19–21)"
                                    FontWeight="Bold" FontSize="12" Foreground="#1A237E" Margin="0,0,0,6"/>
-                        <!-- DataGrid con columnas dinámicas generadas desde code-behind -->
                         <DataGrid x:Name="dgHorasPeriodo" Grid.Row="1"
                                   ItemsSource="{Binding DetalleConsolidado.TablaHoras}"
                                   AutoGenerateColumns="False" IsReadOnly="True"
@@ -275,7 +274,6 @@
                             <DataGrid.RowStyle>
                                 <Style TargetType="DataGridRow">
                                     <Style.Triggers>
-                                        <!-- Filas amarillas (inputs) -->
                                         <DataTrigger Binding="{Binding EsInput}" Value="True">
                                             <Setter Property="Background" Value="#FFFDE7"/>
                                             <Setter Property="FontWeight" Value="Bold"/>
