@@ -100,7 +100,6 @@ public sealed partial class EstudiantesViewModel : ObservableObject
     public bool PuedeEliminar => _sesionActual.TienePermiso("ES.ELIMINAR") || _sesionActual.EsAdministrador;
 
     // ── Cascada: Carrera → Escenarios ─────────────────────────────────────────────
-public
     partial void OnCarreraSeleccionadaChanged(CarreraOpcion? value)
     {
         EscenarioSeleccionado  = null;
