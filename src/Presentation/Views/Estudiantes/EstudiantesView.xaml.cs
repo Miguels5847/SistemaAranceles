@@ -1,4 +1,5 @@
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace SistemaAranceles.Presentation.Views.Estudiantes;
 
