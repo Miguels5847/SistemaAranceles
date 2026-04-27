@@ -6,15 +6,31 @@ public sealed class ProyeccionConsolidadaDto
     public string LabelAnio2 { get; init; } = string.Empty;
     public string LabelAnio3 { get; init; } = string.Empty;
     public string LabelAnio4 { get; init; } = string.Empty;
-    public int[] ParalelosPorPeriodo { get; init; } = [];          // NUEVO
-    public IReadOnlyList<FilaMatriculaPeriodoDto> MatriculaPorPeriodo { get; init; } = []; // NUEV
-    public IReadOnlyList<FilaMatriculaAnualDto> MatriculaPorAnio { get; init; } = [];
-    public IReadOnlyList<FilaDocenteAnualDto> DocentesPorAnio { get; init; } = [];
-    public decimal TotalHorasDocencia { get; init; }
-    public decimal TotalHorasPractica { get; init; }
+
+    // ── Vista nueva: por período (como el Excel) ─────────────────────────
+    public int[]                                     ParalelosPorPeriodo { get; init; } = [];
+    public IReadOnlyList<FilaMatriculaPeriodoDto>    MatriculaPorPeriodo { get; init; } = [];
+
+    // ── Vista legada: por año (se mantiene por compatibilidad) ───────────
+    public IReadOnlyList<FilaMatriculaAnualDto>      MatriculaPorAnio    { get; init; } = [];
+
+    public IReadOnlyList<FilaDocenteAnualDto>        DocentesPorAnio     { get; init; } = [];
+    public decimal TotalHorasDocencia  { get; init; }
+    public decimal TotalHorasPractica  { get; init; }
     public decimal TotalHorasCombinado { get; init; }
-    public IndicadoresProyeccionDto Indicadores { get; init; } = new();
+    public IndicadoresProyeccionDto              Indicadores   { get; init; } = new();
     public IReadOnlyList<FilaConsumoPeriodicDto> TablaPeriodos { get; init; } = [];
+}
+
+/// <summary>
+/// Fila de la tabla 1 — matrícula por período (columnas dinámicas, igual que Excel).
+/// Periodos[0] = período 1, Periodos[1] = período 2, … Periodos[n-1] = período n.
+/// </summary>
+public sealed class FilaMatriculaPeriodoDto
+{
+    public string    Ciclo    { get; init; } = string.Empty;
+    public decimal[] Periodos { get; init; } = [];
+    public decimal   Total    { get; init; }
 }
 
 public sealed class FilaMatriculaAnualDto
@@ -38,12 +54,6 @@ public sealed class FilaDocenteAnualDto
     public decimal Anio2 { get; init; }
     public decimal Anio3 { get; init; }
     public decimal Anio4 { get; init; }
-    public decimal Total { get; init; }
-}
-public sealed class FilaMatriculaPeriodoDto  // NUEVO
-{
-    public string Ciclo { get; init; } = string.Empty;
-    public decimal[] Periodos { get; init; } = [];
     public decimal Total { get; init; }
 }
 public sealed class IndicadoresProyeccionDto

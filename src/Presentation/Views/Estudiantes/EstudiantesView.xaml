@@ -5,22 +5,11 @@
     <Grid Margin="16">
         <!-- DESPUÉS (correcto) -->
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <!-- 0 -->
-            <RowDefinition Height="Auto"/>
-            <!-- 1 -->
-            <RowDefinition Height="Auto"/>
-            <!-- 2 -->
-            <RowDefinition Height="Auto"/>
-            <!-- 3 -->
-            <RowDefinition Height="Auto"/>
-            <!-- 4 -->
-            <RowDefinition Height="Auto"/>
-            <!-- 5 -->
-            <RowDefinition Height="*"/>
-            <!-- 6: spacer — se mantiene -->
-            <RowDefinition Height="Auto"/>
-            <!-- 7: botones -->
+            <RowDefinition Height="Auto"/>   <!-- 0: Título -->
+            <RowDefinition Height="Auto"/>   <!-- 1: Mensajes -->
+            <RowDefinition Height="Auto" MinHeight="280"/>  <!-- 2: Lista + Formulario (fix botón eliminar) -->
+            <RowDefinition Height="Auto"/>   <!-- 3: Indicador cargando detalle -->
+            <RowDefinition Height="*"/>      <!-- 4: Tablas consolidadas -->
         </Grid.RowDefinitions>
 
         <!-- ══ Título ══════════════════════════════════════════════════════════ -->
@@ -95,24 +84,12 @@
                               GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F8F9FE">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Carrera"
-                                                Binding="{Binding CarreraCodigo}"
-                                                Width="Auto"/>
-                            <DataGridTextColumn Header="Nombre carrera"
-                                                Binding="{Binding CarreraNombre}"
-                                                Width="*"/>
-                            <DataGridTextColumn Header="Escenario"
-                                                Binding="{Binding EscenarioNombre}"
-                                                Width="*"/>
-                            <DataGridTextColumn Header="Año base"
-                                                Binding="{Binding AnioBase}"
-                                                Width="Auto"/>
-                            <DataGridTextColumn Header="Semanas/sem."
-                                                Binding="{Binding SemanasPorSemestre}"
-                                                Width="Auto"/>
-                            <DataGridTextColumn Header="Generado"
-                                                Binding="{Binding CreadoEnTexto}"
-                                                Width="Auto"/>
+                            <DataGridTextColumn Header="Carrera"      Binding="{Binding CarreraCodigo}"    Width="Auto"/>
+                            <DataGridTextColumn Header="Nombre carrera" Binding="{Binding CarreraNombre}" Width="*"/>
+                            <DataGridTextColumn Header="Escenario"    Binding="{Binding EscenarioNombre}" Width="*"/>
+                            <DataGridTextColumn Header="Año base"     Binding="{Binding AnioBase}"        Width="Auto"/>
+                            <DataGridTextColumn Header="Semanas/sem." Binding="{Binding SemanasPorSemestre}" Width="Auto"/>
+                            <DataGridTextColumn Header="Generado"     Binding="{Binding CreadoEnTexto}"   Width="Auto"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
@@ -127,14 +104,14 @@
                     Background="#FCFDFF">
                 <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>  <!-- 0: Título -->
+                        <RowDefinition Height="Auto"/>  <!-- 1: Carrera -->
+                        <RowDefinition Height="Auto"/>  <!-- 2: Escenario -->
+                        <RowDefinition Height="Auto"/>  <!-- 3: Simulación -->
+                        <RowDefinition Height="Auto"/>  <!-- 4: Semanas -->
+                        <RowDefinition Height="Auto"/>  <!-- 5: ProgressBar -->
+                        <RowDefinition Height="*"/>     <!-- 6: spacer -->
+                        <RowDefinition Height="Auto"/>  <!-- 7: Botones -->
                     </Grid.RowDefinitions>
 
                     <TextBlock Grid.Row="0"
@@ -207,9 +184,9 @@
                                    Margin="0,4,0,0"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Row="7"
-                                Orientation="Vertical"
-                                VerticalAlignment="Bottom">
+                    <!-- Row 6 = spacer (*) — vacío a propósito -->
+
+                    <StackPanel Grid.Row="7" Orientation="Vertical" VerticalAlignment="Bottom">
                         <Button Content="Generar proyección"
                                 Command="{Binding GenerarCommand}"
                                 Padding="10,8"
@@ -245,7 +222,7 @@
                        Margin="8,0,0,0"/>
         </StackPanel>
 
-        <!-- ══ Row 4: 5 Tablas consolidadas (solo cuando hay proyección seleccionada) ══ -->
+        <!-- ══ Row 4: 5 Tablas consolidadas ════════════════════════════════════ -->
         <Border Grid.Row="4"
                 Margin="0,8,0,0"
                 Visibility="{Binding TieneDetalleConsolidado, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -253,7 +230,7 @@
                         BorderBrush="#C5CAE9">
 
                 <!-- ╔══════════════════════════════════════════════════════╗ -->
-                <!-- ║  TAB 1 — Matrícula por año                          ║ -->
+                <!-- ║  TAB 1 — Matrícula por período (tipo Excel)         ║ -->
                 <!-- ╚══════════════════════════════════════════════════════╝ -->
                 <TabItem Header="1. Matrícula por período">
                     <Grid Margin="8">
@@ -263,12 +240,11 @@
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Row="0"
-                                   Text="Distribución por período y paralelos (formato tipo Excel)"
-                                   FontWeight="Bold"
-                                   FontSize="12"
-                                   Foreground="#1A237E"
+                                   Text="Distribución por período y paralelos"
+                                   FontWeight="Bold" FontSize="12" Foreground="#1A237E"
                                    Margin="0,0,0,6"/>
 
+                        <!-- DataGrid con columnas dinámicas generadas desde code-behind -->
                         <DataGrid x:Name="dgMatriculaPeriodo"
                                   Grid.Row="1"
                                   ItemsSource="{Binding DetalleConsolidado.MatriculaPorPeriodo}"
@@ -283,28 +259,18 @@
                                   MaxHeight="320">
                             <DataGrid.Resources>
                                 <Style TargetType="DataGridColumnHeader">
-                                    <Setter Property="FontWeight"
-                                            Value="Bold"/>
-                                    <Setter Property="Background"
-                                            Value="#E8EAF6"/>
-                                    <Setter Property="HorizontalContentAlignment"
-                                            Value="Center"/>
-                                    <Setter Property="VerticalContentAlignment"
-                                            Value="Center"/>
-                                    <Setter Property="Padding"
-                                            Value="6,4"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                    <Setter Property="Background" Value="#E8EAF6"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                    <Setter Property="Padding" Value="6,4"/>
                                 </Style>
                             </DataGrid.Resources>
-
                             <DataGrid.RowStyle>
                                 <Style TargetType="DataGridRow">
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Ciclo}"
-                                                Value="Total Nº de Estudiantes">
-                                            <Setter Property="FontWeight"
-                                                    Value="Bold"/>
-                                            <Setter Property="Background"
-                                                    Value="#E8EAF6"/>
+                                        <DataTrigger Binding="{Binding Ciclo}" Value="Total Nº de Estudiantes">
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                            <Setter Property="Background" Value="#E8EAF6"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -333,41 +299,12 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="80"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0"
-                                       Text="TIPO DOCENTE"
-                                       FontWeight="Bold"
-                                       FontSize="11"
-                                       Foreground="#455A64"/>
-                            <TextBlock Grid.Column="1"
-                                       Text="{Binding DetalleConsolidado.LabelAnio1}"
-                                       FontWeight="Bold"
-                                       FontSize="11"
-                                       Foreground="#1A237E"
-                                       HorizontalAlignment="Center"/>
-                            <TextBlock Grid.Column="2"
-                                       Text="{Binding DetalleConsolidado.LabelAnio2}"
-                                       FontWeight="Bold"
-                                       FontSize="11"
-                                       Foreground="#1A237E"
-                                       HorizontalAlignment="Center"/>
-                            <TextBlock Grid.Column="3"
-                                       Text="{Binding DetalleConsolidado.LabelAnio3}"
-                                       FontWeight="Bold"
-                                       FontSize="11"
-                                       Foreground="#1A237E"
-                                       HorizontalAlignment="Center"/>
-                            <TextBlock Grid.Column="4"
-                                       Text="{Binding DetalleConsolidado.LabelAnio4}"
-                                       FontWeight="Bold"
-                                       FontSize="11"
-                                       Foreground="#1A237E"
-                                       HorizontalAlignment="Center"/>
-                            <TextBlock Grid.Column="5"
-                                       Text="TOTAL"
-                                       FontWeight="Bold"
-                                       FontSize="11"
-                                       Foreground="#455A64"
-                                       HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="0" Text="TIPO DOCENTE" FontWeight="Bold" FontSize="11" Foreground="#455A64"/>
+                            <TextBlock Grid.Column="1" Text="{Binding DetalleConsolidado.LabelAnio1}" FontWeight="Bold" FontSize="11" Foreground="#1A237E" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="{Binding DetalleConsolidado.LabelAnio2}" FontWeight="Bold" FontSize="11" Foreground="#1A237E" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="3" Text="{Binding DetalleConsolidado.LabelAnio3}" FontWeight="Bold" FontSize="11" Foreground="#1A237E" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="4" Text="{Binding DetalleConsolidado.LabelAnio4}" FontWeight="Bold" FontSize="11" Foreground="#1A237E" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="5" Text="TOTAL" FontWeight="Bold" FontSize="11" Foreground="#455A64" HorizontalAlignment="Center"/>
                         </Grid>
 
                         <DataGrid Grid.Row="1"
@@ -430,26 +367,16 @@
                                 <RowDefinition Height="32"/>
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0"
-                                       Grid.Column="0"
-                                       Text="Horas docencia (Σ fila 16)"
-                                       FontSize="12"
-                                       VerticalAlignment="Center"/>
-                            <TextBlock Grid.Row="0"
-                                       Grid.Column="1"
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Horas docencia (Σ fila 16)" FontSize="12" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1"
                                        Text="{Binding DetalleConsolidado.TotalHorasDocencia, StringFormat=N0}"
                                        FontSize="13"
                                        FontWeight="SemiBold"
                                        Foreground="#1A237E"
                                        VerticalAlignment="Center"/>
 
-                            <TextBlock Grid.Row="1"
-                                       Grid.Column="0"
-                                       Text="Horas práctica (Σ fila 20)"
-                                       FontSize="12"
-                                       VerticalAlignment="Center"/>
-                            <TextBlock Grid.Row="1"
-                                       Grid.Column="1"
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Horas práctica (Σ fila 20)" FontSize="12" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1"
                                        Text="{Binding DetalleConsolidado.TotalHorasPractica, StringFormat=N0}"
                                        FontSize="13"
                                        FontWeight="SemiBold"
@@ -467,11 +394,7 @@
                                         <ColumnDefinition Width="220"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0"
-                                               Text="TOTAL COMBINADO"
-                                               FontWeight="Bold"
-                                               FontSize="12"
-                                               VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="0" Text="TOTAL COMBINADO" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
                                     <TextBlock Grid.Column="1"
                                                Text="{Binding DetalleConsolidado.TotalHorasCombinado, StringFormat=N0}"
                                                FontSize="14"
@@ -510,14 +433,8 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Columna izquierda -->
-                        <StackPanel Grid.Column="0"
-                                    Margin="0,0,0,0">
-                            <TextBlock Text="Matrícula"
-                                       FontWeight="Bold"
-                                       FontSize="12"
-                                       Foreground="#1A237E"
-                                       Margin="0,0,0,6"/>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Matrícula" FontWeight="Bold" FontSize="12" Foreground="#1A237E" Margin="0,0,0,6"/>
 
                             <Border Background="#E3F2FD"
                                     CornerRadius="4"
@@ -564,7 +481,6 @@
                             </Border>
                         </StackPanel>
 
-                        <!-- Columna derecha -->
                         <StackPanel Grid.Column="2">
                             <TextBlock Text="Titulación y retención"
                                        FontWeight="Bold"
@@ -641,27 +557,13 @@
                               AlternatingRowBackground="#F8F9FE"
                               MaxHeight="300">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Per."
-                                                Binding="{Binding Periodo}"
-                                                Width="40"/>
-                            <DataGridTextColumn Header="Año"
-                                                Binding="{Binding Anio}"
-                                                Width="55"/>
-                            <DataGridTextColumn Header="Sem."
-                                                Binding="{Binding Semestre}"
-                                                Width="45"/>
-                            <DataGridTextColumn Header="Docentes"
-                                                Binding="{Binding Docentes, StringFormat=N2}"
-                                                Width="80"/>
-                            <DataGridTextColumn Header="Técnicos"
-                                                Binding="{Binding Tecnicos, StringFormat=N3}"
-                                                Width="80"/>
-                            <DataGridTextColumn Header="H. Docencia"
-                                                Binding="{Binding HorasDocencia, StringFormat=N0}"
-                                                Width="*"/>
-                            <DataGridTextColumn Header="H. Práctica"
-                                                Binding="{Binding HorasPractica, StringFormat=N0}"
-                                                Width="*"/>
+                            <DataGridTextColumn Header="Per."       Binding="{Binding Periodo}"                    Width="40"/>
+                            <DataGridTextColumn Header="Año"        Binding="{Binding Anio}"                       Width="55"/>
+                            <DataGridTextColumn Header="Sem."       Binding="{Binding Semestre}"                   Width="45"/>
+                            <DataGridTextColumn Header="Docentes"   Binding="{Binding Docentes, StringFormat=N2}"  Width="80"/>
+                            <DataGridTextColumn Header="Técnicos"   Binding="{Binding Tecnicos, StringFormat=N3}"  Width="80"/>
+                            <DataGridTextColumn Header="H. Docencia" Binding="{Binding HorasDocencia, StringFormat=N0}" Width="*"/>
+                            <DataGridTextColumn Header="H. Práctica" Binding="{Binding HorasPractica, StringFormat=N0}" Width="*"/>
                         </DataGrid.Columns>
                         <DataGrid.ColumnHeaderStyle>
                             <Style TargetType="DataGridColumnHeader">

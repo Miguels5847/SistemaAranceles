@@ -42,17 +42,23 @@ public static class ConsolidadorProyeccionEstudiantes
                 .ToList()
             : [];
 
+        // ── Paralelos por período (array 0-based: [0]=per1, [1]=per2, …) ──────
+        var paralelosPorPeriodo = Enumerable.Range(1, totalPeriodos)
+            .Select(p => Par(p, paralelosPeriodo1, paralelosPeriodo2))
+            .ToArray();
+
         var acumDocH = new decimal[totalPeriodos + 1];
         var acumTecH = new decimal[totalPeriodos + 1];
 
         for (var p = 1; p <= totalPeriodos; p++)
         {
-            var par = Par(p, paralelosPeriodo1, paralelosPeriodo2);
+            var par = paralelosPorPeriodo[p - 1];
             var i = p - 1;
             acumDocH[p] = acumDocH[p - 1] + Get(DocHBase, i) * par;
             acumTecH[p] = acumTecH[p - 1] + Get(TecHBase, i) * par;
         }
 
+        // ── Tabla 5: consumo por período ─────────────────────────────────────
         var tablaPeriodos = new List<FilaConsumoPeriodicDto>(totalPeriodos);
         decimal totalHDoc = 0, totalHTec = 0;
 
@@ -66,8 +72,8 @@ public static class ConsolidadorProyeccionEstudiantes
 
             tablaPeriodos.Add(new FilaConsumoPeriodicDto
             {
-                Periodo = p,
-                Anio = AnioDePeriodo(proyeccion.AnioBase, p),
+                Periodo  = p,
+                Anio     = AnioDePeriodo(proyeccion.AnioBase, p),
                 Semestre = p % 2 == 1 ? "ABR" : "SEP",
                 Docentes = R(acumDocH[p] / HorasDocSemana),
                 Tecnicos = R(acumTecH[p] / HorasTecSemana, 3),
@@ -76,6 +82,44 @@ public static class ConsolidadorProyeccionEstudiantes
             });
         }
 
+        // ── Tabla 1 NUEVA: matrícula por PERÍODO (como el Excel) ─────────────
+        // Cada fila = un ciclo; cada columna = un período (1..totalPeriodos).
+        // Solo muestra valor si el ciclo ya existe en ese período (ciclo <= p).
+        var filasPeriodo = new List<FilaMatriculaPeriodoDto>(totalCiclos + 1);
+
+        for (var ciclo = 1; ciclo <= totalCiclos; ciclo++)
+        {
+            var vals = Enumerable.Range(1, totalPeriodos)
+                .Select(p =>
+                {
+                    if (ciclo > p) return 0m;   // ciclo aún no existe en ese período
+                    return R(detalles
+                        .Where(d => d.NumeroCiclo == ciclo && d.NumeroPeriodo == p)
+                        .Sum(d => d.TotalEstudiantes));
+                })
+                .ToArray();
+
+            filasPeriodo.Add(new FilaMatriculaPeriodoDto
+            {
+                Ciclo    = $"{ciclo} CICLO",
+                Periodos = vals,
+                Total    = R(vals.Sum())
+            });
+        }
+
+        // Fila TOTAL
+        var totalesPorPeriodo = Enumerable.Range(0, totalPeriodos)
+            .Select(i => R(filasPeriodo.Sum(f => f.Periodos[i])))
+            .ToArray();
+
+        filasPeriodo.Add(new FilaMatriculaPeriodoDto
+        {
+            Ciclo    = "Total Nº de Estudiantes",
+            Periodos = totalesPorPeriodo,
+            Total    = R(totalesPorPeriodo.Sum())
+        });
+
+        // ── Tabla 1 LEGADA: matrícula por AÑO (se mantiene por compatibilidad) ─
         var filasMatricula = new List<FilaMatriculaAnualDto>(totalCiclos + 1);
 
         for (var ciclo = 1; ciclo <= totalCiclos; ciclo++)
@@ -107,6 +151,7 @@ public static class ConsolidadorProyeccionEstudiantes
             Total = R(filasMatricula.Sum(f => f.Total))
         });
 
+        // ── Tabla 2: docentes por año ─────────────────────────────────────────
         var docAnio = anios
             .Select(anio => tablaPeriodos.Where(t => t.Anio == anio).Sum(t => t.Docentes))
             .ToList();
@@ -126,20 +171,21 @@ public static class ConsolidadorProyeccionEstudiantes
             FilaDoc("TOTAL Docentes",    docAnio, tecAnio, d => R(d))
         };
 
-        var p1Total = detalles.Where(d => d.NumeroPeriodo == 1).Sum(d => d.TotalEstudiantes);
-        var pFinalTot = detalles.Where(d => d.NumeroPeriodo == totalPeriodos).Sum(d => d.TotalEstudiantes);
+        // ── Indicadores ───────────────────────────────────────────────────────
+        var p1Total    = detalles.Where(d => d.NumeroPeriodo == 1).Sum(d => d.TotalEstudiantes);
+        var pFinalTot  = detalles.Where(d => d.NumeroPeriodo == totalPeriodos).Sum(d => d.TotalEstudiantes);
         var ingresados = detalles.Where(d => d.NumeroCiclo == 1 && d.NumeroPeriodo % 2 == 1)
                                  .Sum(d => d.TotalEstudiantes);
 
         var indicadores = new IndicadoresProyeccionDto
         {
-            TotalIngresados = R(ingresados),
-            TituladosEsperados = R(ingresados * tasaGraduacionMeta / 100m),
-            MatriculaPeriodo1 = R(p1Total),
+            TotalIngresados       = R(ingresados),
+            TituladosEsperados    = R(ingresados * tasaGraduacionMeta / 100m),
+            MatriculaPeriodo1     = R(p1Total),
             MatriculaPeriodoFinal = R(pFinalTot),
-            CrecimientoMatricula = p1Total > 0 ? R(pFinalTot / p1Total) : 0m,
-            TasaRetencionMeta = tasaRetencionMeta,
-            TasaGraduacionMeta = tasaGraduacionMeta
+            CrecimientoMatricula  = p1Total > 0 ? R(pFinalTot / p1Total) : 0m,
+            TasaRetencionMeta     = tasaRetencionMeta,
+            TasaGraduacionMeta    = tasaGraduacionMeta
         };
 
         return new ProyeccionConsolidadaDto
@@ -148,13 +194,15 @@ public static class ConsolidadorProyeccionEstudiantes
             LabelAnio2 = anios.Count > 1 ? anios[1].ToString() : "—",
             LabelAnio3 = anios.Count > 2 ? anios[2].ToString() : "—",
             LabelAnio4 = anios.Count > 3 ? anios[3].ToString() : "—",
-            MatriculaPorAnio = filasMatricula,
-            DocentesPorAnio = filasDocentes,
-            TotalHorasDocencia = R(totalHDoc),
-            TotalHorasPractica = R(totalHTec),
+            ParalelosPorPeriodo = paralelosPorPeriodo,
+            MatriculaPorPeriodo = filasPeriodo,
+            MatriculaPorAnio    = filasMatricula,
+            DocentesPorAnio     = filasDocentes,
+            TotalHorasDocencia  = R(totalHDoc),
+            TotalHorasPractica  = R(totalHTec),
             TotalHorasCombinado = R(totalHDoc + totalHTec),
-            Indicadores = indicadores,
-            TablaPeriodos = tablaPeriodos
+            Indicadores         = indicadores,
+            TablaPeriodos       = tablaPeriodos
         };
     }
 
@@ -186,7 +234,7 @@ public static class ConsolidadorProyeccionEstudiantes
 
         return new FilaDocenteAnualDto
         {
-            Tipo = tipo,
+            Tipo  = tipo,
             Anio1 = Val(0),
             Anio2 = Val(1),
             Anio3 = Val(2),
