@@ -117,7 +117,7 @@ public static class ConsolidadorProyeccionEstudiantes
                     Valores  = fila21.Select(v => decimal.Round(v, 2)).ToArray() },
         };
 
-        // ── Tabla consumo por período (Tab 5) ────────────────────────────
+        // ── Tabla consumo por período (Tab 4) ────────────────────────────
         // Docentes y Técnicos son personas enteras → siempre Math.Ceiling
         var tablaPeriodos = new List<FilaConsumoPeriodicDto>(totalPeriodos);
         decimal totalHDocAcum = 0, totalHTecAcum = 0;
@@ -132,23 +132,14 @@ public static class ConsolidadorProyeccionEstudiantes
                 Periodo       = p + 1,
                 Anio          = AnioDePeriodo(proyeccion.AnioBase, p + 1),
                 Semestre      = p % 2 == 0 ? "Abril" : "Septiembre",
-                Docentes      = Ceil(fila15[p] / hDoc),          // entero: nunca 3.33
-                Tecnicos      = Ceil(fila19[p] / hTec),          // entero: nunca 0.25
+                Docentes      = Ceil(fila15[p] / hDoc),
+                Tecnicos      = Ceil(fila19[p] / hTec),
                 HorasDocencia = hDocPer,
                 HorasPractica = hTecPer
             });
         }
 
         // ── Docentes requeridos por período (Tabla 2) ──────────────────────
-        //
-        // ALGORITMO SIN NEGATIVOS:
-        //   docTotal[p] = Ceil(fila15[p] / J24)           → 1, 4, 5, 7, 8, 11, 12, 13
-        //   tcMgs[p]    = Ceil(docTotal[p] * 0.60)         → 60 %
-        //   phd[p]      = Ceil(tcMgs[p]   * 0.40)         → 40 % de Mgs = 24 % del total
-        //   parcial[p]  = Max(0, docTotal[p] - tcMgs[p] - phd[p])  → residuo, nunca negativo
-        //   tecnico[p]  = Ceil(fila19[p] / J30)
-        //
-        // INVARIANTE: phd + tcMgs + parcial == docTotal  en cada período.
         var docTotalArr = new int[totalPeriodos];
         var tcMgsArr    = new int[totalPeriodos];
         var phdArr      = new int[totalPeriodos];
@@ -172,12 +163,12 @@ public static class ConsolidadorProyeccionEstudiantes
 
         var filasDocentesPeriodo = new List<FilaDocentePeriodoDto>
         {
-            new() { Tipo = "Docentes Requeridos",       Periodos = docTotalArr, Total = docTotalArr[^1] },
-            new() { Tipo = "TC PhD",                    Periodos = phdArr,      Total = phdArr[^1]      },
-            new() { Tipo = "TC Mgs.",                   Periodos = tcMgsArr,    Total = tcMgsArr[^1]    },
-            new() { Tipo = "Medio Tiempo",              Periodos = new int[totalPeriodos], Total = 0    },
-            new() { Tipo = "Tiempo Parcial",            Periodos = parcialArr,  Total = parcialArr[^1]  },
-            new() { Tipo = "Ocasional Tipo 2 (Técnico)",Periodos = tecnicoArr,  Total = tecnicoArr[^1]  },
+            new() { Tipo = "Docentes Requeridos",        Periodos = docTotalArr, Total = docTotalArr[^1] },
+            new() { Tipo = "TC PhD",                     Periodos = phdArr,      Total = phdArr[^1]      },
+            new() { Tipo = "TC Mgs.",                    Periodos = tcMgsArr,    Total = tcMgsArr[^1]    },
+            new() { Tipo = "Medio Tiempo",               Periodos = new int[totalPeriodos], Total = 0    },
+            new() { Tipo = "Tiempo Parcial",             Periodos = parcialArr,  Total = parcialArr[^1]  },
+            new() { Tipo = "Ocasional Tipo 2 (Técnico)", Periodos = tecnicoArr,  Total = tecnicoArr[^1]  },
         };
 
         // ── Matrícula por período ───────────────────────────────────────
@@ -236,10 +227,13 @@ public static class ConsolidadorProyeccionEstudiantes
         });
 
         // ── Docentes por año (legado) ─────────────────────────────────
+        // Cast a decimal explícito porque FilaConsumoPeriodicDto.Docentes/Tecnicos son int
+        // y FilaDoc() espera IList<decimal>.
         var docAnio = anios.Select(anio =>
-            tablaPeriodos.Where(t => t.Anio == anio).Max(t => t.Docentes)).ToList();
+            (decimal)tablaPeriodos.Where(t => t.Anio == anio).Max(t => t.Docentes)).ToList();
         var tecAnio = anios.Select(anio =>
-            tablaPeriodos.Where(t => t.Anio == anio).Max(t => t.Tecnicos)).ToList();
+            (decimal)tablaPeriodos.Where(t => t.Anio == anio).Max(t => t.Tecnicos)).ToList();
+
         const decimal pctMgs = 0.60m;
         const decimal pctPhd = 0.40m;
         var parcPct = 1m - pctMgs - pctMgs * pctPhd;
