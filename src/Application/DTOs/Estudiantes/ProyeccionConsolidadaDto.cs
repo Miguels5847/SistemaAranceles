@@ -110,13 +110,17 @@ public sealed class IndicadoresProyeccionDto
     public decimal TasaGraduacionMeta    { get; init; }
 }
 
+/// <summary>
+/// Fila de la tabla "4. Consumo por período".
+/// Docentes y Tecnicos son siempre enteros (Math.Ceiling aplicado en el consolidador).
+/// </summary>
 public sealed class FilaConsumoPeriodicDto
 {
-    public int     Periodo       { get; init; }
-    public int     Anio          { get; init; }
-    public string  Semestre      { get; init; } = string.Empty;
-    public decimal Docentes      { get; init; }
-    public decimal Tecnicos      { get; init; }
+    public int    Periodo       { get; init; }
+    public int    Anio          { get; init; }
+    public string Semestre      { get; init; } = string.Empty;
+    public int    Docentes      { get; init; }   // personas enteras, nunca fraccionario
+    public int    Tecnicos      { get; init; }   // personas enteras, nunca fraccionario
     public decimal HorasDocencia { get; init; }
     public decimal HorasPractica { get; init; }
 }
