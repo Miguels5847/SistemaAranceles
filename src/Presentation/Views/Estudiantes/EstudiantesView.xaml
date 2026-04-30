@@ -48,6 +48,32 @@
                               AutoGenerateColumns="False" IsReadOnly="True"
                               HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F8F9FE">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Foreground" Value="#1A237E"/>
+                                <Setter Property="Background" Value="White"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#E8EAF6"/>
+                                        <Setter Property="Foreground" Value="#1A237E"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#C5CAE9"/>
+                                        <Setter Property="Foreground" Value="#1A237E"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell">
+                                <Setter Property="Foreground" Value="#1A237E"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Foreground" Value="#1A237E"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.CellStyle>
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="CARRERA"        Binding="{Binding CarreraCodigo}"      Width="Auto"/>
                             <DataGridTextColumn Header="NOMBRE CARRERA" Binding="{Binding CarreraNombre}"      Width="*"/>
@@ -156,14 +182,33 @@
                             </DataGrid.Resources>
                             <DataGrid.RowStyle>
                                 <Style TargetType="DataGridRow">
+                                    <Setter Property="Foreground" Value="#1A237E"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding Ciclo}" Value="Total Nº de Estudiantes">
                                             <Setter Property="FontWeight" Value="Bold"/>
                                             <Setter Property="Background" Value="#E8EAF6"/>
                                         </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#E8EAF6"/>
+                                            <Setter Property="Foreground" Value="#1A237E"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="#C5CAE9"/>
+                                            <Setter Property="Foreground" Value="#1A237E"/>
+                                        </Trigger>
                                     </Style.Triggers>
                                 </Style>
                             </DataGrid.RowStyle>
+                            <DataGrid.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="Foreground" Value="#1A237E"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Foreground" Value="#1A237E"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.CellStyle>
                         </DataGrid>
                     </Grid>
                 </TabItem>
@@ -176,7 +221,6 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <!-- Header: título + inputs Horas Docente / Horas Técnico -->
                         <Grid Grid.Row="0" Margin="0,0,0,6">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -186,7 +230,6 @@
                                        Text="Docentes requeridos por período"
                                        FontWeight="Bold" FontSize="12" Foreground="#1A237E"
                                        VerticalAlignment="Center"/>
-                            <!-- Inputs editables: recalculan en tiempo real -->
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,0,0">
                                 <Border Background="#FFF9C4" BorderBrush="#F9A825" BorderThickness="1"
                                         CornerRadius="4" Padding="6,3" Margin="0,0,8,0">
@@ -230,6 +273,7 @@
                             </DataGrid.Resources>
                             <DataGrid.RowStyle>
                                 <Style TargetType="DataGridRow">
+                                    <Setter Property="Foreground" Value="#1A237E"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding Tipo}" Value="Docentes Requeridos">
                                             <Setter Property="FontWeight" Value="Bold"/>
@@ -239,14 +283,32 @@
                                             <Setter Property="FontWeight" Value="Bold"/>
                                             <Setter Property="Background" Value="#E3F2FD"/>
                                         </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#E8EAF6"/>
+                                            <Setter Property="Foreground" Value="#1A237E"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="#C5CAE9"/>
+                                            <Setter Property="Foreground" Value="#1A237E"/>
+                                        </Trigger>
                                     </Style.Triggers>
                                 </Style>
                             </DataGrid.RowStyle>
+                            <DataGrid.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="Foreground" Value="#1A237E"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Foreground" Value="#1A237E"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.CellStyle>
                         </DataGrid>
                     </Grid>
                 </TabItem>
 
-                <!-- TAB 3: Horas por período (Filas 15–17 y 19–21) -->
+                <!-- TAB 3: Horas por período -->
                 <TabItem Header="3. Horas por período">
                     <Grid Margin="8">
                         <Grid.RowDefinitions>
@@ -273,14 +335,33 @@
                             </DataGrid.Resources>
                             <DataGrid.RowStyle>
                                 <Style TargetType="DataGridRow">
+                                    <Setter Property="Foreground" Value="#1A237E"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding EsInput}" Value="True">
                                             <Setter Property="Background" Value="#FFFDE7"/>
                                             <Setter Property="FontWeight" Value="Bold"/>
                                         </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#E8EAF6"/>
+                                            <Setter Property="Foreground" Value="#1A237E"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="#C5CAE9"/>
+                                            <Setter Property="Foreground" Value="#1A237E"/>
+                                        </Trigger>
                                     </Style.Triggers>
                                 </Style>
                             </DataGrid.RowStyle>
+                            <DataGrid.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="Foreground" Value="#1A237E"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Foreground" Value="#1A237E"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.CellStyle>
                         </DataGrid>
                     </Grid>
                 </TabItem>
@@ -291,6 +372,32 @@
                               AutoGenerateColumns="False" IsReadOnly="True"
                               HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F8F9FE" MaxHeight="300">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Foreground" Value="#1A237E"/>
+                                <Setter Property="Background" Value="White"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#E8EAF6"/>
+                                        <Setter Property="Foreground" Value="#1A237E"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#C5CAE9"/>
+                                        <Setter Property="Foreground" Value="#1A237E"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell">
+                                <Setter Property="Foreground" Value="#1A237E"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Foreground" Value="#1A237E"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.CellStyle>
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Per."        Binding="{Binding Periodo}"                      Width="40"/>
                             <DataGridTextColumn Header="Año"         Binding="{Binding Anio}"                         Width="55"/>

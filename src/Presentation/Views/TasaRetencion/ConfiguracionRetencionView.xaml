@@ -62,11 +62,6 @@
         </StackPanel>
 
         <TabControl Grid.Row="2">
-
-            <!-- ═══════════════════════════════════════════════════
-                 TAB PRINCIPAL: CONFIGURACIÓN
-                 Contiene tabs internos: Escenarios + Simulación
-            ════════════════════════════════════════════════════ -->
             <TabItem Header="Configuración">
                 <TabControl Margin="4"
                             SelectedIndex="{Binding TabInternoIndice, Mode=TwoWay}">
@@ -103,30 +98,31 @@
                                               AlternatingRowBackground="#F8F9FE">
                                         <DataGrid.RowStyle>
                                             <Style TargetType="DataGridRow">
-                                                <Setter Property="Background"
-                                                        Value="Transparent"/>
-                                                <Setter Property="Foreground"
-                                                        Value="Black"/>
-                                                <Setter Property="Cursor"
-                                                        Value="Arrow"/>
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Setter Property="Foreground" Value="#1A237E"/>
+                                                <Setter Property="Cursor" Value="Arrow"/>
                                                 <Style.Triggers>
-                                                    <Trigger Property="IsMouseOver"
-                                                             Value="True">
-                                                        <Setter Property="Background"
-                                                                Value="#EAEAEA"/>
-                                                        <Setter Property="Foreground"
-                                                                Value="Black"/>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#E8EAF6"/>
+                                                        <Setter Property="Foreground" Value="#1A237E"/>
                                                     </Trigger>
-                                                    <Trigger Property="IsSelected"
-                                                             Value="True">
-                                                        <Setter Property="Background"
-                                                                Value="#D6E4FF"/>
-                                                        <Setter Property="Foreground"
-                                                                Value="Black"/>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter Property="Background" Value="#C5CAE9"/>
+                                                        <Setter Property="Foreground" Value="#1A237E"/>
                                                     </Trigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </DataGrid.RowStyle>
+                                        <DataGrid.CellStyle>
+                                            <Style TargetType="DataGridCell">
+                                                <Setter Property="Foreground" Value="#1A237E"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter Property="Foreground" Value="#1A237E"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </DataGrid.CellStyle>
                                         <DataGrid.Columns>
                                             <DataGridTextColumn Header="Carrera"
                                                                 Binding="{Binding CarreraNombre}"
@@ -176,41 +172,21 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
 
-                                            <StackPanel Grid.Column="0"
-                                                        Margin="0,0,8,0">
-                                                <TextBlock Text="Historico"
-                                                           FontSize="11"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="#283593"
-                                                           Margin="0,0,0,4"/>
-                                                <TextBlock TextWrapping="Wrap"
-                                                           FontSize="11"
-                                                           Foreground="#37474F"
+                                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                                <TextBlock Text="Historico" FontSize="11" FontWeight="SemiBold" Foreground="#283593" Margin="0,0,0,4"/>
+                                                <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="#37474F"
                                                            Text="Escenario base. Ingrese los valores reales de la carrera tomados del Excel institucional. Este escenario sirve como referencia para los demás."/>
                                             </StackPanel>
 
-                                            <StackPanel Grid.Column="1"
-                                                        Margin="0,0,8,0">
-                                                <TextBlock Text="Optimista"
-                                                           FontSize="11"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="#2E7D32"
-                                                           Margin="0,0,0,4"/>
-                                                <TextBlock TextWrapping="Wrap"
-                                                           FontSize="11"
-                                                           Foreground="#37474F"
+                                            <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                                                <TextBlock Text="Optimista" FontSize="11" FontWeight="SemiBold" Foreground="#2E7D32" Margin="0,0,0,4"/>
+                                                <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="#37474F"
                                                            Text="Escenario derivado del histórico. Sube la retención 5% y la graduación 8%, y aumenta los estudiantes un 20%. Proyecta mayores ingresos por mejor permanencia y titulación."/>
                                             </StackPanel>
 
                                             <StackPanel Grid.Column="2">
-                                                <TextBlock Text="Pesimista"
-                                                           FontSize="11"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="#C62828"
-                                                           Margin="0,0,0,4"/>
-                                                <TextBlock TextWrapping="Wrap"
-                                                           FontSize="11"
-                                                           Foreground="#37474F"
+                                                <TextBlock Text="Pesimista" FontSize="11" FontWeight="SemiBold" Foreground="#C62828" Margin="0,0,0,4"/>
+                                                <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="#37474F"
                                                            Text="Escenario derivado del histórico. Baja la retención 10% y la graduación 15%, y reduce los estudiantes un 20%. Proyecta menor ingreso y exige mayor provisión presupuestaria."/>
                                             </StackPanel>
                                         </Grid>
@@ -228,37 +204,25 @@
                                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                                     <StackPanel>
                                         <TextBlock Text="{Binding TituloFormulario}"
-                                                   FontSize="14"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="#283593"
-                                                   Margin="0,0,0,8"/>
+                                                   FontSize="14" FontWeight="SemiBold" Foreground="#283593" Margin="0,0,0,8"/>
 
-                                        <TextBlock Text="Carrera"
-                                                   FontSize="11"
-                                                   Foreground="#546E7A"/>
+                                        <TextBlock Text="Carrera" FontSize="11" Foreground="#546E7A"/>
                                         <ComboBox ItemsSource="{Binding Carreras}"
                                                   SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}"
                                                   DisplayMemberPath="Descripcion"
                                                   Margin="0,0,0,8"/>
 
-                                        <TextBlock Text="Escenario"
-                                                   FontSize="11"
-                                                   Foreground="#546E7A"/>
+                                        <TextBlock Text="Escenario" FontSize="11" Foreground="#546E7A"/>
                                         <ComboBox ItemsSource="{Binding Escenarios}"
                                                   SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}"
                                                   Foreground="#1B1B1B"
                                                   ItemContainerStyle="{StaticResource ComboEscenarioItemStyle}"
                                                   DisplayMemberPath="Descripcion"/>
                                         <TextBlock Text="{Binding TextoInformativoEscenario}"
-                                                   Margin="0,8,0,8"
-                                                   TextWrapping="Wrap"
-                                                   FontSize="12"
-                                                   Foreground="#37474F"/>
+                                                   Margin="0,8,0,8" TextWrapping="Wrap" FontSize="12" Foreground="#37474F"/>
 
                                         <StackPanel Margin="0,0,0,8">
-                                            <TextBlock Text="Total ciclos"
-                                                       FontSize="11"
-                                                       Foreground="#546E7A"/>
+                                            <TextBlock Text="Total ciclos" FontSize="11" Foreground="#546E7A"/>
                                             <TextBox Text="{Binding TotalCiclos, UpdateSourceTrigger=PropertyChanged}"/>
                                         </StackPanel>
 
@@ -267,123 +231,74 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0"
-                                                        Margin="0,0,4,0">
-                                                <TextBlock Text="Tasa retencion %"
-                                                           FontSize="11"
-                                                           Foreground="#546E7A"/>
+                                            <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                                                <TextBlock Text="Tasa retencion %" FontSize="11" Foreground="#546E7A"/>
                                                 <TextBox Text="{Binding TasaRetencion, UpdateSourceTrigger=PropertyChanged}"/>
                                             </StackPanel>
-                                            <StackPanel Grid.Column="1"
-                                                        Margin="4,0,0,0">
-                                                <TextBlock Text="Tasa graduacion %"
-                                                           FontSize="11"
-                                                           Foreground="#546E7A"/>
+                                            <StackPanel Grid.Column="1" Margin="4,0,0,0">
+                                                <TextBlock Text="Tasa graduacion %" FontSize="11" Foreground="#546E7A"/>
                                                 <TextBox Text="{Binding TasaGraduacion, UpdateSourceTrigger=PropertyChanged}"/>
                                             </StackPanel>
                                         </Grid>
 
-                                        <TextBlock Text="Periodo 1"
-                                                   FontSize="11"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="#546E7A"
-                                                   Margin="0,4,0,4"/>
+                                        <TextBlock Text="Periodo 1" FontSize="11" FontWeight="SemiBold" Foreground="#546E7A" Margin="0,4,0,4"/>
                                         <Grid Margin="0,0,0,8">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0"
-                                                        Margin="0,0,4,0">
-                                                <TextBlock Text="Paralelos Periodo 1"
-                                                           FontSize="11"
-                                                           Foreground="#546E7A"/>
+                                            <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                                                <TextBlock Text="Paralelos Periodo 1" FontSize="11" Foreground="#546E7A"/>
                                                 <TextBox Text="{Binding ParalelosPeriodo1, UpdateSourceTrigger=PropertyChanged}"/>
                                             </StackPanel>
-                                            <StackPanel Grid.Column="1"
-                                                        Margin="4,0,0,0">
-                                                <TextBlock Text="Estudiantes Periodo 1"
-                                                           FontSize="11"
-                                                           Foreground="#546E7A"/>
+                                            <StackPanel Grid.Column="1" Margin="4,0,0,0">
+                                                <TextBlock Text="Estudiantes Periodo 1" FontSize="11" Foreground="#546E7A"/>
                                                 <TextBox Text="{Binding EstudiantesPeriodo1, UpdateSourceTrigger=PropertyChanged}"/>
                                             </StackPanel>
                                         </Grid>
 
-                                        <TextBlock Text="Periodo 2"
-                                                   FontSize="11"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="#546E7A"
-                                                   Margin="0,4,0,4"/>
+                                        <TextBlock Text="Periodo 2" FontSize="11" FontWeight="SemiBold" Foreground="#546E7A" Margin="0,4,0,4"/>
                                         <Grid Margin="0,0,0,8">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0"
-                                                        Margin="0,0,4,0">
-                                                <TextBlock Text="Paralelos Periodo 2"
-                                                           FontSize="11"
-                                                           Foreground="#546E7A"/>
+                                            <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                                                <TextBlock Text="Paralelos Periodo 2" FontSize="11" Foreground="#546E7A"/>
                                                 <TextBox Text="{Binding ParalelosPeriodo2, UpdateSourceTrigger=PropertyChanged}"/>
                                             </StackPanel>
-                                            <StackPanel Grid.Column="1"
-                                                        Margin="4,0,0,0">
-                                                <TextBlock Text="Estudiantes Periodo 2"
-                                                           FontSize="11"
-                                                           Foreground="#546E7A"/>
+                                            <StackPanel Grid.Column="1" Margin="4,0,0,0">
+                                                <TextBlock Text="Estudiantes Periodo 2" FontSize="11" Foreground="#546E7A"/>
                                                 <TextBox Text="{Binding EstudiantesPeriodo2, UpdateSourceTrigger=PropertyChanged}"/>
                                             </StackPanel>
                                         </Grid>
 
                                         <Separator Margin="0,4,0,8"/>
                                         <TextBlock Text="Metas de referencia (opcional)"
-                                                   FontSize="12"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="#283593"
-                                                   Margin="0,0,0,6"/>
+                                                   FontSize="12" FontWeight="SemiBold" Foreground="#283593" Margin="0,0,0,6"/>
 
                                         <Grid Margin="0,0,0,8">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0"
-                                                        Margin="0,0,4,0">
-                                                <TextBlock Text="Meta Retencion %"
-                                                           FontSize="11"
-                                                           Foreground="#546E7A"/>
+                                            <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                                                <TextBlock Text="Meta Retencion %" FontSize="11" Foreground="#546E7A"/>
                                                 <TextBox Text="{Binding MetaRetencion, UpdateSourceTrigger=PropertyChanged}"/>
                                             </StackPanel>
-                                            <StackPanel Grid.Column="1"
-                                                        Margin="4,0,0,0">
-                                                <TextBlock Text="Meta Graduacion %"
-                                                           FontSize="11"
-                                                           Foreground="#546E7A"/>
+                                            <StackPanel Grid.Column="1" Margin="4,0,0,0">
+                                                <TextBlock Text="Meta Graduacion %" FontSize="11" Foreground="#546E7A"/>
                                                 <TextBox Text="{Binding MetaGraduacion, UpdateSourceTrigger=PropertyChanged}"/>
                                             </StackPanel>
                                         </Grid>
 
-                                        <StackPanel Orientation="Horizontal"
-                                                    Margin="0,8,0,0">
-                                            <Button Content="Nuevo"
-                                                    Command="{Binding NuevoCommand}"
-                                                    Padding="10,6"
-                                                    Margin="0,0,6,0"/>
-                                            <Button Content="Editar seleccionado"
-                                                    Command="{Binding SeleccionarParaEditarCommand}"
-                                                    Padding="10,6"
-                                                    Margin="0,0,6,0"/>
-                                            <Button Content="Guardar"
-                                                    Command="{Binding GuardarCommand}"
-                                                    Background="#1A237E"
-                                                    Foreground="White"
-                                                    Padding="10,6"
-                                                    Margin="0,0,6,0"/>
-                                            <Button Content="Eliminar"
-                                                    Command="{Binding EliminarSeleccionadoCommand}"
-                                                    Background="#C62828"
-                                                    Foreground="White"
-                                                    Padding="10,6"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                            <Button Content="Nuevo" Command="{Binding NuevoCommand}" Padding="10,6" Margin="0,0,6,0"/>
+                                            <Button Content="Editar seleccionado" Command="{Binding SeleccionarParaEditarCommand}" Padding="10,6" Margin="0,0,6,0"/>
+                                            <Button Content="Guardar" Command="{Binding GuardarCommand}"
+                                                    Background="#1A237E" Foreground="White" Padding="10,6" Margin="0,0,6,0"/>
+                                            <Button Content="Eliminar" Command="{Binding EliminarSeleccionadoCommand}"
+                                                    Background="#C62828" Foreground="White" Padding="10,6"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </ScrollViewer>
@@ -395,8 +310,7 @@
                     <TabItem Header="Simulación">
                         <Grid x:Name="SimulacionTabRoot"
                               DataContext="{Binding SimulacionVm}">
-                            <ScrollViewer Margin="8"
-                                          VerticalScrollBarVisibility="Auto">
+                            <ScrollViewer Margin="8" VerticalScrollBarVisibility="Auto">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -404,13 +318,8 @@
                                     </Grid.RowDefinitions>
 
                                     <Border Grid.Row="0"
-                                            BorderBrush="#C5CAE9"
-                                            BorderThickness="1"
-                                            CornerRadius="10"
-                                            Padding="10"
-                                            MaxHeight="220"
-                                            Background="White"
-                                            Margin="0,0,0,8">
+                                            BorderBrush="#C5CAE9" BorderThickness="1" CornerRadius="10"
+                                            Padding="10" MaxHeight="220" Background="White" Margin="0,0,0,8">
                                         <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
@@ -418,138 +327,69 @@
                                                 <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
 
-                                            <TextBlock Grid.Row="0"
-                                                       Text="Cabecera de simulación"
-                                                       FontWeight="Bold"
-                                                       Foreground="#1A237E"
-                                                       FontSize="12"
-                                                       Margin="0,0,0,6"/>
+                                            <TextBlock Grid.Row="0" Text="Cabecera de simulación"
+                                                       FontWeight="Bold" Foreground="#1A237E" FontSize="12" Margin="0,0,0,6"/>
 
-                                            <UniformGrid Grid.Row="1"
-                                                         Columns="6"
-                                                         Margin="0,0,0,6">
-                                                <Border Margin="0,0,6,0"
-                                                        Padding="6,4"
-                                                        CornerRadius="6"
-                                                        Background="#E8EAF6">
+                                            <UniformGrid Grid.Row="1" Columns="6" Margin="0,0,0,6">
+                                                <Border Margin="0,0,6,0" Padding="6,4" CornerRadius="6" Background="#E8EAF6">
                                                     <StackPanel>
-                                                        <TextBlock Text="Carrera"
-                                                                   Foreground="#455A64"
-                                                                   FontSize="10"/>
-                                                        <TextBlock Text="{Binding ResumenCarrera}"
-                                                                   FontWeight="Bold"
-                                                                   FontSize="11"/>
+                                                        <TextBlock Text="Carrera" Foreground="#455A64" FontSize="10"/>
+                                                        <TextBlock Text="{Binding ResumenCarrera}" FontWeight="Bold" FontSize="11"/>
                                                     </StackPanel>
                                                 </Border>
-                                                <Border Margin="0,0,6,0"
-                                                        Padding="6,4"
-                                                        CornerRadius="6"
-                                                        Background="#E8F5E9">
+                                                <Border Margin="0,0,6,0" Padding="6,4" CornerRadius="6" Background="#E8F5E9">
                                                     <StackPanel>
-                                                        <TextBlock Text="Escenario"
-                                                                   Foreground="#455A64"
-                                                                   FontSize="10"/>
-                                                        <TextBlock Text="{Binding ResumenEscenario}"
-                                                                   FontWeight="Bold"
-                                                                   FontSize="11"/>
+                                                        <TextBlock Text="Escenario" Foreground="#455A64" FontSize="10"/>
+                                                        <TextBlock Text="{Binding ResumenEscenario}" FontWeight="Bold" FontSize="11"/>
                                                     </StackPanel>
                                                 </Border>
-                                                <Border Margin="0,0,6,0"
-                                                        Padding="6,4"
-                                                        CornerRadius="6"
-                                                        Background="#FFF8E1">
+                                                <Border Margin="0,0,6,0" Padding="6,4" CornerRadius="6" Background="#FFF8E1">
                                                     <StackPanel>
-                                                        <TextBlock Text="Grupo de ingreso"
-                                                                   Foreground="#455A64"
-                                                                   FontSize="10"/>
-                                                        <TextBlock Text="{Binding ResumenAnioIngreso}"
-                                                                   FontWeight="Bold"
-                                                                   FontSize="11"/>
+                                                        <TextBlock Text="Grupo de ingreso" Foreground="#455A64" FontSize="10"/>
+                                                        <TextBlock Text="{Binding ResumenAnioIngreso}" FontWeight="Bold" FontSize="11"/>
                                                     </StackPanel>
                                                 </Border>
-                                                <Border Margin="0,0,6,0"
-                                                        Padding="6,4"
-                                                        CornerRadius="6"
-                                                        Background="#E3F2FD">
+                                                <Border Margin="0,0,6,0" Padding="6,4" CornerRadius="6" Background="#E3F2FD">
                                                     <StackPanel>
-                                                        <TextBlock Text="Retención %"
-                                                                   Foreground="#455A64"
-                                                                   FontSize="10"/>
-                                                        <TextBlock Text="{Binding ResumenRetencion}"
-                                                                   FontWeight="Bold"
-                                                                   FontSize="11"/>
+                                                        <TextBlock Text="Retención %" Foreground="#455A64" FontSize="10"/>
+                                                        <TextBlock Text="{Binding ResumenRetencion}" FontWeight="Bold" FontSize="11"/>
                                                     </StackPanel>
                                                 </Border>
-                                                <Border Margin="0,0,6,0"
-                                                        Padding="6,4"
-                                                        CornerRadius="6"
-                                                        Background="#F3E5F5">
+                                                <Border Margin="0,0,6,0" Padding="6,4" CornerRadius="6" Background="#F3E5F5">
                                                     <StackPanel>
-                                                        <TextBlock Text="Graduación %"
-                                                                   Foreground="#455A64"
-                                                                   FontSize="10"/>
-                                                        <TextBlock Text="{Binding ResumenGraduacion}"
-                                                                   FontWeight="Bold"
-                                                                   FontSize="11"/>
+                                                        <TextBlock Text="Graduación %" Foreground="#455A64" FontSize="10"/>
+                                                        <TextBlock Text="{Binding ResumenGraduacion}" FontWeight="Bold" FontSize="11"/>
                                                     </StackPanel>
                                                 </Border>
                                             </UniformGrid>
 
-                                            <WrapPanel Grid.Row="2"
-                                                       ItemHeight="Auto"
-                                                       ItemWidth="Auto">
-                                                <StackPanel Margin="0,0,10,6"
-                                                            Width="300">
-                                                    <TextBlock Text="Configuración"
-                                                               FontSize="10"
-                                                               Foreground="#546E7A"/>
-                                                    <ComboBox ItemsSource="{Binding Configuraciones}"
-                                                              MinHeight="26"
+                                            <WrapPanel Grid.Row="2" ItemHeight="Auto" ItemWidth="Auto">
+                                                <StackPanel Margin="0,0,10,6" Width="300">
+                                                    <TextBlock Text="Configuración" FontSize="10" Foreground="#546E7A"/>
+                                                    <ComboBox ItemsSource="{Binding Configuraciones}" MinHeight="26"
                                                               SelectedItem="{Binding ConfiguracionSeleccionada, Mode=TwoWay}"
                                                               DisplayMemberPath="Descripcion"/>
                                                 </StackPanel>
-                                                <StackPanel Margin="0,0,10,6"
-                                                            Width="120">
-                                                    <TextBlock Text="Grupo de ingreso"
-                                                               FontSize="10"
-                                                               Foreground="#546E7A"/>
+                                                <StackPanel Margin="0,0,10,6" Width="120">
+                                                    <TextBlock Text="Grupo de ingreso" FontSize="10" Foreground="#546E7A"/>
                                                     <TextBox MinHeight="26"
                                                              Text="{Binding CohorteAnio, UpdateSourceTrigger=PropertyChanged}"/>
                                                 </StackPanel>
-                                                <Button Content="Ejecutar simulación"
-                                                        Command="{Binding EjecutarSimulacionCommand}"
-                                                        Background="#1A237E"
-                                                        Foreground="White"
-                                                        Padding="8,5"
-                                                        Margin="0,0,6,6"/>
-                                                <Button Content="Refrescar"
-                                                        Command="{Binding CargarSimulacionesCommand}"
-                                                        Padding="8,5"
-                                                        Margin="0,0,6,6"/>
-                                                <Button Content="Ver detalle"
-                                                        Command="{Binding VerDetalleSimulacionCommand}"
-                                                        Padding="8,5"
-                                                        Margin="0,0,6,6"/>
-                                                <Button Content="Eliminar simulación"
-                                                        Command="{Binding EliminarSimulacionSeleccionadaCommand}"
-                                                        Background="#C62828"
-                                                        Foreground="White"
-                                                        Padding="8,5"
-                                                        Margin="0,0,6,6"/>
-                                                <Button Content="Limpiar por configuración"
-                                                        Command="{Binding LimpiarSimulacionesConfiguracionCommand}"
-                                                        Padding="8,5"
-                                                        Margin="0,0,6,6"/>
+                                                <Button Content="Ejecutar simulación" Command="{Binding EjecutarSimulacionCommand}"
+                                                        Background="#1A237E" Foreground="White" Padding="8,5" Margin="0,0,6,6"/>
+                                                <Button Content="Refrescar" Command="{Binding CargarSimulacionesCommand}" Padding="8,5" Margin="0,0,6,6"/>
+                                                <Button Content="Ver detalle" Command="{Binding VerDetalleSimulacionCommand}" Padding="8,5" Margin="0,0,6,6"/>
+                                                <Button Content="Eliminar simulación" Command="{Binding EliminarSimulacionSeleccionadaCommand}"
+                                                        Background="#C62828" Foreground="White" Padding="8,5" Margin="0,0,6,6"/>
+                                                <Button Content="Limpiar por configuración" Command="{Binding LimpiarSimulacionesConfiguracionCommand}"
+                                                        Padding="8,5" Margin="0,0,6,6"/>
                                             </WrapPanel>
                                         </Grid>
                                     </Border>
 
                                     <Border Grid.Row="1"
-                                            BorderBrush="#1A237E"
-                                            BorderThickness="1"
-                                            CornerRadius="10"
-                                            Background="#FCFDFF"
-                                            Padding="14">
+                                            BorderBrush="#1A237E" BorderThickness="1" CornerRadius="10"
+                                            Background="#FCFDFF" Padding="14">
                                         <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
@@ -560,140 +400,88 @@
                                                 <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
 
-                                            <TextBlock Grid.Row="0"
-                                                       Text="Simulaciones registradas"
-                                                       FontWeight="Bold"
-                                                       FontSize="14"
-                                                       Margin="0,0,0,6"/>
+                                            <TextBlock Grid.Row="0" Text="Simulaciones registradas"
+                                                       FontWeight="Bold" FontSize="14" Margin="0,0,0,6"/>
 
-                                            <Grid Grid.Row="1"
-                                                  Margin="0,0,0,10">
+                                            <Grid Grid.Row="1" Margin="0,0,0,10">
                                                 <DataGrid x:Name="SimulacionesGrid"
-                                                          MinHeight="180"
-                                                          MaxHeight="230"
+                                                          MinHeight="180" MaxHeight="230"
                                                           ItemsSource="{Binding Simulaciones}"
                                                           SelectedItem="{Binding SimulacionSeleccionada, Mode=TwoWay}"
                                                           SelectedValuePath="Id"
                                                           SelectedValue="{Binding SelectedSimulationId, Mode=TwoWay}"
-                                                          SelectionMode="Single"
-                                                          SelectionUnit="FullRow"
-                                                          AutoGenerateColumns="False"
-                                                          IsReadOnly="True"
-                                                          HeadersVisibility="Column"
-                                                          GridLinesVisibility="Horizontal"
+                                                          SelectionMode="Single" SelectionUnit="FullRow"
+                                                          AutoGenerateColumns="False" IsReadOnly="True"
+                                                          HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                                                           AlternatingRowBackground="#F8F9FE">
                                                     <DataGrid.RowStyle>
                                                         <Style TargetType="DataGridRow">
-                                                            <Setter Property="Background"
-                                                                    Value="White"/>
-                                                            <Setter Property="Foreground"
-                                                                    Value="Black"/>
+                                                            <Setter Property="Background" Value="White"/>
+                                                            <Setter Property="Foreground" Value="#1A237E"/>
                                                             <Style.Triggers>
-                                                                <Trigger Property="IsMouseOver"
-                                                                         Value="True">
-                                                                    <Setter Property="Background"
-                                                                            Value="#EAEAEA"/>
-                                                                    <Setter Property="Foreground"
-                                                                            Value="Black"/>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter Property="Background" Value="#E8EAF6"/>
+                                                                    <Setter Property="Foreground" Value="#1A237E"/>
                                                                 </Trigger>
-                                                                <Trigger Property="IsSelected"
-                                                                         Value="True">
-                                                                    <Setter Property="Background"
-                                                                            Value="#D6E4FF"/>
-                                                                    <Setter Property="Foreground"
-                                                                            Value="Black"/>
-                                                                    <Setter Property="FontWeight"
-                                                                            Value="SemiBold"/>
+                                                                <Trigger Property="IsSelected" Value="True">
+                                                                    <Setter Property="Background" Value="#C5CAE9"/>
+                                                                    <Setter Property="Foreground" Value="#1A237E"/>
+                                                                    <Setter Property="FontWeight" Value="SemiBold"/>
                                                                 </Trigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </DataGrid.RowStyle>
+                                                    <DataGrid.CellStyle>
+                                                        <Style TargetType="DataGridCell">
+                                                            <Setter Property="Foreground" Value="#1A237E"/>
+                                                            <Style.Triggers>
+                                                                <Trigger Property="IsSelected" Value="True">
+                                                                    <Setter Property="Foreground" Value="#1A237E"/>
+                                                                </Trigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </DataGrid.CellStyle>
                                                     <DataGrid.Columns>
-                                                        <DataGridTextColumn Header="Carrera"
-                                                                            Binding="{Binding CarreraCodigo}"
-                                                                            Width="Auto"/>
-                                                        <DataGridTextColumn Header="Escenario"
-                                                                            Binding="{Binding EscenarioNombre}"
-                                                                            Width="*"/>
-                                                        <DataGridTextColumn Header="Grupo ingreso"
-                                                                            Binding="{Binding CohorteAnio}"
-                                                                            Width="Auto"/>
+                                                        <DataGridTextColumn Header="Carrera" Binding="{Binding CarreraCodigo}" Width="Auto"/>
+                                                        <DataGridTextColumn Header="Escenario" Binding="{Binding EscenarioNombre}" Width="*"/>
+                                                        <DataGridTextColumn Header="Grupo ingreso" Binding="{Binding CohorteAnio}" Width="Auto"/>
                                                     </DataGrid.Columns>
                                                 </DataGrid>
 
-                                                <Border Padding="10"
-                                                        CornerRadius="6"
-                                                        BorderThickness="1"
-                                                        BorderBrush="#D0D7E2"
-                                                        Background="#FAFBFD"
-                                                        HorizontalAlignment="Center"
-                                                        VerticalAlignment="Center">
+                                                <Border Padding="10" CornerRadius="6" BorderThickness="1"
+                                                        BorderBrush="#D0D7E2" Background="#FAFBFD"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
-                                                            <Setter Property="Visibility"
-                                                                    Value="Collapsed"/>
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
                                                             <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding ElementName=SimulacionesGrid, Path=HasItems}"
-                                                                             Value="False">
-                                                                    <Setter Property="Visibility"
-                                                                            Value="Visible"/>
+                                                                <DataTrigger Binding="{Binding ElementName=SimulacionesGrid, Path=HasItems}" Value="False">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
                                                     <TextBlock Text="No hay simulaciones registradas"
-                                                               Foreground="#455A64"
-                                                               FontWeight="SemiBold"/>
+                                                               Foreground="#455A64" FontWeight="SemiBold"/>
                                                 </Border>
                                             </Grid>
 
                                             <TextBlock Grid.Row="2"
                                                        Text="Resultado de simulación por ciclos (estructura semestral)"
-                                                       FontWeight="Bold"
-                                                       FontSize="15"
-                                                       Margin="0,0,0,8"/>
+                                                       FontWeight="Bold" FontSize="15" Margin="0,0,0,8"/>
 
-                                            <WrapPanel Grid.Row="3"
-                                                       Margin="0,0,0,10">
-                                                <Border Background="#E3F2FD"
-                                                        CornerRadius="6"
-                                                        Padding="10,6"
-                                                        Margin="0,0,8,8">
-                                                    <TextBlock>
-                                                <Run Text="Retención: "/>
-                                                <Run Text="{Binding RetencionResumenTexto}"
-                                                        FontWeight="Bold"/>
-                                                    </TextBlock>
+                                            <WrapPanel Grid.Row="3" Margin="0,0,0,10">
+                                                <Border Background="#E3F2FD" CornerRadius="6" Padding="10,6" Margin="0,0,8,8">
+                                                    <TextBlock><Run Text="Retención: "/><Run Text="{Binding RetencionResumenTexto}" FontWeight="Bold"/></TextBlock>
                                                 </Border>
-                                                <Border Background="#FCE4EC"
-                                                        CornerRadius="6"
-                                                        Padding="10,6"
-                                                        Margin="0,0,8,8">
-                                                    <TextBlock>
-                                                <Run Text="Graduación: "/>
-                                                <Run Text="{Binding GraduacionResumenTexto}"
-                                                        FontWeight="Bold"/>
-                                                    </TextBlock>
+                                                <Border Background="#FCE4EC" CornerRadius="6" Padding="10,6" Margin="0,0,8,8">
+                                                    <TextBlock><Run Text="Graduación: "/><Run Text="{Binding GraduacionResumenTexto}" FontWeight="Bold"/></TextBlock>
                                                 </Border>
-                                                <Border Background="#F1F8E9"
-                                                        CornerRadius="6"
-                                                        Padding="10,6"
-                                                        Margin="0,0,8,8">
-                                                    <TextBlock>
-                                                <Run Text="Paralelo abr-ago: "/>
-                                                <Run Text="{Binding ParaleloAbr}"
-                                                        FontWeight="Bold"/>
-                                                    </TextBlock>
+                                                <Border Background="#F1F8E9" CornerRadius="6" Padding="10,6" Margin="0,0,8,8">
+                                                    <TextBlock><Run Text="Paralelo abr-ago: "/><Run Text="{Binding ParaleloAbr}" FontWeight="Bold"/></TextBlock>
                                                 </Border>
-                                                <Border Background="#E8F5E9"
-                                                        CornerRadius="6"
-                                                        Padding="10,6"
-                                                        Margin="0,0,8,8">
-                                                    <TextBlock>
-                                                <Run Text="Paralelo sep-feb: "/>
-                                                <Run Text="{Binding ParaleloSep}"
-                                                        FontWeight="Bold"/>
-                                                    </TextBlock>
+                                                <Border Background="#E8F5E9" CornerRadius="6" Padding="10,6" Margin="0,0,8,8">
+                                                    <TextBlock><Run Text="Paralelo sep-feb: "/><Run Text="{Binding ParaleloSep}" FontWeight="Bold"/></TextBlock>
                                                 </Border>
                                             </WrapPanel>
 
@@ -708,31 +496,20 @@
                                                     </ItemsControl.ItemsPanel>
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate>
-                                                            <Border BorderBrush="#1F1F1F"
-                                                                    BorderThickness="1"
+                                                            <Border BorderBrush="#1F1F1F" BorderThickness="1"
                                                                     Background="{Binding FondoAlumnos}"
-                                                                    MinWidth="76"
-                                                                    MinHeight="72"
-                                                                    Margin="1"
-                                                                    Padding="6">
+                                                                    MinWidth="76" MinHeight="72" Margin="1" Padding="6">
                                                                 <Grid>
                                                                     <Grid.RowDefinitions>
                                                                         <RowDefinition Height="Auto"/>
                                                                         <RowDefinition Height="*"/>
                                                                     </Grid.RowDefinitions>
-                                                                    <TextBlock Grid.Row="0"
-                                                                               Text="{Binding TituloCiclo}"
-                                                                               HorizontalAlignment="Center"
-                                                                               FontWeight="Bold"
-                                                                               FontSize="13"
-                                                                               Foreground="#1A237E"/>
-                                                                    <TextBlock Grid.Row="1"
-                                                                               Text="{Binding AlumnosTexto}"
-                                                                               HorizontalAlignment="Center"
-                                                                               VerticalAlignment="Center"
-                                                                               FontWeight="SemiBold"
-                                                                               FontSize="16"
-                                                                               Foreground="#1B1B1B"/>
+                                                                    <TextBlock Grid.Row="0" Text="{Binding TituloCiclo}"
+                                                                               HorizontalAlignment="Center" FontWeight="Bold"
+                                                                               FontSize="13" Foreground="#1A237E"/>
+                                                                    <TextBlock Grid.Row="1" Text="{Binding AlumnosTexto}"
+                                                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                               FontWeight="SemiBold" FontSize="16" Foreground="#1B1B1B"/>
                                                                 </Grid>
                                                             </Border>
                                                         </DataTemplate>
@@ -742,8 +519,7 @@
 
                                             <TextBlock Grid.Row="5"
                                                        Text="Cada cuadro muestra número de ciclo y alumnos proyectados. Las tasas se presentan como indicadores externos."
-                                                       Foreground="#546E7A"
-                                                       Margin="0,10,0,0"/>
+                                                       Foreground="#546E7A" Margin="0,10,0,0"/>
                                         </Grid>
                                     </Border>
                                 </Grid>
@@ -753,7 +529,6 @@
 
                 </TabControl>
             </TabItem>
-
         </TabControl>
     </Grid>
 </UserControl>
