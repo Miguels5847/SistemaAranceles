@@ -21,8 +21,7 @@ namespace SistemaAranceles.Application.UseCases.Estudiantes;
 ///             [10, 32, 44, 70, 85, 118, 139, 189]
 ///
 /// TABLA DOCENTES — reglas Excel:
-///   Fila 24 (docTotal) = Fila15[p] / J24          (fraccionario, referencia)
-///                        [1.00, 3.33, 4.44, 6.78, 7.94, 10.17, 11.22, 13.00]
+///   Fila 24 (docTotal) = Ceil(Fila15[p] / J24)         → 1, 4, 5, 7, 8, 11, 12, 13
 ///   Fila 26 (tcMgs)    = Ceil(docTotal * 0.60)
 ///   Fila 25 (phd)      = Ceil(tcMgs   * 0.40)
 ///   Fila 28 (parcial)  = Ceil(docTotal) - tcMgs - phd  (≥ 0 siempre)
@@ -119,6 +118,7 @@ public static class ConsolidadorProyeccionEstudiantes
         };
 
         // ── Tabla consumo por período (Tab 5) ────────────────────────────
+        // Docentes y Técnicos son personas enteras → siempre Math.Ceiling
         var tablaPeriodos = new List<FilaConsumoPeriodicDto>(totalPeriodos);
         decimal totalHDocAcum = 0, totalHTecAcum = 0;
         for (var p = 0; p < totalPeriodos; p++)
@@ -129,11 +129,11 @@ public static class ConsolidadorProyeccionEstudiantes
             totalHTecAcum += hTecPer;
             tablaPeriodos.Add(new FilaConsumoPeriodicDto
             {
-                Periodo      = p + 1,
-                Anio         = AnioDePeriodo(proyeccion.AnioBase, p + 1),
-                Semestre     = p % 2 == 0 ? "Abril" : "Septiembre",
-                Docentes     = decimal.Round(fila15[p] / hDoc, 2),
-                Tecnicos     = decimal.Round(fila19[p] / hTec, 3),
+                Periodo       = p + 1,
+                Anio          = AnioDePeriodo(proyeccion.AnioBase, p + 1),
+                Semestre      = p % 2 == 0 ? "Abril" : "Septiembre",
+                Docentes      = Ceil(fila15[p] / hDoc),          // entero: nunca 3.33
+                Tecnicos      = Ceil(fila19[p] / hTec),          // entero: nunca 0.25
                 HorasDocencia = hDocPer,
                 HorasPractica = hTecPer
             });
@@ -160,11 +160,6 @@ public static class ConsolidadorProyeccionEstudiantes
             var dTot = Ceil(fila15[p] / hDoc);
             var mgs  = Ceil(dTot * 0.60m);
             var phd  = Ceil(mgs  * 0.40m);
-            // Residuo = total - tcMgs - phd; siempre >= 0 porque mgs+phd <= dTot:
-            //   mgs  = Ceil(dTot*0.60) <= dTot  (Ceil nunca supera el entero si la fraccion <= 1)
-            //   phd  = Ceil(mgs *0.40) <= mgs
-            //   => mgs + phd <= mgs + mgs = 2*mgs; pero en la práctica mgs+phd <= dTot siempre
-            //   Para seguridad absoluta: Max(0, ...)
             var par  = Math.Max(0, dTot - mgs - phd);
             var tec  = Ceil(fila19[p] / hTec);
 
@@ -175,16 +170,14 @@ public static class ConsolidadorProyeccionEstudiantes
             tecnicoArr[p]  = tec;
         }
 
-        // Fila extra para los inputs J24 y J30 (aparece como última columna en el DataGrid)
-        // Se emite como fila "Horas Docente" con un solo valor visible al final.
         var filasDocentesPeriodo = new List<FilaDocentePeriodoDto>
         {
-            new() { Tipo = "Docentes Requeridos",      Periodos = docTotalArr, Total = docTotalArr[^1] },
-            new() { Tipo = "TC PhD",                   Periodos = phdArr,      Total = phdArr[^1]      },
-            new() { Tipo = "TC Mgs.",                  Periodos = tcMgsArr,    Total = tcMgsArr[^1]    },
-            new() { Tipo = "Medio Tiempo",             Periodos = new int[totalPeriodos], Total = 0    },
-            new() { Tipo = "Tiempo Parcial",           Periodos = parcialArr,  Total = parcialArr[^1]  },
-            new() { Tipo = "Ocasional Tipo 2 (Técnico)",Periodos = tecnicoArr, Total = tecnicoArr[^1]  },
+            new() { Tipo = "Docentes Requeridos",       Periodos = docTotalArr, Total = docTotalArr[^1] },
+            new() { Tipo = "TC PhD",                    Periodos = phdArr,      Total = phdArr[^1]      },
+            new() { Tipo = "TC Mgs.",                   Periodos = tcMgsArr,    Total = tcMgsArr[^1]    },
+            new() { Tipo = "Medio Tiempo",              Periodos = new int[totalPeriodos], Total = 0    },
+            new() { Tipo = "Tiempo Parcial",            Periodos = parcialArr,  Total = parcialArr[^1]  },
+            new() { Tipo = "Ocasional Tipo 2 (Técnico)",Periodos = tecnicoArr,  Total = tecnicoArr[^1]  },
         };
 
         // ── Matrícula por período ───────────────────────────────────────
@@ -199,9 +192,9 @@ public static class ConsolidadorProyeccionEstudiantes
                 .ToArray();
             filasPeriodo.Add(new FilaMatriculaPeriodoDto
             {
-                Ciclo = $"{ciclo} CICLO",
+                Ciclo    = $"{ciclo} CICLO",
                 Periodos = vals,
-                Total = decimal.Round(vals.Sum(), 2)
+                Total    = decimal.Round(vals.Sum(), 2)
             });
         }
 
@@ -255,7 +248,7 @@ public static class ConsolidadorProyeccionEstudiantes
             FilaDoc("TC PhD (24 %)",     docAnio, tecAnio, d => decimal.Round(d * pctMgs * pctPhd, 2)),
             FilaDoc("TC Mgs (60 %)",     docAnio, tecAnio, d => decimal.Round(d * pctMgs, 2)),
             FilaDoc("T. Parcial (16 %)", docAnio, tecAnio, d => decimal.Round(d * parcPct, 2)),
-            FilaDoc("Técnico",           docAnio, tecAnio, _ => 0m, t => decimal.Round(t, 3)),
+            FilaDoc("Técnico",           docAnio, tecAnio, _ => 0m, t => decimal.Round(t, 0)),
             FilaDoc("TOTAL Docentes",    docAnio, tecAnio, d => decimal.Round(d, 2))
         };
 
