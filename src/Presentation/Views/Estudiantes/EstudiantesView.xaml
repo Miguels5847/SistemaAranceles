@@ -285,78 +285,8 @@
                     </Grid>
                 </TabItem>
 
-                <!-- TAB 4: Indicadores -->
-                <TabItem Header="4. Indicadores">
-                    <Grid Margin="16,12">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="16"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="Matrícula" FontWeight="Bold" FontSize="12" Foreground="#1A237E" Margin="0,0,0,6"/>
-                            <Border Background="#E3F2FD" CornerRadius="4" Padding="10,6" Margin="0,0,0,6">
-                                <StackPanel>
-                                    <TextBlock Text="Matrícula período 1" FontSize="10" Foreground="#546E7A"/>
-                                    <TextBlock Text="{Binding DetalleConsolidado.Indicadores.MatriculaPeriodo1, StringFormat=N2}"
-                                               FontSize="18" FontWeight="Bold" Foreground="#1565C0"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Background="#E3F2FD" CornerRadius="4" Padding="10,6" Margin="0,0,0,6">
-                                <StackPanel>
-                                    <TextBlock Text="Matrícula período final" FontSize="10" Foreground="#546E7A"/>
-                                    <TextBlock Text="{Binding DetalleConsolidado.Indicadores.MatriculaPeriodoFinal, StringFormat=N2}"
-                                               FontSize="18" FontWeight="Bold" Foreground="#1565C0"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Background="#E8EAF6" CornerRadius="4" Padding="10,6">
-                                <StackPanel>
-                                    <TextBlock Text="Crecimiento P1→Pfinal (×)" FontSize="10" Foreground="#546E7A"/>
-                                    <TextBlock Text="{Binding DetalleConsolidado.Indicadores.CrecimientoMatricula, StringFormat=N2}"
-                                               FontSize="18" FontWeight="Bold" Foreground="#283593"/>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-                        <StackPanel Grid.Column="2">
-                            <TextBlock Text="Titulación y retención" FontWeight="Bold" FontSize="12" Foreground="#1A237E" Margin="0,0,0,6"/>
-                            <Border Background="#E8F5E9" CornerRadius="4" Padding="10,6" Margin="0,0,0,6">
-                                <StackPanel>
-                                    <TextBlock Text="Ingresados ABR (ciclo 1, períodos ABR)" FontSize="10" Foreground="#546E7A"/>
-                                    <TextBlock Text="{Binding DetalleConsolidado.Indicadores.TotalIngresados, StringFormat=N2}"
-                                               FontSize="18" FontWeight="Bold" Foreground="#2E7D32"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Background="#E8F5E9" CornerRadius="4" Padding="10,6" Margin="0,0,0,6">
-                                <StackPanel>
-                                    <TextBlock FontSize="10" Foreground="#546E7A">
-                                        <Run Text="Titulados esperados ("/>
-                                        <Run Text="{Binding DetalleConsolidado.Indicadores.TasaGraduacionMeta, StringFormat=N0}"/>
-                                        <Run Text="%)"/>
-                                    </TextBlock>
-                                    <TextBlock Text="{Binding DetalleConsolidado.Indicadores.TituladosEsperados, StringFormat=N2}"
-                                               FontSize="18" FontWeight="Bold" Foreground="#2E7D32"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Background="#FFF8E1" CornerRadius="4" Padding="10,6">
-                                <StackPanel>
-                                    <TextBlock FontSize="10" Foreground="#546E7A">
-                                        <Run Text="Meta retención / ciclo: "/>
-                                        <Run Text="{Binding DetalleConsolidado.Indicadores.TasaRetencionMeta, StringFormat=N0}"/>
-                                        <Run Text="%"/>
-                                    </TextBlock>
-                                    <TextBlock FontSize="10" Foreground="#546E7A" Margin="0,4,0,0">
-                                        <Run Text="Meta titulación global: "/>
-                                        <Run Text="{Binding DetalleConsolidado.Indicadores.TasaGraduacionMeta, StringFormat=N0}"/>
-                                        <Run Text="%"/>
-                                    </TextBlock>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-                    </Grid>
-                </TabItem>
-
-                <!-- TAB 5: Consumo por período -->
-                <TabItem Header="5. Consumo por período">
+                <!-- TAB 4: Consumo por período -->
+                <TabItem Header="4. Consumo por período">
                     <DataGrid Margin="8" ItemsSource="{Binding DetalleConsolidado.TablaPeriodos}"
                               AutoGenerateColumns="False" IsReadOnly="True"
                               HeadersVisibility="Column" GridLinesVisibility="Horizontal"

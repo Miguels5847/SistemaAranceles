@@ -131,7 +131,7 @@ public static class ConsolidadorProyeccionEstudiantes
             {
                 Periodo      = p + 1,
                 Anio         = AnioDePeriodo(proyeccion.AnioBase, p + 1),
-                Semestre     = p % 2 == 0 ? "ABR" : "SEP",
+                Semestre     = p % 2 == 0 ? "Abril" : "Septiembre",
                 Docentes     = decimal.Round(fila15[p] / hDoc, 2),
                 Tecnicos     = decimal.Round(fila19[p] / hTec, 3),
                 HorasDocencia = hDocPer,
@@ -204,6 +204,7 @@ public static class ConsolidadorProyeccionEstudiantes
                 Total = decimal.Round(vals.Sum(), 2)
             });
         }
+
         var totalesPorPeriodo = Enumerable.Range(0, totalPeriodos)
             .Select(i => decimal.Round(filasPeriodo.Sum(f => f.Periodos[i]), 2)).ToArray();
         filasPeriodo.Add(new FilaMatriculaPeriodoDto

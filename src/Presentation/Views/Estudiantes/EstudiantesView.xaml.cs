@@ -58,23 +58,17 @@ public partial class EstudiantesView : UserControl
         {
             var periodo  = detalle.TablaPeriodos.Count > p ? detalle.TablaPeriodos[p] : null;
             var anio     = periodo?.Anio.ToString() ?? string.Empty;
-            var semestre = periodo?.Semestre ?? (p % 2 == 0 ? "ABR" : "SEP");
-            var par      = p < paralelos.Length ? paralelos[p] : 1;
+            var semestre = p % 2 == 0 ? "ABR" : "SEP";
+            var parAcum  = paralelos.Take(p + 1).Sum();
 
             dgMatriculaPeriodo.Columns.Add(new DataGridTextColumn
             {
-                Header  = $"{anio}\n{semestre}\npar:{par}",
+                Header  = $"{anio}\n{semestre}\npar:{parAcum}",
                 Binding = new Binding($"Periodos[{p}]") { StringFormat = "N0" },
                 Width   = new DataGridLength(1, DataGridLengthUnitType.Star)
             });
         }
 
-        dgMatriculaPeriodo.Columns.Add(new DataGridTextColumn
-        {
-            Header  = "TOTAL",
-            Binding = new Binding("Total") { StringFormat = "N0" },
-            Width   = new DataGridLength(80)
-        });
     }
 
     // ─── Tab 2: Docentes por período ───────────────────────────────────
@@ -99,7 +93,7 @@ public partial class EstudiantesView : UserControl
         {
             var periodo  = detalle.TablaPeriodos.Count > p ? detalle.TablaPeriodos[p] : null;
             var anio     = periodo?.Anio.ToString() ?? string.Empty;
-            var semestre = periodo?.Semestre ?? (p % 2 == 0 ? "ABR" : "SEP");
+            var semestre = p % 2 == 0 ? "ABR" : "SEP";
 
             dgDocentesPeriodo.Columns.Add(new DataGridTextColumn
             {
@@ -109,13 +103,6 @@ public partial class EstudiantesView : UserControl
             });
         }
 
-        // Columna TOTAL = valor del período final (acumulado máximo)
-        dgDocentesPeriodo.Columns.Add(new DataGridTextColumn
-        {
-            Header  = "TOTAL",
-            Binding = new Binding("Total") { StringFormat = "N0" },
-            Width   = new DataGridLength(70)
-        });
     }
 
     // ─── Tab 3: Horas por período (filas 15–17 y 19–21) ──────────────────
@@ -142,7 +129,7 @@ public partial class EstudiantesView : UserControl
         {
             var periodo  = detalle.TablaPeriodos.Count > p ? detalle.TablaPeriodos[p] : null;
             var anio     = periodo?.Anio.ToString() ?? string.Empty;
-            var semestre = periodo?.Semestre ?? (p % 2 == 0 ? "ABR" : "SEP");
+            var semestre = p % 2 == 0 ? "ABR" : "SEP";
 
             dgHorasPeriodo.Columns.Add(new DataGridTextColumn
             {
