@@ -10,11 +10,46 @@
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Fonts.xaml"/>
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Themes/Light.Blue.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-            <conv:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
-            <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+
+            <!-- Converters -->
+            <conv:StringToVisibilityConverter  x:Key="StringToVisibilityConverter"/>
+            <conv:BoolToVisibilityConverter    x:Key="BoolToVisibilityConverter"/>
             <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
-            <conv:InverseBoolConverter x:Key="InverseBoolConverter"/>
+            <conv:InverseBoolConverter         x:Key="InverseBoolConverter"/>
             <conv:UtcToEcuadorDateTimeConverter x:Key="UtcToEcuadorDateTimeConverter"/>
+
+            <!--
+                FIX KAN-19: MahApps.Metro Light.Blue pinta el fondo de la fila
+                con el color de acento (azul oscuro) al hacer hover y al
+                seleccionar, pero no cambia el Foreground, dejando el texto
+                invisible. Este estilo global fuerza el texto a blanco en esos
+                estados para todos los DataGrid de la aplicacion.
+            -->
+            <Style TargetType="DataGridRow">
+                <Setter Property="Foreground" Value="#212121"/>
+                <Style.Triggers>
+                    <!-- Hover: fondo acento claro, texto oscuro -->
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="#E8EAF6"/>
+                        <Setter Property="Foreground" Value="#1A237E"/>
+                    </Trigger>
+                    <!-- Seleccionado: fondo acento medio, texto blanco -->
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="#3949AB"/>
+                        <Setter Property="Foreground" Value="White"/>
+                    </Trigger>
+                    <!-- Seleccionado + hover: mantener texto blanco -->
+                    <MultiTrigger>
+                        <MultiTrigger.Conditions>
+                            <Condition Property="IsSelected"    Value="True"/>
+                            <Condition Property="IsMouseOver"   Value="True"/>
+                        </MultiTrigger.Conditions>
+                        <Setter Property="Background" Value="#283593"/>
+                        <Setter Property="Foreground" Value="White"/>
+                    </MultiTrigger>
+                </Style.Triggers>
+            </Style>
+
         </ResourceDictionary>
     </Application.Resources>
 </Application>
