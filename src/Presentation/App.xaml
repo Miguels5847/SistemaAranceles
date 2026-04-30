@@ -19,33 +19,67 @@
             <conv:UtcToEcuadorDateTimeConverter x:Key="UtcToEcuadorDateTimeConverter"/>
 
             <!--
-                FIX KAN-19: MahApps.Metro Light.Blue pinta el fondo de la fila
-                con el color de acento (azul oscuro) al hacer hover y al
-                seleccionar, pero no cambia el Foreground, dejando el texto
-                invisible. Este estilo global fuerza el texto a blanco en esos
-                estados para todos los DataGrid de la aplicacion.
+                FIX KAN-19: MahApps.Metro gestiona el hover a nivel de DataGridCell
+                (no de DataGridRow), por lo que el Foreground del texto queda
+                invisible cuando el fondo de la celda cambia a azul acento.
+                Se sobrescriben ambos niveles:
+                  - DataGridRow: controla el fondo de la fila
+                  - DataGridCell: controla el texto, usando DataTrigger
+                    enlazado al IsMouseOver / IsSelected del Row padre.
             -->
+
+            <!-- Fondo de fila en hover y seleccion -->
             <Style TargetType="DataGridRow">
                 <Setter Property="Foreground" Value="#212121"/>
                 <Style.Triggers>
-                    <!-- Hover: fondo acento claro, texto oscuro -->
                     <Trigger Property="IsMouseOver" Value="True">
                         <Setter Property="Background" Value="#E8EAF6"/>
-                        <Setter Property="Foreground" Value="#1A237E"/>
                     </Trigger>
-                    <!-- Seleccionado: fondo acento medio, texto blanco -->
                     <Trigger Property="IsSelected" Value="True">
                         <Setter Property="Background" Value="#3949AB"/>
                         <Setter Property="Foreground" Value="White"/>
                     </Trigger>
-                    <!-- Seleccionado + hover: mantener texto blanco -->
                     <MultiTrigger>
                         <MultiTrigger.Conditions>
-                            <Condition Property="IsSelected"    Value="True"/>
-                            <Condition Property="IsMouseOver"   Value="True"/>
+                            <Condition Property="IsSelected"  Value="True"/>
+                            <Condition Property="IsMouseOver" Value="True"/>
                         </MultiTrigger.Conditions>
                         <Setter Property="Background" Value="#283593"/>
                         <Setter Property="Foreground" Value="White"/>
+                    </MultiTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <!--
+                Texto de celda: MahApps pinta el fondo a nivel de celda y
+                no hereda el Foreground del Row. Este estilo fuerza el color
+                de texto correcto en cada estado.
+            -->
+            <Style TargetType="DataGridCell">
+                <Setter Property="Foreground"   Value="#212121"/>
+                <Setter Property="BorderBrush"  Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Style.Triggers>
+                    <!-- Hover sobre la fila padre -->
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
+                        <Setter Property="Foreground"  Value="#1A237E"/>
+                        <Setter Property="Background"  Value="#E8EAF6"/>
+                    </DataTrigger>
+                    <!-- Celda seleccionada -->
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Foreground"  Value="White"/>
+                        <Setter Property="Background"  Value="#3949AB"/>
+                        <Setter Property="BorderBrush" Value="#3949AB"/>
+                    </Trigger>
+                    <!-- Celda seleccionada + hover -->
+                    <MultiTrigger>
+                        <MultiTrigger.Conditions>
+                            <Condition Property="IsSelected" Value="True"/>
+                            <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True"/>
+                        </MultiTrigger.Conditions>
+                        <Setter Property="Foreground"  Value="White"/>
+                        <Setter Property="Background"  Value="#283593"/>
+                        <Setter Property="BorderBrush" Value="#283593"/>
                     </MultiTrigger>
                 </Style.Triggers>
             </Style>
