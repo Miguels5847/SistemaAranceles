@@ -246,7 +246,7 @@
                     </Grid>
                 </TabItem>
 
-                <!-- TAB 3: Horas por período (Filas 15–17 y 19–21) -->
+                <!-- TAB 3: Horas por período -->
                 <TabItem Header="3. Horas por período">
                     <Grid Margin="8">
                         <Grid.RowDefinitions>
@@ -254,7 +254,7 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0"
-                                   Text="Horas docencia asistida y aplicación práctica por período (filas 15–17 y 19–21)"
+                                   Text="Horas docencia asistida y aplicación práctica por período"
                                    FontWeight="Bold" FontSize="12" Foreground="#1A237E" Margin="0,0,0,6"/>
                         <DataGrid x:Name="dgHorasPeriodo" Grid.Row="1"
                                   ItemsSource="{Binding DetalleConsolidado.TablaHoras}"
