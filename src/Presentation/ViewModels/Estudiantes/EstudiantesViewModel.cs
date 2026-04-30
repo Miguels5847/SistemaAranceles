@@ -11,7 +11,7 @@ using SistemaAranceles.Presentation.State;
 
 namespace SistemaAranceles.Presentation.ViewModels.Estudiantes;
 
-// ── Opciones para ComboBoxes ───────────────────────────────────────────────────
+// ── Opciones para ComboBoxes ────────────────────────────────────────────
 public sealed class CarreraOpcion
 {
     public int    Id          { get; init; }
@@ -32,7 +32,7 @@ public sealed class SimulacionOpcion
     public string Descripcion { get; init; } = string.Empty;
 }
 
-// ── Ítem de la lista de proyecciones ─────────────────────────────────────────
+// ── Ítem de la lista de proyecciones ───────────────────────────────────
 public sealed class ProyeccionEstudiantesItemViewModel
 {
     public int    Id                 { get; init; }
@@ -46,7 +46,7 @@ public sealed class ProyeccionEstudiantesItemViewModel
     public string CreadoEnTexto      { get; init; } = string.Empty;
 }
 
-// ── ViewModel principal ───────────────────────────────────────────────────────
+// ── ViewModel principal ─────────────────────────────────────────────
 public sealed partial class EstudiantesViewModel : ObservableObject
 {
     private readonly IServiceProvider _serviceProvider;
@@ -64,7 +64,7 @@ public sealed partial class EstudiantesViewModel : ObservableObject
         _sesionActual    = sesionActual;
     }
 
-    // ── Listas ────────────────────────────────────────────────────────────────
+    // ── Listas ──────────────────────────────────────────────────
     [ObservableProperty] private ObservableCollection<ProyeccionEstudiantesItemViewModel> _proyecciones = [];
     [ObservableProperty] private ProyeccionEstudiantesItemViewModel? _proyeccionSeleccionada;
 
@@ -77,10 +77,10 @@ public sealed partial class EstudiantesViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<SimulacionOpcion> _simulaciones = [];
     [ObservableProperty] private SimulacionOpcion?                      _simulacionSeleccionada;
 
-    // ── Formulario ────────────────────────────────────────────────────────────
+    // ── Formulario ───────────────────────────────────────────────
     [ObservableProperty] private string _semanasPorSemestre = "16";
 
-    // ── Parámetros editables J24 / J30 ────────────────────────────────────────
+    // ── Parámetros editables J24 / J30 ──────────────────────────────────
     // Al cambiar cualquiera de los dos se dispara RecalcularConsolidado()
     private decimal _horasDocenteSemana = 18m;
     public decimal HorasDocenteSemana
@@ -104,7 +104,7 @@ public sealed partial class EstudiantesViewModel : ObservableObject
         }
     }
 
-    // ── Estado ────────────────────────────────────────────────────────────────
+    // ── Estado ──────────────────────────────────────────────────
     [ObservableProperty] private bool   _estaCargando;
     [ObservableProperty] private bool   _estaGenerando;
     [ObservableProperty] private bool   _estaEliminando;
@@ -112,7 +112,7 @@ public sealed partial class EstudiantesViewModel : ObservableObject
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
 
-    // ── Consolidado (tablas) ──────────────────────────────────────────────────
+    // ── Consolidado (tablas) ──────────────────────────────────────────
     [ObservableProperty] private ProyeccionConsolidadaDto? _detalleConsolidado;
 
     public bool TieneDetalleConsolidado => DetalleConsolidado is not null;
@@ -123,12 +123,12 @@ public sealed partial class EstudiantesViewModel : ObservableObject
         OnPropertyChanged(nameof(TieneDetalleConsolidado));
     }
 
-    // ── Permisos ──────────────────────────────────────────────────────────────
+    // ── Permisos ────────────────────────────────────────────────
     public bool PuedeVer      => _sesionActual.TienePermiso("ES.VER")      || _sesionActual.EsAdministrador;
     public bool PuedeGenerar  => _sesionActual.TienePermiso("ES.CREAR")    || _sesionActual.EsAdministrador;
     public bool PuedeEliminar => _sesionActual.TienePermiso("ES.ELIMINAR") || _sesionActual.EsAdministrador;
 
-    // ── Cascada: Carrera → Escenarios ─────────────────────────────────────────
+    // ── Cascada: Carrera → Escenarios ───────────────────────────────────
     partial void OnCarreraSeleccionadaChanged(CarreraOpcion? value)
     {
         EscenarioSeleccionado  = null;
@@ -142,7 +142,7 @@ public sealed partial class EstudiantesViewModel : ObservableObject
                 _todosLosEscenarios.Where(e => e.CarreraId == value.Id));
     }
 
-    // ── Cascada: Escenario → Simulaciones ─────────────────────────────────────
+    // ── Cascada: Escenario → Simulaciones ───────────────────────────────
     partial void OnEscenarioSeleccionadoChanged(EscenarioOpcion? value)
     {
         SimulacionSeleccionada = null;
@@ -153,16 +153,18 @@ public sealed partial class EstudiantesViewModel : ObservableObject
             _ = CargarSimulacionesAsync(CarreraSeleccionada.Id, value.Id);
     }
 
-    // ── Selección de proyección → cargar consolidado ──────────────────────────
+    // ── Selección de proyección → cargar consolidado ──────────────────────
     partial void OnProyeccionSeleccionadaChanged(ProyeccionEstudiantesItemViewModel? value)
     {
         DetalleConsolidado = null;
         MensajeError       = string.Empty;
-        if (value is not null)
+        // Solo cargar detalle si el ítem tiene datos completos (CarreraId > 0).
+        // Evita disparar la búsqueda de config con un ítem fantasma (solo Id).
+        if (value is not null && value.CarreraId > 0)
             _ = CargarDetalleConsolidadoAsync(value);
     }
 
-    // ── Recalcular sin ir a la BD (al cambiar J24 o J30) ─────────────────────
+    // ── Recalcular sin ir a la BD (al cambiar J24 o J30) ───────────────────
     private void RecalcularConsolidado()
     {
         if (_ultimaProyeccion is null || _ultimaConfig is null) return;
@@ -181,7 +183,7 @@ public sealed partial class EstudiantesViewModel : ObservableObject
             horasTecSemanaOverride: _horasTecnicoSemana);
     }
 
-    // ── Carga consolidado desde BD ────────────────────────────────────────────
+    // ── Carga consolidado desde BD ───────────────────────────────────────
     private async Task CargarDetalleConsolidadoAsync(ProyeccionEstudiantesItemViewModel item)
     {
         EstaCargandoDetalle = true;
@@ -244,7 +246,7 @@ public sealed partial class EstudiantesViewModel : ObservableObject
         }
     }
 
-    // ── Comandos ──────────────────────────────────────────────────────────────
+    // ── Comandos ──────────────────────────────────────────────────
     [RelayCommand]
     private async Task CargarAsync()
     {
@@ -353,8 +355,12 @@ public sealed partial class EstudiantesViewModel : ObservableObject
                 SemanasPorSemestre    = semanas
             }, _sesionActual.UsuarioId);
 
-            ProyeccionSeleccionada = new ProyeccionEstudiantesItemViewModel { Id = id };
+            // FIX: primero recargar la lista completa desde BD,
+            // luego buscar el ítem ya poblado por su Id.
+            // Así OnProyeccionSeleccionadaChanged recibe un objeto completo
+            // (CarreraId > 0) y no dispara el error de config fantasma.
             await CargarAsync();
+            ProyeccionSeleccionada = Proyecciones.FirstOrDefault(p => p.Id == id);
             MensajeExito = $"Proyección generada correctamente (Id = {id}).";
         }
         catch (Exception ex)
@@ -407,7 +413,7 @@ public sealed partial class EstudiantesViewModel : ObservableObject
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Helpers ──────────────────────────────────────────────────
     private async Task CargarSimulacionesAsync(int carreraId, int escenarioProyeccionId)
     {
         try
