@@ -17,16 +17,16 @@ public sealed class ObtenerCargosFacultadPorCarreraQuery(IRepositorioCargoFacult
         ArgumentNullException.ThrowIfNull(parametros);
 
         if (parametros.EstudiantesCarreraPeriodo < 0m)
-            throw new ArgumentOutOfRangeException(nameof(parametros.EstudiantesCarreraPeriodo));
+            throw new ArgumentOutOfRangeException(nameof(parametros));
 
         if (parametros.EstudiantesUnidadAcademica < 0m)
-            throw new ArgumentOutOfRangeException(nameof(parametros.EstudiantesUnidadAcademica));
+            throw new ArgumentOutOfRangeException(nameof(parametros));
 
         if (parametros.FactorInflacion <= 0m)
-            throw new ArgumentOutOfRangeException(nameof(parametros.FactorInflacion));
+            throw new ArgumentOutOfRangeException(nameof(parametros));
 
         if (parametros.ValorBaseDecimoCuartoSemestral < 0m)
-            throw new ArgumentOutOfRangeException(nameof(parametros.ValorBaseDecimoCuartoSemestral));
+            throw new ArgumentOutOfRangeException(nameof(parametros));
 
         var cargos = await repositorioCargoFacultad.ListarPorCarreraAsync(carreraId, cancellationToken);
         return cargos
@@ -37,19 +37,24 @@ public sealed class ObtenerCargosFacultadPorCarreraQuery(IRepositorioCargoFacult
 
     private static CargoFacultadCalculadoDto Mapear(CargoFacultad cargo, ParametrosCalculoCargoFacultadDto parametros)
     {
-        var peso = CalcularPeso(cargo, parametros);
-        var decimoTercero = Math.Round(cargo.SueldoBaseMensual / 2m, 2);
-        var decimoCuarto = Math.Round(parametros.ValorBaseDecimoCuartoSemestral * parametros.FactorInflacion, 2);
-        var vacaciones = Math.Round(cargo.SueldoBaseMensual / 4m, 2);
-        var fondoReserva = Math.Round(cargo.SueldoBaseMensual * parametros.TasaFondoReserva, 2);
-        var aportePatronal = Math.Round(cargo.SueldoBaseMensual * parametros.TasaAportePatronal, 2);
-        var costoBaseSemestral = Math.Round(
-            ((cargo.SueldoBaseMensual + fondoReserva + aportePatronal) * 6m)
-            + decimoTercero
-            + decimoCuarto
-            + vacaciones,
-            2);
-        var costoSemestralPonderado = Math.Round(costoBaseSemestral * peso, 2);
+        var peso = CalculoCargosFacultad.CalcularPeso(cargo, parametros.EstudiantesCarreraPeriodo, parametros.EstudiantesUnidadAcademica);
+        var decimoTercero = CalculoCargosFacultad.CalcularDecimoTerceroSemestral(cargo.SueldoBaseMensual);
+        var decimoCuarto = CalculoCargosFacultad.CalcularDecimoCuartoSemestral(parametros.ValorBaseDecimoCuartoSemestral);
+        var vacaciones = CalculoCargosFacultad.CalcularVacacionesSemestral(cargo.SueldoBaseMensual);
+        var fondoReserva = CalculoCargosFacultad.CalcularFondoReservaMensual(cargo.SueldoBaseMensual, parametros.TasaFondoReserva);
+        var aportePatronal = CalculoCargosFacultad.CalcularAportePatronalMensual(cargo.SueldoBaseMensual, parametros.TasaAportePatronal);
+        var costoBaseSemestral = CalculoCargosFacultad.CalcularCostoBaseSemestral(
+            cargo.SueldoBaseMensual,
+            fondoReserva,
+            aportePatronal,
+            decimoTercero,
+            decimoCuarto,
+            vacaciones);
+        var costoSemestralPonderado = CalculoCargosFacultad.CalcularCostoTotalSemestral(
+            costoBaseSemestral,
+            peso,
+            1m,
+            parametros.FactorInflacion);
 
         return new CargoFacultadCalculadoDto
         {
@@ -70,26 +75,4 @@ public sealed class ObtenerCargosFacultadPorCarreraQuery(IRepositorioCargoFacult
         };
     }
 
-    private static decimal CalcularPeso(CargoFacultad cargo, ParametrosCalculoCargoFacultadDto parametros)
-    {
-        if (EsPesoFijo(cargo))
-            return 1m;
-
-        var denominador = parametros.EstudiantesUnidadAcademica + parametros.EstudiantesCarreraPeriodo;
-        if (denominador <= 0m)
-            return 0m;
-
-        return Math.Round(parametros.EstudiantesCarreraPeriodo / denominador, 4);
-    }
-
-    private static bool EsPesoFijo(CargoFacultad cargo)
-    {
-        if (cargo.EsCargoDocente)
-            return true;
-
-        if (cargo.NombreCargo.Equals("Director de Carrera", StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        return cargo.TipoCargo.Contains("dedicacion exclusiva", StringComparison.OrdinalIgnoreCase);
-    }
 }

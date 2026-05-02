@@ -28,6 +28,9 @@ public sealed class RepositorioProyeccionCargoFacultad(ContextoAplicacion contex
     public void Actualizar(Domain.Entities.ProyeccionCargoFacultad proyeccion)
         => contextoAplicacion.ProyeccionesCargoFacultad.Update(MapearAInfra(proyeccion));
 
+    public void Eliminar(Domain.Entities.ProyeccionCargoFacultad proyeccion)
+        => contextoAplicacion.ProyeccionesCargoFacultad.Remove(MapearAInfra(proyeccion));
+
     private static Domain.Entities.ProyeccionCargoFacultad MapearADominio(ProyeccionCargoFacultad e)
     {
         var dominio = new Domain.Entities.ProyeccionCargoFacultad(

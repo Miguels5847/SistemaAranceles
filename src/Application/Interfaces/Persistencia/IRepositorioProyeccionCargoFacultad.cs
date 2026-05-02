@@ -8,4 +8,5 @@ public interface IRepositorioProyeccionCargoFacultad
     Task<IReadOnlyList<ProyeccionCargoFacultad>> ListarPorCargoAsync(int cargoFacultadId, CancellationToken ct = default);
     Task AgregarAsync(ProyeccionCargoFacultad proyeccion, CancellationToken ct = default);
     void Actualizar(ProyeccionCargoFacultad proyeccion);
+    void Eliminar(ProyeccionCargoFacultad proyeccion);
 }

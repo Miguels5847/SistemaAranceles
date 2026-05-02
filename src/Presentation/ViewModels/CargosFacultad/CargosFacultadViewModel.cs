@@ -58,7 +58,7 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
     private string _factorInflacion = "1";
 
     [ObservableProperty]
-    private string _valorDecimoCuartoSemestral = "200";
+    private string _valorDecimoCuartoSemestral = "450";
 
     [ObservableProperty]
     private bool _estaCargando;
@@ -121,6 +121,7 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
             }
 
             await CargarCargosAsync();
+            await CargarProyeccionesAsync();
         }
         catch (Exception ex)
         {
@@ -312,6 +313,7 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
             return;
 
         _ = CargarCargosAsync();
+        _ = CargarProyeccionesAsync();
     }
 
     private async Task CargarCargosAsync()

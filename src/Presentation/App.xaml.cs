@@ -136,6 +136,9 @@ public partial class App
         servicios.AddTransient<AgregarCargoFacultadCommand>();
         servicios.AddTransient<ActualizarCargoFacultadCommand>();
         servicios.AddTransient<EliminarCargoFacultadCommand>();
+        servicios.AddTransient<ListarProyeccionesCargoFacultadPorCarreraQuery>();
+        servicios.AddTransient<GuardarProyeccionCargoFacultadCommand>();
+        servicios.AddTransient<EliminarProyeccionCargoFacultadCommand>();
         servicios.AddTransient<ListarInflacionAnualUseCase>();
         servicios.AddTransient<CrearInflacionAnualUseCase>();
         servicios.AddTransient<ActualizarInflacionAnualUseCase>();
