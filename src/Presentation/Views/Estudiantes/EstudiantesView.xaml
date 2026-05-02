@@ -1,0 +1,423 @@
+<UserControl x:Class="SistemaAranceles.Presentation.Views.Estudiantes.EstudiantesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:SistemaAranceles.Presentation.Views.Estudiantes">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto" MinHeight="280"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Título -->
+        <TextBlock Grid.Row="0" Text="Proyección de Estudiantes por Período"
+                   FontSize="22" FontWeight="Bold" Foreground="#1A237E" Margin="0,0,0,8"/>
+
+        <!-- Mensajes -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,8">
+            <TextBlock Text="{Binding MensajeError}" Foreground="#C62828" FontSize="12" TextWrapping="Wrap"
+                       Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding MensajeExito}" Foreground="#2E7D32" FontSize="12" TextWrapping="Wrap"
+                       Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
+        </StackPanel>
+
+        <!-- Lista izquierda + Formulario derecho -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" BorderBrush="#C5CAE9" BorderThickness="1" CornerRadius="8" Padding="10" Background="White">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="Proyecciones generadas" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
+                        <Button Content="REFRESCAR" Command="{Binding CargarCommand}" Margin="12,0,0,0" Padding="8,4"/>
+                        <TextBlock Text="Cargando..." Margin="12,0,0,0" FontStyle="Italic" Foreground="#546E7A" VerticalAlignment="Center"
+                                   Visibility="{Binding EstaCargando, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    </StackPanel>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding Proyecciones}"
+                              SelectedItem="{Binding ProyeccionSeleccionada, Mode=TwoWay}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F8F9FE">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Foreground" Value="#1A237E"/>
+                                <Setter Property="Background" Value="White"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#E8EAF6"/>
+                                        <Setter Property="Foreground" Value="#1A237E"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#C5CAE9"/>
+                                        <Setter Property="Foreground" Value="#1A237E"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell">
+                                <Setter Property="Foreground" Value="#1A237E"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Foreground" Value="#1A237E"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.CellStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="CARRERA"        Binding="{Binding CarreraCodigo}"      Width="Auto"/>
+                            <DataGridTextColumn Header="NOMBRE CARRERA" Binding="{Binding CarreraNombre}"      Width="*"/>
+                            <DataGridTextColumn Header="ESCENARIO"      Binding="{Binding EscenarioNombre}"    Width="*"/>
+                            <DataGridTextColumn Header="AÑO BASE"       Binding="{Binding AnioBase}"           Width="Auto"/>
+                            <DataGridTextColumn Header="SEMANAS/SEM."   Binding="{Binding SemanasPorSemestre}" Width="Auto"/>
+                            <DataGridTextColumn Header="GENERADO"       Binding="{Binding CreadoEnTexto}"      Width="Auto"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="2" BorderBrush="#C5CAE9" BorderThickness="1" CornerRadius="8" Padding="10" Background="#FCFDFF">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="Generar proyección" FontWeight="Bold" FontSize="14" Margin="0,0,0,12"/>
+                    <StackPanel Grid.Row="1" Margin="0,0,0,8">
+                        <TextBlock Text="Carrera" FontSize="11" Foreground="#546E7A"/>
+                        <ComboBox ItemsSource="{Binding Carreras}" SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}"
+                                  DisplayMemberPath="Descripcion"
+                                  IsEnabled="{Binding EstaGenerando, Converter={StaticResource InverseBoolConverter}}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="2" Margin="0,0,0,8">
+                        <TextBlock Text="Escenario de proyección" FontSize="11" Foreground="#546E7A"/>
+                        <ComboBox ItemsSource="{Binding Escenarios}" SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}"
+                                  DisplayMemberPath="Descripcion"
+                                  IsEnabled="{Binding EstaGenerando, Converter={StaticResource InverseBoolConverter}}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="3" Margin="0,0,0,8">
+                        <TextBlock Text="Simulación de retención base" FontSize="11" Foreground="#546E7A"/>
+                        <ComboBox ItemsSource="{Binding Simulaciones}" SelectedItem="{Binding SimulacionSeleccionada, Mode=TwoWay}"
+                                  DisplayMemberPath="Descripcion"
+                                  IsEnabled="{Binding EstaGenerando, Converter={StaticResource InverseBoolConverter}}"/>
+                        <TextBlock Text="Seleccione carrera y escenario para ver simulaciones."
+                                   FontSize="10" FontStyle="Italic" Foreground="#90A4AE" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="4" Margin="0,0,0,8">
+                        <TextBlock Text="Semanas por semestre" FontSize="11" Foreground="#546E7A"/>
+                        <TextBox Text="{Binding SemanasPorSemestre, UpdateSourceTrigger=PropertyChanged}"
+                                 IsEnabled="{Binding EstaGenerando, Converter={StaticResource InverseBoolConverter}}"/>
+                        <TextBlock Text="Valor estándar: 16 semanas." FontSize="10" FontStyle="Italic" Foreground="#90A4AE" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="5" Margin="0,4,0,8"
+                                Visibility="{Binding EstaGenerando, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <ProgressBar IsIndeterminate="True" Height="4"/>
+                        <TextBlock Text="Generando proyección..." FontSize="11" FontStyle="Italic" Foreground="#546E7A" Margin="0,4,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="7" Orientation="Vertical" VerticalAlignment="Bottom">
+                        <Button Content="GENERAR PROYECCIÓN" Command="{Binding GenerarCommand}"
+                                Padding="10,8" Background="#1A237E" Foreground="White"
+                                FontWeight="SemiBold" Margin="0,0,0,6"
+                                IsEnabled="{Binding EstaGenerando, Converter={StaticResource InverseBoolConverter}}"/>
+                        <Button Content="ELIMINAR SELECCIONADA" Command="{Binding EliminarCommand}"
+                                Padding="10,6" Background="#C62828" Foreground="White"
+                                IsEnabled="{Binding EstaEliminando, Converter={StaticResource InverseBoolConverter}}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Indicador carga detalle -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,6,0,0"
+                    Visibility="{Binding EstaCargandoDetalle, Converter={StaticResource BoolToVisibilityConverter}}">
+            <ProgressBar IsIndeterminate="True" Width="120" Height="4" VerticalAlignment="Center"/>
+            <TextBlock Text="Cargando análisis consolidado..." FontSize="11"
+                       FontStyle="Italic" Foreground="#546E7A" Margin="8,0,0,0"/>
+        </StackPanel>
+
+        <!-- Tablas consolidadas -->
+        <Border Grid.Row="4" Margin="0,8,0,0"
+                Visibility="{Binding TieneDetalleConsolidado, Converter={StaticResource BoolToVisibilityConverter}}">
+            <TabControl Background="White" BorderBrush="#C5CAE9">
+
+                <!-- TAB 1: Matrícula por período -->
+                <TabItem Header="1. Matrícula por período">
+                    <Grid Margin="8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="Distribución por período y paralelos"
+                                   FontWeight="Bold" FontSize="12" Foreground="#1A237E" Margin="0,0,0,6"/>
+                        <DataGrid x:Name="dgMatriculaPeriodo" Grid.Row="1"
+                                  ItemsSource="{Binding DetalleConsolidado.MatriculaPorPeriodo}"
+                                  AutoGenerateColumns="False" IsReadOnly="True"
+                                  HeadersVisibility="Column" GridLinesVisibility="All"
+                                  AlternatingRowBackground="#F8F9FE"
+                                  CanUserAddRows="False" CanUserDeleteRows="False"
+                                  CanUserResizeRows="False" MaxHeight="320">
+                            <DataGrid.Resources>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                    <Setter Property="Background" Value="#E8EAF6"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                    <Setter Property="Padding" Value="6,4"/>
+                                </Style>
+                            </DataGrid.Resources>
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow">
+                                    <Setter Property="Foreground" Value="#1A237E"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Ciclo}" Value="Total Nº de Estudiantes">
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                            <Setter Property="Background" Value="#E8EAF6"/>
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#E8EAF6"/>
+                                            <Setter Property="Foreground" Value="#1A237E"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="#C5CAE9"/>
+                                            <Setter Property="Foreground" Value="#1A237E"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="Foreground" Value="#1A237E"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Foreground" Value="#1A237E"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.CellStyle>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+
+                <!-- TAB 2: Docentes por período -->
+                <TabItem Header="2. Docentes por período">
+                    <Grid Margin="8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0" Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="Docentes requeridos por período"
+                                       FontWeight="Bold" FontSize="12" Foreground="#1A237E"
+                                       VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,0,0">
+                                <Border Background="#FFF9C4" BorderBrush="#F9A825" BorderThickness="1"
+                                        CornerRadius="4" Padding="6,3" Margin="0,0,8,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Horas Docente: " FontSize="11"
+                                                   Foreground="#5D4037" VerticalAlignment="Center"/>
+                                        <TextBox Width="40" FontSize="11" FontWeight="Bold"
+                                                 Text="{Binding HorasDocenteSemana, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 VerticalAlignment="Center"
+                                                 BorderBrush="#F9A825" Padding="2"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#FFF9C4" BorderBrush="#F9A825" BorderThickness="1"
+                                        CornerRadius="4" Padding="6,3">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Horas Técnico: " FontSize="11"
+                                                   Foreground="#5D4037" VerticalAlignment="Center"/>
+                                        <TextBox Width="40" FontSize="11" FontWeight="Bold"
+                                                 Text="{Binding HorasTecnicoSemana, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 VerticalAlignment="Center"
+                                                 BorderBrush="#F9A825" Padding="2"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <DataGrid x:Name="dgDocentesPeriodo" Grid.Row="1"
+                                  ItemsSource="{Binding DetalleConsolidado.DocentesPorPeriodo}"
+                                  AutoGenerateColumns="False" IsReadOnly="True"
+                                  HeadersVisibility="Column" GridLinesVisibility="All"
+                                  AlternatingRowBackground="#F8F9FE"
+                                  CanUserAddRows="False" CanUserDeleteRows="False"
+                                  CanUserResizeRows="False" MaxHeight="260">
+                            <DataGrid.Resources>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                    <Setter Property="Background" Value="#E8EAF6"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                    <Setter Property="Padding" Value="6,4"/>
+                                </Style>
+                            </DataGrid.Resources>
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow">
+                                    <Setter Property="Foreground" Value="#1A237E"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Tipo}" Value="Docentes Requeridos">
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                            <Setter Property="Background" Value="#E8EAF6"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Tipo}" Value="Ocasional Tipo 2 (Técnico)">
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                            <Setter Property="Background" Value="#E3F2FD"/>
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#E8EAF6"/>
+                                            <Setter Property="Foreground" Value="#1A237E"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="#C5CAE9"/>
+                                            <Setter Property="Foreground" Value="#1A237E"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="Foreground" Value="#1A237E"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Foreground" Value="#1A237E"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.CellStyle>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+
+                <!-- TAB 3: Horas por período -->
+                <TabItem Header="3. Horas por período">
+                    <Grid Margin="8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0"
+                                   Text="Horas docencia asistida y aplicación práctica por período"
+                                   FontWeight="Bold" FontSize="12" Foreground="#1A237E" Margin="0,0,0,6"/>
+                        <DataGrid x:Name="dgHorasPeriodo" Grid.Row="1"
+                                  ItemsSource="{Binding DetalleConsolidado.TablaHoras}"
+                                  AutoGenerateColumns="False" IsReadOnly="True"
+                                  HeadersVisibility="Column" GridLinesVisibility="All"
+                                  AlternatingRowBackground="#FFFDE7"
+                                  CanUserAddRows="False" CanUserDeleteRows="False"
+                                  CanUserResizeRows="False" MaxHeight="260">
+                            <DataGrid.Resources>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                    <Setter Property="Background" Value="#E8EAF6"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                    <Setter Property="Padding" Value="6,4"/>
+                                </Style>
+                            </DataGrid.Resources>
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow">
+                                    <Setter Property="Foreground" Value="#1A237E"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding EsInput}" Value="True">
+                                            <Setter Property="Background" Value="#FFFDE7"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#E8EAF6"/>
+                                            <Setter Property="Foreground" Value="#1A237E"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="#C5CAE9"/>
+                                            <Setter Property="Foreground" Value="#1A237E"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="Foreground" Value="#1A237E"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Foreground" Value="#1A237E"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.CellStyle>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+
+                <!-- TAB 4: Consumo por período -->
+                <TabItem Header="4. Consumo por período">
+                    <DataGrid Margin="8" ItemsSource="{Binding DetalleConsolidado.TablaPeriodos}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F8F9FE" MaxHeight="300">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Foreground" Value="#1A237E"/>
+                                <Setter Property="Background" Value="White"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#E8EAF6"/>
+                                        <Setter Property="Foreground" Value="#1A237E"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#C5CAE9"/>
+                                        <Setter Property="Foreground" Value="#1A237E"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell">
+                                <Setter Property="Foreground" Value="#1A237E"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Foreground" Value="#1A237E"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.CellStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Per."        Binding="{Binding Periodo}"                        Width="40"/>
+                            <DataGridTextColumn Header="Año"         Binding="{Binding Anio}"                           Width="55"/>
+                            <DataGridTextColumn Header="Sem."        Binding="{Binding Semestre}"                       Width="45"/>
+                            <DataGridTextColumn Header="Docentes"    Binding="{Binding Docentes, StringFormat=N0}"      Width="80"/>
+                            <DataGridTextColumn Header="Técnicos"    Binding="{Binding Tecnicos, StringFormat=N0}"      Width="80"/>
+                            <DataGridTextColumn Header="H. Docencia" Binding="{Binding HorasDocencia, StringFormat=N0}" Width="*"/>
+                            <DataGridTextColumn Header="H. Práctica" Binding="{Binding HorasPractica, StringFormat=N0}" Width="*"/>
+                        </DataGrid.Columns>
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="Background" Value="#E8EAF6"/>
+                                <Setter Property="Padding" Value="6,4"/>
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+                    </DataGrid>
+                </TabItem>
+
+            </TabControl>
+        </Border>
+    </Grid>
+</UserControl>

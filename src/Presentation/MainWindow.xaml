@@ -7,11 +7,13 @@
         xmlns:vmC="clr-namespace:SistemaAranceles.Presentation.ViewModels.Carreras"
         xmlns:vmI="clr-namespace:SistemaAranceles.Presentation.ViewModels.Inflacion"
         xmlns:vmT="clr-namespace:SistemaAranceles.Presentation.ViewModels.TasaRetencion"
+        xmlns:vmE="clr-namespace:SistemaAranceles.Presentation.ViewModels.Estudiantes"
         xmlns:vU="clr-namespace:SistemaAranceles.Presentation.Views.Usuarios"
         xmlns:vA="clr-namespace:SistemaAranceles.Presentation.Views.Auditoria"
         xmlns:vC="clr-namespace:SistemaAranceles.Presentation.Views.Carreras"
         xmlns:vI="clr-namespace:SistemaAranceles.Presentation.Views.Inflacion"
         xmlns:vT="clr-namespace:SistemaAranceles.Presentation.Views.TasaRetencion"
+        xmlns:vE="clr-namespace:SistemaAranceles.Presentation.Views.Estudiantes"
         Title="Sistema de Aranceles Universitarios"
         Width="1400"
         Height="820"
@@ -40,6 +42,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmT:ConfiguracionRetencionViewModel}">
             <vT:ConfiguracionRetencionView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmE:EstudiantesViewModel}">
+            <vE:EstudiantesView/>
         </DataTemplate>
     </Window.Resources>
 
