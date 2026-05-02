@@ -1,0 +1,322 @@
+<UserControl x:Class="SistemaAranceles.Presentation.Views.CargosFacultad.CargosFacultadView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0"
+                    Margin="0,0,0,12">
+            <TextBlock Text="Sueldos y Planta Central"
+                       FontSize="22"
+                       FontWeight="Bold"
+                       Foreground="#1A237E"/>
+            <TextBlock Text="Configura cargos, sueldos base y parámetros de cálculo para beneficios sociales."
+                       FontSize="12"
+                       Foreground="#546E7A"
+                       Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1"
+                    Margin="0,0,0,10">
+            <TextBlock Text="{Binding MensajeError}"
+                       Foreground="#C62828"
+                       FontSize="12"
+                       TextWrapping="Wrap"
+                       Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding MensajeExito}"
+                       Foreground="#2E7D32"
+                       FontSize="12"
+                       TextWrapping="Wrap"
+                       Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
+        </StackPanel>
+
+        <Border Grid.Row="2"
+                BorderBrush="#C5CAE9"
+                BorderThickness="1"
+                CornerRadius="10"
+                Background="#FDFEFF"
+                Padding="12"
+                Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.2*"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0,0,0,8">
+                        <TextBlock Text="Carrera"
+                                   FontSize="11"
+                                   Foreground="#546E7A"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,8,0"/>
+                        <ComboBox ItemsSource="{Binding Carreras}"
+                                  SelectedValue="{Binding CarreraSeleccionadaId, Mode=TwoWay}"
+                                  SelectedValuePath="Id"
+                                  DisplayMemberPath="Nombre"
+                                  MinWidth="280"
+                                  Padding="6,4"/>
+                        <Button Content="Actualizar"
+                                Command="{Binding CargarCommand}"
+                                Padding="10,5"
+                                Margin="10,0,0,0"
+                                Background="#3949AB"
+                                Foreground="White"
+                                BorderThickness="0"/>
+                    </StackPanel>
+
+                    <WrapPanel Grid.Row="1"
+                               ItemWidth="180"
+                               ItemHeight="56">
+                        <StackPanel Margin="0,0,12,8">
+                            <TextBlock Text="Estudiantes UA"
+                                       FontSize="11"
+                                       Foreground="#546E7A"/>
+                            <TextBox Text="{Binding EstudiantesUnidadAcademica, UpdateSourceTrigger=PropertyChanged}"
+                                     Padding="6,4"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,8">
+                            <TextBlock Text="Estudiantes carrera período"
+                                       FontSize="11"
+                                       Foreground="#546E7A"/>
+                            <TextBox Text="{Binding EstudiantesCarreraPeriodo, UpdateSourceTrigger=PropertyChanged}"
+                                     Padding="6,4"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,8">
+                            <TextBlock Text="Factor inflación"
+                                       FontSize="11"
+                                       Foreground="#546E7A"/>
+                            <TextBox Text="{Binding FactorInflacion, UpdateSourceTrigger=PropertyChanged}"
+                                     Padding="6,4"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,8">
+                            <TextBlock Text="Décimo cuarto semestral"
+                                       FontSize="11"
+                                       Foreground="#546E7A"/>
+                            <TextBox Text="{Binding ValorDecimoCuartoSemestral, UpdateSourceTrigger=PropertyChanged}"
+                                     Padding="6,4"/>
+                        </StackPanel>
+                    </WrapPanel>
+                </Grid>
+
+                <StackPanel Grid.Column="1"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="{Binding TituloModulo}"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Foreground="#1A237E"
+                               HorizontalAlignment="Right"/>
+                    <TextBlock Text="Cambia los parámetros y presiona actualizar para recalcular la vista."
+                               FontSize="12"
+                               Foreground="#5C6BC0"
+                               TextAlignment="Right"
+                               TextWrapping="Wrap"
+                               Width="260"
+                               Margin="0,4,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2.2*"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0"
+                    BorderBrush="#C5CAE9"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Background="White"
+                    Padding="10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0,0,0,8">
+                        <TextBlock Text="Cargos calculados"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Foreground="#1A237E"
+                                   VerticalAlignment="Center"/>
+                        <Button Content="Nuevo"
+                                Command="{Binding NuevoCommand}"
+                                Margin="12,0,0,0"
+                                Padding="10,5"
+                                Background="#ECEFF1"
+                                BorderBrush="#CFD8DC"/>
+                        <Button Content="Editar seleccionado"
+                                Command="{Binding SeleccionarParaEditarCommand}"
+                                Margin="8,0,0,0"
+                                Padding="10,5"
+                                Background="#0277BD"
+                                Foreground="White"
+                                BorderThickness="0"
+                                Visibility="{Binding PuedeEditar, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        <Button Content="Eliminar seleccionado"
+                                Command="{Binding EliminarSeleccionadoCommand}"
+                                Margin="8,0,0,0"
+                                Padding="10,5"
+                                Background="#B71C1C"
+                                Foreground="White"
+                                BorderThickness="0"
+                                Visibility="{Binding PuedeEliminar, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    </StackPanel>
+
+                    <DataGrid Grid.Row="1"
+                              ItemsSource="{Binding Cargos}"
+                              SelectedItem="{Binding CargoSeleccionado, Mode=TwoWay}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              CanUserAddRows="False"
+                              SelectionMode="Single"
+                              GridLinesVisibility="Horizontal"
+                              HeadersVisibility="Column"
+                              BorderBrush="#C5CAE9"
+                              AlternatingRowBackground="#F8F9FF">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Cargo"
+                                    Binding="{Binding NombreCargo}"
+                                    Width="*"/>
+                            <DataGridTextColumn Header="Tipo"
+                                    Binding="{Binding TipoCargo}"
+                                    Width="140"/>
+                            <DataGridTextColumn Header="Sueldo base"
+                                    Binding="{Binding SueldoBaseMensual, StringFormat={}{0:N2}}"
+                                    Width="110"/>
+                            <DataGridTextColumn Header="Peso"
+                                    Binding="{Binding PesoProporcional, StringFormat={}{0:N4}}"
+                                    Width="80"/>
+                            <DataGridTextColumn Header="D13"
+                                    Binding="{Binding DecimoTerceroSemestral, StringFormat={}{0:N2}}"
+                                    Width="90"/>
+                            <DataGridTextColumn Header="D14"
+                                    Binding="{Binding DecimoCuartoSemestral, StringFormat={}{0:N2}}"
+                                    Width="90"/>
+                            <DataGridTextColumn Header="Vacaciones"
+                                    Binding="{Binding VacacionesSemestral, StringFormat={}{0:N2}}"
+                                    Width="100"/>
+                            <DataGridTextColumn Header="F. Reserva"
+                                    Binding="{Binding FondoReservaMensual, StringFormat={}{0:N2}}"
+                                    Width="95"/>
+                            <DataGridTextColumn Header="Aporte"
+                                    Binding="{Binding AportePatronalMensual, StringFormat={}{0:N2}}"
+                                    Width="90"/>
+                            <DataGridTextColumn Header="Base semestral"
+                                    Binding="{Binding CostoBaseSemestral, StringFormat={}{0:N2}}"
+                                    Width="120"/>
+                            <DataGridTextColumn Header="Ponderado"
+                                    Binding="{Binding CostoSemestralPonderado, StringFormat={}{0:N2}}"
+                                    Width="110"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="2"
+                    BorderBrush="#C5CAE9"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Background="#FCFDFF"
+                    Padding="10">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="{Binding TituloFormulario}"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Foreground="#1A237E"
+                                   Margin="0,0,0,8"/>
+
+                        <StackPanel Margin="0,0,0,8">
+                            <TextBlock Text="Nombre del cargo"
+                                    FontSize="11"
+                                    Foreground="#546E7A"/>
+                            <TextBox Text="{Binding NombreCargo, UpdateSourceTrigger=PropertyChanged}"
+                                    Padding="6,4"/>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,0,0,8">
+                            <TextBlock Text="Tipo de cargo"
+                                    FontSize="11"
+                                    Foreground="#546E7A"/>
+                            <TextBox Text="{Binding TipoCargo, UpdateSourceTrigger=PropertyChanged}"
+                                    Padding="6,4"/>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,0,0,8">
+                            <TextBlock Text="Sueldo base mensual"
+                                    FontSize="11"
+                                    Foreground="#546E7A"/>
+                            <TextBox Text="{Binding SueldoBaseMensual, UpdateSourceTrigger=PropertyChanged}"
+                                    Padding="6,4"/>
+                        </StackPanel>
+
+                        <CheckBox Content="Es cargo docente"
+                                  IsChecked="{Binding EsCargoDocente, Mode=TwoWay}"
+                                  Margin="0,0,0,12"/>
+
+                        <Border Background="#EEF3FF"
+                                BorderBrush="#D7E0FF"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="10"
+                                Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Vista previa del cargo seleccionado"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="#1A237E"
+                                           Margin="0,0,0,6"/>
+                                <TextBlock Text="{Binding CargoSeleccionado.NombreCargo, TargetNullValue=Sin selección}"
+                                           Foreground="#37474F"/>
+                                <TextBlock Text="{Binding CargoSeleccionado.PesoProporcional, StringFormat=Peso: {0:N4}, TargetNullValue=Peso: -}"
+                                           Foreground="#37474F"/>
+                                <TextBlock Text="{Binding CargoSeleccionado.CostoBaseSemestral, StringFormat=Costo base: {0:N2}, TargetNullValue=Costo base: -}"
+                                           Foreground="#37474F"/>
+                            </StackPanel>
+                        </Border>
+
+                        <WrapPanel>
+                            <Button Content="Guardar"
+                                    Command="{Binding GuardarCommand}"
+                                    Padding="12,6"
+                                    Margin="0,0,8,8"
+                                    Background="#3949AB"
+                                    Foreground="White"
+                                    BorderThickness="0"
+                                    Visibility="{Binding PuedeEditar, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                            <Button Content="Refrescar"
+                                    Command="{Binding CargarCommand}"
+                                    Padding="12,6"
+                                    Margin="0,0,8,8"
+                                    Background="#ECEFF1"
+                                    BorderBrush="#CFD8DC"/>
+                        </WrapPanel>
+
+                        <TextBlock Text="Nota: el total ponderado refleja la vista calculada del módulo; la proyección semestral completa se consolida en el siguiente paso funcional."
+                                   FontSize="11"
+                                   Foreground="#607D8B"
+                                   TextWrapping="Wrap"
+                                   Margin="0,8,0,0"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

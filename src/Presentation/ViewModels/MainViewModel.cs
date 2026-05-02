@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.DTOs.Usuarios;
 using SistemaAranceles.Application.UseCases.Autenticacion;
+using SistemaAranceles.Presentation.ViewModels.CargosFacultad;
 using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.Services;
 using SistemaAranceles.Presentation.State;
@@ -33,6 +34,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ServicioInactividad _servicioInactividad;
     private readonly UsuariosViewModel _usuariosViewModel;
     private readonly AuditoriaViewModel _auditoriaViewModel;
+    private readonly CargosFacultadViewModel _cargosFacultadViewModel;
     private readonly CarrerasViewModel _carrerasViewModel;
     private readonly EstudiantesViewModel _estudiantesViewModel;
     private readonly InflacionViewModel _inflacionViewModel;
@@ -47,6 +49,7 @@ public sealed partial class MainViewModel : ObservableObject
         ServicioInactividad servicioInactividad,
         UsuariosViewModel usuariosViewModel,
         AuditoriaViewModel auditoriaViewModel,
+        CargosFacultadViewModel cargosFacultadViewModel,
         CarrerasViewModel carrerasViewModel,
         EstudiantesViewModel estudiantesViewModel,
         InflacionViewModel inflacionViewModel,
@@ -58,6 +61,7 @@ public sealed partial class MainViewModel : ObservableObject
         _servicioInactividad = servicioInactividad;
         _usuariosViewModel = usuariosViewModel;
         _auditoriaViewModel = auditoriaViewModel;
+        _cargosFacultadViewModel = cargosFacultadViewModel;
         _carrerasViewModel = carrerasViewModel;
         _estudiantesViewModel = estudiantesViewModel;
         _inflacionViewModel = inflacionViewModel;
@@ -91,6 +95,11 @@ public sealed partial class MainViewModel : ObservableObject
         {
             PaginaActual = _inflacionViewModel;
             _ = MostrarInflacionAsync();
+        }
+        else if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
+        {
+            PaginaActual = _cargosFacultadViewModel;
+            _ = MostrarCargosFacultadAsync();
         }
         else
         {
@@ -152,6 +161,16 @@ public sealed partial class MainViewModel : ObservableObject
             });
         }
 
+        if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Sueldos y Planta Central",
+                Icono = string.Empty,
+                Comando = new AsyncRelayCommand(() => MostrarCargosFacultadAsync())
+            });
+        }
+
         if (_sesionActual.TienePermiso("TRE.VER") || _sesionActual.TienePermiso("PR.VER") || _sesionActual.EsAdministrador)
         {
             MenuItems.Add(new ItemMenu
@@ -169,16 +188,6 @@ public sealed partial class MainViewModel : ObservableObject
                 Titulo = "Proyección de Estudiantes",
                 Icono = string.Empty,
                 Comando = new AsyncRelayCommand(() => MostrarEstudiantesAsync())
-            });
-        }
-
-        if (_sesionActual.TienePermiso("AF.VER"))
-        {
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Análisis Financiero",
-                Icono = string.Empty,
-                Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Análisis Financiero", "Épica 5"))
             });
         }
 
@@ -338,6 +347,19 @@ public sealed partial class MainViewModel : ObservableObject
         MensajePagina = string.Empty;
         PaginaActual = _inflacionViewModel;
         await _inflacionViewModel.CargarCommand.ExecuteAsync(null);
+    }
+
+    private async Task MostrarCargosFacultadAsync()
+    {
+        if (!(_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador))
+        {
+            MensajePagina = "Acceso denegado al módulo de Sueldos y Planta Central.";
+            return;
+        }
+
+        MensajePagina = string.Empty;
+        PaginaActual = _cargosFacultadViewModel;
+        await _cargosFacultadViewModel.CargarCommand.ExecuteAsync(null);
     }
 
     [RelayCommand]

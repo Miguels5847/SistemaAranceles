@@ -4,12 +4,14 @@
         xmlns:vm="clr-namespace:SistemaAranceles.Presentation.ViewModels"
         xmlns:vmU="clr-namespace:SistemaAranceles.Presentation.ViewModels.Usuarios"
         xmlns:vmA="clr-namespace:SistemaAranceles.Presentation.ViewModels.Auditoria"
+        xmlns:vmCF="clr-namespace:SistemaAranceles.Presentation.ViewModels.CargosFacultad"
         xmlns:vmC="clr-namespace:SistemaAranceles.Presentation.ViewModels.Carreras"
         xmlns:vmI="clr-namespace:SistemaAranceles.Presentation.ViewModels.Inflacion"
         xmlns:vmT="clr-namespace:SistemaAranceles.Presentation.ViewModels.TasaRetencion"
         xmlns:vmE="clr-namespace:SistemaAranceles.Presentation.ViewModels.Estudiantes"
         xmlns:vU="clr-namespace:SistemaAranceles.Presentation.Views.Usuarios"
         xmlns:vA="clr-namespace:SistemaAranceles.Presentation.Views.Auditoria"
+        xmlns:vCF="clr-namespace:SistemaAranceles.Presentation.Views.CargosFacultad"
         xmlns:vC="clr-namespace:SistemaAranceles.Presentation.Views.Carreras"
         xmlns:vI="clr-namespace:SistemaAranceles.Presentation.Views.Inflacion"
         xmlns:vT="clr-namespace:SistemaAranceles.Presentation.Views.TasaRetencion"
@@ -33,6 +35,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmA:AuditoriaViewModel}">
             <vA:AuditoriaView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmCF:CargosFacultadViewModel}">
+            <vCF:CargosFacultadView/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmC:CarrerasViewModel}">
             <vC:CarrerasView/>

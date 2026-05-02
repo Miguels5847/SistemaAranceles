@@ -9,12 +9,14 @@ using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.Options;
 using SistemaAranceles.Application.UseCases.Auditoria;
 using SistemaAranceles.Application.UseCases.Autenticacion;
+using SistemaAranceles.Application.UseCases.CargosFacultad;
 using SistemaAranceles.Application.UseCases.Inflacion;
 using SistemaAranceles.Application.UseCases.TasaRetencion;
 using SistemaAranceles.Application.UseCases.TasaRetencion.Validadores;
 using SistemaAranceles.Application.UseCases.Estudiantes;
 using SistemaAranceles.Application.UseCases.Estudiantes.Validadores;
 using SistemaAranceles.Application.DTOs.Estudiantes;
+using SistemaAranceles.Presentation.ViewModels.CargosFacultad;
 using SistemaAranceles.Presentation.ViewModels.Estudiantes;
 using SistemaAranceles.Application.UseCases.Usuarios;
 using SistemaAranceles.Application.UseCases.Permisos;
@@ -130,6 +132,10 @@ public partial class App
         servicios.AddTransient<ObtenerPermisosEfectivosUsuarioUseCase>();
         servicios.AddTransient<ActualizarPermisosUsuarioUseCase>();
         servicios.AddTransient<ConsultarAuditoriaUseCase>();
+        servicios.AddTransient<ObtenerCargosFacultadPorCarreraQuery>();
+        servicios.AddTransient<AgregarCargoFacultadCommand>();
+        servicios.AddTransient<ActualizarCargoFacultadCommand>();
+        servicios.AddTransient<EliminarCargoFacultadCommand>();
         servicios.AddTransient<ListarInflacionAnualUseCase>();
         servicios.AddTransient<CrearInflacionAnualUseCase>();
         servicios.AddTransient<ActualizarInflacionAnualUseCase>();
@@ -167,6 +173,7 @@ public partial class App
         servicios.AddTransient<ObtenerProyeccionEstudiantesUseCase>();
         servicios.AddTransient<ListarProyeccionesEstudiantesUseCase>();
         servicios.AddTransient<EliminarProyeccionEstudiantesUseCase>();
+        servicios.AddTransient<CargosFacultadViewModel>();
         servicios.AddTransient<EstudiantesViewModel>();
 
         // ViewModels
