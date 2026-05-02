@@ -316,7 +316,7 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0"
-                                   Text="Horas docencia asistida y aplicación práctica por período (filas 15–17 y 19–21)"
+                                   Text="Horas docencia asistida y aplicación práctica por período"
                                    FontWeight="Bold" FontSize="12" Foreground="#1A237E" Margin="0,0,0,6"/>
                         <DataGrid x:Name="dgHorasPeriodo" Grid.Row="1"
                                   ItemsSource="{Binding DetalleConsolidado.TablaHoras}"
@@ -399,11 +399,11 @@
                             </Style>
                         </DataGrid.CellStyle>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Per."        Binding="{Binding Periodo}"                      Width="40"/>
-                            <DataGridTextColumn Header="Año"         Binding="{Binding Anio}"                         Width="55"/>
-                            <DataGridTextColumn Header="Sem."        Binding="{Binding Semestre}"                     Width="45"/>
-                            <DataGridTextColumn Header="Docentes"    Binding="{Binding Docentes, StringFormat=N0}"    Width="80"/>
-                            <DataGridTextColumn Header="Técnicos"    Binding="{Binding Tecnicos, StringFormat=N0}"    Width="80"/>
+                            <DataGridTextColumn Header="Per."        Binding="{Binding Periodo}"                        Width="40"/>
+                            <DataGridTextColumn Header="Año"         Binding="{Binding Anio}"                           Width="55"/>
+                            <DataGridTextColumn Header="Sem."        Binding="{Binding Semestre}"                       Width="45"/>
+                            <DataGridTextColumn Header="Docentes"    Binding="{Binding Docentes, StringFormat=N0}"      Width="80"/>
+                            <DataGridTextColumn Header="Técnicos"    Binding="{Binding Tecnicos, StringFormat=N0}"      Width="80"/>
                             <DataGridTextColumn Header="H. Docencia" Binding="{Binding HorasDocencia, StringFormat=N0}" Width="*"/>
                             <DataGridTextColumn Header="H. Práctica" Binding="{Binding HorasPractica, StringFormat=N0}" Width="*"/>
                         </DataGrid.Columns>
