@@ -12,6 +12,10 @@ using SistemaAranceles.Application.UseCases.Autenticacion;
 using SistemaAranceles.Application.UseCases.Inflacion;
 using SistemaAranceles.Application.UseCases.TasaRetencion;
 using SistemaAranceles.Application.UseCases.TasaRetencion.Validadores;
+using SistemaAranceles.Application.UseCases.Estudiantes;
+using SistemaAranceles.Application.UseCases.Estudiantes.Validadores;
+using SistemaAranceles.Application.DTOs.Estudiantes;
+using SistemaAranceles.Presentation.ViewModels.Estudiantes;
 using SistemaAranceles.Application.UseCases.Usuarios;
 using SistemaAranceles.Application.UseCases.Permisos;
 using SistemaAranceles.Application.DTOs.TasaRetencion;
@@ -156,6 +160,14 @@ public partial class App
         servicios.AddTransient<EliminarSimulacionRetencionUseCase>();
         servicios.AddTransient<LimpiarSimulacionesRetencionUseCase>();
         servicios.AddScoped<ObtenerValoresSugeridosParaEscenarioUseCase>();
+
+        // Épica 5 — Estudiantes (KAN-17)
+        servicios.AddTransient<IValidator<GenerarProyeccionEstudiantesDto>, GenerarProyeccionEstudiantesDtoValidador>();
+        servicios.AddTransient<GenerarProyeccionEstudiantesUseCase>();
+        servicios.AddTransient<ObtenerProyeccionEstudiantesUseCase>();
+        servicios.AddTransient<ListarProyeccionesEstudiantesUseCase>();
+        servicios.AddTransient<EliminarProyeccionEstudiantesUseCase>();
+        servicios.AddTransient<EstudiantesViewModel>();
 
         // ViewModels
         servicios.AddTransient<LoginViewModel>();

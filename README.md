@@ -7,6 +7,7 @@ Aplicación de escritorio WPF para simulación y análisis de aranceles en apert
 - **.NET 8** + **WPF** (MVVM)
 - **EF Core** + **PostgreSQL (Supabase pooler 6543)**
 - **CommunityToolkit.Mvvm** · **FluentValidation** · **BCrypt.Net-Next**
+- **MahApps.Metro 2.4.11** · **MahApps.Metro.IconPacks 6.2.1**
 - **ClosedXML** (XLSX) · **QuestPDF** (PDF)
 
 ## Arquitectura
@@ -22,15 +23,22 @@ Presentation    ← WPF Views/ViewModels/State (SesionActual)
 
 ## Estado por épica
 
-| #    | Épica                                              | KANs    | Estado                                   |
-| ---- | -------------------------------------------------- | ------- | ---------------------------------------- |
-| 1    | Setup & Arquitectura                               | 01–05   | ✅                                       |
-| 2    | Usuarios (CRUD + Login + Menú dinámico + AuditLog) | 06–09   | ✅                                       |
-| 3    | Inflación (CRUD + Proyección + Solo lectura)       | 10–12   | ✅                                       |
-| —    | Infra/RBAC/QA (KAN-13/14, multi-fase)              | 13–14   | ✅ Cerrada                               |
-| 4    | Tasa Retención                                     | 13–16\* | 🟡 KAN-14 validado; KAN-15/16 pendientes |
-| 5–13 | Estudiantes / Sueldos / Recursos / … / Reportes    | 17–49   | ⏳                                       |
-| 14   | Cierre & Validación                                | 50–53   | ⏳                                       |
+| #   | Épica                                              | KANs      | SP  | Estado      |
+|-----|----------------------------------------------------|-----------|-----|-------------|
+| 1   | Setup & Arquitectura                               | 01–05     | —   | ✅           |
+| 2   | Usuarios (CRUD + Login + Menú dinámico + AuditLog) | 06–09     | —   | ✅           |
+| 3   | Inflación (CRUD + Proyección + Solo lectura)       | 10–12     | —   | ✅           |
+| —   | Infra / RBAC / QA                                  | 13–14     | —   | ✅           |
+| 4   | Tasa Retención                                     | 15–16\*   | —   | ✅           |
+| 5   | Estudiantes                                        | 17–19     | 13  | ✅           |
+| 6   | Sueldos Planta Central                             | 20–xx     | —   | ⏳           |
+| 7   | Recursos Físicos / Depreciación                    | xx        | —   | ⏳           |
+| 8   | Costos y Gastos                                    | xx        | —   | ⏳           |
+| 9   | Demanda / Ingresos                                 | xx        | —   | ⏳           |
+| 10  | Mantenimiento / Capital Trabajo / Inversión        | xx        | —   | ⏳           |
+| 11  | Financiamiento / Balance / Reportes                | xx        | —   | ⏳           |
+| 12  | Análisis Financiero                                | xx        | —   | ⏳           |
+| 13  | Cierre & Validación                                | 50–53     | —   | ⏳           |
 
 \* KANs 13/14 originales (Épica 4) renombrados internamente; los KAN-13/14 ejecutados son tareas de infraestructura.
 
@@ -45,7 +53,11 @@ Presentation    ← WPF Views/ViewModels/State (SesionActual)
 - Inflación: 9 use cases (CRUD anual + proyectar + importar BCE + limpiar)
 - Métodos proyección: regresión lineal (default) y promedio suave
 - RLS progresivo (Admin bypass; Analista/Visualizador restringidos)
-- Tasa Retención: configuración de carrera/cohorte, simulación ciclo a ciclo, listado/selección/eliminación de simulaciones y UI validada para la rama `feature/KAN-14-simulacion-cohorte`
+- **Tasa Retención** (Épica 4): configuración por carrera/escenario (Histórico, Optimista, Pesimista), simulación ciclo a ciclo por cohorte, cálculo de tasas y metas de retención/graduación, listado/selección/eliminación de simulaciones
+- **Estudiantes** (Épica 5):
+  - KAN-17 · Proyección de estudiantes por período: generación por carrera, escenario y simulación de retención base; tabla consolidada de matrícula por período y paralelos
+  - KAN-18 · Horas de docencia por paralelos: cálculo de horas de docencia asistida y aplicación práctica; inputs editables Horas Docente / Horas Técnico con recálculo en tiempo real
+  - KAN-19 · Desglose de docentes por tipo: distinción Titular / Ocasional Tipo 1 / Ocasional Tipo 2 (Técnico); DataGrid con filas destacadas por tipo; fix de compatibilidad MahApps.Metro (CellStyle + RowStyle completo en todos los DataGrids del módulo)
 
 ## Estructura del repo
 
@@ -53,9 +65,16 @@ Presentation    ← WPF Views/ViewModels/State (SesionActual)
 src/
   Domain/         Entities/  ValueObjects/  Enums/  Interfaces/  Common/
   Application/    UseCases/  DTOs/  Interfaces/
+    UseCases/
+      Autenticacion/  Usuarios/  Permisos/  Auditoria/
+      Inflacion/  TasaRetencion/  Estudiantes/
+      SueldosPlantaCentral/  RecursosFisicosDepreciacion/
+      CostosGastos/  DemandaIngresos/
+      MantenimientoCapitalTrabajoInversionInicial/
+      FinanciamientoBalanceReportes/  AnalisisFinanciero/
   Infrastructure/ Persistence/  Servicios/  Export/  DI/
   Presentation/   Views/  ViewModels/  Converters/  State/  Mensajes/  Services/
-sql/              # Scripts versionados KAN03..KAN14 (precheck/apply/postcheck/rollback)
+sql/              # Scripts versionados KAN03..KAN19 (precheck/apply/postcheck/rollback)
 docs/             # Informes épicas + DB
 ```
 
@@ -75,9 +94,6 @@ Configurar `src/Presentation/appsettings.Local.json` con cadena Supabase (`Maxim
 
 - `main` — estable
 - `develop` — integración
-- `feature/KAN-14-simulacion-cohorte` — simulación de retención y graduación validada
-- `feature/KAN-15-indicadores-retencion` — siguiente rama
-- `feature/KAN-16-edicion-trazabilidad` — siguiente rama
 - `feature/KAN-xx` — desarrollo por historia técnica → merge a `develop`
 
 ## Documentación
@@ -115,5 +131,5 @@ Configurar `src/Presentation/appsettings.Local.json` con cadena Supabase (`Maxim
 
 ## Restore Supabase (referencia)
 
-**Backup:** Custom · Solo schema `public` · No owner · No privileges · Sin realtime/storage/auth/extensions internas
+**Backup:** Custom · Solo schema `public` · No owner · No privileges · Sin realtime/storage/auth/extensions internas  
 **Restore:** Pre-data + Data + Post-data · No owner · No privileges · `Clean before restore` solo en pruebas
