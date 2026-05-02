@@ -1,4 +1,4 @@
-using SistemaAranceles.Infrastructure.Persistence.Entidades;
+using SistemaAranceles.Domain.Entities;
 
 namespace SistemaAranceles.Application.Interfaces.Persistencia;
 
