@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Domain.Entities;
-using SistemaAranceles.Infrastructure.Persistence.Contexto;
+using SistemaAranceles.Infrastructure.Persistence;
 
 namespace SistemaAranceles.Infrastructure.Persistence.Repositories;
 
