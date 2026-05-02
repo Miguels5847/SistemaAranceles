@@ -31,15 +31,18 @@ public sealed class RepositorioCargoFacultad(ContextoAplicacion contextoAplicaci
     public void Eliminar(Domain.Entities.CargoFacultad cargo)
         => contextoAplicacion.CargosFacultad.Remove(MapearAInfra(cargo));
 
-    private static Domain.Entities.CargoFacultad MapearADominio(CargoFacultad e) => new()
+    private static Domain.Entities.CargoFacultad MapearADominio(CargoFacultad e)
     {
-        Id = e.Id,
-        CarreraId = e.CarreraId,
-        NombreCargo = e.NombreCargo,
-        TipoCargo = e.TipoCargo,
-        SueldoBaseMensual = e.SueldoBaseMensual,
-        EsCargoDocente = e.EsCargoDocente,
-    };
+        var dominio = new Domain.Entities.CargoFacultad(
+            e.CarreraId,
+            e.NombreCargo,
+            e.TipoCargo,
+            e.SueldoBaseMensual,
+            e.EsCargoDocente);
+
+        dominio.RehidratarId(e.Id);
+        return dominio;
+    }
 
     private static CargoFacultad MapearAInfra(Domain.Entities.CargoFacultad d) => new()
     {

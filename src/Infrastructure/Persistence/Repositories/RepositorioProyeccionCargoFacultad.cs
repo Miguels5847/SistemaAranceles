@@ -28,16 +28,19 @@ public sealed class RepositorioProyeccionCargoFacultad(ContextoAplicacion contex
     public void Actualizar(Domain.Entities.ProyeccionCargoFacultad proyeccion)
         => contextoAplicacion.ProyeccionesCargoFacultad.Update(MapearAInfra(proyeccion));
 
-    private static Domain.Entities.ProyeccionCargoFacultad MapearADominio(ProyeccionCargoFacultad e) => new()
+    private static Domain.Entities.ProyeccionCargoFacultad MapearADominio(ProyeccionCargoFacultad e)
     {
-        Id = e.Id,
-        CargoFacultadId = e.CargoFacultadId,
-        PeriodoAcademicoId = e.PeriodoAcademicoId,
-        CantidadPersonas = e.CantidadPersonas,
-        FactorPonderacion = e.FactorPonderacion,
-        FactorInflacion = e.FactorInflacion,
-        CostoTotalSemestre = e.CostoTotalSemestre,
-    };
+        var dominio = new Domain.Entities.ProyeccionCargoFacultad(
+            e.CargoFacultadId,
+            e.PeriodoAcademicoId,
+            e.CantidadPersonas,
+            e.FactorPonderacion,
+            e.FactorInflacion,
+            e.CostoTotalSemestre);
+
+        dominio.RehidratarId(e.Id);
+        return dominio;
+    }
 
     private static ProyeccionCargoFacultad MapearAInfra(Domain.Entities.ProyeccionCargoFacultad d) => new()
     {
