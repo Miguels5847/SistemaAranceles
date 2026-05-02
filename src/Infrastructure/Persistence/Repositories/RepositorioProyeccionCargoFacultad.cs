@@ -1,32 +1,24 @@
 using Microsoft.EntityFrameworkCore;
 using SistemaAranceles.Application.Interfaces.Persistencia;
-using SistemaAranceles.Domain.Entities;
-using SistemaAranceles.Infrastructure.Persistence;
+using SistemaAranceles.Infrastructure.Persistence.Entidades;
 
 namespace SistemaAranceles.Infrastructure.Persistence.Repositories;
 
-internal sealed class RepositorioProyeccionCargoFacultad : IRepositorioProyeccionCargoFacultad
+public sealed class RepositorioProyeccionCargoFacultad(ContextoAplicacion contextoAplicacion) : IRepositorioProyeccionCargoFacultad
 {
-    private readonly ContextoAplicacion _contexto;
-
-    public RepositorioProyeccionCargoFacultad(ContextoAplicacion contexto)
-    {
-        _contexto = contexto;
-    }
-
     public async Task<ProyeccionCargoFacultad?> ObtenerPorIdAsync(int id, CancellationToken ct = default)
-        => await _contexto.ProyeccionesCargoFacultad
+        => await contextoAplicacion.ProyeccionesCargoFacultad
             .FirstOrDefaultAsync(x => x.Id == id, ct);
 
     public async Task<IReadOnlyList<ProyeccionCargoFacultad>> ListarPorCargoAsync(int cargoFacultadId, CancellationToken ct = default)
-        => await _contexto.ProyeccionesCargoFacultad
+        => await contextoAplicacion.ProyeccionesCargoFacultad
             .Where(x => x.CargoFacultadId == cargoFacultadId)
             .OrderBy(x => x.PeriodoAcademicoId)
             .ToListAsync(ct);
 
     public async Task AgregarAsync(ProyeccionCargoFacultad proyeccion, CancellationToken ct = default)
-        => await _contexto.ProyeccionesCargoFacultad.AddAsync(proyeccion, ct);
+        => await contextoAplicacion.ProyeccionesCargoFacultad.AddAsync(proyeccion, ct);
 
     public void Actualizar(ProyeccionCargoFacultad proyeccion)
-        => _contexto.ProyeccionesCargoFacultad.Update(proyeccion);
+        => contextoAplicacion.ProyeccionesCargoFacultad.Update(proyeccion);
 }
