@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:SistemaAranceles.Presentation.ViewModels"
+        xmlns:vmCat="clr-namespace:SistemaAranceles.Presentation.ViewModels.Catalogos"
         xmlns:vmU="clr-namespace:SistemaAranceles.Presentation.ViewModels.Usuarios"
         xmlns:vmA="clr-namespace:SistemaAranceles.Presentation.ViewModels.Auditoria"
         xmlns:vmCF="clr-namespace:SistemaAranceles.Presentation.ViewModels.CargosFacultad"
@@ -9,13 +10,16 @@
         xmlns:vmI="clr-namespace:SistemaAranceles.Presentation.ViewModels.Inflacion"
         xmlns:vmT="clr-namespace:SistemaAranceles.Presentation.ViewModels.TasaRetencion"
         xmlns:vmE="clr-namespace:SistemaAranceles.Presentation.ViewModels.Estudiantes"
+        xmlns:vmCap="clr-namespace:SistemaAranceles.Presentation.ViewModels.CapitalTrabajo"
         xmlns:vU="clr-namespace:SistemaAranceles.Presentation.Views.Usuarios"
         xmlns:vA="clr-namespace:SistemaAranceles.Presentation.Views.Auditoria"
         xmlns:vCF="clr-namespace:SistemaAranceles.Presentation.Views.CargosFacultad"
+        xmlns:vCat="clr-namespace:SistemaAranceles.Presentation.Views.Catalogos"
         xmlns:vC="clr-namespace:SistemaAranceles.Presentation.Views.Carreras"
         xmlns:vI="clr-namespace:SistemaAranceles.Presentation.Views.Inflacion"
         xmlns:vT="clr-namespace:SistemaAranceles.Presentation.Views.TasaRetencion"
         xmlns:vE="clr-namespace:SistemaAranceles.Presentation.Views.Estudiantes"
+        xmlns:vCap="clr-namespace:SistemaAranceles.Presentation.Views.CapitalTrabajo"
         Title="Sistema de Aranceles Universitarios"
         Width="1400"
         Height="820"
@@ -38,6 +42,15 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmCF:CargosFacultadViewModel}">
             <vCF:CargosFacultadView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmCat:CatalogoCargosViewModel}">
+            <vCat:CatalogoCargosView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmCat:CatalogoMaterialesViewModel}">
+            <vCat:CatalogoMaterialesView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmCap:CapitalTrabajoViewModel}">
+            <vCap:CapitalTrabajoView/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmC:CarrerasViewModel}">
             <vC:CarrerasView/>

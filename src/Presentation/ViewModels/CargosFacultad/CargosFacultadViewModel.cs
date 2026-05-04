@@ -31,6 +31,9 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
     private int _carreraSeleccionadaId;
 
     [ObservableProperty]
+    private Carrera? _carreraSeleccionada;
+
+    [ObservableProperty]
     private ObservableCollection<CargoFacultadCalculadoDto> _cargos = [];
 
     [ObservableProperty]
@@ -122,6 +125,7 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
 
             await CargarCargosAsync();
             await CargarProyeccionesAsync();
+            await CargarOpcionesInflacionAsync();
         }
         catch (Exception ex)
         {
@@ -316,6 +320,22 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
         _ = CargarProyeccionesAsync();
     }
 
+    partial void OnCarreraSeleccionadaChanged(Carrera? value)
+    {
+        if (_bloquearRecargaPorCarrera || EstaCargando)
+            return;
+
+        try
+        {
+            _bloquearRecargaPorCarrera = true;
+            CarreraSeleccionadaId = value?.Id ?? 0;
+        }
+        finally
+        {
+            _bloquearRecargaPorCarrera = false;
+        }
+    }
+
     private async Task CargarCargosAsync()
     {
         if (!PuedeVer || CarreraSeleccionadaId <= 0)
@@ -330,7 +350,9 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
             var useCase = scope.ServiceProvider.GetRequiredService<ObtenerCargosFacultadPorCarreraQuery>();
             var parametros = ConstruirParametrosCalculo();
             var lista = await useCase.EjecutarAsync(CarreraSeleccionadaId, parametros);
-            Cargos = new ObservableCollection<CargoFacultadCalculadoDto>(lista);
+            // Asegurar orden estable por nombre de cargo
+            var listaOrdenada = lista.OrderBy(x => x.NombreCargo, StringComparer.OrdinalIgnoreCase).ToList();
+            Cargos = new ObservableCollection<CargoFacultadCalculadoDto>(listaOrdenada);
 
             if (CargoSeleccionado is not null && Cargos.All(x => x.Id != CargoSeleccionado.Id))
                 CargoSeleccionado = null;

@@ -62,8 +62,7 @@
                                    VerticalAlignment="Center"
                                    Margin="0,0,8,0"/>
                         <ComboBox ItemsSource="{Binding Carreras}"
-                                  SelectedValue="{Binding CarreraSeleccionadaId, Mode=TwoWay}"
-                                  SelectedValuePath="Id"
+                                  SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}"
                                   DisplayMemberPath="Nombre"
                                   MinWidth="280"
                                   Padding="6,4"/>
@@ -77,8 +76,8 @@
                     </StackPanel>
 
                     <WrapPanel Grid.Row="1"
-                               ItemWidth="180"
-                               ItemHeight="56">
+                               ItemWidth="300"
+                               ItemHeight="80">
                         <StackPanel Margin="0,0,12,8">
                             <TextBlock Text="Décimo cuarto anual"
                                        FontSize="11"
@@ -94,17 +93,45 @@
                                      Padding="6,4"/>
                         </StackPanel>
                         <StackPanel Margin="0,0,12,8">
-                            <TextBlock Text="Factor inflación"
-                                       FontSize="11"
-                                       Foreground="#546E7A"/>
-                            <TextBox Text="{Binding FactorInflacion, UpdateSourceTrigger=PropertyChanged}"
-                                     Padding="6,4"/>
-                        </StackPanel>
-                        <StackPanel Margin="0,0,12,8">
                             <TextBlock Text="Décimo cuarto semestral"
                                        FontSize="11"
                                        Foreground="#546E7A"/>
                             <TextBox Text="{Binding ValorDecimoCuartoSemestral, UpdateSourceTrigger=PropertyChanged}"
+                                     Padding="6,4"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,8">
+                            <TextBlock Text="Año - Inflación"
+                                       FontSize="11"
+                                       Foreground="#546E7A"/>
+                            <ComboBox ItemsSource="{Binding OpcionesInflacion}"
+                                      SelectedItem="{Binding InflacionSeleccionada, Mode=TwoWay}"
+                                      DisplayMemberPath="DisplayText"
+                                      Padding="6,4"
+                                      Width="420"
+                                      IsEnabled="{Binding EstaCargandoInflacion, Converter={StaticResource InverseBoolConverter}}"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,8">
+                            <TextBlock Text="Usar previsión / Manual"
+                                       FontSize="11"
+                                       Foreground="#546E7A"/>
+                            <StackPanel Orientation="Horizontal"
+                                        Height="28"
+                                        VerticalAlignment="Center">
+                                <RadioButton Content="Previsión"
+                                             IsChecked="{Binding UsarInflacionManual, Converter={StaticResource InverseBoolConverter}}"
+                                             Margin="0,0,8,0"
+                                             FontSize="11"/>
+                                <RadioButton Content="Manual"
+                                             IsChecked="{Binding UsarInflacionManual}"
+                                             FontSize="11"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,8"
+                                    Visibility="{Binding UsarInflacionManual, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="Valor manual"
+                                       FontSize="11"
+                                       Foreground="#546E7A"/>
+                            <TextBox Text="{Binding InflacionManualValor, UpdateSourceTrigger=PropertyChanged}"
                                      Padding="6,4"/>
                         </StackPanel>
                     </WrapPanel>
@@ -430,8 +457,8 @@
 
                                     <StackPanel Margin="0,0,0,8">
                                         <TextBlock Text="Cargo"
-                                                FontSize="11"
-                                                Foreground="#546E7A"/>
+                                                   FontSize="11"
+                                                   Foreground="#546E7A"/>
                                         <ComboBox ItemsSource="{Binding Cargos}"
                                                   SelectedItem="{Binding CargoSeleccionado, Mode=TwoWay}"
                                                   DisplayMemberPath="NombreCargo"
@@ -440,16 +467,16 @@
 
                                     <StackPanel Margin="0,0,0,8">
                                         <TextBlock Text="Período académico (Id)"
-                                                FontSize="11"
-                                                Foreground="#546E7A"/>
+                                                   FontSize="11"
+                                                   Foreground="#546E7A"/>
                                         <TextBox Text="{Binding PeriodoAcademicoId, UpdateSourceTrigger=PropertyChanged}"
                                                  Padding="6,4"/>
                                     </StackPanel>
 
                                     <StackPanel Margin="0,0,0,8">
                                         <TextBlock Text="Cantidad de personas"
-                                                FontSize="11"
-                                                Foreground="#546E7A"/>
+                                                   FontSize="11"
+                                                   Foreground="#546E7A"/>
                                         <TextBox Text="{Binding CantidadPersonas, UpdateSourceTrigger=PropertyChanged}"
                                                  Padding="6,4"/>
                                     </StackPanel>

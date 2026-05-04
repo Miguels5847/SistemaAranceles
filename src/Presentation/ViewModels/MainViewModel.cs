@@ -36,6 +36,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly AuditoriaViewModel _auditoriaViewModel;
     private readonly CargosFacultadViewModel _cargosFacultadViewModel;
     private readonly CarrerasViewModel _carrerasViewModel;
+    private readonly SistemaAranceles.Presentation.ViewModels.CapitalTrabajo.CapitalTrabajoViewModel _capitalTrabajoViewModel;
     private readonly EstudiantesViewModel _estudiantesViewModel;
     private readonly InflacionViewModel _inflacionViewModel;
     private readonly ConfiguracionRetencionViewModel _configuracionRetencionViewModel;
@@ -50,6 +51,7 @@ public sealed partial class MainViewModel : ObservableObject
         UsuariosViewModel usuariosViewModel,
         AuditoriaViewModel auditoriaViewModel,
         CargosFacultadViewModel cargosFacultadViewModel,
+        SistemaAranceles.Presentation.ViewModels.CapitalTrabajo.CapitalTrabajoViewModel capitalTrabajoViewModel,
         CarrerasViewModel carrerasViewModel,
         EstudiantesViewModel estudiantesViewModel,
         InflacionViewModel inflacionViewModel,
@@ -62,6 +64,7 @@ public sealed partial class MainViewModel : ObservableObject
         _usuariosViewModel = usuariosViewModel;
         _auditoriaViewModel = auditoriaViewModel;
         _cargosFacultadViewModel = cargosFacultadViewModel;
+        _capitalTrabajoViewModel = capitalTrabajoViewModel;
         _carrerasViewModel = carrerasViewModel;
         _estudiantesViewModel = estudiantesViewModel;
         _inflacionViewModel = inflacionViewModel;
@@ -158,6 +161,17 @@ public sealed partial class MainViewModel : ObservableObject
                 Titulo = "Inflación",
                 Icono = string.Empty,
                 Comando = new AsyncRelayCommand(() => MostrarInflacionAsync())
+            });
+        }
+
+        // Catálogo maestro: Capital de Trabajo (reemplaza menús separados de catálogos)
+        if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Capital de Trabajo",
+                Icono = string.Empty,
+                Comando = new AsyncRelayCommand(() => MostrarCapitalTrabajoAsync())
             });
         }
 
@@ -360,6 +374,29 @@ public sealed partial class MainViewModel : ObservableObject
         MensajePagina = string.Empty;
         PaginaActual = _cargosFacultadViewModel;
         await _cargosFacultadViewModel.CargarCommand.ExecuteAsync(null);
+    }
+
+    private Task MostrarCatalogoCargosAsync()
+    {
+        return MostrarCapitalTrabajoAsync();
+    }
+
+    private async Task MostrarCapitalTrabajoAsync()
+    {
+        if (!(_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador))
+        {
+            MensajePagina = "Acceso denegado al módulo Capital de Trabajo.";
+            return;
+        }
+
+        MensajePagina = string.Empty;
+        PaginaActual = _capitalTrabajoViewModel;
+        await _capitalTrabajoViewModel.CargarCommand.ExecuteAsync(null);
+    }
+
+    private Task MostrarCatalogoMaterialesAsync()
+    {
+        return MostrarCapitalTrabajoAsync();
     }
 
     [RelayCommand]

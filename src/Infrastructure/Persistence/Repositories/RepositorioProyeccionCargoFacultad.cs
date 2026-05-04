@@ -22,6 +22,16 @@ public sealed class RepositorioProyeccionCargoFacultad(ContextoAplicacion contex
         return lista.Select(MapearADominio).ToList();
     }
 
+    public async Task<IReadOnlyList<Domain.Entities.ProyeccionCargoFacultad>> ObtenerPorCarreraYPeriodoAsync(int carreraId, int periodoAcademicoId, CancellationToken ct = default)
+    {
+        var lista = await contextoAplicacion.ProyeccionesCargoFacultad
+            .Include(x => x.CargoFacultad)
+            .Where(x => x.CargoFacultad!.CarreraId == carreraId && x.PeriodoAcademicoId == periodoAcademicoId)
+            .OrderBy(x => x.CargoFacultadId)
+            .ToListAsync(ct);
+        return lista.Select(MapearADominio).ToList();
+    }
+
     public async Task AgregarAsync(Domain.Entities.ProyeccionCargoFacultad proyeccion, CancellationToken ct = default)
         => await contextoAplicacion.ProyeccionesCargoFacultad.AddAsync(MapearAInfra(proyeccion), ct);
 
