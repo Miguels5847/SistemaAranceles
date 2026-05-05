@@ -29,7 +29,6 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
         _catalogoMateriales = catalogoMateriales;
     }
 
-    // Exposición del VM de cargos para que la vista lo use directamente
     public CatalogoCargosViewModel CatalogoCargos => _catalogoCargos;
 
     [ObservableProperty] private ObservableCollection<object> _materiales = [];
@@ -57,20 +56,26 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
         MensajeExito = string.Empty;
         try
         {
+            // --- Semilla: scope propio, se cierra antes de cualquier otro query ---
             Trace.TraceInformation($"[{DateTime.UtcNow:O}] CapitalTrabajoVM: iniciando SemillaCapitalTrabajoService...");
-            using (var scope = _serviceProvider.CreateScope())
+            bool cargada;
+            // SemillaCapitalTrabajoService ya maneja su propio scope internamente;
+            // lo resolvemos desde un scope breve solo para instanciarlo.
+            using (var scopeSemilla = _serviceProvider.CreateScope())
             {
-                var semilla = scope.ServiceProvider.GetRequiredService<SemillaCapitalTrabajoService>();
-                var cargada = await semilla.CargarSemillaCapitalTrabajoAsync();
-                Trace.TraceInformation($"[{DateTime.UtcNow:O}] CapitalTrabajoVM: semilla completada. cargada={cargada}");
-                if (cargada)
-                    MensajeExito = "✓ Datos maestros de Capital de Trabajo cargados exitosamente.";
+                var semilla = scopeSemilla.ServiceProvider.GetRequiredService<SemillaCapitalTrabajoService>();
+                cargada = await semilla.CargarSemillaCapitalTrabajoAsync();
             }
+            Trace.TraceInformation($"[{DateTime.UtcNow:O}] CapitalTrabajoVM: semilla completada. cargada={cargada}");
+            if (cargada)
+                MensajeExito = "\u2713 Datos maestros de Capital de Trabajo cargados exitosamente.";
 
+            // --- Cargos: scope propio, secuencial ---
             Trace.TraceInformation($"[{DateTime.UtcNow:O}] CapitalTrabajoVM: cargando cargos...");
             await _catalogoCargos.CargarCommand.ExecuteAsync(carreraId ?? 1);
             Trace.TraceInformation($"[{DateTime.UtcNow:O}] CapitalTrabajoVM: cargos OK ({_catalogoCargos.Cargos.Count} items). MensajeError cargos='{_catalogoCargos.MensajeError}'");
 
+            // --- Materiales: scope propio, secuencial ---
             Trace.TraceInformation($"[{DateTime.UtcNow:O}] CapitalTrabajoVM: refrescando materiales...");
             await RefrescarMaterialesAsync();
             Trace.TraceInformation($"[{DateTime.UtcNow:O}] CapitalTrabajoVM: materiales OK. MensajeError materiales='{_catalogoMateriales.MensajeError}' Total={Materiales.Count}");
@@ -100,44 +105,44 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
             PrecioUnitario = i.PrecioUnitario
         }).ToList();
 
-        Materiales = new ObservableCollection<object>(agrupados);
-        MaterialesSuministros = new ObservableCollection<object>(agrupados.Where(i => i.Categoria == "MATERIALES_SUMINISTROS"));
-        AseoLimpieza          = new ObservableCollection<object>(agrupados.Where(i => i.Categoria == "ASEO_LIMPIEZA"));
-        AccesoriosMateriales  = new ObservableCollection<object>(agrupados.Where(i => i.Categoria == "ACCESORIOS_MATERIALES"));
+        Materiales             = new ObservableCollection<object>(agrupados);
+        MaterialesSuministros  = new ObservableCollection<object>(agrupados.Where(i => i.Categoria == "MATERIALES_SUMINISTROS"));
+        AseoLimpieza           = new ObservableCollection<object>(agrupados.Where(i => i.Categoria == "ASEO_LIMPIEZA"));
+        AccesoriosMateriales   = new ObservableCollection<object>(agrupados.Where(i => i.Categoria == "ACCESORIOS_MATERIALES"));
     }
 
-    // ── CRUD Materiales ─────────────────────────────────────────────────────
+    // \u2500\u2500 CRUD Materiales \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
     [RelayCommand]
     private void AbrirNuevoMaterial(string categoria)
     {
-        FormMatId = 0;
-        FormMatNombre = string.Empty;
+        FormMatId       = 0;
+        FormMatNombre   = string.Empty;
         FormMatCantidad = 0m;
-        FormMatPrecio = 0m;
+        FormMatPrecio   = 0m;
         FormMatCategoria = categoria;
         FormMatEsEdicion = false;
-        FormMatVisible = true;
+        FormMatVisible  = true;
     }
 
     [RelayCommand]
     private void AbrirEditarMaterial(object item)
     {
         if (item is not MaterialItemVm vm) return;
-        FormMatId = vm.Id;
-        FormMatNombre = vm.NombreItem;
-        FormMatCantidad = vm.Cantidad;
-        FormMatPrecio = vm.PrecioUnitario;
+        FormMatId        = vm.Id;
+        FormMatNombre    = vm.NombreItem;
+        FormMatCantidad  = vm.Cantidad;
+        FormMatPrecio    = vm.PrecioUnitario;
         FormMatCategoria = vm.Categoria;
         FormMatEsEdicion = true;
-        FormMatVisible = true;
+        FormMatVisible   = true;
     }
 
     [RelayCommand]
     private void CancelarFormMat()
     {
         FormMatVisible = false;
-        MensajeError = string.Empty;
+        MensajeError   = string.Empty;
     }
 
     [RelayCommand]
@@ -153,13 +158,13 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
             {
                 var nuevo = new ItemMaterialInsumo
                 {
-                    CarreraId = 1,
-                    NombreItem = FormMatNombre,
+                    CarreraId       = 1,
+                    NombreItem      = FormMatNombre,
                     CategoriaNombre = FormMatCategoria,
-                    UnidadNombre = "Unidad",
-                    CantidadBase = FormMatCantidad,
-                    PrecioUnitario = FormMatPrecio,
-                    EsCantidadFija = false,
+                    UnidadNombre    = "Unidad",
+                    CantidadBase    = FormMatCantidad,
+                    PrecioUnitario  = FormMatPrecio,
+                    EsCantidadFija  = false,
                 };
                 ctx.ItemsMaterialInsumo.Add(nuevo);
             }
@@ -168,8 +173,8 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
                 var existente = await ctx.ItemsMaterialInsumo.FindAsync(FormMatId);
                 if (existente is not null)
                 {
-                    existente.NombreItem = FormMatNombre;
-                    existente.CantidadBase = FormMatCantidad;
+                    existente.NombreItem     = FormMatNombre;
+                    existente.CantidadBase   = FormMatCantidad;
                     existente.PrecioUnitario = FormMatPrecio;
                 }
             }
