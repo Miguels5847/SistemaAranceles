@@ -39,9 +39,16 @@ public sealed partial class CatalogoMaterialesViewModel : ObservableObject
             Trace.TraceInformation($"[{DateTime.UtcNow:O}] CatalogoMaterialesVM: obteniendo ContextoAplicacion...");
             var ctx = scope.ServiceProvider.GetRequiredService<ContextoAplicacion>();
             Trace.TraceInformation($"[{DateTime.UtcNow:O}] CatalogoMaterialesVM: ejecutando ToListAsync sobre item_material_insumo...");
-            var datos = await ctx.ItemsMaterialInsumo.OrderBy(x => x.NombreItem).ToListAsync();
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            var datos = await ctx.ItemsMaterialInsumo.OrderBy(x => x.NombreItem).ToListAsync(cts.Token);
             Trace.TraceInformation($"[{DateTime.UtcNow:O}] CatalogoMaterialesVM: query OK. {datos.Count} items.");
             Items = new ObservableCollection<ItemMaterialInsumo>(datos);
+        }
+        catch (OperationCanceledException)
+        {
+            const string msg = "Timeout (30 s): item_material_insumo no respondió. Verifica la conexión a Supabase.";
+            Trace.TraceError($"[{DateTime.UtcNow:O}] CatalogoMaterialesVM: TIMEOUT — {msg}");
+            MensajeError = msg;
         }
         catch (Exception ex)
         {
