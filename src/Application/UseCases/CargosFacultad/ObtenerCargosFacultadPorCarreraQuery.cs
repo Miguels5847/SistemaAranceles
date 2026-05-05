@@ -64,6 +64,7 @@ public sealed class ObtenerCargosFacultadPorCarreraQuery(IRepositorioCargoFacult
             TipoCargo = cargo.TipoCargo,
             SueldoBaseMensual = cargo.SueldoBaseMensual,
             EsCargoDocente = cargo.EsCargoDocente,
+            CantidadDefault = cargo.CantidadDefault,
             PesoProporcional = peso,
             DecimoTerceroSemestral = decimoTercero,
             DecimoCuartoSemestral = decimoCuarto,

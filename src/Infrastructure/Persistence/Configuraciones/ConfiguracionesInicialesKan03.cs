@@ -677,6 +677,7 @@ internal sealed class CargoFacultadConfiguracion : IEntityTypeConfiguration<Carg
         builder.Property(x => x.TipoCargo).HasColumnName("tipo_cargo").HasMaxLength(60).IsRequired();
         builder.Property(x => x.SueldoBaseMensual).HasColumnName("sueldo_base_mensual").HasColumnType("decimal(18,2)").IsRequired();
         builder.Property(x => x.EsCargoDocente).HasColumnName("es_cargo_docente").IsRequired();
+        builder.Property(x => x.CantidadDefault).HasColumnName("cantidad_default").HasColumnType("decimal(9,2)").HasDefaultValue(1m).IsRequired();
 
         builder.HasOne(x => x.Carrera)
             .WithMany(x => x.CargosFacultad)

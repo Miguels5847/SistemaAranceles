@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,16 +31,25 @@ public sealed partial class CatalogoMaterialesViewModel : ObservableObject
     [RelayCommand]
     private async Task CargarAsync()
     {
+        Trace.TraceInformation($"[{DateTime.UtcNow:O}] CatalogoMaterialesVM: CargarAsync iniciado.");
         try
         {
+            Trace.TraceInformation($"[{DateTime.UtcNow:O}] CatalogoMaterialesVM: creando scope...");
             using var scope = _serviceProvider.CreateScope();
+            Trace.TraceInformation($"[{DateTime.UtcNow:O}] CatalogoMaterialesVM: obteniendo ContextoAplicacion...");
             var ctx = scope.ServiceProvider.GetRequiredService<ContextoAplicacion>();
+            Trace.TraceInformation($"[{DateTime.UtcNow:O}] CatalogoMaterialesVM: ejecutando ToListAsync sobre item_material_insumo...");
             var datos = await ctx.ItemsMaterialInsumo.OrderBy(x => x.NombreItem).ToListAsync();
+            Trace.TraceInformation($"[{DateTime.UtcNow:O}] CatalogoMaterialesVM: query OK. {datos.Count} items.");
             Items = new ObservableCollection<ItemMaterialInsumo>(datos);
         }
         catch (Exception ex)
         {
+            Trace.TraceError($"[{DateTime.UtcNow:O}] CatalogoMaterialesVM: EXCEPCION: {ex.GetType().Name}: {ex.Message}");
+            if (ex.InnerException is not null)
+                Trace.TraceError($"[{DateTime.UtcNow:O}] CatalogoMaterialesVM: InnerException: {ex.InnerException.Message}");
             MensajeError = ex.Message;
         }
+        Trace.TraceInformation($"[{DateTime.UtcNow:O}] CatalogoMaterialesVM: CargarAsync finalizado.");
     }
 }

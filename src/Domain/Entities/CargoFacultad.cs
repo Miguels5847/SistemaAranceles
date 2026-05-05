@@ -8,13 +8,14 @@ public sealed class CargoFacultad : EntidadDominioBase
     {
     }
 
-    public CargoFacultad(int carreraId, string nombreCargo, string tipoCargo, decimal sueldoBaseMensual, bool esCargoDocente)
+    public CargoFacultad(int carreraId, string nombreCargo, string tipoCargo, decimal sueldoBaseMensual, bool esCargoDocente, decimal cantidadDefault = 1m)
     {
         CambiarCarrera(carreraId);
         CambiarNombreCargo(nombreCargo);
         CambiarTipoCargo(tipoCargo);
         CambiarSueldoBase(sueldoBaseMensual);
         EsCargoDocente = esCargoDocente;
+        CantidadDefault = cantidadDefault;
     }
 
     public int CarreraId { get; private set; }
@@ -22,6 +23,7 @@ public sealed class CargoFacultad : EntidadDominioBase
     public string TipoCargo { get; private set; } = string.Empty;
     public decimal SueldoBaseMensual { get; private set; }
     public bool EsCargoDocente { get; private set; }
+    public decimal CantidadDefault { get; private set; } = 1m;
 
     public void CambiarCarrera(int carreraId)
     {
@@ -46,5 +48,10 @@ public sealed class CargoFacultad : EntidadDominioBase
     public void CambiarEsCargoDocente(bool esCargoDocente)
     {
         EsCargoDocente = esCargoDocente;
+    }
+
+    public void CambiarCantidadDefault(decimal cantidad)
+    {
+        CantidadDefault = GuardiaDominio.DecimalNoNegativo(cantidad, "Cantidad default", 4);
     }
 }

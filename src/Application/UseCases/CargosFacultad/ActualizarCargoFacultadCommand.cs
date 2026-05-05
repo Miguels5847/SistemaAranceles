@@ -19,6 +19,7 @@ public sealed class ActualizarCargoFacultadCommand(
         cargo.CambiarTipoCargo(dto.TipoCargo);
         cargo.CambiarSueldoBase(dto.SueldoBaseMensual);
         cargo.CambiarEsCargoDocente(dto.EsCargoDocente);
+        cargo.CambiarCantidadDefault(dto.CantidadDefault);
 
         repositorioCargoFacultad.Actualizar(cargo);
         await unidadTrabajo.GuardarCambiosAsync(cancellationToken);

@@ -38,7 +38,8 @@ public sealed class RepositorioCargoFacultad(ContextoAplicacion contextoAplicaci
             e.NombreCargo,
             e.TipoCargo,
             e.SueldoBaseMensual,
-            e.EsCargoDocente);
+            e.EsCargoDocente,
+            e.CantidadDefault);
 
         dominio.RehidratarId(e.Id);
         return dominio;
@@ -52,5 +53,6 @@ public sealed class RepositorioCargoFacultad(ContextoAplicacion contextoAplicaci
         TipoCargo = d.TipoCargo,
         SueldoBaseMensual = d.SueldoBaseMensual,
         EsCargoDocente = d.EsCargoDocente,
+        CantidadDefault = d.CantidadDefault,
     };
 }

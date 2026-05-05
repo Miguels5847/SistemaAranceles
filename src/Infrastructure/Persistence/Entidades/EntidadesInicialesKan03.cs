@@ -271,6 +271,7 @@ public sealed class CargoFacultad : EntidadBase
     public string TipoCargo { get; set; } = string.Empty;
     public decimal SueldoBaseMensual { get; set; }
     public bool EsCargoDocente { get; set; }
+    public decimal CantidadDefault { get; set; } = 1m;
 
     public Carrera? Carrera { get; set; }
     public ICollection<ProyeccionCargoFacultad> ProyeccionesCargoFacultad { get; set; } = new List<ProyeccionCargoFacultad>();

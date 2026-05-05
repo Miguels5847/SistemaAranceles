@@ -8,6 +8,7 @@ public sealed class CargoFacultadCalculadoDto
     public string TipoCargo { get; init; } = string.Empty;
     public decimal SueldoBaseMensual { get; init; }
     public bool EsCargoDocente { get; init; }
+    public decimal CantidadDefault { get; init; }
     public decimal PesoProporcional { get; init; }
     public decimal DecimoTerceroSemestral { get; init; }
     public decimal DecimoCuartoSemestral { get; init; }

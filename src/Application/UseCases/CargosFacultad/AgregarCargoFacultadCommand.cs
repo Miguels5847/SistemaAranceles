@@ -17,7 +17,8 @@ public sealed class AgregarCargoFacultadCommand(
             dto.NombreCargo,
             dto.TipoCargo,
             dto.SueldoBaseMensual,
-            dto.EsCargoDocente);
+            dto.EsCargoDocente,
+            dto.CantidadDefault);
 
         await repositorioCargoFacultad.AgregarAsync(cargo, cancellationToken);
         await unidadTrabajo.GuardarCambiosAsync(cancellationToken);

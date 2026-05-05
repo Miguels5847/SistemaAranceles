@@ -6,6 +6,10 @@ using System.Windows;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using FluentValidation;
+using SistemaAranceles.Infrastructure.DI;
+using SistemaAranceles.Infrastructure.Persistence;
+using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Application.Options;
 using SistemaAranceles.Application.UseCases.Auditoria;
 using SistemaAranceles.Application.UseCases.Autenticacion;
@@ -20,12 +24,8 @@ using SistemaAranceles.Presentation.ViewModels.CargosFacultad;
 using SistemaAranceles.Presentation.ViewModels.Estudiantes;
 using SistemaAranceles.Application.UseCases.Usuarios;
 using SistemaAranceles.Application.UseCases.Permisos;
-using SistemaAranceles.Application.DTOs.TasaRetencion;
-using FluentValidation;
-using SistemaAranceles.Infrastructure.DI;
-using SistemaAranceles.Infrastructure.Persistence;
-using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.Services;
+using SistemaAranceles.Application.DTOs.TasaRetencion;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.ViewModels;
 using SistemaAranceles.Presentation.ViewModels.Auditoria;
@@ -159,6 +159,7 @@ public partial class App
         servicios.AddTransient<ImportarInflacionBceArchivoUseCase>();
         servicios.AddTransient<ProyectarInflacionUseCase>();
         servicios.AddTransient<ObtenerInflacionProyectadaParaDependientesUseCase>();
+        servicios.AddTransient<SemillaCapitalTrabajoService>();
 
         // KAN-13: Tasa de Retención — Configuración
         servicios.AddTransient<IValidator<CrearConfiguracionRetencionDto>, CrearConfiguracionRetencionDtoValidador>();

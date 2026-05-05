@@ -7,4 +7,5 @@ public sealed class CrearCargoFacultadDto
     public string TipoCargo { get; init; } = string.Empty;
     public decimal SueldoBaseMensual { get; init; }
     public bool EsCargoDocente { get; init; }
+    public decimal CantidadDefault { get; init; } = 1m;
 }
