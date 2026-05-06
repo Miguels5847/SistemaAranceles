@@ -674,7 +674,7 @@ internal sealed class CargoFacultadConfiguracion : IEntityTypeConfiguration<Carg
 
         builder.Property(x => x.CarreraId).HasColumnName("carrera_id").IsRequired();
         builder.Property(x => x.NombreCargo).HasColumnName("nombre_cargo").HasMaxLength(120).IsRequired();
-        builder.Property(x => x.TipoCargo).HasColumnName("tipo_cargo").HasMaxLength(60).IsRequired();
+        // TipoCargo removed from persistence model (handled at domain/UI level if needed)
         builder.Property(x => x.SueldoBaseMensual).HasColumnName("sueldo_base_mensual").HasColumnType("decimal(18,2)").IsRequired();
         builder.Property(x => x.EsCargoDocente).HasColumnName("es_cargo_docente").IsRequired();
         builder.Property(x => x.CantidadDefault).HasColumnName("cantidad_default").HasColumnType("decimal(9,2)").HasDefaultValue(1m).IsRequired();

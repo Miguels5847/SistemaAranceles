@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS public.cargos_facultad (
     id BIGSERIAL PRIMARY KEY,
     carrera_id INTEGER NOT NULL,
     nombre_cargo TEXT NOT NULL,
-    tipo_cargo TEXT,
     sueldo_base_mensual NUMERIC(12,2),
     es_cargo_docente BOOLEAN DEFAULT false,
     activo BOOLEAN DEFAULT true,

@@ -10,28 +10,28 @@
 -- A.1 Personal Administrativo (Cantidad fija)
 -- ============================================================================
 
-INSERT INTO public.cargos_facultad (carrera_id, nombre_cargo, tipo_cargo, sueldo_base_mensual, es_cargo_docente, activo, fecha_creacion)
+INSERT INTO public.cargos_facultad (carrera_id, nombre_cargo, sueldo_base_mensual, es_cargo_docente, activo, fecha_creacion)
 VALUES
-    (1, 'Decano', 'Admin', 3880.00, false, true, NOW()),
-    (1, 'Subdecano', 'Admin', 2880.00, false, true, NOW()),
-    (1, 'Director de Carrera', 'Director', 2200.00, false, true, NOW()),
-    (1, 'Secretario', 'Admin', 1000.00, false, true, NOW()),
-    (1, 'Auxiliar de Secretaria', 'Admin', 850.00, false, true, NOW()),
-    (1, 'Coordinador', 'Admin', 900.00, false, true, NOW()),
-    (1, 'Bienestar Estudiantil', 'Admin', 900.00, false, true, NOW()),
-    (1, 'Bibliotecario', 'Admin', 800.00, false, true, NOW()),
-    (1, 'Auxiliar de Servicio', 'Admin', 450.00, false, true, NOW()),
-    (1, 'Guardia', 'Admin', 650.00, false, true, NOW())
+    (1, 'Decano', 3880.00, false, true, NOW()),
+    (1, 'Subdecano', 2880.00, false, true, NOW()),
+    (1, 'Director de Carrera', 2200.00, false, true, NOW()),
+    (1, 'Secretario', 1000.00, false, true, NOW()),
+    (1, 'Auxiliar de Secretaria', 850.00, false, true, NOW()),
+    (1, 'Coordinador', 900.00, false, true, NOW()),
+    (1, 'Bienestar Estudiantil', 900.00, false, true, NOW()),
+    (1, 'Bibliotecario', 800.00, false, true, NOW()),
+    (1, 'Auxiliar de Servicio', 450.00, false, true, NOW()),
+    (1, 'Guardia', 650.00, false, true, NOW())
 ON CONFLICT DO NOTHING;
 
 -- A.2 Personal Docente (Cantidad variable)
-INSERT INTO public.cargos_facultad (carrera_id, nombre_cargo, tipo_cargo, sueldo_base_mensual, es_cargo_docente, activo, fecha_creacion)
+INSERT INTO public.cargos_facultad (carrera_id, nombre_cargo, sueldo_base_mensual, es_cargo_docente, activo, fecha_creacion)
 VALUES
-    (1, 'Tiempo Completo PhD', 'Docente', 2800.00, true, true, NOW()),
-    (1, 'Tiempo Completo Mgs.', 'Docente', 1800.00, true, true, NOW()),
-    (1, 'Medio Tiempo', 'Docente', 900.00, true, true, NOW()),
-    (1, 'Tiempo Parcial', 'Docente', 432.00, true, true, NOW()),
-    (1, 'Ocasional Tipo 2 (Técnico Docente)', 'Docente', 1350.00, true, true, NOW())
+    (1, 'Tiempo Completo PhD', 2800.00, true, true, NOW()),
+    (1, 'Tiempo Completo Mgs.', 1800.00, true, true, NOW()),
+    (1, 'Medio Tiempo', 900.00, true, true, NOW()),
+    (1, 'Tiempo Parcial', 432.00, true, true, NOW()),
+    (1, 'Ocasional Tipo 2 (Técnico Docente)', 1350.00, true, true, NOW())
 ON CONFLICT DO NOTHING;
 
 -- ============================================================================

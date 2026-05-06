@@ -26,17 +26,41 @@ public sealed class RepositorioCargoFacultad(ContextoAplicacion contextoAplicaci
         => await contextoAplicacion.CargosFacultad.AddAsync(MapearAInfra(cargo), ct);
 
     public void Actualizar(Domain.Entities.CargoFacultad cargo)
-        => contextoAplicacion.CargosFacultad.Update(MapearAInfra(cargo));
+    {
+        var tracked = contextoAplicacion.CargosFacultad.Local.FirstOrDefault(x => x.Id == cargo.Id);
+        if (tracked is not null)
+        {
+            tracked.CarreraId = cargo.CarreraId;
+            tracked.NombreCargo = cargo.NombreCargo;
+            tracked.SueldoBaseMensual = cargo.SueldoBaseMensual;
+            tracked.EsCargoDocente = cargo.EsCargoDocente;
+            tracked.CantidadDefault = cargo.CantidadDefault;
+        }
+        else
+        {
+            contextoAplicacion.CargosFacultad.Update(MapearAInfra(cargo));
+        }
+    }
 
     public void Eliminar(Domain.Entities.CargoFacultad cargo)
-        => contextoAplicacion.CargosFacultad.Remove(MapearAInfra(cargo));
+    {
+        var tracked = contextoAplicacion.CargosFacultad.Local.FirstOrDefault(x => x.Id == cargo.Id);
+        if (tracked is not null)
+        {
+            contextoAplicacion.CargosFacultad.Remove(tracked);
+            return;
+        }
+
+        var proxy = MapearAInfra(cargo);
+        contextoAplicacion.Entry(proxy).State = EntityState.Deleted;
+    }
 
     private static Domain.Entities.CargoFacultad MapearADominio(CargoFacultad e)
     {
         var dominio = new Domain.Entities.CargoFacultad(
             e.CarreraId,
             e.NombreCargo,
-            e.TipoCargo,
+            "No especificado",
             e.SueldoBaseMensual,
             e.EsCargoDocente,
             e.CantidadDefault);
@@ -50,7 +74,6 @@ public sealed class RepositorioCargoFacultad(ContextoAplicacion contextoAplicaci
         Id = d.Id,
         CarreraId = d.CarreraId,
         NombreCargo = d.NombreCargo,
-        TipoCargo = d.TipoCargo,
         SueldoBaseMensual = d.SueldoBaseMensual,
         EsCargoDocente = d.EsCargoDocente,
         CantidadDefault = d.CantidadDefault,

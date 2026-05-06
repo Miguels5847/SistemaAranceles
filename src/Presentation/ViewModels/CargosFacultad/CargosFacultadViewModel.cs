@@ -42,8 +42,6 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
     [ObservableProperty]
     private string _nombreCargo = string.Empty;
 
-    [ObservableProperty]
-    private string _tipoCargo = "Admin";
 
     [ObservableProperty]
     private string _sueldoBaseMensual = string.Empty;
@@ -87,7 +85,7 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
 
     public string TituloModulo => "Sueldos y Planta Central";
 
-    public string TituloFormulario => EstaEditando ? "Editar cargo de facultad" : "Nuevo cargo de facultad";
+    public string TituloFormulario => EstaEditando ? "Editar cargo" : "Detalles del cargo";
 
     [RelayCommand]
     private async Task CargarAsync()
@@ -143,7 +141,6 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
         CargoSeleccionado = null;
         EstaEditando = false;
         NombreCargo = string.Empty;
-        TipoCargo = "Admin";
         SueldoBaseMensual = string.Empty;
         EsCargoDocente = false;
         MensajeError = string.Empty;
@@ -165,7 +162,6 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
 
         EstaEditando = true;
         NombreCargo = CargoSeleccionado.NombreCargo;
-        TipoCargo = CargoSeleccionado.TipoCargo;
         SueldoBaseMensual = CargoSeleccionado.SueldoBaseMensual.ToString(CultureInfo.InvariantCulture);
         EsCargoDocente = CargoSeleccionado.EsCargoDocente;
         CarreraSeleccionadaId = CargoSeleccionado.CarreraId;
@@ -198,12 +194,6 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(TipoCargo))
-        {
-            MensajeError = "Ingrese el tipo de cargo.";
-            return;
-        }
-
         if (!TryParseDecimalFlexible(SueldoBaseMensual, out var sueldoBaseMensual) || sueldoBaseMensual < 0m)
         {
             MensajeError = "Ingrese un sueldo base válido.";
@@ -227,7 +217,7 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
                     Id = CargoSeleccionado.Id,
                     CarreraId = CarreraSeleccionadaId,
                     NombreCargo = NombreCargo,
-                    TipoCargo = TipoCargo,
+                    TipoCargo = "No especificado",
                     SueldoBaseMensual = sueldoBaseMensual,
                     EsCargoDocente = EsCargoDocente,
                 });
@@ -241,7 +231,7 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
                 {
                     CarreraId = CarreraSeleccionadaId,
                     NombreCargo = NombreCargo,
-                    TipoCargo = TipoCargo,
+                    TipoCargo = "No especificado",
                     SueldoBaseMensual = sueldoBaseMensual,
                     EsCargoDocente = EsCargoDocente,
                 });

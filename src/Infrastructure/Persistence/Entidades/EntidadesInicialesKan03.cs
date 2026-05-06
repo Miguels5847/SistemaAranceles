@@ -268,7 +268,6 @@ public sealed class CargoFacultad : EntidadBase
 {
     public int CarreraId { get; set; }
     public string NombreCargo { get; set; } = string.Empty;
-    public string TipoCargo { get; set; } = string.Empty;
     public decimal SueldoBaseMensual { get; set; }
     public bool EsCargoDocente { get; set; }
     public decimal CantidadDefault { get; set; } = 1m;

@@ -110,7 +110,7 @@ public sealed partial class CatalogoCargosViewModel : ObservableObject
                 {
                     CarreraId = carreraId,
                     NombreCargo = FormNombreCargo,
-                    TipoCargo = FormTipoCargo,
+                    TipoCargo = "No especificado",
                     SueldoBaseMensual = FormSueldo,
                     EsCargoDocente = FormEsDocente,
                     CantidadDefault = FormCantidad
@@ -124,7 +124,7 @@ public sealed partial class CatalogoCargosViewModel : ObservableObject
                     Id = FormCargoId,
                     CarreraId = carreraId,
                     NombreCargo = FormNombreCargo,
-                    TipoCargo = FormTipoCargo,
+                    TipoCargo = "No especificado",
                     SueldoBaseMensual = FormSueldo,
                     EsCargoDocente = FormEsDocente,
                     CantidadDefault = FormCantidad

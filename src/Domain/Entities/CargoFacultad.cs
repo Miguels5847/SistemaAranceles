@@ -37,6 +37,12 @@ public sealed class CargoFacultad : EntidadDominioBase
 
     public void CambiarTipoCargo(string tipoCargo)
     {
+        if (string.IsNullOrWhiteSpace(tipoCargo))
+        {
+            TipoCargo = "No especificado";
+            return;
+        }
+
         TipoCargo = GuardiaDominio.Requerido(tipoCargo, "Tipo de cargo", 80);
     }
 
