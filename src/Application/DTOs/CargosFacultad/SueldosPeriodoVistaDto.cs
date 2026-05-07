@@ -11,10 +11,17 @@ public sealed class SueldosPeriodoVistaDto
 
     public decimal EstudiantesUA { get; init; }
     public decimal EstudiantesCarrera { get; init; }
-    public decimal InflacionAcumulada { get; init; } = 1m;
     public decimal InflacionPeriodoPorcentaje { get; init; }
     public decimal ValorBaseDecimoCuartoAnual { get; init; }
 
     public IReadOnlyList<FilaSueldoPeriodoDto> Filas { get; init; } = [];
+
+    public decimal TotalNumeroPersonas { get; init; }
+    public decimal TotalSueldoMensual { get; init; }
+    public decimal TotalDecimoTercero { get; init; }
+    public decimal TotalDecimoCuarto { get; init; }
+    public decimal TotalVacaciones { get; init; }
+    public decimal TotalFondoReserva { get; init; }
+    public decimal TotalAportePatronal { get; init; }
     public decimal TotalSemestrePeriodo { get; init; }
 }

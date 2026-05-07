@@ -16,7 +16,7 @@
                        FontSize="22"
                        FontWeight="Bold"
                        Foreground="#1A237E"/>
-            <TextBlock Text="Vista autogenerada por carrera y período. Los datos provienen de Capital de Trabajo, Estudiantes e Inflación."
+            <TextBlock Text="Vista autogenerada por carrera, escenario y período. Datos: Capital de Trabajo + Proyección de Estudiantes + Inflación."
                        FontSize="12"
                        Foreground="#546E7A"
                        Margin="0,4,0,0"/>
@@ -43,21 +43,35 @@
                 Padding="10"
                 Margin="0,0,0,8">
             <StackPanel Orientation="Horizontal">
-                <StackPanel Margin="0,0,16,0">
+                <StackPanel Margin="0,0,12,0">
                     <TextBlock Text="Carrera" FontSize="11" Foreground="#546E7A"/>
                     <ComboBox ItemsSource="{Binding Carreras}"
                               SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}"
                               DisplayMemberPath="Nombre"
-                              MinWidth="240"
+                              MinWidth="220"
                               Padding="6,4"/>
                 </StackPanel>
-                <StackPanel Margin="0,0,16,0">
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Text="Escenario" FontSize="11" Foreground="#546E7A"/>
+                    <ComboBox ItemsSource="{Binding Escenarios}"
+                              SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}"
+                              DisplayMemberPath="Nombre"
+                              MinWidth="180"
+                              Padding="6,4"/>
+                </StackPanel>
+                <StackPanel Margin="0,0,12,0">
                     <TextBlock Text="Período" FontSize="11" Foreground="#546E7A"/>
                     <ComboBox ItemsSource="{Binding Periodos}"
                               SelectedItem="{Binding PeriodoSeleccionado, Mode=TwoWay}"
                               DisplayMemberPath="DisplayText"
-                              MinWidth="220"
+                              MinWidth="200"
                               Padding="6,4"/>
+                </StackPanel>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Text="Estudiantes UA" FontSize="11" Foreground="#546E7A"/>
+                    <TextBox Text="{Binding EstudiantesUAInput, UpdateSourceTrigger=PropertyChanged}"
+                             MinWidth="100"
+                             Padding="6,4"/>
                 </StackPanel>
                 <StackPanel VerticalAlignment="Bottom">
                     <Button Content="Generar / Recalcular"
@@ -77,25 +91,15 @@
                 Background="#FCFDFF"
                 Padding="10"
                 Margin="0,0,0,8">
-            <UniformGrid Rows="1" Columns="4">
+            <UniformGrid Rows="1" Columns="2">
                 <StackPanel Margin="0,0,8,0">
-                    <TextBlock Text="Estudiantes UA" FontSize="11" Foreground="#546E7A"/>
-                    <TextBlock Text="{Binding EstudiantesUA, StringFormat={}{0:N0}}"
-                               FontSize="16" FontWeight="SemiBold" Foreground="#1A237E"/>
-                </StackPanel>
-                <StackPanel Margin="0,0,8,0">
-                    <TextBlock Text="Estudiantes carrera" FontSize="11" Foreground="#546E7A"/>
-                    <TextBlock Text="{Binding EstudiantesCarrera, StringFormat={}{0:N2}}"
-                               FontSize="16" FontWeight="SemiBold" Foreground="#1A237E"/>
-                </StackPanel>
-                <StackPanel Margin="0,0,8,0">
-                    <TextBlock Text="Inflación período" FontSize="11" Foreground="#546E7A"/>
-                    <TextBlock Text="{Binding TextoInflacionPeriodo}"
+                    <TextBlock Text="Estudiantes carrera (período)" FontSize="11" Foreground="#546E7A"/>
+                    <TextBlock Text="{Binding TextoEstudiantesCarrera}"
                                FontSize="16" FontWeight="SemiBold" Foreground="#1A237E"/>
                 </StackPanel>
                 <StackPanel>
-                    <TextBlock Text="Inflación acumulada" FontSize="11" Foreground="#546E7A"/>
-                    <TextBlock Text="{Binding TextoInflacionAcumulada}"
+                    <TextBlock Text="Inflación del año del período" FontSize="11" Foreground="#546E7A"/>
+                    <TextBlock Text="{Binding TextoInflacionPeriodo}"
                                FontSize="16" FontWeight="SemiBold" Foreground="#1A237E"/>
                 </StackPanel>
             </UniformGrid>
@@ -160,20 +164,57 @@
                 BorderThickness="1"
                 CornerRadius="8"
                 Background="#EEF3FF"
-                Padding="12,8"
+                Padding="0"
                 Margin="0,8,0,0">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <TextBlock Text="TOTAL DEL PERÍODO:"
-                           FontSize="14"
-                           FontWeight="SemiBold"
-                           Foreground="#1A237E"
-                           VerticalAlignment="Center"
-                           Margin="0,0,12,0"/>
-                <TextBlock Text="{Binding TotalSemestrePeriodo, StringFormat={}{0:N2}}"
-                           FontSize="18"
-                           FontWeight="Bold"
-                           Foreground="#1A237E"
-                           VerticalAlignment="Center"/>
+            <StackPanel>
+                <Grid Background="#E3E8FF" Margin="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="*" MinWidth="180"/>
+                        <ColumnDefinition Width="120"/>
+                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="120"/>
+                        <ColumnDefinition Width="130"/>
+                        <ColumnDefinition Width="120"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="" Padding="6,6"/>
+                    <TextBlock Grid.Column="1" Text="{Binding TotalNumeroPersonas, StringFormat={}{0:N2}}"
+                               FontWeight="SemiBold" Foreground="#1A237E" Padding="6,6"/>
+                    <TextBlock Grid.Column="2" Text="TOTALES"
+                               FontWeight="Bold" Foreground="#1A237E" Padding="6,6"/>
+                    <TextBlock Grid.Column="3" Text="{Binding TotalSueldoMensual, StringFormat={}{0:N2}}"
+                               FontWeight="SemiBold" Foreground="#1A237E" Padding="6,6"/>
+                    <TextBlock Grid.Column="4" Text="{Binding TotalDecimoTercero, StringFormat={}{0:N2}}"
+                               FontWeight="SemiBold" Foreground="#1A237E" Padding="6,6"/>
+                    <TextBlock Grid.Column="5" Text="{Binding TotalDecimoCuarto, StringFormat={}{0:N2}}"
+                               FontWeight="SemiBold" Foreground="#1A237E" Padding="6,6"/>
+                    <TextBlock Grid.Column="6" Text="{Binding TotalVacaciones, StringFormat={}{0:N2}}"
+                               FontWeight="SemiBold" Foreground="#1A237E" Padding="6,6"/>
+                    <TextBlock Grid.Column="7" Text="{Binding TotalFondoReserva, StringFormat={}{0:N2}}"
+                               FontWeight="SemiBold" Foreground="#1A237E" Padding="6,6"/>
+                    <TextBlock Grid.Column="8" Text="{Binding TotalAportePatronal, StringFormat={}{0:N2}}"
+                               FontWeight="SemiBold" Foreground="#1A237E" Padding="6,6"/>
+                    <TextBlock Grid.Column="9" Text="{Binding TotalSemestrePeriodo, StringFormat={}{0:N2}}"
+                               FontWeight="Bold" Foreground="#1A237E" Padding="6,6"/>
+                </Grid>
+                <Border Background="#1A237E" Padding="12,8">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="TOTAL DEL PERÍODO:"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Foreground="White"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,12,0"/>
+                        <TextBlock Text="{Binding TotalSemestrePeriodo, StringFormat={}{0:N2}}"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   Foreground="White"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </Border>
     </Grid>

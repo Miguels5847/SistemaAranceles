@@ -148,6 +148,9 @@ public partial class App
         servicios.AddTransient<ListarProyeccionesCargoPlantaCentralQuery>();
         servicios.AddTransient<ObtenerConsolidadoSueldosPeriodoQuery>();
         servicios.AddTransient<GenerarTablaSueldosPeriodoQuery>();
+        servicios.AddTransient<ListarCarrerasConProyeccionQuery>();
+        servicios.AddTransient<ListarEscenariosConProyeccionPorCarreraQuery>();
+        servicios.AddTransient<ListarPeriodosDeProyeccionEstudiantesQuery>();
         servicios.AddTransient<ListarPeriodosAcademicosQuery>();
         servicios.AddTransient<ListarOpcionesInflacionPorAnioQuery>();
         servicios.AddTransient<ObtenerInflacionPorAnioQuery>();

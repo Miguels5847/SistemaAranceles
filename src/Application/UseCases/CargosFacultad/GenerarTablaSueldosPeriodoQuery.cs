@@ -5,50 +5,84 @@ using SistemaAranceles.Domain.Entities;
 namespace SistemaAranceles.Application.UseCases.CargosFacultad;
 
 /// <summary>
-/// Genera (on-the-fly) la tabla de sueldos del período seleccionado para una carrera,
-/// combinando catálogo de cargos + estudiantes proyectados + inflación acumulada.
+/// Genera (on-the-fly) la tabla de sueldos del período seleccionado para una carrera+escenario,
+/// combinando catálogo de cargos + estudiantes proyectados + inflación encadenada por año.
 /// </summary>
 public sealed class GenerarTablaSueldosPeriodoQuery(
     IRepositorioCargoFacultad repositorioCargo,
-    IRepositorioPeriodoAcademico repositorioPeriodo,
     IRepositorioInflacionAnual repositorioInflacion,
     IRepositorioProyeccionEstudiantes repositorioProyeccionEstudiantes,
     IRepositorioCarrera repositorioCarrera)
 {
-    private const int AnioBase = 2023;
-    private const decimal EstudiantesUaPorDefecto = 285m;
-
     public async Task<SueldosPeriodoVistaDto> EjecutarAsync(
         int carreraId,
+        int escenarioProyeccionId,
         int periodoAcademicoId,
+        decimal estudiantesUA,
         CancellationToken cancellationToken = default)
     {
-        if (carreraId <= 0 || periodoAcademicoId <= 0)
+        if (carreraId <= 0 || escenarioProyeccionId <= 0 || periodoAcademicoId <= 0)
             return new SueldosPeriodoVistaDto { CarreraId = carreraId, PeriodoAcademicoId = periodoAcademicoId };
 
-        var periodos = await repositorioPeriodo.ListarTodosAsync(cancellationToken);
-        var periodo = periodos.FirstOrDefault(p => p.Id == periodoAcademicoId);
-        if (periodo is null)
+        var proyeccionId = await repositorioProyeccionEstudiantes.ObtenerIdPorCarreraYEscenarioAsync(
+            carreraId,
+            escenarioProyeccionId,
+            cancellationToken);
+
+        if (proyeccionId is null or 0)
             return new SueldosPeriodoVistaDto { CarreraId = carreraId, PeriodoAcademicoId = periodoAcademicoId };
+
+        var proyeccion = await repositorioProyeccionEstudiantes.ObtenerDtoPorIdAsync(proyeccionId.Value, cancellationToken);
+        if (proyeccion is null)
+            return new SueldosPeriodoVistaDto { CarreraId = carreraId, PeriodoAcademicoId = periodoAcademicoId };
+
+        var detallesPeriodo = proyeccion.Detalles
+            .Where(d => d.PeriodoAcademicoId == periodoAcademicoId)
+            .ToList();
+
+        if (detallesPeriodo.Count == 0)
+            return new SueldosPeriodoVistaDto { CarreraId = carreraId, PeriodoAcademicoId = periodoAcademicoId };
+
+        var primerDetalle = detallesPeriodo[0];
+        var anioPeriodo = primerDetalle.Anio;
+        var numeroPeriodo = primerDetalle.NumeroPeriodo;
+        var etiquetaPeriodo = primerDetalle.EtiquetaPeriodo;
+        var anioBase = proyeccion.AnioBase;
+
+        var estudiantesCarrera = detallesPeriodo.Sum(d => d.TotalEstudiantes);
 
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, cancellationToken);
         var carreraNombre = carrera?.Nombre ?? string.Empty;
 
-        var (inflacionAcumulada, inflacionPeriodoPct) = await CalcularInflacionAcumuladaAsync(
-            periodo.Anio,
-            cancellationToken);
-
-        var estudiantesCarrera = await ObtenerEstudiantesCarreraAsync(
-            carreraId,
-            periodoAcademicoId,
+        var (factorEncadenado, inflacionPeriodoPct) = await CalcularFactorEncadenadoAsync(
+            anioBase,
+            anioPeriodo,
+            numeroPeriodo,
             cancellationToken);
 
         var cargos = await repositorioCargo.ListarPorCarreraAsync(carreraId, cancellationToken);
+
+        // Fallback: si la carrera seleccionada no tiene cargos en el catálogo,
+        // usar los de cualquier carrera que sí los tenga como plantilla compartida.
+        if (cargos.Count == 0)
+        {
+            var todasLasCarreras = await repositorioCarrera.ListarAsync();
+            foreach (var c in todasLasCarreras.Where(x => x.Id != carreraId))
+            {
+                var alternativos = await repositorioCargo.ListarPorCarreraAsync(c.Id, cancellationToken);
+                if (alternativos.Count > 0)
+                {
+                    cargos = alternativos;
+                    break;
+                }
+            }
+        }
+
         var parametros = new ParametrosCalculoCargoFacultadDto
         {
             EstudiantesCarreraPeriodo = estudiantesCarrera,
-            EstudiantesUnidadAcademica = EstudiantesUaPorDefecto,
-            FactorInflacion = inflacionAcumulada,
+            EstudiantesUnidadAcademica = estudiantesUA < 0m ? 0m : estudiantesUA,
+            FactorInflacion = factorEncadenado,
         };
 
         var filas = cargos
@@ -61,70 +95,70 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
             CarreraId = carreraId,
             CarreraNombre = carreraNombre,
             PeriodoAcademicoId = periodoAcademicoId,
-            Anio = periodo.Anio,
-            NumeroPeriodo = periodo.NumeroPeriodo,
-            EtiquetaPeriodo = periodo.EtiquetaPeriodo,
+            Anio = anioPeriodo,
+            NumeroPeriodo = numeroPeriodo,
+            EtiquetaPeriodo = etiquetaPeriodo,
             EstudiantesUA = parametros.EstudiantesUnidadAcademica,
             EstudiantesCarrera = estudiantesCarrera,
-            InflacionAcumulada = inflacionAcumulada,
             InflacionPeriodoPorcentaje = inflacionPeriodoPct,
             ValorBaseDecimoCuartoAnual = parametros.ValorBaseDecimoCuartoSemestral * 2m,
             Filas = filas,
+            TotalNumeroPersonas = Math.Round(filas.Sum(f => f.NumeroPersonas), 2),
+            TotalSueldoMensual = Math.Round(filas.Sum(f => f.SueldoMensual), 2),
+            TotalDecimoTercero = Math.Round(filas.Sum(f => f.DecimoTerceroSemestral), 2),
+            TotalDecimoCuarto = Math.Round(filas.Sum(f => f.DecimoCuartoSemestral), 2),
+            TotalVacaciones = Math.Round(filas.Sum(f => f.VacacionesSemestral), 2),
+            TotalFondoReserva = Math.Round(filas.Sum(f => f.FondoReservaMensual), 2),
+            TotalAportePatronal = Math.Round(filas.Sum(f => f.AportePatronalMensual), 2),
             TotalSemestrePeriodo = Math.Round(filas.Sum(f => f.TotalSemestre), 2),
         };
     }
 
-    private async Task<(decimal Acumulada, decimal PorcentajePeriodo)> CalcularInflacionAcumuladaAsync(
+    /// <summary>
+    /// Inflación encadenada: factor = ∏ (1 + infl_y/100) para y desde anioBase hasta anioPeriodo-1,
+    /// y se multiplica también por (1 + infl_anioPeriodo/100) si el período es P2 (numeroPeriodo == 2).
+    /// </summary>
+    private async Task<(decimal Factor, decimal PorcentajePeriodo)> CalcularFactorEncadenadoAsync(
+        int anioBase,
         int anioPeriodo,
+        int numeroPeriodo,
         CancellationToken cancellationToken)
     {
-        if (anioPeriodo <= AnioBase)
+        if (anioPeriodo < anioBase)
             return (1m, 0m);
 
-        var registros = await repositorioInflacion.ListarPorRangoAsync(AnioBase + 1, anioPeriodo, cancellationToken);
+        var registros = await repositorioInflacion.ListarPorRangoAsync(anioBase, anioPeriodo, cancellationToken);
 
-        decimal acumulada = 1m;
+        decimal factor = 1m;
         decimal porcentajePeriodo = 0m;
 
-        for (var anio = AnioBase + 1; anio <= anioPeriodo; anio++)
+        for (var anio = anioBase; anio <= anioPeriodo; anio++)
         {
-            var registro = registros
-                .Where(r => r.Anio == anio)
-                .OrderBy(r => r.TipoFuente.Equals("estimacion", StringComparison.OrdinalIgnoreCase) ? 1 : 0)
-                .FirstOrDefault();
+            var pct = ObtenerPorcentajeAnio(registros, anio);
 
-            var pct = registro?.PorcentajeInflacion ?? 0m;
-            var factor = 1m + (pct / 100m);
-            if (factor < 1m) factor = 1m;
-
-            acumulada *= factor;
             if (anio == anioPeriodo)
+            {
                 porcentajePeriodo = pct;
+                if (numeroPeriodo >= 2)
+                    factor *= 1m + (pct / 100m);
+            }
+            else if (anio < anioPeriodo)
+            {
+                factor *= 1m + (pct / 100m);
+            }
         }
 
-        return (Math.Round(acumulada, 6), porcentajePeriodo);
+        if (factor < 1m) factor = 1m;
+        return (Math.Round(factor, 6), porcentajePeriodo);
     }
 
-    private async Task<decimal> ObtenerEstudiantesCarreraAsync(
-        int carreraId,
-        int periodoAcademicoId,
-        CancellationToken cancellationToken)
+    private static decimal ObtenerPorcentajeAnio(IReadOnlyList<InflacionAnual> registros, int anio)
     {
-        var resumenes = await repositorioProyeccionEstudiantes.ListarResumenAsync(carreraId, null, cancellationToken);
-        var resumen = resumenes
-            .OrderByDescending(r => r.ActualizadoEn ?? r.CreadoEn)
+        var registro = registros
+            .Where(r => r.Anio == anio)
+            .OrderBy(r => r.TipoFuente.Equals("estimacion", StringComparison.OrdinalIgnoreCase) ? 1 : 0)
             .FirstOrDefault();
-
-        if (resumen is null)
-            return 0m;
-
-        var detalle = await repositorioProyeccionEstudiantes.ObtenerDtoPorIdAsync(resumen.Id, cancellationToken);
-        if (detalle is null)
-            return 0m;
-
-        return detalle.Detalles
-            .Where(d => d.PeriodoAcademicoId == periodoAcademicoId)
-            .Sum(d => d.TotalEstudiantes);
+        return registro?.PorcentajeInflacion ?? 0m;
     }
 
     private static FilaSueldoPeriodoDto Calcular(CargoFacultad cargo, ParametrosCalculoCargoFacultadDto parametros)

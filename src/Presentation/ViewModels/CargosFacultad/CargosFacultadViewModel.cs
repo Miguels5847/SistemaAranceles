@@ -1,9 +1,9 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.DTOs.CargosFacultad;
-using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.CargosFacultad;
 using SistemaAranceles.Domain.Entities;
 using SistemaAranceles.Presentation.State;
@@ -29,25 +29,51 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
     private Carrera? _carreraSeleccionada;
 
     [ObservableProperty]
-    private ObservableCollection<PeriodoAcademicoCatalogDto> _periodos = [];
+    private ObservableCollection<EscenarioProyeccion> _escenarios = [];
 
     [ObservableProperty]
-    private PeriodoAcademicoCatalogDto? _periodoSeleccionado;
+    private EscenarioProyeccion? _escenarioSeleccionado;
+
+    [ObservableProperty]
+    private ObservableCollection<PeriodoDisponibleSueldosDto> _periodos = [];
+
+    [ObservableProperty]
+    private PeriodoDisponibleSueldosDto? _periodoSeleccionado;
 
     [ObservableProperty]
     private ObservableCollection<FilaSueldoPeriodoDto> _filas = [];
 
     [ObservableProperty]
-    private decimal _estudiantesUA;
+    private string _estudiantesUAInput = "285";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TextoEstudiantesCarrera))]
     private decimal _estudiantesCarrera;
 
     [ObservableProperty]
-    private decimal _inflacionAcumulada = 1m;
+    [NotifyPropertyChangedFor(nameof(TextoInflacionPeriodo))]
+    private decimal _inflacionPeriodoPorcentaje;
 
     [ObservableProperty]
-    private decimal _inflacionPeriodoPorcentaje;
+    private decimal _totalNumeroPersonas;
+
+    [ObservableProperty]
+    private decimal _totalSueldoMensual;
+
+    [ObservableProperty]
+    private decimal _totalDecimoTercero;
+
+    [ObservableProperty]
+    private decimal _totalDecimoCuarto;
+
+    [ObservableProperty]
+    private decimal _totalVacaciones;
+
+    [ObservableProperty]
+    private decimal _totalFondoReserva;
+
+    [ObservableProperty]
+    private decimal _totalAportePatronal;
 
     [ObservableProperty]
     private decimal _totalSemestrePeriodo;
@@ -68,11 +94,9 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
 
     public string TituloModulo => "Sueldos";
 
-    public string TextoInflacionPeriodo =>
-        $"{InflacionPeriodoPorcentaje:N2}%";
+    public string TextoInflacionPeriodo => string.Format(CultureInfo.CurrentCulture, "{0:N2}%", InflacionPeriodoPorcentaje);
 
-    public string TextoInflacionAcumulada =>
-        $"x {InflacionAcumulada:N4}";
+    public string TextoEstudiantesCarrera => string.Format(CultureInfo.CurrentCulture, "{0:N2}", EstudiantesCarrera);
 
     [RelayCommand]
     private async Task CargarAsync()
@@ -93,41 +117,121 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
         try
         {
             using var scope = _serviceProvider.CreateScope();
-
-            var repoCarrera = scope.ServiceProvider.GetRequiredService<IRepositorioCarrera>();
-            var carreras = await repoCarrera.ListarAsync();
-
-            var queryPeriodos = scope.ServiceProvider.GetRequiredService<ListarPeriodosAcademicosQuery>();
-            var periodos = await queryPeriodos.EjecutarAsync();
+            var queryCarreras = scope.ServiceProvider.GetRequiredService<ListarCarrerasConProyeccionQuery>();
+            var carreras = await queryCarreras.EjecutarAsync();
 
             _suprimirRecargaAutomatica = true;
             try
             {
-                Carreras = new ObservableCollection<Carrera>(carreras.OrderBy(x => x.Nombre));
-                Periodos = new ObservableCollection<PeriodoAcademicoCatalogDto>(
-                    periodos.OrderBy(p => p.Anio).ThenBy(p => p.NumeroPeriodo));
-
+                Carreras = new ObservableCollection<Carrera>(carreras);
                 if (Carreras.Count > 0 && (CarreraSeleccionada is null || Carreras.All(c => c.Id != CarreraSeleccionada.Id)))
                     CarreraSeleccionada = Carreras[0];
-
-                if (Periodos.Count > 0 && (PeriodoSeleccionado is null || Periodos.All(p => p.Id != PeriodoSeleccionado.Id)))
-                    PeriodoSeleccionado = Periodos[0];
+                else if (Carreras.Count == 0)
+                    CarreraSeleccionada = null;
             }
             finally
             {
                 _suprimirRecargaAutomatica = false;
             }
 
-            await GenerarAsync();
+            if (CarreraSeleccionada is not null)
+                await CargarEscenariosAsync();
+            else
+                LimpiarVista();
         }
         catch (Exception ex)
         {
-            MensajeError = $"Error al cargar el módulo de sueldos: {ObtenerDetalle(ex)}";
+            MensajeError = $"Error al cargar el módulo de Sueldos: {ObtenerDetalle(ex)}";
         }
         finally
         {
             EstaCargando = false;
         }
+    }
+
+    private async Task CargarEscenariosAsync()
+    {
+        if (CarreraSeleccionada is null)
+        {
+            _suprimirRecargaAutomatica = true;
+            try
+            {
+                EscenarioSeleccionado = null;
+                Escenarios = [];
+                PeriodoSeleccionado = null;
+                Periodos = [];
+            }
+            finally { _suprimirRecargaAutomatica = false; }
+            LimpiarVista();
+            return;
+        }
+
+        IReadOnlyList<EscenarioProyeccion> lista;
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var query = scope.ServiceProvider.GetRequiredService<ListarEscenariosConProyeccionPorCarreraQuery>();
+            lista = await query.EjecutarAsync(CarreraSeleccionada.Id);
+        }
+
+        _suprimirRecargaAutomatica = true;
+        try
+        {
+            EscenarioSeleccionado = null;
+            Escenarios = new ObservableCollection<EscenarioProyeccion>(lista);
+            EscenarioSeleccionado = Escenarios.Count > 0 ? Escenarios[0] : null;
+        }
+        finally { _suprimirRecargaAutomatica = false; }
+
+        if (EscenarioSeleccionado is not null)
+            await CargarPeriodosAsync();
+        else
+        {
+            _suprimirRecargaAutomatica = true;
+            try
+            {
+                PeriodoSeleccionado = null;
+                Periodos = [];
+            }
+            finally { _suprimirRecargaAutomatica = false; }
+            LimpiarVista();
+        }
+    }
+
+    private async Task CargarPeriodosAsync()
+    {
+        if (CarreraSeleccionada is null || EscenarioSeleccionado is null)
+        {
+            _suprimirRecargaAutomatica = true;
+            try
+            {
+                PeriodoSeleccionado = null;
+                Periodos = [];
+            }
+            finally { _suprimirRecargaAutomatica = false; }
+            LimpiarVista();
+            return;
+        }
+
+        IReadOnlyList<PeriodoDisponibleSueldosDto> lista;
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var query = scope.ServiceProvider.GetRequiredService<ListarPeriodosDeProyeccionEstudiantesQuery>();
+            lista = await query.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
+        }
+
+        _suprimirRecargaAutomatica = true;
+        try
+        {
+            PeriodoSeleccionado = null;
+            Periodos = new ObservableCollection<PeriodoDisponibleSueldosDto>(lista);
+            PeriodoSeleccionado = Periodos.Count > 0 ? Periodos[0] : null;
+        }
+        finally { _suprimirRecargaAutomatica = false; }
+
+        if (PeriodoSeleccionado is not null)
+            await GenerarAsync();
+        else
+            LimpiarVista();
     }
 
     [RelayCommand]
@@ -144,15 +248,28 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
 
         if (CarreraSeleccionada is null)
         {
-            MensajeError = "Seleccione una carrera.";
+            MensajeError = "Seleccione una carrera con proyección de estudiantes.";
+            LimpiarVista();
+            return;
+        }
+
+        if (EscenarioSeleccionado is null)
+        {
+            MensajeError = "Seleccione un escenario.";
             LimpiarVista();
             return;
         }
 
         if (PeriodoSeleccionado is null)
         {
-            MensajeError = "Seleccione un período académico.";
+            MensajeError = "Seleccione un período.";
             LimpiarVista();
+            return;
+        }
+
+        if (!TryParseDecimalFlexible(EstudiantesUAInput, out var estudiantesUA) || estudiantesUA < 0m)
+        {
+            MensajeError = "Ingrese un valor válido para Estudiantes UA.";
             return;
         }
 
@@ -164,17 +281,27 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
         {
             using var scope = _serviceProvider.CreateScope();
             var query = scope.ServiceProvider.GetRequiredService<GenerarTablaSueldosPeriodoQuery>();
-            var resultado = await query.EjecutarAsync(CarreraSeleccionada.Id, PeriodoSeleccionado.Id);
+            var resultado = await query.EjecutarAsync(
+                CarreraSeleccionada.Id,
+                EscenarioSeleccionado.Id,
+                PeriodoSeleccionado.PeriodoAcademicoId,
+                estudiantesUA);
 
             Filas = new ObservableCollection<FilaSueldoPeriodoDto>(resultado.Filas);
-            EstudiantesUA = resultado.EstudiantesUA;
             EstudiantesCarrera = resultado.EstudiantesCarrera;
-            InflacionAcumulada = resultado.InflacionAcumulada;
             InflacionPeriodoPorcentaje = resultado.InflacionPeriodoPorcentaje;
+
+            TotalNumeroPersonas = resultado.TotalNumeroPersonas;
+            TotalSueldoMensual = resultado.TotalSueldoMensual;
+            TotalDecimoTercero = resultado.TotalDecimoTercero;
+            TotalDecimoCuarto = resultado.TotalDecimoCuarto;
+            TotalVacaciones = resultado.TotalVacaciones;
+            TotalFondoReserva = resultado.TotalFondoReserva;
+            TotalAportePatronal = resultado.TotalAportePatronal;
             TotalSemestrePeriodo = resultado.TotalSemestrePeriodo;
 
             OnPropertyChanged(nameof(TextoInflacionPeriodo));
-            OnPropertyChanged(nameof(TextoInflacionAcumulada));
+            OnPropertyChanged(nameof(TextoEstudiantesCarrera));
         }
         catch (Exception ex)
         {
@@ -192,10 +319,18 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
         _ = value;
         if (_suprimirRecargaAutomatica || EstaCargando)
             return;
-        _ = GenerarAsync();
+        _ = CargarEscenariosAsync();
     }
 
-    partial void OnPeriodoSeleccionadoChanged(PeriodoAcademicoCatalogDto? value)
+    partial void OnEscenarioSeleccionadoChanged(EscenarioProyeccion? value)
+    {
+        _ = value;
+        if (_suprimirRecargaAutomatica || EstaCargando)
+            return;
+        _ = CargarPeriodosAsync();
+    }
+
+    partial void OnPeriodoSeleccionadoChanged(PeriodoDisponibleSueldosDto? value)
     {
         _ = value;
         if (_suprimirRecargaAutomatica || EstaCargando)
@@ -207,11 +342,27 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
     {
         Filas = [];
         EstudiantesCarrera = 0m;
-        InflacionAcumulada = 1m;
         InflacionPeriodoPorcentaje = 0m;
+        TotalNumeroPersonas = 0m;
+        TotalSueldoMensual = 0m;
+        TotalDecimoTercero = 0m;
+        TotalDecimoCuarto = 0m;
+        TotalVacaciones = 0m;
+        TotalFondoReserva = 0m;
+        TotalAportePatronal = 0m;
         TotalSemestrePeriodo = 0m;
         OnPropertyChanged(nameof(TextoInflacionPeriodo));
-        OnPropertyChanged(nameof(TextoInflacionAcumulada));
+        OnPropertyChanged(nameof(TextoEstudiantesCarrera));
+    }
+
+    private static bool TryParseDecimalFlexible(string? value, out decimal result)
+    {
+        if (decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out result))
+            return true;
+
+        var normalizado = value?.Replace(',', '.');
+        return decimal.TryParse(normalizado, NumberStyles.Any, CultureInfo.InvariantCulture, out result)
+            || decimal.TryParse(value, NumberStyles.Any, CultureInfo.CurrentCulture, out result);
     }
 
     private static string ObtenerDetalle(Exception ex)
