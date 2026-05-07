@@ -73,11 +73,18 @@
                              MinWidth="100"
                              Padding="6,4"/>
                 </StackPanel>
-                <StackPanel VerticalAlignment="Bottom">
+                <StackPanel VerticalAlignment="Bottom" Orientation="Horizontal">
                     <Button Content="Generar / Recalcular"
                             Command="{Binding GenerarCommand}"
                             Padding="12,6"
                             Background="#3949AB"
+                            Foreground="White"
+                            BorderThickness="0"/>
+                    <Button Content="Resumen Sueldos"
+                            Command="{Binding MostrarResumenSueldosCommand}"
+                            Padding="12,6"
+                            Margin="8,0,0,0"
+                            Background="#00897B"
                             Foreground="White"
                             BorderThickness="0"/>
                 </StackPanel>
@@ -181,8 +188,7 @@
                         <ColumnDefinition Width="120"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="" Padding="6,6"/>
-                    <TextBlock Grid.Column="1" Text="{Binding TotalNumeroPersonas, StringFormat={}{0:N2}}"
-                               FontWeight="SemiBold" Foreground="#1A237E" Padding="6,6"/>
+                    <TextBlock Grid.Column="1" Text="" Padding="6,6"/>
                     <TextBlock Grid.Column="2" Text="TOTALES"
                                FontWeight="Bold" Foreground="#1A237E" Padding="6,6"/>
                     <TextBlock Grid.Column="3" Text="{Binding TotalSueldoMensual, StringFormat={}{0:N2}}"

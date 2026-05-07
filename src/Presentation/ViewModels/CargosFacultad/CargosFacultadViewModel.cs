@@ -7,6 +7,8 @@ using SistemaAranceles.Application.DTOs.CargosFacultad;
 using SistemaAranceles.Application.UseCases.CargosFacultad;
 using SistemaAranceles.Domain.Entities;
 using SistemaAranceles.Presentation.State;
+using SistemaAranceles.Presentation.Views.CargosFacultad;
+using System.Windows;
 
 namespace SistemaAranceles.Presentation.ViewModels.CargosFacultad;
 
@@ -311,6 +313,55 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
         finally
         {
             EstaGenerando = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task MostrarResumenSueldosAsync()
+    {
+        if (!PuedeVer)
+        {
+            MensajeError = "Acceso denegado al módulo de Sueldos.";
+            return;
+        }
+
+        if (CarreraSeleccionada is null || EscenarioSeleccionado is null)
+        {
+            MensajeError = "Seleccione carrera y escenario antes de generar el resumen.";
+            return;
+        }
+
+        if (!TryParseDecimalFlexible(EstudiantesUAInput, out var estudiantesUA) || estudiantesUA < 0m)
+        {
+            MensajeError = "Ingrese un valor válido para Estudiantes UA.";
+            return;
+        }
+
+        try
+        {
+            ResumenSueldosVistaDto resumen;
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var query = scope.ServiceProvider.GetRequiredService<GenerarResumenSueldosQuery>();
+                resumen = await query.EjecutarAsync(
+                    CarreraSeleccionada.Id,
+                    EscenarioSeleccionado.Id,
+                    estudiantesUA);
+            }
+
+            var ventana = new ResumenSueldosWindow();
+            var ownerCandidato = System.Windows.Application.Current?.Windows
+                .OfType<Window>()
+                .FirstOrDefault(w => w.IsActive && !ReferenceEquals(w, ventana));
+            if (ownerCandidato is not null)
+                ventana.Owner = ownerCandidato;
+
+            ventana.CargarResumen(resumen);
+            ventana.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            MensajeError = $"Error al generar el resumen de sueldos: {ObtenerDetalle(ex)}";
         }
     }
 
