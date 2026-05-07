@@ -96,7 +96,7 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
 
     public string TextoInflacionPeriodo => string.Format(CultureInfo.CurrentCulture, "{0:N2}%", InflacionPeriodoPorcentaje);
 
-    public string TextoEstudiantesCarrera => string.Format(CultureInfo.CurrentCulture, "{0:N2}", EstudiantesCarrera);
+    public string TextoEstudiantesCarrera => string.Format(CultureInfo.CurrentCulture, "{0:N0}", EstudiantesCarrera);
 
     [RelayCommand]
     private async Task CargarAsync()
