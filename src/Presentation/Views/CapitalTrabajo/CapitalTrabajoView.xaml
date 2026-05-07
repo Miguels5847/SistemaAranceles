@@ -42,7 +42,7 @@
 
             <!-- TAB B: Materiales y Suministros -->
             <TabItem Header="B. Materiales y Suministros">
-                <Grid>
+                <Grid Margin="8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
@@ -50,9 +50,9 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,4,0,6">
-                        <TextBlock Text="Materiales y Suministros" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                        <Button Content="+ Nuevo" Margin="12,0,0,0" Padding="8,3"
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
+                        <TextBlock Text="Materiales y Suministros" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Button Content="+ Nuevo" Margin="12,0,4,0" Padding="8,3"
                                 Command="{Binding AbrirNuevoMaterialCommand}"
                                 CommandParameter="MATERIALES_SUMINISTROS"/>
                     </StackPanel>
@@ -62,12 +62,15 @@
                                Margin="0,0,0,4"/>
 
                     <DataGrid Grid.Row="2" ItemsSource="{Binding MaterialesSuministros}"
-                              AutoGenerateColumns="False" IsReadOnly="True">
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              CanUserResizeColumns="False" CanUserSortColumns="False" CanUserReorderColumns="False"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Concepto"       Binding="{Binding NombreItem}"   Width="*"/>
-                            <DataGridTextColumn Header="Cantidad"       Binding="{Binding Cantidad, StringFormat={}{0:N2}}" Width="80"/>
-                            <DataGridTextColumn Header="Valor Unitario" Binding="{Binding PrecioUnitario, StringFormat=C}" Width="110"/>
-                            <DataGridTemplateColumn Header="Acciones" Width="110">
+                            <DataGridTextColumn Header="Concepto"       Binding="{Binding NombreItem}"   Width="*" MinWidth="220"/>
+                            <DataGridTextColumn Header="Cantidad"       Binding="{Binding Cantidad, StringFormat={}{0:N2}}" Width="90"/>
+                            <DataGridTextColumn Header="Valor Unitario" Binding="{Binding PrecioUnitario, StringFormat=C}" Width="120"/>
+                            <DataGridTemplateColumn Header="Acciones" Width="120">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
@@ -122,27 +125,30 @@
 
             <!-- TAB C: Aseo y Limpieza -->
             <TabItem Header="C. Aseo y Limpieza">
-                <Grid>
+                <Grid Margin="8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,4,0,6">
-                        <TextBlock Text="Suministros de Aseo y Limpieza" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                        <Button Content="+ Nuevo" Margin="12,0,0,0" Padding="8,3"
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
+                        <TextBlock Text="Suministros de Aseo y Limpieza" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Button Content="+ Nuevo" Margin="12,0,4,0" Padding="8,3"
                                 Command="{Binding AbrirNuevoMaterialCommand}"
                                 CommandParameter="ASEO_LIMPIEZA"/>
                     </StackPanel>
 
                     <DataGrid Grid.Row="1" ItemsSource="{Binding AseoLimpieza}"
-                              AutoGenerateColumns="False" IsReadOnly="True">
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              CanUserResizeColumns="False" CanUserSortColumns="False" CanUserReorderColumns="False"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Concepto"       Binding="{Binding NombreItem}"   Width="*"/>
-                            <DataGridTextColumn Header="Cantidad"       Binding="{Binding Cantidad, StringFormat={}{0:N2}}" Width="80"/>
-                            <DataGridTextColumn Header="Valor Unitario" Binding="{Binding PrecioUnitario, StringFormat=C}" Width="110"/>
-                            <DataGridTemplateColumn Header="Acciones" Width="110">
+                            <DataGridTextColumn Header="Concepto"       Binding="{Binding NombreItem}"   Width="*" MinWidth="220"/>
+                            <DataGridTextColumn Header="Cantidad"       Binding="{Binding Cantidad, StringFormat={}{0:N2}}" Width="90"/>
+                            <DataGridTextColumn Header="Valor Unitario" Binding="{Binding PrecioUnitario, StringFormat=C}" Width="120"/>
+                            <DataGridTemplateColumn Header="Acciones" Width="120">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
@@ -197,27 +203,30 @@
 
             <!-- TAB D: Accesorios -->
             <TabItem Header="D. Accesorios y Materiales">
-                <Grid>
+                <Grid Margin="8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,4,0,6">
-                        <TextBlock Text="Accesorios y Materiales" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                        <Button Content="+ Nuevo" Margin="12,0,0,0" Padding="8,3"
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
+                        <TextBlock Text="Accesorios y Materiales" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Button Content="+ Nuevo" Margin="12,0,4,0" Padding="8,3"
                                 Command="{Binding AbrirNuevoMaterialCommand}"
                                 CommandParameter="ACCESORIOS_MATERIALES"/>
                     </StackPanel>
 
                     <DataGrid Grid.Row="1" ItemsSource="{Binding AccesoriosMateriales}"
-                              AutoGenerateColumns="False" IsReadOnly="True">
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              CanUserResizeColumns="False" CanUserSortColumns="False" CanUserReorderColumns="False"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Concepto"       Binding="{Binding NombreItem}"   Width="*"/>
-                            <DataGridTextColumn Header="Cantidad"       Binding="{Binding Cantidad, StringFormat={}{0:N2}}" Width="80"/>
-                            <DataGridTextColumn Header="Valor Unitario" Binding="{Binding PrecioUnitario, StringFormat=C}" Width="110"/>
-                            <DataGridTemplateColumn Header="Acciones" Width="110">
+                            <DataGridTextColumn Header="Concepto"       Binding="{Binding NombreItem}"   Width="*" MinWidth="220"/>
+                            <DataGridTextColumn Header="Cantidad"       Binding="{Binding Cantidad, StringFormat={}{0:N2}}" Width="90"/>
+                            <DataGridTextColumn Header="Valor Unitario" Binding="{Binding PrecioUnitario, StringFormat=C}" Width="120"/>
+                            <DataGridTemplateColumn Header="Acciones" Width="120">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">

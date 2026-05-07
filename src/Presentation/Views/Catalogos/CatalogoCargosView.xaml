@@ -39,7 +39,14 @@
                           ItemsSource="{Binding Cargos}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
-                          SelectedItem="{Binding CargoSeleccionado}">
+                          SelectedItem="{Binding CargoSeleccionado}"
+                          CanUserResizeColumns="False"
+                          CanUserSortColumns="False"
+                          CanUserReorderColumns="False"
+                          HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal"
+                          AlternatingRowBackground="#F8F9FF"
+                          BorderBrush="#C5CAE9">
                         <DataGrid.Columns>
                                 <DataGridTextColumn Header="Nombre"
                                                     Binding="{Binding NombreCargo}"
