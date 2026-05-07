@@ -179,7 +179,7 @@ public sealed partial class MainViewModel : ObservableObject
         {
             MenuItems.Add(new ItemMenu
             {
-                Titulo = "Sueldos y Planta Central",
+                Titulo = "Sueldos",
                 Icono = string.Empty,
                 Comando = new AsyncRelayCommand(() => MostrarCargosFacultadAsync())
             });
@@ -367,7 +367,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         if (!(_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador))
         {
-            MensajePagina = "Acceso denegado al módulo de Sueldos y Planta Central.";
+            MensajePagina = "Acceso denegado al módulo de Sueldos.";
             return;
         }
 

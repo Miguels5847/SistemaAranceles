@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,7 +7,6 @@ using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.CargosFacultad;
 using SistemaAranceles.Domain.Entities;
 using SistemaAranceles.Presentation.State;
-using System.Windows;
 
 namespace SistemaAranceles.Presentation.ViewModels.CargosFacultad;
 
@@ -16,7 +14,7 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
-    private bool _bloquearRecargaPorCarrera;
+    private bool _suprimirRecargaAutomatica;
 
     public CargosFacultadViewModel(IServiceProvider serviceProvider, SesionActual sesionActual)
     {
@@ -28,50 +26,37 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
     private ObservableCollection<Carrera> _carreras = [];
 
     [ObservableProperty]
-    private int _carreraSeleccionadaId;
-
-    [ObservableProperty]
     private Carrera? _carreraSeleccionada;
 
     [ObservableProperty]
-    private ObservableCollection<CargoFacultadCalculadoDto> _cargos = [];
+    private ObservableCollection<PeriodoAcademicoCatalogDto> _periodos = [];
 
     [ObservableProperty]
-    private CargoFacultadCalculadoDto? _cargoSeleccionado;
+    private PeriodoAcademicoCatalogDto? _periodoSeleccionado;
 
     [ObservableProperty]
-    private string _nombreCargo = string.Empty;
-
-
-    [ObservableProperty]
-    private string _sueldoBaseMensual = string.Empty;
+    private ObservableCollection<FilaSueldoPeriodoDto> _filas = [];
 
     [ObservableProperty]
-    private bool _esCargoDocente;
+    private decimal _estudiantesUA;
 
     [ObservableProperty]
-    private string _estudiantesUnidadAcademica = "285";
+    private decimal _estudiantesCarrera;
 
     [ObservableProperty]
-    private string _estudiantesCarreraPeriodo = "30";
+    private decimal _inflacionAcumulada = 1m;
 
     [ObservableProperty]
-    private string _factorInflacion = "1";
+    private decimal _inflacionPeriodoPorcentaje;
 
     [ObservableProperty]
-    private string _valorDecimoCuartoSemestral = "450";
+    private decimal _totalSemestrePeriodo;
 
     [ObservableProperty]
     private bool _estaCargando;
 
     [ObservableProperty]
-    private bool _estaGuardando;
-
-    [ObservableProperty]
-    private bool _estaEliminando;
-
-    [ObservableProperty]
-    private bool _estaEditando;
+    private bool _estaGenerando;
 
     [ObservableProperty]
     private string _mensajeError = string.Empty;
@@ -80,19 +65,21 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
     private string _mensajeExito = string.Empty;
 
     public bool PuedeVer => _sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador;
-    public bool PuedeEditar => PuedeVer;
-    public bool PuedeEliminar => PuedeVer;
 
-    public string TituloModulo => "Sueldos y Planta Central";
+    public string TituloModulo => "Sueldos";
 
-    public string TituloFormulario => EstaEditando ? "Editar cargo" : "Detalles del cargo";
+    public string TextoInflacionPeriodo =>
+        $"{InflacionPeriodoPorcentaje:N2}%";
+
+    public string TextoInflacionAcumulada =>
+        $"x {InflacionAcumulada:N4}";
 
     [RelayCommand]
     private async Task CargarAsync()
     {
         if (!PuedeVer)
         {
-            MensajeError = "Acceso denegado al módulo de Sueldos y Planta Central.";
+            MensajeError = "Acceso denegado al módulo de Sueldos.";
             return;
         }
 
@@ -106,28 +93,36 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
         try
         {
             using var scope = _serviceProvider.CreateScope();
+
             var repoCarrera = scope.ServiceProvider.GetRequiredService<IRepositorioCarrera>();
             var carreras = await repoCarrera.ListarAsync();
-            Carreras = new ObservableCollection<Carrera>(carreras.OrderBy(x => x.Nombre));
 
-            _bloquearRecargaPorCarrera = true;
+            var queryPeriodos = scope.ServiceProvider.GetRequiredService<ListarPeriodosAcademicosQuery>();
+            var periodos = await queryPeriodos.EjecutarAsync();
+
+            _suprimirRecargaAutomatica = true;
             try
             {
-                if (Carreras.Count > 0 && (CarreraSeleccionadaId <= 0 || Carreras.All(x => x.Id != CarreraSeleccionadaId)))
-                    CarreraSeleccionadaId = Carreras[0].Id;
+                Carreras = new ObservableCollection<Carrera>(carreras.OrderBy(x => x.Nombre));
+                Periodos = new ObservableCollection<PeriodoAcademicoCatalogDto>(
+                    periodos.OrderBy(p => p.Anio).ThenBy(p => p.NumeroPeriodo));
+
+                if (Carreras.Count > 0 && (CarreraSeleccionada is null || Carreras.All(c => c.Id != CarreraSeleccionada.Id)))
+                    CarreraSeleccionada = Carreras[0];
+
+                if (Periodos.Count > 0 && (PeriodoSeleccionado is null || Periodos.All(p => p.Id != PeriodoSeleccionado.Id)))
+                    PeriodoSeleccionado = Periodos[0];
             }
             finally
             {
-                _bloquearRecargaPorCarrera = false;
+                _suprimirRecargaAutomatica = false;
             }
 
-            await CargarCargosAsync();
-            await CargarProyeccionesAsync();
-            await CargarOpcionesInflacionAsync();
+            await GenerarAsync();
         }
         catch (Exception ex)
         {
-            MensajeError = $"Error al cargar cargos de facultad: {ObtenerDetalle(ex)}";
+            MensajeError = $"Error al cargar el módulo de sueldos: {ObtenerDetalle(ex)}";
         }
         finally
         {
@@ -136,254 +131,87 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Nuevo()
+    private async Task GenerarAsync()
     {
-        CargoSeleccionado = null;
-        EstaEditando = false;
-        NombreCargo = string.Empty;
-        SueldoBaseMensual = string.Empty;
-        EsCargoDocente = false;
-        MensajeError = string.Empty;
-        MensajeExito = string.Empty;
-        OnPropertyChanged(nameof(TituloFormulario));
-    }
-
-    [RelayCommand]
-    private void SeleccionarParaEditar()
-    {
-        if (!PuedeEditar)
-            return;
-
-        if (CargoSeleccionado is null)
+        if (!PuedeVer)
         {
-            MensajeError = "Seleccione un cargo para editar.";
+            MensajeError = "Acceso denegado al módulo de Sueldos.";
             return;
         }
 
-        EstaEditando = true;
-        NombreCargo = CargoSeleccionado.NombreCargo;
-        SueldoBaseMensual = CargoSeleccionado.SueldoBaseMensual.ToString(CultureInfo.InvariantCulture);
-        EsCargoDocente = CargoSeleccionado.EsCargoDocente;
-        CarreraSeleccionadaId = CargoSeleccionado.CarreraId;
-        MensajeError = string.Empty;
-        MensajeExito = string.Empty;
-        OnPropertyChanged(nameof(TituloFormulario));
-    }
-
-    [RelayCommand]
-    private async Task GuardarAsync()
-    {
-        if (!PuedeEditar)
-        {
-            MensajeError = "No tiene permiso para guardar cargos de facultad.";
-            return;
-        }
-
-        if (EstaGuardando)
+        if (EstaGenerando)
             return;
 
-        if (CarreraSeleccionadaId <= 0)
+        if (CarreraSeleccionada is null)
         {
             MensajeError = "Seleccione una carrera.";
+            LimpiarVista();
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(NombreCargo))
+        if (PeriodoSeleccionado is null)
         {
-            MensajeError = "Ingrese el nombre del cargo.";
+            MensajeError = "Seleccione un período académico.";
+            LimpiarVista();
             return;
         }
 
-        if (!TryParseDecimalFlexible(SueldoBaseMensual, out var sueldoBaseMensual) || sueldoBaseMensual < 0m)
-        {
-            MensajeError = "Ingrese un sueldo base válido.";
-            return;
-        }
-
-        EstaGuardando = true;
+        EstaGenerando = true;
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
 
         try
         {
             using var scope = _serviceProvider.CreateScope();
-            var mensajeExito = string.Empty;
+            var query = scope.ServiceProvider.GetRequiredService<GenerarTablaSueldosPeriodoQuery>();
+            var resultado = await query.EjecutarAsync(CarreraSeleccionada.Id, PeriodoSeleccionado.Id);
 
-            if (EstaEditando && CargoSeleccionado is not null)
-            {
-                var useCase = scope.ServiceProvider.GetRequiredService<ActualizarCargoFacultadCommand>();
-                await useCase.EjecutarAsync(new ActualizarCargoFacultadDto
-                {
-                    Id = CargoSeleccionado.Id,
-                    CarreraId = CarreraSeleccionadaId,
-                    NombreCargo = NombreCargo,
-                    TipoCargo = "No especificado",
-                    SueldoBaseMensual = sueldoBaseMensual,
-                    EsCargoDocente = EsCargoDocente,
-                });
+            Filas = new ObservableCollection<FilaSueldoPeriodoDto>(resultado.Filas);
+            EstudiantesUA = resultado.EstudiantesUA;
+            EstudiantesCarrera = resultado.EstudiantesCarrera;
+            InflacionAcumulada = resultado.InflacionAcumulada;
+            InflacionPeriodoPorcentaje = resultado.InflacionPeriodoPorcentaje;
+            TotalSemestrePeriodo = resultado.TotalSemestrePeriodo;
 
-                mensajeExito = "Cargo actualizado correctamente.";
-            }
-            else
-            {
-                var useCase = scope.ServiceProvider.GetRequiredService<AgregarCargoFacultadCommand>();
-                await useCase.EjecutarAsync(new CrearCargoFacultadDto
-                {
-                    CarreraId = CarreraSeleccionadaId,
-                    NombreCargo = NombreCargo,
-                    TipoCargo = "No especificado",
-                    SueldoBaseMensual = sueldoBaseMensual,
-                    EsCargoDocente = EsCargoDocente,
-                });
-
-                mensajeExito = "Cargo registrado correctamente.";
-            }
-
-            await CargarCargosAsync();
-            Nuevo();
-            MensajeExito = mensajeExito;
+            OnPropertyChanged(nameof(TextoInflacionPeriodo));
+            OnPropertyChanged(nameof(TextoInflacionAcumulada));
         }
         catch (Exception ex)
         {
-            MensajeError = $"Error al guardar cargo: {ObtenerDetalle(ex)}";
+            MensajeError = $"Error al generar la tabla de sueldos: {ObtenerDetalle(ex)}";
+            LimpiarVista();
         }
         finally
         {
-            EstaGuardando = false;
+            EstaGenerando = false;
         }
-    }
-
-    [RelayCommand]
-    private async Task EliminarSeleccionadoAsync()
-    {
-        if (!PuedeEliminar)
-        {
-            MensajeError = "No tiene permiso para eliminar cargos de facultad.";
-            return;
-        }
-
-        if (CargoSeleccionado is null)
-        {
-            MensajeError = "Seleccione un cargo para eliminar.";
-            return;
-        }
-
-        var respuesta = MessageBox.Show(
-            $"¿Eliminar el cargo '{CargoSeleccionado.NombreCargo}'?",
-            "Confirmar eliminación",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Warning);
-
-        if (respuesta != MessageBoxResult.Yes)
-            return;
-
-        if (EstaEliminando)
-            return;
-
-        EstaEliminando = true;
-        try
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var useCase = scope.ServiceProvider.GetRequiredService<EliminarCargoFacultadCommand>();
-            await useCase.EjecutarAsync(CargoSeleccionado.Id);
-
-            await CargarCargosAsync();
-            Nuevo();
-            MensajeExito = "Cargo eliminado correctamente.";
-        }
-        catch (Exception ex)
-        {
-            MensajeError = $"Error al eliminar cargo: {ObtenerDetalle(ex)}";
-        }
-        finally
-        {
-            EstaEliminando = false;
-        }
-    }
-
-    partial void OnCarreraSeleccionadaIdChanged(int value)
-    {
-        if (_bloquearRecargaPorCarrera || EstaCargando)
-            return;
-
-        _ = CargarCargosAsync();
-        _ = CargarProyeccionesAsync();
     }
 
     partial void OnCarreraSeleccionadaChanged(Carrera? value)
     {
-        if (_bloquearRecargaPorCarrera || EstaCargando)
+        _ = value;
+        if (_suprimirRecargaAutomatica || EstaCargando)
             return;
-
-        try
-        {
-            _bloquearRecargaPorCarrera = true;
-            CarreraSeleccionadaId = value?.Id ?? 0;
-        }
-        finally
-        {
-            _bloquearRecargaPorCarrera = false;
-        }
+        _ = GenerarAsync();
     }
 
-    private async Task CargarCargosAsync()
+    partial void OnPeriodoSeleccionadoChanged(PeriodoAcademicoCatalogDto? value)
     {
-        if (!PuedeVer || CarreraSeleccionadaId <= 0)
-        {
-            Cargos = [];
+        _ = value;
+        if (_suprimirRecargaAutomatica || EstaCargando)
             return;
-        }
-
-        try
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var useCase = scope.ServiceProvider.GetRequiredService<ObtenerCargosFacultadPorCarreraQuery>();
-            var parametros = ConstruirParametrosCalculo();
-            var lista = await useCase.EjecutarAsync(CarreraSeleccionadaId, parametros);
-            // Asegurar orden estable por nombre de cargo
-            var listaOrdenada = lista.OrderBy(x => x.NombreCargo, StringComparer.OrdinalIgnoreCase).ToList();
-            Cargos = new ObservableCollection<CargoFacultadCalculadoDto>(listaOrdenada);
-
-            if (CargoSeleccionado is not null && Cargos.All(x => x.Id != CargoSeleccionado.Id))
-                CargoSeleccionado = null;
-        }
-        catch (Exception ex)
-        {
-            MensajeError = $"Error al cargar lista de cargos: {ObtenerDetalle(ex)}";
-        }
+        _ = GenerarAsync();
     }
 
-    private ParametrosCalculoCargoFacultadDto ConstruirParametrosCalculo()
+    private void LimpiarVista()
     {
-        if (!TryParseDecimalFlexible(EstudiantesCarreraPeriodo, out var estudiantesCarreraPeriodo))
-            throw new InvalidOperationException("Ingrese un valor válido para los estudiantes de carrera del período.");
-
-        if (!TryParseDecimalFlexible(EstudiantesUnidadAcademica, out var estudiantesUnidadAcademica))
-            throw new InvalidOperationException("Ingrese un valor válido para los estudiantes de la unidad académica.");
-
-        if (!TryParseDecimalFlexible(FactorInflacion, out var factorInflacion) || factorInflacion <= 0m)
-            throw new InvalidOperationException("Ingrese un factor de inflación válido.");
-
-        if (!TryParseDecimalFlexible(ValorDecimoCuartoSemestral, out var valorDecimoCuarto) || valorDecimoCuarto < 0m)
-            throw new InvalidOperationException("Ingrese un valor válido para el décimo cuarto semestral.");
-
-        return new ParametrosCalculoCargoFacultadDto
-        {
-            EstudiantesCarreraPeriodo = estudiantesCarreraPeriodo,
-            EstudiantesUnidadAcademica = estudiantesUnidadAcademica,
-            FactorInflacion = factorInflacion,
-            ValorBaseDecimoCuartoSemestral = valorDecimoCuarto,
-        };
-    }
-
-    private static bool TryParseDecimalFlexible(string? value, out decimal result)
-    {
-        if (decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out result))
-            return true;
-
-        var normalizado = value?.Replace(',', '.');
-        return decimal.TryParse(normalizado, NumberStyles.Any, CultureInfo.InvariantCulture, out result)
-            || decimal.TryParse(value, NumberStyles.Any, CultureInfo.CurrentCulture, out result);
+        Filas = [];
+        EstudiantesCarrera = 0m;
+        InflacionAcumulada = 1m;
+        InflacionPeriodoPorcentaje = 0m;
+        TotalSemestrePeriodo = 0m;
+        OnPropertyChanged(nameof(TextoInflacionPeriodo));
+        OnPropertyChanged(nameof(TextoInflacionAcumulada));
     }
 
     private static string ObtenerDetalle(Exception ex)

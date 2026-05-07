@@ -147,6 +147,7 @@ public partial class App
         servicios.AddTransient<CalcularProyeccionesCargoPlantaCentralCommand>();
         servicios.AddTransient<ListarProyeccionesCargoPlantaCentralQuery>();
         servicios.AddTransient<ObtenerConsolidadoSueldosPeriodoQuery>();
+        servicios.AddTransient<GenerarTablaSueldosPeriodoQuery>();
         servicios.AddTransient<ListarPeriodosAcademicosQuery>();
         servicios.AddTransient<ListarOpcionesInflacionPorAnioQuery>();
         servicios.AddTransient<ObtenerInflacionPorAnioQuery>();
