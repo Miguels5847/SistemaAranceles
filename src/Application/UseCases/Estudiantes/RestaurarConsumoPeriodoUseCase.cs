@@ -20,7 +20,7 @@ public sealed class RestaurarConsumoPeriodoUseCase(
         repositorio.Eliminar(existente);
         await unidadTrabajo.GuardarCambiosAsync(ct);
 
-        _ = auditoria.RegistrarAsync(
+        await auditoria.RegistrarAsync(
             "Estudiantes", "OverrideHorasPeriodo",
             $"{proyeccionId}:{periodo}", "ELIMINAR",
             $"Restaurar horas P{periodo} de proyección {proyeccionId} (vuelve a default)",

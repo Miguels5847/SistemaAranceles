@@ -541,8 +541,8 @@ public sealed partial class EstudiantesViewModel : ObservableObject
 
         MensajeError = string.Empty;
         ResumenPeriodoEdicion = $"Período {PeriodoConsumoSeleccionado.Periodo} · {PeriodoConsumoSeleccionado.Anio} · {PeriodoConsumoSeleccionado.Semestre}";
-        HorasDocenciaEdicion = PeriodoConsumoSeleccionado.HorasDocencia.ToString("N2", CultureInfo.CurrentCulture);
-        HorasPracticaEdicion = PeriodoConsumoSeleccionado.HorasPractica.ToString("N2", CultureInfo.CurrentCulture);
+        HorasDocenciaEdicion = PeriodoConsumoSeleccionado.HorasDocencia.ToString("0.##", CultureInfo.CurrentCulture);
+        HorasPracticaEdicion = PeriodoConsumoSeleccionado.HorasPractica.ToString("0.##", CultureInfo.CurrentCulture);
         EstaEditandoHorasMalla = true;
     }
 
@@ -625,14 +625,22 @@ public sealed partial class EstudiantesViewModel : ObservableObject
 
         try
         {
-            using var scope = _serviceProvider.CreateScope();
-            var ucEditar = scope.ServiceProvider.GetRequiredService<EditarConsumoPeriodoUseCase>();
-            var ucOverrides = scope.ServiceProvider.GetRequiredService<ListarOverridesHorasPeriodoUseCase>();
+            // Use separate scopes to avoid sharing the same EF Core DbContext for write + subsequent read,
+            // which can produce "read operation pending" errors on some ADO providers.
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var ucEditar = scope.ServiceProvider.GetRequiredService<EditarConsumoPeriodoUseCase>();
+                await ucEditar.EjecutarAsync(
+                    _ultimaProyeccion.Id, periodo, horasDocencia, horasPractica, _sesionActual.UsuarioId);
+            }
 
-            await ucEditar.EjecutarAsync(
-                _ultimaProyeccion.Id, periodo, horasDocencia, horasPractica, _sesionActual.UsuarioId);
-
-            var overrides = await ucOverrides.EjecutarAsync(_ultimaProyeccion.Id);
+            // Create a new scope for reading overrides to ensure a fresh DbContext/connection.
+            IReadOnlyList<SistemaAranceles.Domain.Entities.OverrideHorasPeriodo> overrides;
+            using (var scope2 = _serviceProvider.CreateScope())
+            {
+                var ucOverrides = scope2.ServiceProvider.GetRequiredService<ListarOverridesHorasPeriodoUseCase>();
+                overrides = await ucOverrides.EjecutarAsync(_ultimaProyeccion.Id);
+            }
             (_overrideHorasDocencia, _overrideHorasPractica) =
                 ConstruirArreglosOverride(overrides, _ultimaProyeccion);
 
@@ -653,13 +661,19 @@ public sealed partial class EstudiantesViewModel : ObservableObject
 
         try
         {
-            using var scope = _serviceProvider.CreateScope();
-            var ucRestaurar = scope.ServiceProvider.GetRequiredService<RestaurarConsumoPeriodoUseCase>();
-            var ucOverrides = scope.ServiceProvider.GetRequiredService<ListarOverridesHorasPeriodoUseCase>();
+            // Separate scopes for write + read to avoid overlapping reader on same connection
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var ucRestaurar = scope.ServiceProvider.GetRequiredService<RestaurarConsumoPeriodoUseCase>();
+                await ucRestaurar.EjecutarAsync(_ultimaProyeccion.Id, periodo, _sesionActual.UsuarioId);
+            }
 
-            await ucRestaurar.EjecutarAsync(_ultimaProyeccion.Id, periodo, _sesionActual.UsuarioId);
-
-            var overrides = await ucOverrides.EjecutarAsync(_ultimaProyeccion.Id);
+            IReadOnlyList<SistemaAranceles.Domain.Entities.OverrideHorasPeriodo> overrides;
+            using (var scope2 = _serviceProvider.CreateScope())
+            {
+                var ucOverrides = scope2.ServiceProvider.GetRequiredService<ListarOverridesHorasPeriodoUseCase>();
+                overrides = await ucOverrides.EjecutarAsync(_ultimaProyeccion.Id);
+            }
             (_overrideHorasDocencia, _overrideHorasPractica) =
                 ConstruirArreglosOverride(overrides, _ultimaProyeccion);
 

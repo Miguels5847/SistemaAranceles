@@ -7,31 +7,31 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"
-                    MinHeight="280"/>
+                           MinHeight="280"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <!-- Título -->
         <TextBlock Grid.Row="0"
-                Text="Proyección de Estudiantes por Período"
+                   Text="Proyección de Estudiantes por Período"
                    FontSize="22"
-                FontWeight="Bold"
-                Foreground="#1A237E"
-                Margin="0,0,0,8"/>
+                   FontWeight="Bold"
+                   Foreground="#1A237E"
+                   Margin="0,0,0,8"/>
 
         <!-- Mensajes -->
         <StackPanel Grid.Row="1"
-                Margin="0,0,0,8">
+                    Margin="0,0,0,8">
             <TextBlock Text="{Binding MensajeError}"
-                    Foreground="#C62828"
-                    FontSize="12"
-                    TextWrapping="Wrap"
+                       Foreground="#C62828"
+                       FontSize="12"
+                       TextWrapping="Wrap"
                        Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
             <TextBlock Text="{Binding MensajeExito}"
-                    Foreground="#2E7D32"
-                    FontSize="12"
-                    TextWrapping="Wrap"
+                       Foreground="#2E7D32"
+                       FontSize="12"
+                       TextWrapping="Wrap"
                        Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
         </StackPanel>
 
@@ -55,30 +55,30 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <StackPanel Grid.Row="0"
-                            Orientation="Horizontal"
-                            Margin="0,0,0,8">
+                                Orientation="Horizontal"
+                                Margin="0,0,0,8">
                         <TextBlock Text="Proyecciones generadas"
-                                FontWeight="Bold"
-                                FontSize="14"
-                                VerticalAlignment="Center"/>
+                                   FontWeight="Bold"
+                                   FontSize="14"
+                                   VerticalAlignment="Center"/>
                         <Button Content="REFRESCAR"
                                 Command="{Binding CargarCommand}"
                                 Margin="12,0,0,0"
                                 Padding="8,4"/>
                         <TextBlock Text="Cargando..."
-                                Margin="12,0,0,0"
-                                FontStyle="Italic"
-                                Foreground="#546E7A"
-                                VerticalAlignment="Center"
+                                   Margin="12,0,0,0"
+                                   FontStyle="Italic"
+                                   Foreground="#546E7A"
+                                   VerticalAlignment="Center"
                                    Visibility="{Binding EstaCargando, Converter={StaticResource BoolToVisibilityConverter}}"/>
                     </StackPanel>
                     <DataGrid Grid.Row="1"
-                            ItemsSource="{Binding Proyecciones}"
+                              ItemsSource="{Binding Proyecciones}"
                               SelectedItem="{Binding ProyeccionSeleccionada, Mode=TwoWay}"
                               AutoGenerateColumns="False"
-                            IsReadOnly="True"
+                              IsReadOnly="True"
                               HeadersVisibility="Column"
-                            GridLinesVisibility="Horizontal"
+                              GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F8F9FE">
                         <DataGrid.RowStyle>
                             <Style TargetType="DataGridRow">
@@ -88,14 +88,14 @@
                                         Value="White"/>
                                 <Style.Triggers>
                                     <Trigger Property="IsMouseOver"
-                                            Value="True">
+                                             Value="True">
                                         <Setter Property="Background"
                                                 Value="#E8EAF6"/>
                                         <Setter Property="Foreground"
                                                 Value="#1A237E"/>
                                     </Trigger>
                                     <Trigger Property="IsSelected"
-                                            Value="True">
+                                             Value="True">
                                         <Setter Property="Background"
                                                 Value="#C5CAE9"/>
                                         <Setter Property="Foreground"
@@ -110,7 +110,7 @@
                                         Value="#1A237E"/>
                                 <Style.Triggers>
                                     <Trigger Property="IsSelected"
-                                            Value="True">
+                                             Value="True">
                                         <Setter Property="Foreground"
                                                 Value="#1A237E"/>
                                     </Trigger>
@@ -119,23 +119,23 @@
                         </DataGrid.CellStyle>
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="CARRERA"
-                                    Binding="{Binding CarreraCodigo}"
-                                    Width="Auto"/>
+                                                Binding="{Binding CarreraCodigo}"
+                                                Width="Auto"/>
                             <DataGridTextColumn Header="NOMBRE CARRERA"
-                                    Binding="{Binding CarreraNombre}"
-                                    Width="*"/>
+                                                Binding="{Binding CarreraNombre}"
+                                                Width="*"/>
                             <DataGridTextColumn Header="ESCENARIO"
-                                    Binding="{Binding EscenarioNombre}"
-                                    Width="*"/>
+                                                Binding="{Binding EscenarioNombre}"
+                                                Width="*"/>
                             <DataGridTextColumn Header="AÑO BASE"
-                                    Binding="{Binding AnioBase}"
-                                    Width="Auto"/>
+                                                Binding="{Binding AnioBase}"
+                                                Width="Auto"/>
                             <DataGridTextColumn Header="SEMANAS/SEM."
-                                    Binding="{Binding SemanasPorSemestre}"
-                                    Width="Auto"/>
+                                                Binding="{Binding SemanasPorSemestre}"
+                                                Width="Auto"/>
                             <DataGridTextColumn Header="GENERADO"
-                                    Binding="{Binding CreadoEnTexto}"
-                                    Width="Auto"/>
+                                                Binding="{Binding CreadoEnTexto}"
+                                                Width="Auto"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
@@ -159,72 +159,72 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0"
-                            Text="Generar proyección"
-                            FontWeight="Bold"
-                            FontSize="14"
-                            Margin="0,0,0,12"/>
+                               Text="Generar proyección"
+                               FontWeight="Bold"
+                               FontSize="14"
+                               Margin="0,0,0,12"/>
                     <StackPanel Grid.Row="1"
-                            Margin="0,0,0,8">
+                                Margin="0,0,0,8">
                         <TextBlock Text="Carrera"
-                                FontSize="11"
-                                Foreground="#546E7A"/>
+                                   FontSize="11"
+                                   Foreground="#546E7A"/>
                         <ComboBox ItemsSource="{Binding Carreras}"
-                                SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}"
+                                  SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}"
                                   DisplayMemberPath="Descripcion"
                                   IsEnabled="{Binding EstaGenerando, Converter={StaticResource InverseBoolConverter}}"/>
                     </StackPanel>
                     <StackPanel Grid.Row="2"
-                            Margin="0,0,0,8">
+                                Margin="0,0,0,8">
                         <TextBlock Text="Escenario de proyección"
-                                FontSize="11"
-                                Foreground="#546E7A"/>
+                                   FontSize="11"
+                                   Foreground="#546E7A"/>
                         <ComboBox ItemsSource="{Binding Escenarios}"
-                                SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}"
+                                  SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}"
                                   DisplayMemberPath="Descripcion"
                                   IsEnabled="{Binding EstaGenerando, Converter={StaticResource InverseBoolConverter}}"/>
                     </StackPanel>
                     <StackPanel Grid.Row="3"
-                            Margin="0,0,0,8">
+                                Margin="0,0,0,8">
                         <TextBlock Text="Simulación de retención base"
-                                FontSize="11"
-                                Foreground="#546E7A"/>
+                                   FontSize="11"
+                                   Foreground="#546E7A"/>
                         <ComboBox ItemsSource="{Binding Simulaciones}"
-                                SelectedItem="{Binding SimulacionSeleccionada, Mode=TwoWay}"
+                                  SelectedItem="{Binding SimulacionSeleccionada, Mode=TwoWay}"
                                   DisplayMemberPath="Descripcion"
                                   IsEnabled="{Binding EstaGenerando, Converter={StaticResource InverseBoolConverter}}"/>
                         <TextBlock Text="Seleccione carrera y escenario para ver simulaciones."
                                    FontSize="10"
-                                FontStyle="Italic"
-                                Foreground="#90A4AE"
-                                Margin="0,2,0,0"/>
+                                   FontStyle="Italic"
+                                   Foreground="#90A4AE"
+                                   Margin="0,2,0,0"/>
                     </StackPanel>
                     <StackPanel Grid.Row="4"
-                            Margin="0,0,0,8">
+                                Margin="0,0,0,8">
                         <TextBlock Text="Semanas por semestre"
-                                FontSize="11"
-                                Foreground="#546E7A"/>
+                                   FontSize="11"
+                                   Foreground="#546E7A"/>
                         <TextBox Text="{Binding SemanasPorSemestre, UpdateSourceTrigger=PropertyChanged}"
                                  IsEnabled="{Binding EstaGenerando, Converter={StaticResource InverseBoolConverter}}"/>
                         <TextBlock Text="Valor estándar: 16 semanas."
-                                FontSize="10"
-                                FontStyle="Italic"
-                                Foreground="#90A4AE"
-                                Margin="0,2,0,0"/>
+                                   FontSize="10"
+                                   FontStyle="Italic"
+                                   Foreground="#90A4AE"
+                                   Margin="0,2,0,0"/>
                     </StackPanel>
                     <StackPanel Grid.Row="5"
-                            Margin="0,4,0,8"
+                                Margin="0,4,0,8"
                                 Visibility="{Binding EstaGenerando, Converter={StaticResource BoolToVisibilityConverter}}">
                         <ProgressBar IsIndeterminate="True"
-                                Height="4"/>
+                                     Height="4"/>
                         <TextBlock Text="Generando proyección..."
-                                FontSize="11"
-                                FontStyle="Italic"
-                                Foreground="#546E7A"
-                                Margin="0,4,0,0"/>
+                                   FontSize="11"
+                                   FontStyle="Italic"
+                                   Foreground="#546E7A"
+                                   Margin="0,4,0,0"/>
                     </StackPanel>
                     <StackPanel Grid.Row="7"
-                            Orientation="Vertical"
-                            VerticalAlignment="Bottom">
+                                Orientation="Vertical"
+                                VerticalAlignment="Bottom">
                         <Button Content="GENERAR PROYECCIÓN"
                                 Command="{Binding GenerarCommand}"
                                 Padding="10,8"
@@ -246,18 +246,18 @@
 
         <!-- Indicador carga detalle -->
         <StackPanel Grid.Row="3"
-                Orientation="Horizontal"
-                Margin="0,6,0,0"
+                    Orientation="Horizontal"
+                    Margin="0,6,0,0"
                     Visibility="{Binding EstaCargandoDetalle, Converter={StaticResource BoolToVisibilityConverter}}">
             <ProgressBar IsIndeterminate="True"
-                    Width="120"
-                    Height="4"
-                    VerticalAlignment="Center"/>
+                         Width="120"
+                         Height="4"
+                         VerticalAlignment="Center"/>
             <TextBlock Text="Cargando análisis consolidado..."
-                    FontSize="11"
+                       FontSize="11"
                        FontStyle="Italic"
-                    Foreground="#546E7A"
-                    Margin="8,0,0,0"/>
+                       Foreground="#546E7A"
+                       Margin="8,0,0,0"/>
         </StackPanel>
 
         <!-- Tablas consolidadas -->
@@ -265,7 +265,7 @@
                 Margin="0,8,0,0"
                 Visibility="{Binding TieneDetalleConsolidado, Converter={StaticResource BoolToVisibilityConverter}}">
             <TabControl Background="White"
-                    BorderBrush="#C5CAE9">
+                        BorderBrush="#C5CAE9">
 
                 <!-- TAB 1: Matrícula por período -->
                 <TabItem Header="1. Matrícula por período">
@@ -275,23 +275,23 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0"
-                                Text="Distribución por período y paralelos"
+                                   Text="Distribución por período y paralelos"
                                    FontWeight="Bold"
-                                FontSize="12"
-                                Foreground="#1A237E"
-                                Margin="0,0,0,6"/>
+                                   FontSize="12"
+                                   Foreground="#1A237E"
+                                   Margin="0,0,0,6"/>
                         <DataGrid x:Name="dgMatriculaPeriodo"
-                                Grid.Row="1"
+                                  Grid.Row="1"
                                   ItemsSource="{Binding DetalleConsolidado.MatriculaPorPeriodo}"
                                   AutoGenerateColumns="False"
-                                IsReadOnly="True"
+                                  IsReadOnly="True"
                                   HeadersVisibility="Column"
-                                GridLinesVisibility="All"
+                                  GridLinesVisibility="All"
                                   AlternatingRowBackground="#F8F9FE"
                                   CanUserAddRows="False"
-                                CanUserDeleteRows="False"
+                                  CanUserDeleteRows="False"
                                   CanUserResizeRows="False"
-                                MaxHeight="320">
+                                  MaxHeight="320">
                             <DataGrid.Resources>
                                 <Style TargetType="DataGridColumnHeader">
                                     <Setter Property="FontWeight"
@@ -310,21 +310,21 @@
                                             Value="#1A237E"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding Ciclo}"
-                                                Value="Total Nº de Estudiantes">
+                                                     Value="Total Nº de Estudiantes">
                                             <Setter Property="FontWeight"
                                                     Value="Bold"/>
                                             <Setter Property="Background"
                                                     Value="#E8EAF6"/>
                                         </DataTrigger>
                                         <Trigger Property="IsMouseOver"
-                                                Value="True">
+                                                 Value="True">
                                             <Setter Property="Background"
                                                     Value="#E8EAF6"/>
                                             <Setter Property="Foreground"
                                                     Value="#1A237E"/>
                                         </Trigger>
                                         <Trigger Property="IsSelected"
-                                                Value="True">
+                                                 Value="True">
                                             <Setter Property="Background"
                                                     Value="#C5CAE9"/>
                                             <Setter Property="Foreground"
@@ -339,7 +339,7 @@
                                             Value="#1A237E"/>
                                     <Style.Triggers>
                                         <Trigger Property="IsSelected"
-                                                Value="True">
+                                                 Value="True">
                                             <Setter Property="Foreground"
                                                     Value="#1A237E"/>
                                         </Trigger>
@@ -359,7 +359,7 @@
                         </Grid.RowDefinitions>
 
                         <Grid Grid.Row="0"
-                                Margin="0,0,0,6">
+                              Margin="0,0,0,6">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
@@ -367,12 +367,12 @@
                             <TextBlock Grid.Column="0"
                                        Text="Docentes requeridos por período"
                                        FontWeight="Bold"
-                                    FontSize="12"
-                                    Foreground="#1A237E"
+                                       FontSize="12"
+                                       Foreground="#1A237E"
                                        VerticalAlignment="Center"/>
                             <StackPanel Grid.Column="1"
-                                    Orientation="Horizontal"
-                                    Margin="12,0,0,0">
+                                        Orientation="Horizontal"
+                                        Margin="12,0,0,0">
                                 <Border Background="#FFF9C4"
                                         BorderBrush="#F9A825"
                                         BorderThickness="1"
@@ -381,16 +381,16 @@
                                         Margin="0,0,8,0">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="Horas Docente: "
-                                                FontSize="11"
+                                                   FontSize="11"
                                                    Foreground="#5D4037"
-                                                VerticalAlignment="Center"/>
+                                                   VerticalAlignment="Center"/>
                                         <TextBox Width="40"
-                                                FontSize="11"
-                                                FontWeight="Bold"
+                                                 FontSize="11"
+                                                 FontWeight="Bold"
                                                  Text="{Binding HorasDocenteSemana, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                  VerticalAlignment="Center"
                                                  BorderBrush="#F9A825"
-                                                Padding="2"/>
+                                                 Padding="2"/>
                                     </StackPanel>
                                 </Border>
                                 <Border Background="#FFF9C4"
@@ -400,33 +400,33 @@
                                         Padding="6,3">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="Horas Técnico: "
-                                                FontSize="11"
+                                                   FontSize="11"
                                                    Foreground="#5D4037"
-                                                VerticalAlignment="Center"/>
+                                                   VerticalAlignment="Center"/>
                                         <TextBox Width="40"
-                                                FontSize="11"
-                                                FontWeight="Bold"
+                                                 FontSize="11"
+                                                 FontWeight="Bold"
                                                  Text="{Binding HorasTecnicoSemana, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                  VerticalAlignment="Center"
                                                  BorderBrush="#F9A825"
-                                                Padding="2"/>
+                                                 Padding="2"/>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
                         </Grid>
 
                         <DataGrid x:Name="dgDocentesPeriodo"
-                                Grid.Row="1"
+                                  Grid.Row="1"
                                   ItemsSource="{Binding DetalleConsolidado.DocentesPorPeriodo}"
                                   AutoGenerateColumns="False"
-                                IsReadOnly="True"
+                                  IsReadOnly="True"
                                   HeadersVisibility="Column"
-                                GridLinesVisibility="All"
+                                  GridLinesVisibility="All"
                                   AlternatingRowBackground="#F8F9FE"
                                   CanUserAddRows="False"
-                                CanUserDeleteRows="False"
+                                  CanUserDeleteRows="False"
                                   CanUserResizeRows="False"
-                                MaxHeight="260">
+                                  MaxHeight="260">
                             <DataGrid.Resources>
                                 <Style TargetType="DataGridColumnHeader">
                                     <Setter Property="FontWeight"
@@ -445,42 +445,42 @@
                                             Value="#1A237E"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding Tipo}"
-                                                Value="Docentes Requeridos">
+                                                     Value="Docentes Requeridos">
                                             <Setter Property="FontWeight"
                                                     Value="Bold"/>
                                             <Setter Property="Background"
                                                     Value="#E8EAF6"/>
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding Tipo}"
-                                                Value="Ocasional Tipo 2 (Técnico)">
+                                                     Value="Ocasional Tipo 2 (Técnico)">
                                             <Setter Property="FontWeight"
                                                     Value="Bold"/>
                                             <Setter Property="Background"
                                                     Value="#E3F2FD"/>
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding Tipo}"
-                                                Value="Horas asignadas Medio Tiempo">
+                                                     Value="Horas asignadas Medio Tiempo">
                                             <Setter Property="Background"
                                                     Value="#FFF3E0"/>
                                             <Setter Property="FontStyle"
                                                     Value="Italic"/>
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding Tipo}"
-                                                Value="Horas asignadas Tiempo Parcial">
+                                                     Value="Horas asignadas Tiempo Parcial">
                                             <Setter Property="Background"
                                                     Value="#FFF3E0"/>
                                             <Setter Property="FontStyle"
                                                     Value="Italic"/>
                                         </DataTrigger>
                                         <Trigger Property="IsMouseOver"
-                                                Value="True">
+                                                 Value="True">
                                             <Setter Property="Background"
                                                     Value="#E8EAF6"/>
                                             <Setter Property="Foreground"
                                                     Value="#1A237E"/>
                                         </Trigger>
                                         <Trigger Property="IsSelected"
-                                                Value="True">
+                                                 Value="True">
                                             <Setter Property="Background"
                                                     Value="#C5CAE9"/>
                                             <Setter Property="Foreground"
@@ -495,7 +495,7 @@
                                             Value="#1A237E"/>
                                     <Style.Triggers>
                                         <Trigger Property="IsSelected"
-                                                Value="True">
+                                                 Value="True">
                                             <Setter Property="Foreground"
                                                     Value="#1A237E"/>
                                         </Trigger>
@@ -516,21 +516,21 @@
                         <TextBlock Grid.Row="0"
                                    Text="Horas docencia asistida y aplicación práctica por período"
                                    FontWeight="Bold"
-                                FontSize="12"
-                                Foreground="#1A237E"
-                                Margin="0,0,0,6"/>
+                                   FontSize="12"
+                                   Foreground="#1A237E"
+                                   Margin="0,0,0,6"/>
                         <DataGrid x:Name="dgHorasPeriodo"
-                                Grid.Row="1"
+                                  Grid.Row="1"
                                   ItemsSource="{Binding DetalleConsolidado.TablaHoras}"
                                   AutoGenerateColumns="False"
-                                IsReadOnly="True"
+                                  IsReadOnly="True"
                                   HeadersVisibility="Column"
-                                GridLinesVisibility="All"
+                                  GridLinesVisibility="All"
                                   AlternatingRowBackground="#FFFDE7"
                                   CanUserAddRows="False"
-                                CanUserDeleteRows="False"
+                                  CanUserDeleteRows="False"
                                   CanUserResizeRows="False"
-                                MaxHeight="260">
+                                  MaxHeight="260">
                             <DataGrid.Resources>
                                 <Style TargetType="DataGridColumnHeader">
                                     <Setter Property="FontWeight"
@@ -549,21 +549,21 @@
                                             Value="#1A237E"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding EsInput}"
-                                                Value="True">
+                                                     Value="True">
                                             <Setter Property="Background"
                                                     Value="#FFFDE7"/>
                                             <Setter Property="FontWeight"
                                                     Value="Bold"/>
                                         </DataTrigger>
                                         <Trigger Property="IsMouseOver"
-                                                Value="True">
+                                                 Value="True">
                                             <Setter Property="Background"
                                                     Value="#E8EAF6"/>
                                             <Setter Property="Foreground"
                                                     Value="#1A237E"/>
                                         </Trigger>
                                         <Trigger Property="IsSelected"
-                                                Value="True">
+                                                 Value="True">
                                             <Setter Property="Background"
                                                     Value="#C5CAE9"/>
                                             <Setter Property="Foreground"
@@ -578,7 +578,7 @@
                                             Value="#1A237E"/>
                                     <Style.Triggers>
                                         <Trigger Property="IsSelected"
-                                                Value="True">
+                                                 Value="True">
                                             <Setter Property="Foreground"
                                                     Value="#1A237E"/>
                                         </Trigger>
@@ -600,7 +600,7 @@
                         </Grid.RowDefinitions>
 
                         <Grid Grid.Row="0"
-                                Margin="0,0,0,6">
+                              Margin="0,0,0,6">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
@@ -609,8 +609,8 @@
                             <TextBlock Grid.Column="0"
                                        Text="Seleccione un período y use el botón para editar H. Docencia y H. Práctica"
                                        FontStyle="Italic"
-                                    FontSize="11"
-                                    Foreground="#5D4037"/>
+                                       FontSize="11"
+                                       Foreground="#5D4037"/>
 
                             <Button Grid.Column="1"
                                     Content="Editar horas malla"
@@ -624,17 +624,17 @@
                         </Grid>
 
                         <DataGrid x:Name="dgConsumoPeriodo"
-                                Grid.Row="1"
+                                  Grid.Row="1"
                                   ItemsSource="{Binding DetalleConsolidado.TablaPeriodos}"
                                   SelectedItem="{Binding PeriodoConsumoSeleccionado, Mode=TwoWay}"
                                   AutoGenerateColumns="False"
-                                IsReadOnly="True"
+                                  IsReadOnly="True"
                                   CanUserAddRows="False"
-                                CanUserDeleteRows="False"
+                                  CanUserDeleteRows="False"
                                   HeadersVisibility="Column"
-                                GridLinesVisibility="Horizontal"
+                                  GridLinesVisibility="Horizontal"
                                   AlternatingRowBackground="#F8F9FE"
-                                MaxHeight="300">
+                                  MaxHeight="300">
                             <DataGrid.RowStyle>
                                 <Style TargetType="DataGridRow">
                                     <Setter Property="Foreground"
@@ -643,14 +643,14 @@
                                             Value="White"/>
                                     <Style.Triggers>
                                         <Trigger Property="IsMouseOver"
-                                                Value="True">
+                                                 Value="True">
                                             <Setter Property="Background"
                                                     Value="#E8EAF6"/>
                                             <Setter Property="Foreground"
                                                     Value="#1A237E"/>
                                         </Trigger>
                                         <Trigger Property="IsSelected"
-                                                Value="True">
+                                                 Value="True">
                                             <Setter Property="Background"
                                                     Value="#C5CAE9"/>
                                             <Setter Property="Foreground"
@@ -665,7 +665,7 @@
                                             Value="#1A237E"/>
                                     <Style.Triggers>
                                         <Trigger Property="IsSelected"
-                                                Value="True">
+                                                 Value="True">
                                             <Setter Property="Foreground"
                                                     Value="#1A237E"/>
                                         </Trigger>
@@ -674,33 +674,33 @@
                             </DataGrid.CellStyle>
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Per."
-                                        Binding="{Binding Periodo}"
-                                        Width="40"
-                                        IsReadOnly="True"/>
+                                                    Binding="{Binding Periodo}"
+                                                    Width="40"
+                                                    IsReadOnly="True"/>
                                 <DataGridTextColumn Header="Año"
-                                        Binding="{Binding Anio}"
-                                        Width="55"
-                                        IsReadOnly="True"/>
+                                                    Binding="{Binding Anio}"
+                                                    Width="55"
+                                                    IsReadOnly="True"/>
                                 <DataGridTextColumn Header="Sem."
-                                        Binding="{Binding Semestre}"
-                                        Width="45"
-                                        IsReadOnly="True"/>
+                                                    Binding="{Binding Semestre}"
+                                                    Width="45"
+                                                    IsReadOnly="True"/>
                                 <DataGridTextColumn Header="Docentes"
-                                        Binding="{Binding Docentes, StringFormat=N0}"
-                                        Width="80"
-                                        IsReadOnly="True"/>
+                                                    Binding="{Binding Docentes, StringFormat=N0}"
+                                                    Width="80"
+                                                    IsReadOnly="True"/>
                                 <DataGridTextColumn Header="Técnicos"
-                                        Binding="{Binding Tecnicos, StringFormat=N0}"
-                                        Width="80"
-                                        IsReadOnly="True"/>
+                                                    Binding="{Binding Tecnicos, StringFormat=N0}"
+                                                    Width="80"
+                                                    IsReadOnly="True"/>
                                 <DataGridTextColumn Header="H. Docencia"
-                                        Binding="{Binding HorasDocencia, StringFormat=N2}"
-                                        Width="*"
-                                        IsReadOnly="True"/>
+                                                    Binding="{Binding HorasDocencia, StringFormat={}{0:0.##}}"
+                                                    Width="*"
+                                                    IsReadOnly="True"/>
                                 <DataGridTextColumn Header="H. Práctica"
-                                        Binding="{Binding HorasPractica, StringFormat=N2}"
-                                        Width="*"
-                                        IsReadOnly="True"/>
+                                                    Binding="{Binding HorasPractica, StringFormat={}{0:0.##}}"
+                                                    Width="*"
+                                                    IsReadOnly="True"/>
                             </DataGrid.Columns>
                             <DataGrid.ColumnHeaderStyle>
                                 <Style TargetType="DataGridColumnHeader">
@@ -738,43 +738,43 @@
                                 </Grid.ColumnDefinitions>
 
                                 <TextBlock Grid.Row="0"
-                                        Grid.ColumnSpan="6"
+                                           Grid.ColumnSpan="6"
                                            Text="Editando horas malla"
                                            FontSize="13"
-                                        FontWeight="Bold"
-                                        Foreground="#1A237E"/>
+                                           FontWeight="Bold"
+                                           Foreground="#1A237E"/>
 
                                 <TextBlock Grid.Row="1"
-                                        Grid.ColumnSpan="6"
+                                           Grid.ColumnSpan="6"
                                            Text="{Binding ResumenPeriodoEdicion}"
                                            Margin="0,2,0,10"
                                            FontSize="11"
-                                        Foreground="#546E7A"/>
+                                           Foreground="#546E7A"/>
 
                                 <TextBlock Grid.Row="2"
-                                        Grid.Column="0"
-                                        Text="H. Docencia"
-                                        VerticalAlignment="Center"
-                                        Foreground="#37474F"/>
+                                           Grid.Column="0"
+                                           Text="H. Docencia"
+                                           VerticalAlignment="Center"
+                                           Foreground="#37474F"/>
                                 <TextBox Grid.Row="2"
-                                        Grid.Column="1"
-                                        Margin="8,0,0,0"
+                                         Grid.Column="1"
+                                         Margin="8,0,0,0"
                                          Text="{Binding HorasDocenciaEdicion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
                                 <TextBlock Grid.Row="2"
-                                        Grid.Column="3"
-                                        Text="H. Práctica"
-                                        VerticalAlignment="Center"
-                                        Foreground="#37474F"/>
+                                           Grid.Column="3"
+                                           Text="H. Práctica"
+                                           VerticalAlignment="Center"
+                                           Foreground="#37474F"/>
                                 <TextBox Grid.Row="2"
-                                        Grid.Column="4"
-                                        Margin="8,0,0,0"
+                                         Grid.Column="4"
+                                         Margin="8,0,0,0"
                                          Text="{Binding HorasPracticaEdicion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
                                 <StackPanel Grid.Row="2"
-                                        Grid.Column="5"
-                                        Orientation="Horizontal"
-                                        HorizontalAlignment="Right">
+                                            Grid.Column="5"
+                                            Orientation="Horizontal"
+                                            HorizontalAlignment="Right">
                                     <Button Content="Guardar cambios"
                                             Command="{Binding GuardarEdicionHorasMallaCommand}"
                                             Padding="10,5"
@@ -805,32 +805,32 @@
 
                                 <StackPanel Grid.Column="0">
                                     <TextBlock Text="Total H. Docencia"
-                                            FontSize="11"
-                                            Foreground="#546E7A"/>
-                                    <TextBlock Text="{Binding TotalHorasDocenciaConsumo, StringFormat=N2}"
-                                            FontSize="15"
-                                            FontWeight="Bold"
-                                            Foreground="#1A237E"/>
+                                               FontSize="11"
+                                               Foreground="#546E7A"/>
+                                    <TextBlock Text="{Binding TotalHorasDocenciaConsumo, StringFormat={}{0:0.##}}"
+                                               FontSize="15"
+                                               FontWeight="Bold"
+                                               Foreground="#1A237E"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="1">
                                     <TextBlock Text="Total H. Práctica"
-                                            FontSize="11"
-                                            Foreground="#546E7A"/>
-                                    <TextBlock Text="{Binding TotalHorasPracticaConsumo, StringFormat=N2}"
-                                            FontSize="15"
-                                            FontWeight="Bold"
-                                            Foreground="#1A237E"/>
+                                               FontSize="11"
+                                               Foreground="#546E7A"/>
+                                    <TextBlock Text="{Binding TotalHorasPracticaConsumo, StringFormat={}{0:0.##}}"
+                                               FontSize="15"
+                                               FontWeight="Bold"
+                                               Foreground="#1A237E"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="2">
                                     <TextBlock Text="Total horas combinadas"
-                                            FontSize="11"
-                                            Foreground="#546E7A"/>
-                                    <TextBlock Text="{Binding TotalHorasCombinadasConsumo, StringFormat=N2}"
-                                            FontSize="15"
-                                            FontWeight="Bold"
-                                            Foreground="#1A237E"/>
+                                               FontSize="11"
+                                               Foreground="#546E7A"/>
+                                    <TextBlock Text="{Binding TotalHorasCombinadasConsumo, StringFormat={}{0:0.##}}"
+                                               FontSize="15"
+                                               FontWeight="Bold"
+                                               Foreground="#1A237E"/>
                                 </StackPanel>
                             </Grid>
                         </Border>

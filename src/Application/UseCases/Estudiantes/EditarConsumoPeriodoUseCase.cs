@@ -42,7 +42,7 @@ public sealed class EditarConsumoPeriodoUseCase(
         await unidadTrabajo.GuardarCambiosAsync(ct);
 
         var nuevoJson = $"{{\"HorasDocencia\":{Fmt(horasDocencia)},\"HorasPractica\":{Fmt(horasPractica)}}}";
-        _ = auditoria.RegistrarAsync(
+        await auditoria.RegistrarAsync(
             "Estudiantes", "OverrideHorasPeriodo",
             $"{proyeccionId}:{periodo}", "EDITAR",
             $"Override horas P{periodo} de proyección {proyeccionId}",
