@@ -1,10 +1,30 @@
 using SistemaAranceles.Application.DTOs.CargosFacultad;
+using SistemaAranceles.Domain.Constantes;
 using SistemaAranceles.Domain.Entities;
+using SistemaAranceles.Domain.Enums;
 
 namespace SistemaAranceles.Application.UseCases.CargosFacultad;
 
 internal static class CalculoCargosFacultad
 {
+    public static bool EsTiempoParcial(CargoFacultad cargo)
+        => cargo.TipoContrato == TipoContrato.TiempoParcial;
+
+    /// <summary>
+    /// CU-SP-02 RN-79b: TP se paga por hora sin beneficios sociales (servicios profesionales).
+    /// Costo semestral = TarifaHora × HorasAsignadasSemana × SemanasPorMes × 6.
+    /// </summary>
+    public static decimal CalcularCostoSemestralTiempoParcial(
+        decimal tarifaHora,
+        decimal horasAsignadasSemana,
+        decimal personas,
+        decimal pesoProporcional,
+        decimal factorInflacion)
+        => Math.Round(
+            tarifaHora * horasAsignadasSemana * ConstantesDocentes.SemanasPorMes * 6m
+            * personas * pesoProporcional * NormalizarFactorInflacion(factorInflacion),
+            2);
+
     public static decimal CalcularPeso(
         CargoFacultad cargo,
         decimal estudiantesCarreraPeriodo,

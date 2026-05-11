@@ -71,8 +71,10 @@ Permite al sistema calcular el costo semestral atribuible a la carrera por cada 
 
 ## Reglas de Negocio
 
-- **RN-79:** La fórmula de costo semestral es Total = N _ Peso _ Sueldo + FondoReserva + AportePatronal + 6 \* DXIII + DXIV + Vacaciones.
+- **RN-79:** La fórmula de costo semestral depende del tipo de contrato:
+  - **(a) PhD / Mgs / Medio Tiempo / Administrativo:** `Total = (Sueldo + FondoReserva + AportePatronal) × 6 + DXIII + DXIV + Vacaciones`, multiplicado por `N × Peso × FactorInflacion`.
+  - **(b) Tiempo Parcial:** `Total = TarifaHora × HorasAsignadasSemana × SemanasPorMes × 6 × N × Peso × FactorInflacion` (sin beneficios sociales — servicios profesionales).
 - **RN-80:** Si el factor de inflación del año es negativo, el sistema lo reemplaza por 1.0; los sueldos nunca se reducen por efecto de la inflación negativa.
 - **RN-81:** El peso de los cargos administrativos es dinámico; se recalcula en cada período usando el estcarreraperiodo proyectado.
 - **RN-82:** El factor de inflación aplicado es acumulado: para el año 2 se aplica 1 + inf1 + 1 + inf2, y así sucesivamente, conforme al esquema del módulo Inflación.
-- **RN-83:** El recálculo se ejecuta automáticamente en menos de 2 segundos ante cualquier cambio en cargos/sueldos, docentes requeridos, estudiantes proyectados o factores de inflación.
+- **RN-83:** El recálculo se ejecuta automáticamente en menos de 2 segundos ante cualquier cambio en cargos/sueldos, docentes requeridos (incluyendo Medio Tiempo), horas asignadas a Tiempo Parcial, estudiantes proyectados o factores de inflación.

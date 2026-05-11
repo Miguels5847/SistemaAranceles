@@ -1,5 +1,6 @@
 using SistemaAranceles.Application.DTOs.CargosFacultad;
 using SistemaAranceles.Application.Interfaces.Persistencia;
+using SistemaAranceles.Domain.Constantes;
 using SistemaAranceles.Domain.Entities;
 
 namespace SistemaAranceles.Application.UseCases.CargosFacultad;
@@ -142,6 +143,7 @@ public sealed class GenerarResumenSueldosQuery(
         for (int i = 0; i < totalesPorPeriodo.Length; i++)
             totalesPorPeriodo[i] = Math.Round(totalesPorPeriodo[i], 2);
 
+        var ultimoPeriodo = periodos[^1];
         return new ResumenSueldosVistaDto
         {
             CarreraId = carreraId,
@@ -150,6 +152,8 @@ public sealed class GenerarResumenSueldosQuery(
             Filas = filas,
             TotalesPorPeriodo = totalesPorPeriodo,
             GranTotal = Math.Round(totalesPorPeriodo.Sum(), 2),
+            TotalSemestralPeriodoFinal = totalesPorPeriodo[^1],
+            EtiquetaPeriodoFinal = $"P{ultimoPeriodo.NumeroPeriodo}-{ultimoPeriodo.Anio}",
         };
     }
 
@@ -200,6 +204,17 @@ public sealed class GenerarResumenSueldosQuery(
 
     private static decimal CalcularTotalSemestre(CargoFacultad cargo, ParametrosCalculoCargoFacultadDto parametros)
     {
+        var peso = CalculoCargosFacultad.CalcularPeso(cargo, parametros.EstudiantesCarreraPeriodo, parametros.EstudiantesUnidadAcademica);
+        var personas = cargo.CantidadDefault;
+
+        // CU-SP-02 RN-79b: TP por hora sin beneficios. TODO Fase 4: hTP[p] real desde consolidador.
+        if (CalculoCargosFacultad.EsTiempoParcial(cargo))
+        {
+            var tarifaAjustada = Math.Round(cargo.TarifaHora * parametros.FactorInflacion, 4);
+            return CalculoCargosFacultad.CalcularCostoSemestralTiempoParcial(
+                tarifaAjustada, ConstantesDocentes.HorasTPMaxSemana, personas, peso, 1m);
+        }
+
         var sueldoMensualAjustado = Math.Round(cargo.SueldoBaseMensual * parametros.FactorInflacion, 2);
         var d14SemestralAjustado = Math.Round(
             CalculoCargosFacultad.CalcularDecimoCuartoSemestral(parametros.ValorBaseDecimoCuartoSemestral) * parametros.FactorInflacion, 2);
@@ -208,9 +223,6 @@ public sealed class GenerarResumenSueldosQuery(
         var vacaciones = CalculoCargosFacultad.CalcularVacacionesSemestral(sueldoMensualAjustado);
         var fondoReserva = CalculoCargosFacultad.CalcularFondoReservaMensual(sueldoMensualAjustado, parametros.TasaFondoReserva);
         var aportePatronal = CalculoCargosFacultad.CalcularAportePatronalMensual(sueldoMensualAjustado, parametros.TasaAportePatronal);
-
-        var peso = CalculoCargosFacultad.CalcularPeso(cargo, parametros.EstudiantesCarreraPeriodo, parametros.EstudiantesUnidadAcademica);
-        var personas = cargo.CantidadDefault;
 
         var costoBaseSemestral = ((sueldoMensualAjustado + fondoReserva + aportePatronal) * 6m)
                                  + d13 + d14SemestralAjustado + vacaciones;

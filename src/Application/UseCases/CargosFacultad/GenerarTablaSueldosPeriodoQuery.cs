@@ -1,5 +1,6 @@
 using SistemaAranceles.Application.DTOs.CargosFacultad;
 using SistemaAranceles.Application.Interfaces.Persistencia;
+using SistemaAranceles.Domain.Constantes;
 using SistemaAranceles.Domain.Entities;
 
 namespace SistemaAranceles.Application.UseCases.CargosFacultad;
@@ -163,6 +164,40 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
 
     private static FilaSueldoPeriodoDto Calcular(CargoFacultad cargo, ParametrosCalculoCargoFacultadDto parametros)
     {
+        var peso = CalculoCargosFacultad.CalcularPeso(
+            cargo,
+            parametros.EstudiantesCarreraPeriodo,
+            parametros.EstudiantesUnidadAcademica);
+
+        var personas = cargo.CantidadDefault;
+
+        // CU-SP-02 RN-79b: TP se paga por hora sin beneficios sociales.
+        // TODO Fase 4: hTP[p] vendrá del consolidador via override; por ahora HorasTPMaxSemana.
+        if (CalculoCargosFacultad.EsTiempoParcial(cargo))
+        {
+            var tarifaAjustada = Math.Round(cargo.TarifaHora * parametros.FactorInflacion, 4);
+            var totalTP = CalculoCargosFacultad.CalcularCostoSemestralTiempoParcial(
+                tarifaAjustada, ConstantesDocentes.HorasTPMaxSemana, personas, peso, 1m);
+            var sueldoMensualEquivalente = Math.Round(
+                tarifaAjustada * ConstantesDocentes.HorasTPMaxSemana * ConstantesDocentes.SemanasPorMes, 2);
+
+            return new FilaSueldoPeriodoDto
+            {
+                CargoId = cargo.Id,
+                NombreCargo = cargo.NombreCargo,
+                EsCargoDocente = cargo.EsCargoDocente,
+                NumeroPersonas = personas,
+                Peso = peso,
+                SueldoMensual = sueldoMensualEquivalente,
+                DecimoTerceroSemestral = 0m,
+                DecimoCuartoSemestral = 0m,
+                VacacionesSemestral = 0m,
+                FondoReservaMensual = 0m,
+                AportePatronalMensual = 0m,
+                TotalSemestre = totalTP,
+            };
+        }
+
         var sueldoMensualAjustado = Math.Round(cargo.SueldoBaseMensual * parametros.FactorInflacion, 2);
         var d14SemestralAjustado = Math.Round(
             CalculoCargosFacultad.CalcularDecimoCuartoSemestral(parametros.ValorBaseDecimoCuartoSemestral) * parametros.FactorInflacion,
@@ -172,13 +207,6 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
         var vacaciones = CalculoCargosFacultad.CalcularVacacionesSemestral(sueldoMensualAjustado);
         var fondoReserva = CalculoCargosFacultad.CalcularFondoReservaMensual(sueldoMensualAjustado, parametros.TasaFondoReserva);
         var aportePatronal = CalculoCargosFacultad.CalcularAportePatronalMensual(sueldoMensualAjustado, parametros.TasaAportePatronal);
-
-        var peso = CalculoCargosFacultad.CalcularPeso(
-            cargo,
-            parametros.EstudiantesCarreraPeriodo,
-            parametros.EstudiantesUnidadAcademica);
-
-        var personas = cargo.CantidadDefault;
 
         var costoBaseSemestral = ((sueldoMensualAjustado + fondoReserva + aportePatronal) * 6m)
                                  + d13 + d14SemestralAjustado + vacaciones;

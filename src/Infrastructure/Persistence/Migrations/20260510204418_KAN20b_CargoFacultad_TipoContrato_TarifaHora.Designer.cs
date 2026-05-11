@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SistemaAranceles.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using SistemaAranceles.Infrastructure.Persistence;
 namespace SistemaAranceles.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ContextoAplicacion))]
-    partial class ContextoAplicacionModelSnapshot : ModelSnapshot
+    [Migration("20260510204418_KAN20b_CargoFacultad_TipoContrato_TarifaHora")]
+    partial class KAN20b_CargoFacultad_TipoContrato_TarifaHora
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1003,67 +1006,6 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("item_material_insumo", (string)null);
-                });
-
-            modelBuilder.Entity("SistemaAranceles.Infrastructure.Persistence.Entidades.OverrideHorasPeriodo", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime?>("ActualizadoEn")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("actualizado_en");
-
-                    b.Property<int?>("ActualizadoPorUsuarioId")
-                        .HasColumnType("integer")
-                        .HasColumnName("actualizado_por_usuario_id");
-
-                    b.Property<DateTime>("CreadoEn")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("creado_en");
-
-                    b.Property<int?>("CreadoPorUsuarioId")
-                        .HasColumnType("integer")
-                        .HasColumnName("creado_por_usuario_id");
-
-                    b.Property<DateTime?>("EliminadoEn")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("eliminado_en");
-
-                    b.Property<int?>("EliminadoPorUsuarioId")
-                        .HasColumnType("integer")
-                        .HasColumnName("eliminado_por_usuario_id");
-
-                    b.Property<bool>("EstaActivo")
-                        .HasColumnType("boolean")
-                        .HasColumnName("esta_activo");
-
-                    b.Property<decimal?>("HorasDocencia")
-                        .HasColumnType("decimal(10,2)")
-                        .HasColumnName("horas_docencia");
-
-                    b.Property<decimal?>("HorasPractica")
-                        .HasColumnType("decimal(10,2)")
-                        .HasColumnName("horas_practica");
-
-                    b.Property<short>("Periodo")
-                        .HasColumnType("smallint")
-                        .HasColumnName("periodo");
-
-                    b.Property<int>("ProyeccionId")
-                        .HasColumnType("integer")
-                        .HasColumnName("proyeccion_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProyeccionId", "Periodo")
-                        .IsUnique();
-
-                    b.ToTable("override_horas_periodo", (string)null);
                 });
 
             modelBuilder.Entity("SistemaAranceles.Infrastructure.Persistence.Entidades.PeriodoAcademico", b =>

@@ -678,6 +678,17 @@ internal sealed class CargoFacultadConfiguracion : IEntityTypeConfiguration<Carg
         builder.Property(x => x.SueldoBaseMensual).HasColumnName("sueldo_base_mensual").HasColumnType("decimal(18,2)").IsRequired();
         builder.Property(x => x.EsCargoDocente).HasColumnName("es_cargo_docente").IsRequired();
         builder.Property(x => x.CantidadDefault).HasColumnName("cantidad_default").HasColumnType("decimal(9,2)").HasDefaultValue(1m).IsRequired();
+        builder.Property(x => x.TipoContrato)
+            .HasColumnName("tipo_contrato")
+            .HasConversion<string>()
+            .HasMaxLength(30)
+            .HasDefaultValue(SistemaAranceles.Domain.Enums.TipoContrato.Administrativo)
+            .IsRequired();
+        builder.Property(x => x.TarifaHora)
+            .HasColumnName("tarifa_hora")
+            .HasColumnType("decimal(10,4)")
+            .HasDefaultValue(0m)
+            .IsRequired();
 
         builder.HasOne(x => x.Carrera)
             .WithMany(x => x.CargosFacultad)
@@ -1022,5 +1033,28 @@ internal sealed class UsuarioPermisoOverrideConfiguracion : IEntityTypeConfigura
             .WithMany()
             .HasForeignKey(x => x.PermisoId)
             .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+internal sealed class OverrideHorasPeriodoConfiguracion : IEntityTypeConfiguration<OverrideHorasPeriodo>
+{
+    public void Configure(EntityTypeBuilder<OverrideHorasPeriodo> builder)
+    {
+        builder.ToTable("override_horas_periodo");
+
+        builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.ProyeccionId).HasColumnName("proyeccion_id").IsRequired();
+        builder.Property(x => x.Periodo).HasColumnName("periodo").HasColumnType("smallint").IsRequired();
+        builder.Property(x => x.HorasDocencia).HasColumnName("horas_docencia").HasColumnType("decimal(10,2)");
+        builder.Property(x => x.HorasPractica).HasColumnName("horas_practica").HasColumnType("decimal(10,2)");
+        builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();
+        builder.Property(x => x.CreadoPorUsuarioId).HasColumnName("creado_por_usuario_id");
+        builder.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
+        builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id");
+        builder.Property(x => x.EstaActivo).HasColumnName("esta_activo").IsRequired();
+        builder.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
+        builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
+
+        builder.HasIndex(x => new { x.ProyeccionId, x.Periodo }).IsUnique();
     }
 }

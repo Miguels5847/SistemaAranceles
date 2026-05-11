@@ -35,6 +35,8 @@ public sealed class RepositorioCargoFacultad(ContextoAplicacion contextoAplicaci
             tracked.SueldoBaseMensual = cargo.SueldoBaseMensual;
             tracked.EsCargoDocente = cargo.EsCargoDocente;
             tracked.CantidadDefault = cargo.CantidadDefault;
+            tracked.TipoContrato = cargo.TipoContrato;
+            tracked.TarifaHora = cargo.TarifaHora;
         }
         else
         {
@@ -65,6 +67,8 @@ public sealed class RepositorioCargoFacultad(ContextoAplicacion contextoAplicaci
             e.EsCargoDocente,
             e.CantidadDefault);
 
+        dominio.CambiarTipoContrato(e.TipoContrato);
+        dominio.CambiarTarifaHora(e.TarifaHora);
         dominio.RehidratarId(e.Id);
         return dominio;
     }
@@ -77,5 +81,7 @@ public sealed class RepositorioCargoFacultad(ContextoAplicacion contextoAplicaci
         SueldoBaseMensual = d.SueldoBaseMensual,
         EsCargoDocente = d.EsCargoDocente,
         CantidadDefault = d.CantidadDefault,
+        TipoContrato = d.TipoContrato,
+        TarifaHora = d.TarifaHora,
     };
 }

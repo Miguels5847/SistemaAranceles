@@ -1,37 +1,79 @@
 using SistemaAranceles.Application.DTOs.Estudiantes;
+using SistemaAranceles.Domain.Constantes;
 
 namespace SistemaAranceles.Application.UseCases.Estudiantes;
 
 /// <summary>
 /// Replica la lógica de la hoja "1 Estudiantes" de la Matriz Financiera.
 ///
-/// TABLA HORAS — reglas Excel (valores de referencia Sistemas Computacionales):
+/// TABLA HORAS — reglas Excel:
 ///   Fila 16 = horas docencia asistida SEMESTRAL por período (input amarillo)
-///             [288, 336, 320, 336, 336, 320, 304, 256]
-///   Fila 17 = Fila16[p] / semanas * paralelos[p]       (h/semana nuevas)
-///             [18, 42, 20, 42, 21, 40, 19, 32]
-///   Fila 15 = acumulado de Fila17                       (h/semana totales)
-///             [18, 60, 80, 122, 143, 183, 202, 234]
-///
+///   Fila 17 = Fila16[p] / semanas * paralelos[p]   (h/semana nuevas)
+///   Fila 15 = acumulado de Fila17                  (h/semana totales)
 ///   Fila 20 = horas práctica SEMESTRAL por período (input amarillo)
-///             [160, 176, 192, 208, 240, 264, 336, 400]
 ///   Fila 21 = Fila20[p] / semanas * paralelos[p]
-///             [10, 22, 12, 26, 15, 33, 21, 50]
 ///   Fila 19 = acumulado de Fila21
-///             [10, 32, 44, 70, 85, 118, 139, 189]
 ///
-/// TABLA DOCENTES — reglas Excel:
-///   Fila 24 (docTotal) = Ceil(Fila15[p] / J24)         → 1, 4, 5, 7, 8, 11, 12, 13
-///   Fila 26 (tcMgs)    = Ceil(docTotal * 0.60)
-///   Fila 25 (phd)      = Ceil(tcMgs   * 0.40)
-///   Fila 28 (parcial)  = Ceil(docTotal) - tcMgs - phd  (≥ 0 siempre)
-///   Fila 30 (tecnico)  = Ceil(Fila19[p] / J30)
-///
-///   INVARIANTE: phd + tcMgs + parcial == Ceil(docTotal)  en cada período.
-///   INVARIANTE: ningún valor es negativo.
+/// TABLA DOCENTES — algoritmo MT/TP (CU-ES-03 RN-68..72, RN-94, RN-95):
+///   Ver <see cref="DesglosarDocentesPorPeriodo"/>.
 /// </summary>
 public static class ConsolidadorProyeccionEstudiantes
 {
+    /// <summary>
+    /// Desglosa docentes para un período según las horas asistidas/semana.
+    /// Implementa CU-ES-03 RN-68 (PhD/Mgs base), RN-70 (CES con umbral),
+    /// RN-71 (floor+round), RN-72 (MT/TP residual) y RN-94 (invariante de horas).
+    /// </summary>
+    public static (int phd, int mgs, int mt, int tp, decimal hMT, decimal hTP)
+        DesglosarDocentesPorPeriodo(decimal horasAsistidas)
+    {
+        if (horasAsistidas <= 0m) return (0, 0, 0, 0, 0m, 0m);
+
+        var totalDec = horasAsistidas / ConstantesDocentes.HorasDocenteTC;
+        var tcEntero = (int)Math.Floor(totalDec);
+        // Evita pérdida de precisión decimal de "horas/18" recomponiendo aritméticamente.
+        var residuoH = horasAsistidas - tcEntero * ConstantesDocentes.HorasDocenteTC;
+
+        var mgs = (int)Math.Round(tcEntero * ConstantesDocentes.PorcentajeMgs,
+                                  MidpointRounding.AwayFromZero);
+        var phd = tcEntero - mgs;
+
+        // RN-70 CES: 1 PhD mínimo cuando la carrera tiene capacidad estructural
+        if (horasAsistidas >= ConstantesDocentes.UmbralPhdMinimoHoras
+            && tcEntero >= 2 && phd == 0)
+        {
+            phd = 1;
+            mgs = tcEntero - 1;
+        }
+
+        var mt  = 0;
+        var hMT = 0m;
+        if (residuoH > ConstantesDocentes.UmbralResiduoMT)
+        {
+            mt  = 1;
+            hMT = ConstantesDocentes.HorasMTSemana;
+        }
+
+        var tp  = 0;
+        var hTP = 0m;
+        var residuoDespuesMT = residuoH - hMT;
+        if (residuoDespuesMT > 0m)
+        {
+            if (residuoDespuesMT <= ConstantesDocentes.HorasTPMaxSemana)
+            {
+                tp  = 1;
+                hTP = residuoDespuesMT;
+            }
+            else
+            {
+                tp  = (int)Math.Ceiling(residuoDespuesMT / ConstantesDocentes.HorasTPMaxSemana);
+                hTP = residuoDespuesMT;
+            }
+        }
+
+        return (phd, mgs, mt, tp, hMT, hTP);
+    }
+
     private const decimal HorasDocSemanaDefault = 18m;
     private const decimal HorasTecSemanaDefault = 40m;
 
@@ -139,26 +181,32 @@ public static class ConsolidadorProyeccionEstudiantes
             });
         }
 
-        // ── Docentes requeridos por período (Tabla 2) ──────────────────────
+        // ── Docentes requeridos por período (Tabla 2) — CU-ES-03 ───────────
         var docTotalArr = new int[totalPeriodos];
-        var tcMgsArr    = new int[totalPeriodos];
         var phdArr      = new int[totalPeriodos];
+        var tcMgsArr    = new int[totalPeriodos];
+        var mtArr       = new int[totalPeriodos];
         var parcialArr  = new int[totalPeriodos];
         var tecnicoArr  = new int[totalPeriodos];
+        var hMTArr      = new decimal[totalPeriodos];
+        var hTPArr      = new decimal[totalPeriodos];
+        var hMTArrInt   = new int[totalPeriodos];
+        var hTPArrInt   = new int[totalPeriodos];
 
         for (var p = 0; p < totalPeriodos; p++)
         {
-            var dTot = Ceil(fila15[p] / hDoc);
-            var mgs  = Ceil(dTot * 0.60m);
-            var phd  = Ceil(mgs  * 0.40m);
-            var par  = Math.Max(0, dTot - mgs - phd);
-            var tec  = Ceil(fila19[p] / hTec);
+            var (phd, mgs, mt, tp, hMT, hTP) = DesglosarDocentesPorPeriodo(fila15[p]);
 
-            docTotalArr[p] = dTot;
-            tcMgsArr[p]    = mgs;
             phdArr[p]      = phd;
-            parcialArr[p]  = par;
-            tecnicoArr[p]  = tec;
+            tcMgsArr[p]    = mgs;
+            mtArr[p]       = mt;
+            parcialArr[p]  = tp;
+            hMTArr[p]      = hMT;
+            hTPArr[p]      = hTP;
+            hMTArrInt[p]   = (int)Math.Round(hMT, MidpointRounding.AwayFromZero);
+            hTPArrInt[p]   = (int)Math.Round(hTP, MidpointRounding.AwayFromZero);
+            docTotalArr[p] = phd + mgs + mt + tp;
+            tecnicoArr[p]  = Ceil(fila19[p] / hTec);
         }
 
         var filasDocentesPeriodo = new List<FilaDocentePeriodoDto>
@@ -166,9 +214,13 @@ public static class ConsolidadorProyeccionEstudiantes
             new() { Tipo = "Docentes Requeridos",        Periodos = docTotalArr, Total = docTotalArr[^1] },
             new() { Tipo = "TC PhD",                     Periodos = phdArr,      Total = phdArr[^1]      },
             new() { Tipo = "TC Mgs.",                    Periodos = tcMgsArr,    Total = tcMgsArr[^1]    },
-            new() { Tipo = "Medio Tiempo",               Periodos = new int[totalPeriodos], Total = 0    },
+            new() { Tipo = "Medio Tiempo",               Periodos = mtArr,       Total = mtArr[^1]       },
             new() { Tipo = "Tiempo Parcial",             Periodos = parcialArr,  Total = parcialArr[^1]  },
             new() { Tipo = "Ocasional Tipo 2 (Técnico)", Periodos = tecnicoArr,  Total = tecnicoArr[^1]  },
+            new() { Tipo = "Horas asignadas Medio Tiempo",
+                    Periodos = hMTArrInt, Total = hMTArrInt[^1], HorasAsignadas = hMTArr },
+            new() { Tipo = "Horas asignadas Tiempo Parcial",
+                    Periodos = hTPArrInt, Total = hTPArrInt[^1], HorasAsignadas = hTPArr },
         };
 
         // ── Matrícula por período ───────────────────────────────────────

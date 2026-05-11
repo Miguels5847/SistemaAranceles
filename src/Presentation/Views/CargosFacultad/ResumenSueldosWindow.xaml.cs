@@ -21,7 +21,21 @@ public partial class ResumenSueldosWindow : Window
             ? $"{resumen.Periodos.Count} períodos · {resumen.Filas.Count} cargos"
             : $"Carrera: {resumen.CarreraNombre} · {resumen.Periodos.Count} períodos · {resumen.Filas.Count} cargos";
 
-        TxtGranTotal.Text = resumen.GranTotal.ToString("N2", CultureInfo.CurrentCulture);
+        TxtGranTotal.Text = resumen.GranTotal.ToString("C2", CultureInfo.CurrentCulture);
+
+        if (string.IsNullOrEmpty(resumen.EtiquetaPeriodoFinal))
+        {
+            TxtEtiquetaPeriodoFinal.Text  = "—";
+            TxtSueldoFinalSemestral.Text  = "—";
+            TxtSueldoFinalMensual.Text    = string.Empty;
+        }
+        else
+        {
+            TxtEtiquetaPeriodoFinal.Text  = resumen.EtiquetaPeriodoFinal;
+            TxtSueldoFinalSemestral.Text  = resumen.TotalSemestralPeriodoFinal.ToString("C2", CultureInfo.CurrentCulture);
+            var mensual = Math.Round(resumen.TotalSemestralPeriodoFinal / 6m, 2);
+            TxtSueldoFinalMensual.Text    = $"≈ {mensual.ToString("C2", CultureInfo.CurrentCulture)} mensual";
+        }
 
         ConstruirColumnasResumen(resumen);
         ConstruirColumnasTotales(resumen);

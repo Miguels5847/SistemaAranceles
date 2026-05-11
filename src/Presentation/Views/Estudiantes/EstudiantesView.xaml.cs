@@ -44,28 +44,28 @@ public partial class EstudiantesView : UserControl
         dgMatriculaPeriodo.Columns.Clear();
         if (detalle is null || detalle.MatriculaPorPeriodo.Count == 0) return;
 
-        var paralelos     = detalle.ParalelosPorPeriodo;
+        var paralelos = detalle.ParalelosPorPeriodo;
         var totalPeriodos = paralelos.Length;
 
         dgMatriculaPeriodo.Columns.Add(new DataGridTextColumn
         {
-            Header  = "CICLO",
+            Header = "CICLO",
             Binding = new Binding("Ciclo"),
-            Width   = new DataGridLength(110)
+            Width = new DataGridLength(110)
         });
 
         for (var p = 0; p < totalPeriodos; p++)
         {
-            var periodo  = detalle.TablaPeriodos.Count > p ? detalle.TablaPeriodos[p] : null;
-            var anio     = periodo?.Anio.ToString() ?? string.Empty;
+            var periodo = detalle.TablaPeriodos.Count > p ? detalle.TablaPeriodos[p] : null;
+            var anio = periodo?.Anio.ToString() ?? string.Empty;
             var semestre = p % 2 == 0 ? "ABR" : "SEP";
-            var parAcum  = paralelos.Take(p + 1).Sum();
+            var parAcum = paralelos.Take(p + 1).Sum();
 
             dgMatriculaPeriodo.Columns.Add(new DataGridTextColumn
             {
-                Header  = $"{anio}\n{semestre}\npar:{parAcum}",
+                Header = $"{anio}\n{semestre}\npar:{parAcum}",
                 Binding = new Binding($"Periodos[{p}]") { StringFormat = "N0" },
-                Width   = new DataGridLength(1, DataGridLengthUnitType.Star)
+                Width = new DataGridLength(1, DataGridLengthUnitType.Star)
             });
         }
 
@@ -84,22 +84,22 @@ public partial class EstudiantesView : UserControl
 
         dgDocentesPeriodo.Columns.Add(new DataGridTextColumn
         {
-            Header  = "Tipo",
+            Header = "Tipo",
             Binding = new Binding("Tipo"),
-            Width   = new DataGridLength(180)
+            Width = new DataGridLength(180)
         });
 
         for (var p = 0; p < totalPeriodos; p++)
         {
-            var periodo  = detalle.TablaPeriodos.Count > p ? detalle.TablaPeriodos[p] : null;
-            var anio     = periodo?.Anio.ToString() ?? string.Empty;
+            var periodo = detalle.TablaPeriodos.Count > p ? detalle.TablaPeriodos[p] : null;
+            var anio = periodo?.Anio.ToString() ?? string.Empty;
             var semestre = p % 2 == 0 ? "ABR" : "SEP";
 
             dgDocentesPeriodo.Columns.Add(new DataGridTextColumn
             {
-                Header  = $"{anio}\n{semestre}",
+                Header = $"{anio}\n{semestre}",
                 Binding = new Binding($"Periodos[{p}]") { StringFormat = "N0" },
-                Width   = new DataGridLength(1, DataGridLengthUnitType.Star)
+                Width = new DataGridLength(1, DataGridLengthUnitType.Star)
             });
         }
 
@@ -119,24 +119,25 @@ public partial class EstudiantesView : UserControl
         // Columna fija: DESCRIPCIÓN (etiqueta de fila)
         dgHorasPeriodo.Columns.Add(new DataGridTextColumn
         {
-            Header  = "Concepto",
+            Header = "Concepto",
             Binding = new Binding("Etiqueta"),
-            Width   = new DataGridLength(280)
+            Width = new DataGridLength(280)
         });
 
         // Una columna por período: "AAAA\nABR/SEP"
         for (var p = 0; p < totalPeriodos; p++)
         {
-            var periodo  = detalle.TablaPeriodos.Count > p ? detalle.TablaPeriodos[p] : null;
-            var anio     = periodo?.Anio.ToString() ?? string.Empty;
+            var periodo = detalle.TablaPeriodos.Count > p ? detalle.TablaPeriodos[p] : null;
+            var anio = periodo?.Anio.ToString() ?? string.Empty;
             var semestre = p % 2 == 0 ? "ABR" : "SEP";
 
             dgHorasPeriodo.Columns.Add(new DataGridTextColumn
             {
-                Header  = $"{anio}\n{semestre}",
+                Header = $"{anio}\n{semestre}",
                 Binding = new Binding($"Valores[{p}]") { StringFormat = "N0" },
-                Width   = new DataGridLength(1, DataGridLengthUnitType.Star)
+                Width = new DataGridLength(1, DataGridLengthUnitType.Star)
             });
         }
     }
+
 }

@@ -1,3 +1,5 @@
+using SistemaAranceles.Domain.Enums;
+
 namespace SistemaAranceles.Infrastructure.Persistence.Entidades;
 
 public sealed class Usuario : EntidadBase
@@ -271,9 +273,19 @@ public sealed class CargoFacultad : EntidadBase
     public decimal SueldoBaseMensual { get; set; }
     public bool EsCargoDocente { get; set; }
     public decimal CantidadDefault { get; set; } = 1m;
+    public TipoContrato TipoContrato { get; set; } = TipoContrato.Administrativo;
+    public decimal TarifaHora { get; set; }
 
     public Carrera? Carrera { get; set; }
     public ICollection<ProyeccionCargoFacultad> ProyeccionesCargoFacultad { get; set; } = new List<ProyeccionCargoFacultad>();
+}
+
+public sealed class OverrideHorasPeriodo : EntidadBase
+{
+    public int ProyeccionId { get; set; }
+    public int Periodo { get; set; }
+    public decimal? HorasDocencia { get; set; }
+    public decimal? HorasPractica { get; set; }
 }
 
 public sealed class ProyeccionCargoFacultad : EntidadBase

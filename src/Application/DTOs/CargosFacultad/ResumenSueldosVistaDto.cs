@@ -20,5 +20,10 @@ public sealed class ResumenSueldosVistaDto
     public IReadOnlyList<PeriodoDisponibleSueldosDto> Periodos { get; init; } = [];
     public IReadOnlyList<FilaResumenSueldosDto> Filas { get; init; } = [];
     public decimal[] TotalesPorPeriodo { get; init; } = [];
+    /// <summary>Suma de TotalesPorPeriodo. Equivale a "Total acumulado 4 años" (cada total semestral = 6 meses).</summary>
     public decimal GranTotal { get; init; }
+    /// <summary>Costo semestral del último período proyectado. = TotalesPorPeriodo[^1] (0 si no hay períodos).</summary>
+    public decimal TotalSemestralPeriodoFinal { get; init; }
+    /// <summary>Etiqueta del último período (ej. "P8-2026"). Vacío si no hay períodos.</summary>
+    public string EtiquetaPeriodoFinal { get; init; } = string.Empty;
 }

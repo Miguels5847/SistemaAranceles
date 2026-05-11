@@ -1,4 +1,5 @@
 using SistemaAranceles.Domain.Common;
+using SistemaAranceles.Domain.Enums;
 
 namespace SistemaAranceles.Domain.Entities;
 
@@ -24,6 +25,8 @@ public sealed class CargoFacultad : EntidadDominioBase
     public decimal SueldoBaseMensual { get; private set; }
     public bool EsCargoDocente { get; private set; }
     public decimal CantidadDefault { get; private set; } = 1m;
+    public TipoContrato TipoContrato { get; private set; } = TipoContrato.Administrativo;
+    public decimal TarifaHora { get; private set; }
 
     public void CambiarCarrera(int carreraId)
     {
@@ -59,5 +62,15 @@ public sealed class CargoFacultad : EntidadDominioBase
     public void CambiarCantidadDefault(decimal cantidad)
     {
         CantidadDefault = GuardiaDominio.DecimalNoNegativo(cantidad, "Cantidad default", 4);
+    }
+
+    public void CambiarTipoContrato(TipoContrato tipo)
+    {
+        TipoContrato = tipo;
+    }
+
+    public void CambiarTarifaHora(decimal tarifa)
+    {
+        TarifaHora = GuardiaDominio.DecimalNoNegativo(tarifa, "Tarifa hora", 4);
     }
 }

@@ -2,6 +2,8 @@ using System.Threading.Tasks;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using SistemaAranceles.Domain.Constantes;
+using SistemaAranceles.Domain.Enums;
 using SistemaAranceles.Infrastructure.Persistence;
 using SistemaAranceles.Infrastructure.Persistence.Entidades;
 
@@ -34,23 +36,26 @@ public sealed class SemillaCapitalTrabajoService
         if (cargosExistentes > 0)
             return false; // Ya hay datos cargados
 
+        const decimal sueldoTPMensual = 432.00m;
+        var tarifaTP = sueldoTPMensual / (ConstantesDocentes.HorasTPMaxSemana * ConstantesDocentes.SemanasPorMes);
+
         var cargos = new[]
         {
-            new CargoFacultad { CarreraId = 1, NombreCargo = "Decano",                              SueldoBaseMensual = 3880.00m, EsCargoDocente = false, CantidadDefault = 1m    },
-            new CargoFacultad { CarreraId = 1, NombreCargo = "Subdecano",                           SueldoBaseMensual = 2880.00m, EsCargoDocente = false, CantidadDefault = 1m    },
-            new CargoFacultad { CarreraId = 1, NombreCargo = "Director de Carrera",                 SueldoBaseMensual = 2200.00m, EsCargoDocente = false, CantidadDefault = 1m    },
-            new CargoFacultad { CarreraId = 1, NombreCargo = "Secretario",                          SueldoBaseMensual = 1000.00m, EsCargoDocente = false, CantidadDefault = 1m    },
-            new CargoFacultad { CarreraId = 1, NombreCargo = "Auxiliar de Secretaria",              SueldoBaseMensual = 850.00m,  EsCargoDocente = false, CantidadDefault = 1m    },
-            new CargoFacultad { CarreraId = 1, NombreCargo = "Coordinador",                         SueldoBaseMensual = 900.00m,  EsCargoDocente = false, CantidadDefault = 1m    },
-            new CargoFacultad { CarreraId = 1, NombreCargo = "Bienestar Estudiantil",               SueldoBaseMensual = 900.00m,  EsCargoDocente = false, CantidadDefault = 1m    },
-            new CargoFacultad { CarreraId = 1, NombreCargo = "Bibliotecario",                       SueldoBaseMensual = 800.00m,  EsCargoDocente = false, CantidadDefault = 1m    },
-            new CargoFacultad { CarreraId = 1, NombreCargo = "Auxiliar de Servicio",                SueldoBaseMensual = 450.00m,  EsCargoDocente = false, CantidadDefault = 2m    },
-            new CargoFacultad { CarreraId = 1, NombreCargo = "Guardia",                             SueldoBaseMensual = 650.00m,  EsCargoDocente = false, CantidadDefault = 1m    },
-            new CargoFacultad { CarreraId = 1, NombreCargo = "Tiempo Completo PhD",                 SueldoBaseMensual = 2800.00m, EsCargoDocente = true,  CantidadDefault = 0.24m },
-            new CargoFacultad { CarreraId = 1, NombreCargo = "Tiempo Completo Mgs.",                SueldoBaseMensual = 1800.00m, EsCargoDocente = true,  CantidadDefault = 0.60m },
-            new CargoFacultad { CarreraId = 1, NombreCargo = "Medio Tiempo",                        SueldoBaseMensual = 900.00m,  EsCargoDocente = true,  CantidadDefault = 0m    },
-            new CargoFacultad { CarreraId = 1, NombreCargo = "Tiempo Parcial",                      SueldoBaseMensual = 432.00m,  EsCargoDocente = true,  CantidadDefault = 0.16m },
-            new CargoFacultad { CarreraId = 1, NombreCargo = "Ocasional Tipo 2 (T\u00e9cnico Docente)",  SueldoBaseMensual = 1350.00m, EsCargoDocente = true,  CantidadDefault = 0.25m },
+            new CargoFacultad { CarreraId = 1, NombreCargo = "Decano",                              SueldoBaseMensual = 3880.00m, EsCargoDocente = false, CantidadDefault = 1m,    TipoContrato = TipoContrato.Administrativo },
+            new CargoFacultad { CarreraId = 1, NombreCargo = "Subdecano",                           SueldoBaseMensual = 2880.00m, EsCargoDocente = false, CantidadDefault = 1m,    TipoContrato = TipoContrato.Administrativo },
+            new CargoFacultad { CarreraId = 1, NombreCargo = "Director de Carrera",                 SueldoBaseMensual = 2200.00m, EsCargoDocente = false, CantidadDefault = 1m,    TipoContrato = TipoContrato.Administrativo },
+            new CargoFacultad { CarreraId = 1, NombreCargo = "Secretario",                          SueldoBaseMensual = 1000.00m, EsCargoDocente = false, CantidadDefault = 1m,    TipoContrato = TipoContrato.Administrativo },
+            new CargoFacultad { CarreraId = 1, NombreCargo = "Auxiliar de Secretaria",              SueldoBaseMensual = 850.00m,  EsCargoDocente = false, CantidadDefault = 1m,    TipoContrato = TipoContrato.Administrativo },
+            new CargoFacultad { CarreraId = 1, NombreCargo = "Coordinador",                         SueldoBaseMensual = 900.00m,  EsCargoDocente = false, CantidadDefault = 1m,    TipoContrato = TipoContrato.Administrativo },
+            new CargoFacultad { CarreraId = 1, NombreCargo = "Bienestar Estudiantil",               SueldoBaseMensual = 900.00m,  EsCargoDocente = false, CantidadDefault = 1m,    TipoContrato = TipoContrato.Administrativo },
+            new CargoFacultad { CarreraId = 1, NombreCargo = "Bibliotecario",                       SueldoBaseMensual = 800.00m,  EsCargoDocente = false, CantidadDefault = 1m,    TipoContrato = TipoContrato.Administrativo },
+            new CargoFacultad { CarreraId = 1, NombreCargo = "Auxiliar de Servicio",                SueldoBaseMensual = 450.00m,  EsCargoDocente = false, CantidadDefault = 2m,    TipoContrato = TipoContrato.Administrativo },
+            new CargoFacultad { CarreraId = 1, NombreCargo = "Guardia",                             SueldoBaseMensual = 650.00m,  EsCargoDocente = false, CantidadDefault = 1m,    TipoContrato = TipoContrato.Administrativo },
+            new CargoFacultad { CarreraId = 1, NombreCargo = "Tiempo Completo PhD",                 SueldoBaseMensual = 2800.00m, EsCargoDocente = true,  CantidadDefault = 0.24m, TipoContrato = TipoContrato.PhD },
+            new CargoFacultad { CarreraId = 1, NombreCargo = "Tiempo Completo Mgs.",                SueldoBaseMensual = 1800.00m, EsCargoDocente = true,  CantidadDefault = 0.60m, TipoContrato = TipoContrato.Mgs },
+            new CargoFacultad { CarreraId = 1, NombreCargo = "Medio Tiempo",                        SueldoBaseMensual = 900.00m,  EsCargoDocente = true,  CantidadDefault = 0m,    TipoContrato = TipoContrato.MedioTiempo },
+            new CargoFacultad { CarreraId = 1, NombreCargo = "Tiempo Parcial",                      SueldoBaseMensual = 0m,       EsCargoDocente = true,  CantidadDefault = 0.16m, TipoContrato = TipoContrato.TiempoParcial, TarifaHora = tarifaTP },
+            new CargoFacultad { CarreraId = 1, NombreCargo = "Ocasional Tipo 2 (T\u00e9cnico Docente)",  SueldoBaseMensual = 1350.00m, EsCargoDocente = true,  CantidadDefault = 0.25m, TipoContrato = TipoContrato.Tecnico },
         };
 
         await ctx.CargosFacultad.AddRangeAsync(cargos);

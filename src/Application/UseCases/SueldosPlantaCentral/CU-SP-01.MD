@@ -93,8 +93,10 @@ Permite al Planificador Académico registrar o editar los cargos de la facultad 
 
 ## Reglas de Negocio
 
-- **RN-74:** El número de docentes PhD, Mgs., Parcial y Técnico proviene del módulo Estudiantes y no es editable en este módulo; solo se visualiza como referencia.
+- **RN-74:** El número de docentes PhD, Mgs., Medio Tiempo, Parcial y Técnico proviene del módulo Estudiantes y no es editable en este módulo; solo se visualiza como referencia.
 - **RN-75:** El peso proporcional de los cargos administrativos de la facultad es estcarreraperiodo / estUA; el Director de Carrera y todos los docentes tienen peso fijo 1.0.
-- **RN-76:** Los beneficios sociales se calculan automáticamente al registrar o cambiar el sueldo base: DXIII = Sueldo / 12, DXIV = 450 / 12, Vacaciones = Sueldo / 24, Fondo Reserva = Sueldo / 8.33, Aporte Patronal = Sueldo / 11.15.
+- **RN-76:** Los beneficios sociales se calculan automáticamente al registrar o cambiar el sueldo base **únicamente para PhD, Mgs, Medio Tiempo y Administrativos**: DXIII = Sueldo / 12, DXIV = 450 / 12, Vacaciones = Sueldo / 24, Fondo Reserva = Sueldo × 0.0833, Aporte Patronal = Sueldo × 0.1115. **Tiempo Parcial NO recibe estos beneficios** (servicios profesionales, RN-96).
 - **RN-77:** El valor del Décimo Cuarto, 450 anual o 37.50 mensual, corresponde al valor legal vigente en Ecuador y es configurable únicamente por el Administrador ante cambios normativos.
 - **RN-78:** Los estudiantes UA representan únicamente a estudiantes de otras carreras de la misma facultad; la carrera proyectada no se incluye en ese denominador.
+- **RN-96:** Cargo con `TipoContrato == TiempoParcial` usa `TarifaHora` (NUMERIC NOT NULL DEFAULT 0) en lugar de `SueldoBaseMensual`. Helper de inicialización: `TarifaHora = SueldoMensual / (HorasTPMaxSemana × SemanasPorMes)` (12 × 4 = 48). Tras inicializar, `SueldoBaseMensual` se setea a 0 para TP.
+- **RN-97:** Validación por tipo: si `TipoContrato == TiempoParcial` → `TarifaHora > 0` requerido y `SueldoBaseMensual = 0` permitido. Caso contrario → `SueldoBaseMensual > 0` requerido y `TarifaHora = 0` permitido. La distinción se hace por `TipoContrato` (enum), no por `null`.

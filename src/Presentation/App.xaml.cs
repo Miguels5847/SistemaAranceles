@@ -198,6 +198,9 @@ public partial class App
         servicios.AddTransient<ObtenerProyeccionEstudiantesUseCase>();
         servicios.AddTransient<ListarProyeccionesEstudiantesUseCase>();
         servicios.AddTransient<EliminarProyeccionEstudiantesUseCase>();
+        servicios.AddTransient<EditarConsumoPeriodoUseCase>();
+        servicios.AddTransient<RestaurarConsumoPeriodoUseCase>();
+        servicios.AddTransient<ListarOverridesHorasPeriodoUseCase>();
         servicios.AddTransient<CargosFacultadViewModel>();
         servicios.AddTransient<EstudiantesViewModel>();
 
