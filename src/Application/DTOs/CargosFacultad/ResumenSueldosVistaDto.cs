@@ -8,6 +8,7 @@ public sealed class FilaResumenSueldosDto
     public string NombreCargo { get; init; } = string.Empty;
     public bool EsCargoDocente { get; init; }
     public decimal Peso { get; init; }
+    public decimal[] PesosPorPeriodo { get; init; } = [];
     public decimal NumeroPersonas { get; init; }
     public decimal[] ValoresPorPeriodo { get; init; } = [];
     public decimal TotalFila { get; init; }

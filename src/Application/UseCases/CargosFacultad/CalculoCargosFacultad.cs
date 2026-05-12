@@ -5,7 +5,7 @@ using SistemaAranceles.Domain.Enums;
 
 namespace SistemaAranceles.Application.UseCases.CargosFacultad;
 
-internal static class CalculoCargosFacultad
+public static class CalculoCargosFacultad
 {
     public static bool EsTiempoParcial(CargoFacultad cargo)
         => cargo.TipoContrato == TipoContrato.TiempoParcial;
@@ -75,6 +75,39 @@ internal static class CalculoCargosFacultad
         decimal cantidadPersonas,
         decimal factorInflacion)
         => Math.Round(costoBaseSemestral * pesoProporcional * cantidadPersonas * NormalizarFactorInflacion(factorInflacion), 2);
+
+    public static decimal CalcularFactorInflacionEncadenado(
+        IReadOnlyList<InflacionAnual> registros,
+        int anioBase,
+        int anioPeriodo,
+        int numeroPeriodo)
+    {
+        if (anioPeriodo < anioBase)
+            return 1m;
+
+        decimal factor = 1m;
+        for (var anio = anioBase; anio <= anioPeriodo; anio++)
+        {
+            var registro = registros
+                .Where(r => r.Anio == anio)
+                .OrderBy(r => r.TipoFuente.Equals("estimacion", StringComparison.OrdinalIgnoreCase) ? 1 : 0)
+                .FirstOrDefault();
+            var pct = registro?.PorcentajeInflacion ?? 0m;
+
+            if (anio == anioPeriodo)
+            {
+                if (numeroPeriodo >= 2)
+                    factor *= 1m + (pct / 100m);
+            }
+            else
+            {
+                factor *= 1m + (pct / 100m);
+            }
+        }
+
+        if (factor < 1m) factor = 1m;
+        return Math.Round(factor, 6);
+    }
 
     public static decimal NormalizarFactorInflacion(decimal factorInflacion)
         => factorInflacion < 1m ? 1m : factorInflacion;

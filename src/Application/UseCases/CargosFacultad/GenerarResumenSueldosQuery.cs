@@ -105,12 +105,17 @@ public sealed class GenerarResumenSueldosQuery(
             var valores = new decimal[periodos.Count];
 
             decimal pesoPrimerPeriodo = 0m;
+            var pesosPorPeriodo = new decimal[periodos.Count];
 
             for (int i = 0; i < periodos.Count; i++)
             {
                 var periodo = periodos[i];
-                var factor = CalcularFactorEncadenado(registrosInflacion, anioBase, periodo.Anio, periodo.NumeroPeriodo);
                 var estCarrera = estudiantesPorPeriodo.GetValueOrDefault(periodo.PeriodoAcademicoId, 0m);
+                var factor = CalculoCargosFacultad.CalcularFactorInflacionEncadenado(
+                    registrosInflacion,
+                    anioBase,
+                    periodo.Anio,
+                    periodo.NumeroPeriodo);
 
                 var parametros = new ParametrosCalculoCargoFacultadDto
                 {
@@ -122,10 +127,11 @@ public sealed class GenerarResumenSueldosQuery(
                 var total = CalcularTotalSemestre(cargo, parametros);
                 valores[i] = total;
                 totalesPorPeriodo[i] += total;
+                pesosPorPeriodo[i] = CalculoCargosFacultad.CalcularPeso(
+                    cargo, estCarrera, parametros.EstudiantesUnidadAcademica);
 
                 if (i == 0)
-                    pesoPrimerPeriodo = CalculoCargosFacultad.CalcularPeso(
-                        cargo, estCarrera, parametros.EstudiantesUnidadAcademica);
+                    pesoPrimerPeriodo = pesosPorPeriodo[i];
             }
 
             filas.Add(new FilaResumenSueldosDto
@@ -134,6 +140,7 @@ public sealed class GenerarResumenSueldosQuery(
                 NombreCargo = cargo.NombreCargo,
                 EsCargoDocente = cargo.EsCargoDocente,
                 Peso = pesoPrimerPeriodo,
+                PesosPorPeriodo = pesosPorPeriodo,
                 NumeroPersonas = cargo.CantidadDefault,
                 ValoresPorPeriodo = valores,
                 TotalFila = Math.Round(valores.Sum(), 2),
@@ -167,39 +174,6 @@ public sealed class GenerarResumenSueldosQuery(
             .OrderBy(c => indice.TryGetValue(c.NombreCargo, out var idx) ? idx : int.MaxValue)
             .ThenBy(c => c.NombreCargo)
             .ToList();
-    }
-
-    private static decimal CalcularFactorEncadenado(
-        IReadOnlyList<InflacionAnual> registros,
-        int anioBase,
-        int anioPeriodo,
-        int numeroPeriodo)
-    {
-        if (anioPeriodo < anioBase)
-            return 1m;
-
-        decimal factor = 1m;
-        for (var anio = anioBase; anio <= anioPeriodo; anio++)
-        {
-            var registro = registros
-                .Where(r => r.Anio == anio)
-                .OrderBy(r => r.TipoFuente.Equals("estimacion", StringComparison.OrdinalIgnoreCase) ? 1 : 0)
-                .FirstOrDefault();
-            var pct = registro?.PorcentajeInflacion ?? 0m;
-
-            if (anio == anioPeriodo)
-            {
-                if (numeroPeriodo >= 2)
-                    factor *= 1m + (pct / 100m);
-            }
-            else
-            {
-                factor *= 1m + (pct / 100m);
-            }
-        }
-
-        if (factor < 1m) factor = 1m;
-        return Math.Round(factor, 6);
     }
 
     private static decimal CalcularTotalSemestre(CargoFacultad cargo, ParametrosCalculoCargoFacultadDto parametros)

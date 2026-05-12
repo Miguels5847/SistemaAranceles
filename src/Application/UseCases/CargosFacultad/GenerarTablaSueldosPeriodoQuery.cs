@@ -55,11 +55,13 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, cancellationToken);
         var carreraNombre = carrera?.Nombre ?? string.Empty;
 
-        var (factorEncadenado, inflacionPeriodoPct) = await CalcularFactorEncadenadoAsync(
+        var registrosInflacion = await repositorioInflacion.ListarPorRangoAsync(anioBase, anioPeriodo, cancellationToken);
+        var factorEncadenado = CalculoCargosFacultad.CalcularFactorInflacionEncadenado(
+            registrosInflacion,
             anioBase,
             anioPeriodo,
-            numeroPeriodo,
-            cancellationToken);
+            numeroPeriodo);
+        var inflacionPeriodoPct = ObtenerPorcentajeAnio(registrosInflacion, anioPeriodo);
 
         var cargos = await repositorioCargo.ListarPorCarreraAsync(carreraId, cancellationToken);
 
@@ -113,44 +115,6 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
             TotalAportePatronal = Math.Round(filas.Sum(f => f.AportePatronalMensual), 2),
             TotalSemestrePeriodo = Math.Round(filas.Sum(f => f.TotalSemestre), 2),
         };
-    }
-
-    /// <summary>
-    /// Inflación encadenada: factor = ∏ (1 + infl_y/100) para y desde anioBase hasta anioPeriodo-1,
-    /// y se multiplica también por (1 + infl_anioPeriodo/100) si el período es P2 (numeroPeriodo == 2).
-    /// </summary>
-    private async Task<(decimal Factor, decimal PorcentajePeriodo)> CalcularFactorEncadenadoAsync(
-        int anioBase,
-        int anioPeriodo,
-        int numeroPeriodo,
-        CancellationToken cancellationToken)
-    {
-        if (anioPeriodo < anioBase)
-            return (1m, 0m);
-
-        var registros = await repositorioInflacion.ListarPorRangoAsync(anioBase, anioPeriodo, cancellationToken);
-
-        decimal factor = 1m;
-        decimal porcentajePeriodo = 0m;
-
-        for (var anio = anioBase; anio <= anioPeriodo; anio++)
-        {
-            var pct = ObtenerPorcentajeAnio(registros, anio);
-
-            if (anio == anioPeriodo)
-            {
-                porcentajePeriodo = pct;
-                if (numeroPeriodo >= 2)
-                    factor *= 1m + (pct / 100m);
-            }
-            else if (anio < anioPeriodo)
-            {
-                factor *= 1m + (pct / 100m);
-            }
-        }
-
-        if (factor < 1m) factor = 1m;
-        return (Math.Round(factor, 6), porcentajePeriodo);
     }
 
     private static decimal ObtenerPorcentajeAnio(IReadOnlyList<InflacionAnual> registros, int anio)
