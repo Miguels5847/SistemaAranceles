@@ -32,6 +32,38 @@ public sealed class RepositorioEscenarioProyeccion(ContextoAplicacion contextoAp
         return await contextoAplicacion.EscenariosProyeccion.AnyAsync(x => x.Id == id && x.EstaActivo, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<EscenarioDominio>> ListarPorCarreraAsync(int carreraId, CancellationToken cancellationToken = default)
+    {
+        if (carreraId <= 0)
+            throw new ArgumentException($"{nameof(carreraId)} debe ser mayor que 0.", nameof(carreraId));
+
+        var lista = await contextoAplicacion.EscenariosProyeccion
+            .AsNoTracking()
+            .Where(x => x.CarreraId == carreraId && x.EstaActivo)
+            .OrderByDescending(x => x.EsPredeterminado)
+            .ThenBy(x => x.Nombre)
+            .ToListAsync(cancellationToken);
+
+        return lista.Select(MapearADominio).ToList();
+    }
+
+    public async Task AgregarAsync(EscenarioDominio escenario, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(escenario);
+
+        var entidad = new EscenarioPersistencia
+        {
+            CarreraId = escenario.CarreraId,
+            Nombre = escenario.Nombre,
+            Descripcion = escenario.Descripcion,
+            EsPredeterminado = false,
+            EstaActivo = true
+        };
+
+        contextoAplicacion.EscenariosProyeccion.Add(entidad);
+        await Task.CompletedTask;
+    }
+
     private static EscenarioDominio MapearADominio(EscenarioPersistencia entidad)
     {
         var dominio = new EscenarioDominio(entidad.CarreraId, entidad.Nombre, entidad.Descripcion, entidad.EsPredeterminado);

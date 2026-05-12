@@ -178,19 +178,76 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
 
     partial void OnCarreraSeleccionadaChanged(OpcionCarrera? value)
     {
-        ActualizarEscenariosPorCarrera(value?.Id);
-
         if (value is null)
         {
+            ActualizarEscenariosPorCarrera(null);
             EscenarioSeleccionado = null;
             TextoInformativoEscenario = string.Empty;
             return;
         }
 
+        // Lanzar carga de escenarios de forma asincrónica (fire-and-forget)
+        // pero actualizar UI de forma síncrona con escenarios conocidos
+        ActualizarEscenariosPorCarrera(value.Id);
+
         if (EscenarioSeleccionado is not null && EscenarioSeleccionado.CarreraId != value.Id)
         {
             EscenarioSeleccionado = null;
             TextoInformativoEscenario = string.Empty;
+        }
+
+        // Intentar auto-crear escenarios si carrera no tiene ninguno
+        _ = CrearEscenariosEnBlancoSiNecesarioAsync(value.Id);
+    }
+
+    private async Task CrearEscenariosEnBlancoSiNecesarioAsync(int carreraId)
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var uc = scope.ServiceProvider.GetRequiredService<CrearEscenariosEstandardPorCarreraUseCase>();
+
+            // Solo crea si no existen; si ya existen, no hace nada
+            var idsCreados = await uc.EjecutarAsync(carreraId);
+
+            if (idsCreados.Count > 0)
+            {
+                // Recargar escenarios desde BD para reflejar los nuevos creados
+                var repoEscenario = scope.ServiceProvider.GetRequiredService<IRepositorioEscenarioProyeccion>();
+                var escenariosFrescos = await repoEscenario.ListarAsync();
+
+                var nuevosEscenarios = escenariosFrescos
+                    .Where(e => e.CarreraId == carreraId)
+                    .Select(e => new OpcionEscenario
+                    {
+                        Id = e.Id,
+                        CarreraId = e.CarreraId,
+                        Descripcion = e.Nombre
+                    })
+                    .ToList();
+
+                // Actualizar catálogo y UI
+                foreach (var es in nuevosEscenarios)
+                {
+                    if (!_catalogoEscenarios.Any(x => x.Id == es.Id))
+                        _catalogoEscenarios.Add(es);
+                }
+
+                // Refrescar UI
+                ActualizarEscenariosPorCarrera(carreraId);
+
+                // Auto-seleccionar escenario "Historico" si existe
+                var historico = Escenarios.FirstOrDefault(x =>
+                    x.Descripcion == "Historico" || x.Descripcion == "Histórico");
+                if (historico is not null)
+                {
+                    EscenarioSeleccionado = historico;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            MensajeError = $"No se pudieron crear escenarios estándar automáticamente: {ObtenerDetalle(ex)}";
         }
     }
 

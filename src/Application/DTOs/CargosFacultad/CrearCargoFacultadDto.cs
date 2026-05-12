@@ -1,3 +1,5 @@
+using SistemaAranceles.Domain.Enums;
+
 namespace SistemaAranceles.Application.DTOs.CargosFacultad;
 
 public sealed class CrearCargoFacultadDto
@@ -8,4 +10,6 @@ public sealed class CrearCargoFacultadDto
     public decimal SueldoBaseMensual { get; init; }
     public bool EsCargoDocente { get; init; }
     public decimal CantidadDefault { get; init; } = 1m;
+    public TipoContrato TipoContrato { get; init; } = TipoContrato.Administrativo;
+    public decimal TarifaHora { get; init; } = 0m;
 }

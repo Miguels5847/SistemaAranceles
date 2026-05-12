@@ -207,7 +207,7 @@ public sealed class GenerarResumenSueldosQuery(
         var peso = CalculoCargosFacultad.CalcularPeso(cargo, parametros.EstudiantesCarreraPeriodo, parametros.EstudiantesUnidadAcademica);
         var personas = cargo.CantidadDefault;
 
-        // CU-SP-02 RN-79b: TP por hora sin beneficios. TODO Fase 4: hTP[p] real desde consolidador.
+        // CU-SP-02 RN-79b: TP por hora sin beneficios. TODO Fase 5: hTP[p] real desde consolidador refactorizado.
         if (CalculoCargosFacultad.EsTiempoParcial(cargo))
         {
             var tarifaAjustada = Math.Round(cargo.TarifaHora * parametros.FactorInflacion, 4);

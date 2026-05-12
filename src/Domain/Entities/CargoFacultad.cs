@@ -9,14 +9,24 @@ public sealed class CargoFacultad : EntidadDominioBase
     {
     }
 
-    public CargoFacultad(int carreraId, string nombreCargo, string tipoCargo, decimal sueldoBaseMensual, bool esCargoDocente, decimal cantidadDefault = 1m)
+    public CargoFacultad(
+        int carreraId,
+        string nombreCargo,
+        string tipoCargo,
+        decimal sueldoBaseMensual,
+        bool esCargoDocente,
+        decimal cantidadDefault = 1m,
+        TipoContrato tipoContrato = TipoContrato.Administrativo,
+        decimal tarifaHora = 0m)
     {
         CambiarCarrera(carreraId);
         CambiarNombreCargo(nombreCargo);
         CambiarTipoCargo(tipoCargo);
         CambiarSueldoBase(sueldoBaseMensual);
         EsCargoDocente = esCargoDocente;
-        CantidadDefault = cantidadDefault;
+        CambiarCantidadDefault(cantidadDefault);
+        CambiarTipoContrato(tipoContrato);
+        CambiarTarifaHora(tarifaHora);
     }
 
     public int CarreraId { get; private set; }

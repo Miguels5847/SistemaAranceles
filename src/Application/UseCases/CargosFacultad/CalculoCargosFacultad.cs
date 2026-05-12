@@ -5,7 +5,7 @@ using SistemaAranceles.Domain.Enums;
 
 namespace SistemaAranceles.Application.UseCases.CargosFacultad;
 
-internal static class CalculoCargosFacultad
+public static class CalculoCargosFacultad
 {
     public static bool EsTiempoParcial(CargoFacultad cargo)
         => cargo.TipoContrato == TipoContrato.TiempoParcial;

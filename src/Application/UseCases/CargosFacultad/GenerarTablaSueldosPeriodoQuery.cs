@@ -172,7 +172,7 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
         var personas = cargo.CantidadDefault;
 
         // CU-SP-02 RN-79b: TP se paga por hora sin beneficios sociales.
-        // TODO Fase 4: hTP[p] vendrá del consolidador via override; por ahora HorasTPMaxSemana.
+        // TODO Fase 5: hTP[p] vendrá del consolidador refactorizado; por ahora HorasTPMaxSemana con fallback.
         if (CalculoCargosFacultad.EsTiempoParcial(cargo))
         {
             var tarifaAjustada = Math.Round(cargo.TarifaHora * parametros.FactorInflacion, 4);

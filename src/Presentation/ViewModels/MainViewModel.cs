@@ -175,16 +175,7 @@ public sealed partial class MainViewModel : ObservableObject
             });
         }
 
-        if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
-        {
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Sueldos Carrera",
-                Icono = string.Empty,
-                Comando = new AsyncRelayCommand(() => MostrarCargosFacultadAsync())
-            });
-        }
-
+        // REORDEN: Tasa de Retención PRIMERO
         if (_sesionActual.TienePermiso("TRE.VER") || _sesionActual.TienePermiso("PR.VER") || _sesionActual.EsAdministrador)
         {
             MenuItems.Add(new ItemMenu
@@ -195,6 +186,7 @@ public sealed partial class MainViewModel : ObservableObject
             });
         }
 
+        // REORDEN: Proyección SEGUNDO
         if (_sesionActual.TienePermiso("ES.VER") || _sesionActual.EsAdministrador)
         {
             MenuItems.Add(new ItemMenu
@@ -202,6 +194,17 @@ public sealed partial class MainViewModel : ObservableObject
                 Titulo = "Proyección de Estudiantes",
                 Icono = string.Empty,
                 Comando = new AsyncRelayCommand(() => MostrarEstudiantesAsync())
+            });
+        }
+
+        // REORDEN: Sueldos TERCERO
+        if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Sueldos Carrera",
+                Icono = string.Empty,
+                Comando = new AsyncRelayCommand(() => MostrarCargosFacultadAsync())
             });
         }
 

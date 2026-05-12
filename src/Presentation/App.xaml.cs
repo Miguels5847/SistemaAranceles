@@ -186,6 +186,7 @@ public partial class App
         servicios.AddTransient<EliminarSimulacionRetencionUseCase>();
         servicios.AddTransient<LimpiarSimulacionesRetencionUseCase>();
         servicios.AddScoped<ObtenerValoresSugeridosParaEscenarioUseCase>();
+        servicios.AddScoped<CrearEscenariosEstandardPorCarreraUseCase>();
 
         // Catálogos: vistas y viewmodels
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.Catalogos.CatalogoCargosViewModel>();
