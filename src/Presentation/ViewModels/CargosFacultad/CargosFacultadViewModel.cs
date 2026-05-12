@@ -4,7 +4,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.DTOs.CargosFacultad;
+using SistemaAranceles.Application.DTOs.Estudiantes;
+using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.CargosFacultad;
+using SistemaAranceles.Application.UseCases.Estudiantes;
 using SistemaAranceles.Domain.Entities;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.Views.CargosFacultad;
@@ -16,12 +19,17 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
+    private readonly ConsolidadoEstudiantesActualState _consolidadoActualState;
     private bool _suprimirRecargaAutomatica;
 
-    public CargosFacultadViewModel(IServiceProvider serviceProvider, SesionActual sesionActual)
+    public CargosFacultadViewModel(
+        IServiceProvider serviceProvider,
+        SesionActual sesionActual,
+        ConsolidadoEstudiantesActualState consolidadoActualState)
     {
         _serviceProvider = serviceProvider;
         _sesionActual = sesionActual;
+        _consolidadoActualState = consolidadoActualState;
     }
 
     [ObservableProperty]
@@ -94,7 +102,7 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
 
     public bool PuedeVer => _sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador;
 
-    public string TituloModulo => "Sueldos";
+    public static string TituloModulo => "Sueldos";
 
     public string TextoInflacionPeriodo => string.Format(CultureInfo.CurrentCulture, "{0:N2}%", InflacionPeriodoPorcentaje);
 
@@ -283,11 +291,13 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
         {
             using var scope = _serviceProvider.CreateScope();
             var query = scope.ServiceProvider.GetRequiredService<GenerarTablaSueldosPeriodoQuery>();
+            var consolidadoActual = await ObtenerConsolidadoActualAsync();
             var resultado = await query.EjecutarAsync(
                 CarreraSeleccionada.Id,
                 EscenarioSeleccionado.Id,
                 PeriodoSeleccionado.PeriodoAcademicoId,
-                estudiantesUA);
+                estudiantesUA,
+                consolidadoActual);
 
             Filas = new ObservableCollection<FilaSueldoPeriodoDto>(resultado.Filas);
             EstudiantesCarrera = resultado.EstudiantesCarrera;
@@ -340,13 +350,15 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
         try
         {
             ResumenSueldosVistaDto resumen;
+            var consolidadoActual = await ObtenerConsolidadoActualAsync();
             using (var scope = _serviceProvider.CreateScope())
             {
                 var query = scope.ServiceProvider.GetRequiredService<GenerarResumenSueldosQuery>();
                 resumen = await query.EjecutarAsync(
                     CarreraSeleccionada.Id,
                     EscenarioSeleccionado.Id,
-                    estudiantesUA);
+                    estudiantesUA,
+                    consolidadoActual);
             }
 
             var ventana = new ResumenSueldosWindow();
@@ -418,4 +430,74 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
 
     private static string ObtenerDetalle(Exception ex)
         => ex.InnerException?.Message ?? ex.Message;
+
+    private async Task<ProyeccionConsolidadaDto?> ObtenerConsolidadoActualAsync()
+    {
+        if (CarreraSeleccionada is null || EscenarioSeleccionado is null)
+            return null;
+
+        if (_consolidadoActualState.CoincideCon(CarreraSeleccionada.Id, EscenarioSeleccionado.Id))
+            return _consolidadoActualState.Detalle;
+
+        using var scope = _serviceProvider.CreateScope();
+        var repoProyeccion = scope.ServiceProvider.GetRequiredService<IRepositorioProyeccionEstudiantes>();
+        var repoConfiguracion = scope.ServiceProvider.GetRequiredService<IRepositorioConfiguracionRetencion>();
+        var ucObtenerProyeccion = scope.ServiceProvider.GetRequiredService<ObtenerProyeccionEstudiantesUseCase>();
+        var ucOverrides = scope.ServiceProvider.GetRequiredService<ListarOverridesHorasPeriodoUseCase>();
+
+        var proyeccionId = await repoProyeccion.ObtenerIdPorCarreraYEscenarioAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
+        if (proyeccionId is null or 0)
+            return null;
+
+        var proyeccion = await ucObtenerProyeccion.EjecutarAsync(proyeccionId.Value);
+        if (proyeccion is null || proyeccion.Detalles.Count == 0)
+            return null;
+
+        var config = (await repoConfiguracion.ListarDtoAsync())
+            .FirstOrDefault(c => c.CarreraId == CarreraSeleccionada.Id && c.EscenarioProyeccionId == EscenarioSeleccionado.Id);
+        if (config is null)
+            return null;
+
+        var overrides = await ucOverrides.EjecutarAsync(proyeccion.Id);
+        var (docOverride, tecOverride) = ConstruirArreglosOverride(overrides, proyeccion);
+
+        var consolidado = ConsolidadorProyeccionEstudiantes.Calcular(
+            proyeccion,
+            config.ParalelosPeriodo1,
+            config.ParalelosPeriodo2,
+            config.TasaRetencionPorcentaje,
+            config.TasaGraduacionPorcentaje,
+            horasDocSemestralesOverride: docOverride,
+            horasTecSemestralesOverride: tecOverride,
+            horasDocSemanaOverride: 18m,
+            horasTecSemanaOverride: 40m);
+
+        _consolidadoActualState.Establecer(CarreraSeleccionada.Id, EscenarioSeleccionado.Id, consolidado);
+        return consolidado;
+    }
+
+    private static (decimal[]? doc, decimal[]? prac) ConstruirArreglosOverride(
+        IReadOnlyList<SistemaAranceles.Domain.Entities.OverrideHorasPeriodo> overrides,
+        ProyeccionEstudiantesDto proyeccion)
+    {
+        if (overrides.Count == 0) return (null, null);
+
+        var totalPeriodos = proyeccion.Detalles.Select(d => d.NumeroPeriodo).DefaultIfEmpty(0).Max();
+        if (totalPeriodos <= 0) return (null, null);
+
+        decimal[] doc = new decimal[totalPeriodos];
+        decimal[] prac = new decimal[totalPeriodos];
+        bool hayDoc = false;
+        bool hayPrac = false;
+
+        foreach (var o in overrides)
+        {
+            var idx = o.Periodo - 1;
+            if (idx < 0 || idx >= totalPeriodos) continue;
+            if (o.HorasDocencia is { } hd) { doc[idx] = hd; hayDoc = true; }
+            if (o.HorasPractica is { } hp) { prac[idx] = hp; hayPrac = true; }
+        }
+
+        return (hayDoc ? doc : null, hayPrac ? prac : null);
+    }
 }

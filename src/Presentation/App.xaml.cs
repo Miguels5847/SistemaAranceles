@@ -201,6 +201,7 @@ public partial class App
         servicios.AddTransient<EditarConsumoPeriodoUseCase>();
         servicios.AddTransient<RestaurarConsumoPeriodoUseCase>();
         servicios.AddTransient<ListarOverridesHorasPeriodoUseCase>();
+        servicios.AddSingleton<ConsolidadoEstudiantesActualState>();
         servicios.AddTransient<CargosFacultadViewModel>();
         servicios.AddTransient<EstudiantesViewModel>();
 

@@ -1,7 +1,9 @@
 using SistemaAranceles.Application.DTOs.CargosFacultad;
+using SistemaAranceles.Application.DTOs.Estudiantes;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Domain.Constantes;
 using SistemaAranceles.Domain.Entities;
+using SistemaAranceles.Domain.Enums;
 
 namespace SistemaAranceles.Application.UseCases.CargosFacultad;
 
@@ -20,6 +22,7 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
         int escenarioProyeccionId,
         int periodoAcademicoId,
         decimal estudiantesUA,
+        ProyeccionConsolidadaDto? consolidadoActual = null,
         CancellationToken cancellationToken = default)
     {
         if (carreraId <= 0 || escenarioProyeccionId <= 0 || periodoAcademicoId <= 0)
@@ -88,9 +91,10 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
             FactorInflacion = factorEncadenado,
         };
 
+        var periodoIndex = ObtenerIndicePeriodo(proyeccion.Detalles, periodoAcademicoId);
         var filas = cargos
             .OrderBy(c => c.NombreCargo)
-            .Select(c => Calcular(c, parametros))
+            .Select(c => Calcular(c, parametros, consolidadoActual, periodoIndex))
             .ToList();
 
         return new SueldosPeriodoVistaDto
@@ -126,17 +130,20 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
         return registro?.PorcentajeInflacion ?? 0m;
     }
 
-    private static FilaSueldoPeriodoDto Calcular(CargoFacultad cargo, ParametrosCalculoCargoFacultadDto parametros)
+    private static FilaSueldoPeriodoDto Calcular(
+        CargoFacultad cargo,
+        ParametrosCalculoCargoFacultadDto parametros,
+        ProyeccionConsolidadaDto? consolidadoActual,
+        int periodoIndex)
     {
         var peso = CalculoCargosFacultad.CalcularPeso(
             cargo,
             parametros.EstudiantesCarreraPeriodo,
             parametros.EstudiantesUnidadAcademica);
 
-        var personas = cargo.CantidadDefault;
+        var personas = ObtenerPersonasPeriodo(cargo, consolidadoActual, periodoIndex);
 
         // CU-SP-02 RN-79b: TP se paga por hora sin beneficios sociales.
-        // TODO Fase 4: hTP[p] vendrá del consolidador via override; por ahora HorasTPMaxSemana.
         if (CalculoCargosFacultad.EsTiempoParcial(cargo))
         {
             var tarifaAjustada = Math.Round(cargo.TarifaHora * parametros.FactorInflacion, 4);
@@ -193,4 +200,49 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
             TotalSemestre = totalSemestre,
         };
     }
+
+    private static int ObtenerIndicePeriodo(IReadOnlyList<DetalleProyeccionEstudiantesDto> detalles, int periodoAcademicoId)
+    {
+        var periodosOrdenados = detalles
+            .OrderBy(d => d.Anio)
+            .ThenBy(d => d.NumeroPeriodo)
+            .ToList();
+
+        return periodosOrdenados.FindIndex(d => d.PeriodoAcademicoId == periodoAcademicoId);
+    }
+
+    private static decimal ObtenerPersonasPeriodo(
+        CargoFacultad cargo,
+        ProyeccionConsolidadaDto? consolidadoActual,
+        int periodoIndex)
+    {
+        if (periodoIndex < 0)
+            return cargo.TipoContrato == TipoContrato.Administrativo ? cargo.CantidadDefault : 0m;
+
+        var tipoFila = ObtenerTipoFilaDocente(cargo);
+        if (tipoFila is null)
+            return cargo.CantidadDefault;
+
+        if (consolidadoActual is null)
+            return 0m;
+
+        var fila = consolidadoActual.DocentesPorPeriodo.FirstOrDefault(x =>
+            x.Tipo.Equals(tipoFila, StringComparison.OrdinalIgnoreCase));
+
+        if (fila is null || fila.Periodos.Length <= periodoIndex)
+            return 0m;
+
+        return fila.Periodos[periodoIndex];
+    }
+
+    private static string? ObtenerTipoFilaDocente(CargoFacultad cargo)
+        => cargo.TipoContrato switch
+        {
+            TipoContrato.PhD => "TC PhD",
+            TipoContrato.Mgs => "TC Mgs.",
+            TipoContrato.MedioTiempo => "Medio Tiempo",
+            TipoContrato.TiempoParcial => "Tiempo Parcial",
+            TipoContrato.Tecnico => "Ocasional Tipo 2 (Técnico)",
+            _ => null,
+        };
 }

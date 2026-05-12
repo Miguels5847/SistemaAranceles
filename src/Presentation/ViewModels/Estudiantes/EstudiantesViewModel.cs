@@ -52,6 +52,7 @@ public sealed partial class EstudiantesViewModel : ObservableObject
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
+    private readonly ConsolidadoEstudiantesActualState _consolidadoActualState;
 
     private IReadOnlyList<EscenarioOpcion> _todosLosEscenarios = [];
 
@@ -61,10 +62,14 @@ public sealed partial class EstudiantesViewModel : ObservableObject
     private decimal[]? _overrideHorasDocencia;
     private decimal[]? _overrideHorasPractica;
 
-    public EstudiantesViewModel(IServiceProvider serviceProvider, SesionActual sesionActual)
+    public EstudiantesViewModel(
+        IServiceProvider serviceProvider,
+        SesionActual sesionActual,
+        ConsolidadoEstudiantesActualState consolidadoActualState)
     {
         _serviceProvider = serviceProvider;
         _sesionActual = sesionActual;
+        _consolidadoActualState = consolidadoActualState;
     }
 
     // ── Listas ──────────────────────────────────────────────────
@@ -289,6 +294,8 @@ public sealed partial class EstudiantesViewModel : ObservableObject
                 horasTecSemestralesOverride: _overrideHorasPractica,
                 horasDocSemanaOverride: _horasDocenteSemana,
                 horasTecSemanaOverride: _horasTecnicoSemana);
+
+            _consolidadoActualState.Establecer(item.CarreraId, item.EscenarioId, DetalleConsolidado);
 
             ReaplicarSeleccionConsumo();
         }

@@ -1,7 +1,9 @@
 using SistemaAranceles.Application.DTOs.CargosFacultad;
+using SistemaAranceles.Application.DTOs.Estudiantes;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Domain.Constantes;
 using SistemaAranceles.Domain.Entities;
+using SistemaAranceles.Domain.Enums;
 
 namespace SistemaAranceles.Application.UseCases.CargosFacultad;
 
@@ -39,39 +41,15 @@ public sealed class GenerarResumenSueldosQuery(
         int carreraId,
         int escenarioProyeccionId,
         decimal estudiantesUA,
+        ProyeccionConsolidadaDto? consolidadoActual = null,
         CancellationToken cancellationToken = default)
     {
-        if (carreraId <= 0 || escenarioProyeccionId <= 0)
-            return new ResumenSueldosVistaDto { CarreraId = carreraId };
-
-        var proyeccionId = await repositorioProyeccionEstudiantes.ObtenerIdPorCarreraYEscenarioAsync(
-            carreraId, escenarioProyeccionId, cancellationToken);
-        if (proyeccionId is null or 0)
-            return new ResumenSueldosVistaDto { CarreraId = carreraId };
-
-        var proyeccion = await repositorioProyeccionEstudiantes.ObtenerDtoPorIdAsync(proyeccionId.Value, cancellationToken);
+        var proyeccion = await ObtenerProyeccionAsync(carreraId, escenarioProyeccionId, cancellationToken);
         if (proyeccion is null || proyeccion.Detalles.Count == 0)
             return new ResumenSueldosVistaDto { CarreraId = carreraId };
 
-        var periodos = proyeccion.Detalles
-            .GroupBy(d => d.PeriodoAcademicoId)
-            .Select(g =>
-            {
-                var p = g.First();
-                return new PeriodoDisponibleSueldosDto
-                {
-                    PeriodoAcademicoId = p.PeriodoAcademicoId,
-                    Anio = p.Anio,
-                    NumeroPeriodo = p.NumeroPeriodo,
-                    EtiquetaPeriodo = p.EtiquetaPeriodo,
-                };
-            })
-            .OrderBy(p => p.Anio).ThenBy(p => p.NumeroPeriodo)
-            .ToList();
-
-        var estudiantesPorPeriodo = proyeccion.Detalles
-            .GroupBy(d => d.PeriodoAcademicoId)
-            .ToDictionary(g => g.Key, g => g.Sum(x => x.TotalEstudiantes));
+        var periodos = ConstruirPeriodos(proyeccion);
+        var estudiantesPorPeriodo = ConstruirEstudiantesPorPeriodo(proyeccion);
 
         var anioBase = proyeccion.AnioBase;
         var anioMax = periodos.Max(p => p.Anio);
@@ -80,16 +58,7 @@ public sealed class GenerarResumenSueldosQuery(
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, cancellationToken);
         var carreraNombre = carrera?.Nombre ?? string.Empty;
 
-        var cargos = await repositorioCargo.ListarPorCarreraAsync(carreraId, cancellationToken);
-        if (cargos.Count == 0)
-        {
-            var todas = await repositorioCarrera.ListarAsync();
-            foreach (var c in todas.Where(x => x.Id != carreraId))
-            {
-                var alt = await repositorioCargo.ListarPorCarreraAsync(c.Id, cancellationToken);
-                if (alt.Count > 0) { cargos = alt; break; }
-            }
-        }
+        var cargos = await ObtenerCargosAsync(carreraId, cancellationToken);
 
         var cargosOrdenados = OrdenarCargos(cargos);
         var parametrosBase = new ParametrosCalculoCargoFacultadDto
@@ -104,7 +73,8 @@ public sealed class GenerarResumenSueldosQuery(
         {
             var valores = new decimal[periodos.Count];
 
-            decimal pesoPrimerPeriodo = 0m;
+            decimal pesoUltimoPeriodo = 0m;
+            decimal personasUltimoPeriodo = 0m;
             var pesosPorPeriodo = new decimal[periodos.Count];
 
             for (int i = 0; i < periodos.Count; i++)
@@ -116,6 +86,7 @@ public sealed class GenerarResumenSueldosQuery(
                     anioBase,
                     periodo.Anio,
                     periodo.NumeroPeriodo);
+                var personas = ObtenerPersonasPeriodo(cargo, consolidadoActual, i);
 
                 var parametros = new ParametrosCalculoCargoFacultadDto
                 {
@@ -124,14 +95,14 @@ public sealed class GenerarResumenSueldosQuery(
                     FactorInflacion = factor,
                 };
 
-                var total = CalcularTotalSemestre(cargo, parametros);
+                var total = CalcularTotalSemestre(cargo, parametros, personas);
                 valores[i] = total;
                 totalesPorPeriodo[i] += total;
                 pesosPorPeriodo[i] = CalculoCargosFacultad.CalcularPeso(
                     cargo, estCarrera, parametros.EstudiantesUnidadAcademica);
 
-                if (i == 0)
-                    pesoPrimerPeriodo = pesosPorPeriodo[i];
+                pesoUltimoPeriodo = pesosPorPeriodo[i];
+                personasUltimoPeriodo = personas;
             }
 
             filas.Add(new FilaResumenSueldosDto
@@ -139,9 +110,9 @@ public sealed class GenerarResumenSueldosQuery(
                 CargoId = cargo.Id,
                 NombreCargo = cargo.NombreCargo,
                 EsCargoDocente = cargo.EsCargoDocente,
-                Peso = pesoPrimerPeriodo,
+                Peso = pesoUltimoPeriodo,
                 PesosPorPeriodo = pesosPorPeriodo,
-                NumeroPersonas = cargo.CantidadDefault,
+                NumeroPersonas = personasUltimoPeriodo,
                 ValoresPorPeriodo = valores,
                 TotalFila = Math.Round(valores.Sum(), 2),
             });
@@ -164,6 +135,64 @@ public sealed class GenerarResumenSueldosQuery(
         };
     }
 
+    private async Task<ProyeccionEstudiantesDto?> ObtenerProyeccionAsync(
+        int carreraId,
+        int escenarioProyeccionId,
+        CancellationToken cancellationToken)
+    {
+        if (carreraId <= 0 || escenarioProyeccionId <= 0)
+            return null;
+
+        var proyeccionId = await repositorioProyeccionEstudiantes.ObtenerIdPorCarreraYEscenarioAsync(
+            carreraId, escenarioProyeccionId, cancellationToken);
+        if (proyeccionId is null or 0)
+            return null;
+
+        return await repositorioProyeccionEstudiantes.ObtenerDtoPorIdAsync(proyeccionId.Value, cancellationToken);
+    }
+
+    private async Task<IReadOnlyList<CargoFacultad>> ObtenerCargosAsync(
+        int carreraId,
+        CancellationToken cancellationToken)
+    {
+        var cargos = await repositorioCargo.ListarPorCarreraAsync(carreraId, cancellationToken);
+        if (cargos.Count > 0)
+            return cargos;
+
+        var todas = await repositorioCarrera.ListarAsync();
+        foreach (var c in todas.Where(x => x.Id != carreraId))
+        {
+            var alternativos = await repositorioCargo.ListarPorCarreraAsync(c.Id, cancellationToken);
+            if (alternativos.Count > 0)
+                return alternativos;
+        }
+
+        return cargos;
+    }
+
+    private static List<PeriodoDisponibleSueldosDto> ConstruirPeriodos(ProyeccionEstudiantesDto proyeccion)
+        => proyeccion.Detalles
+            .GroupBy(d => d.PeriodoAcademicoId)
+            .Select(g =>
+            {
+                var p = g.First();
+                return new PeriodoDisponibleSueldosDto
+                {
+                    PeriodoAcademicoId = p.PeriodoAcademicoId,
+                    Anio = p.Anio,
+                    NumeroPeriodo = p.NumeroPeriodo,
+                    EtiquetaPeriodo = p.EtiquetaPeriodo,
+                };
+            })
+            .OrderBy(p => p.Anio)
+            .ThenBy(p => p.NumeroPeriodo)
+            .ToList();
+
+    private static Dictionary<int, decimal> ConstruirEstudiantesPorPeriodo(ProyeccionEstudiantesDto proyeccion)
+        => proyeccion.Detalles
+            .GroupBy(d => d.PeriodoAcademicoId)
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.TotalEstudiantes));
+
     private static List<CargoFacultad> OrdenarCargos(IReadOnlyList<CargoFacultad> cargos)
     {
         var indice = OrdenCargos
@@ -176,12 +205,13 @@ public sealed class GenerarResumenSueldosQuery(
             .ToList();
     }
 
-    private static decimal CalcularTotalSemestre(CargoFacultad cargo, ParametrosCalculoCargoFacultadDto parametros)
+    private static decimal CalcularTotalSemestre(
+        CargoFacultad cargo,
+        ParametrosCalculoCargoFacultadDto parametros,
+        decimal personas)
     {
         var peso = CalculoCargosFacultad.CalcularPeso(cargo, parametros.EstudiantesCarreraPeriodo, parametros.EstudiantesUnidadAcademica);
-        var personas = cargo.CantidadDefault;
 
-        // CU-SP-02 RN-79b: TP por hora sin beneficios. TODO Fase 4: hTP[p] real desde consolidador.
         if (CalculoCargosFacultad.EsTiempoParcial(cargo))
         {
             var tarifaAjustada = Math.Round(cargo.TarifaHora * parametros.FactorInflacion, 4);
@@ -203,4 +233,39 @@ public sealed class GenerarResumenSueldosQuery(
 
         return Math.Round(costoBaseSemestral * personas * peso, 2);
     }
+
+    private static decimal ObtenerPersonasPeriodo(
+        CargoFacultad cargo,
+        ProyeccionConsolidadaDto? consolidadoActual,
+        int periodoIndex)
+    {
+        if (periodoIndex < 0)
+            return cargo.TipoContrato == TipoContrato.Administrativo ? cargo.CantidadDefault : 0m;
+
+        var tipoFila = ObtenerTipoFilaDocente(cargo);
+        if (tipoFila is null)
+            return cargo.CantidadDefault;
+
+        if (consolidadoActual is null)
+            return 0m;
+
+        var fila = consolidadoActual.DocentesPorPeriodo.FirstOrDefault(x =>
+            x.Tipo.Equals(tipoFila, StringComparison.OrdinalIgnoreCase));
+
+        if (fila is null || fila.Periodos.Length <= periodoIndex)
+            return 0m;
+
+        return fila.Periodos[periodoIndex];
+    }
+
+    private static string? ObtenerTipoFilaDocente(CargoFacultad cargo)
+        => cargo.TipoContrato switch
+        {
+            TipoContrato.PhD => "TC PhD",
+            TipoContrato.Mgs => "TC Mgs.",
+            TipoContrato.MedioTiempo => "Medio Tiempo",
+            TipoContrato.TiempoParcial => "Tiempo Parcial",
+            TipoContrato.Tecnico => "Ocasional Tipo 2 (Técnico)",
+            _ => null,
+        };
 }

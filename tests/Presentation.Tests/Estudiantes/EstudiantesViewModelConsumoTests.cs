@@ -20,7 +20,8 @@ public class EstudiantesViewModelConsumoTests
         var repositorio = new FakeRepositorioOverrideHorasPeriodo();
         var provider = BuildServiceProvider(repositorio);
         var sesion = BuildSesionAdmin();
-        var vm = new EstudiantesViewModel(provider, sesion);
+        var consolidadoState = new ConsolidadoEstudiantesActualState();
+        var vm = new EstudiantesViewModel(provider, sesion, consolidadoState);
 
         var proyeccion = CrearProyeccionMinima();
         var config = CrearConfiguracionMinima();
@@ -60,7 +61,8 @@ public class EstudiantesViewModelConsumoTests
         var repositorio = new FakeRepositorioOverrideHorasPeriodo();
         var provider = BuildServiceProvider(repositorio);
         var sesion = BuildSesionAdmin();
-        var vm = new EstudiantesViewModel(provider, sesion)
+        var consolidadoState = new ConsolidadoEstudiantesActualState();
+        var vm = new EstudiantesViewModel(provider, sesion, consolidadoState)
         {
             DetalleConsolidado = new ProyeccionConsolidadaDto
             {

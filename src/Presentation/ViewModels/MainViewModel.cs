@@ -175,16 +175,6 @@ public sealed partial class MainViewModel : ObservableObject
             });
         }
 
-        if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
-        {
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Sueldos Carrera",
-                Icono = string.Empty,
-                Comando = new AsyncRelayCommand(() => MostrarCargosFacultadAsync())
-            });
-        }
-
         if (_sesionActual.TienePermiso("TRE.VER") || _sesionActual.TienePermiso("PR.VER") || _sesionActual.EsAdministrador)
         {
             MenuItems.Add(new ItemMenu
@@ -202,6 +192,16 @@ public sealed partial class MainViewModel : ObservableObject
                 Titulo = "Proyección de Estudiantes",
                 Icono = string.Empty,
                 Comando = new AsyncRelayCommand(() => MostrarEstudiantesAsync())
+            });
+        }
+
+        if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Sueldos Carrera",
+                Icono = string.Empty,
+                Comando = new AsyncRelayCommand(() => MostrarCargosFacultadAsync())
             });
         }
 
