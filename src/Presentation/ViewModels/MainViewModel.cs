@@ -154,16 +154,6 @@ public sealed partial class MainViewModel : ObservableObject
             });
         }
 
-        if (_sesionActual.TienePermiso("INF.VER"))
-        {
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Inflación",
-                Icono = string.Empty,
-                Comando = new AsyncRelayCommand(() => MostrarInflacionAsync())
-            });
-        }
-
         // Catálogo maestro: Capital de Trabajo (reemplaza menús separados de catálogos)
         if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
         {
@@ -175,11 +165,21 @@ public sealed partial class MainViewModel : ObservableObject
             });
         }
 
+        if (_sesionActual.TienePermiso("INF.VER"))
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Inflación",
+                Icono = string.Empty,
+                Comando = new AsyncRelayCommand(() => MostrarInflacionAsync())
+            });
+        }
+
         if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
         {
             MenuItems.Add(new ItemMenu
             {
-                Titulo = "Sueldos",
+                Titulo = "Sueldos Carrera",
                 Icono = string.Empty,
                 Comando = new AsyncRelayCommand(() => MostrarCargosFacultadAsync())
             });
