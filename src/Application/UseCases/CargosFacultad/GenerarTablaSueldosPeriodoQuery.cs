@@ -203,12 +203,10 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
 
     private static int ObtenerIndicePeriodo(IReadOnlyList<DetalleProyeccionEstudiantesDto> detalles, int periodoAcademicoId)
     {
-        var periodosOrdenados = detalles
-            .OrderBy(d => d.Anio)
-            .ThenBy(d => d.NumeroPeriodo)
-            .ToList();
-
-        return periodosOrdenados.FindIndex(d => d.PeriodoAcademicoId == periodoAcademicoId);
+        // El consolidador indexa por NumeroPeriodo: período N → índice (N-1)
+        // NO por posición en la lista de detalles (que puede tener períodos faltantes)
+        var detalle = detalles.FirstOrDefault(d => d.PeriodoAcademicoId == periodoAcademicoId);
+        return detalle is null ? -1 : detalle.NumeroPeriodo - 1;
     }
 
     private static decimal ObtenerPersonasPeriodo(
@@ -216,23 +214,31 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
         ProyeccionConsolidadaDto? consolidadoActual,
         int periodoIndex)
     {
-        if (periodoIndex < 0)
-            return cargo.TipoContrato == TipoContrato.Administrativo ? cargo.CantidadDefault : 0m;
+        if (cargo.EsCargoDocente)
+        {
+            if (periodoIndex < 0 || consolidadoActual is null)
+                return 0m;
 
-        var tipoFila = ObtenerTipoFilaDocente(cargo);
-        if (tipoFila is null)
+            var tipoFila = ObtenerTipoFilaDocente(cargo);
+            if (tipoFila is null)
+                return 0m;
+
+            var fila = consolidadoActual.DocentesPorPeriodo.FirstOrDefault(x =>
+                x.Tipo.Equals(tipoFila, StringComparison.OrdinalIgnoreCase));
+
+            if (fila is null || fila.Periodos.Length <= periodoIndex)
+                return 0m;
+
+            return fila.Periodos[periodoIndex];
+        }
+
+        if (periodoIndex < 0)
             return cargo.CantidadDefault;
 
         if (consolidadoActual is null)
-            return 0m;
+            return cargo.CantidadDefault;
 
-        var fila = consolidadoActual.DocentesPorPeriodo.FirstOrDefault(x =>
-            x.Tipo.Equals(tipoFila, StringComparison.OrdinalIgnoreCase));
-
-        if (fila is null || fila.Periodos.Length <= periodoIndex)
-            return 0m;
-
-        return fila.Periodos[periodoIndex];
+        return cargo.CantidadDefault;
     }
 
     private static string? ObtenerTipoFilaDocente(CargoFacultad cargo)
