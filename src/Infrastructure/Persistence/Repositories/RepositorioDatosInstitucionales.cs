@@ -10,6 +10,7 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
     public async Task<DominioDatosInstitucionales?> ObtenerPorPeriodoAsync(string periodo, CancellationToken cancellationToken = default)
     {
         var e = await contexto.DatosInstitucionales
+            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Periodo == periodo, cancellationToken);
         return e is null ? null : MapearADominio(e);
     }
@@ -17,6 +18,7 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
     public async Task<DominioDatosInstitucionales?> ObtenerVigenteAsync(CancellationToken cancellationToken = default)
     {
         var e = await contexto.DatosInstitucionales
+            .AsNoTracking()
             .OrderByDescending(x => x.FechaActualizacion)
             .FirstOrDefaultAsync(cancellationToken);
         return e is null ? null : MapearADominio(e);
@@ -25,6 +27,7 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
     public async Task<DominioDatosInstitucionales?> ObtenerAnteriorAsync(string periodoActual, CancellationToken cancellationToken = default)
     {
         var e = await contexto.DatosInstitucionales
+            .AsNoTracking()
             .Where(x => x.Periodo != periodoActual)
             .OrderByDescending(x => x.FechaActualizacion)
             .FirstOrDefaultAsync(cancellationToken);
@@ -34,6 +37,7 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
     public async Task<IReadOnlyList<DominioDatosInstitucionales>> ListarHistoricoAsync(CancellationToken cancellationToken = default)
     {
         var lista = await contexto.DatosInstitucionales
+            .AsNoTracking()
             .OrderByDescending(x => x.FechaActualizacion)
             .ToListAsync(cancellationToken);
         return lista.Select(MapearADominio).ToList();
@@ -43,7 +47,16 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
         => contexto.DatosInstitucionales.Add(MapearAInfra(datos));
 
     public void Actualizar(DominioDatosInstitucionales datos)
-        => contexto.DatosInstitucionales.Update(MapearAInfra(datos));
+    {
+        var rastreado = contexto.ChangeTracker.Entries<InfraDatosInstitucionales>()
+            .FirstOrDefault(e => e.Entity.Id == datos.Id);
+        if (rastreado is not null)
+        {
+            rastreado.State = EntityState.Detached;
+        }
+
+        contexto.DatosInstitucionales.Update(MapearAInfra(datos));
+    }
 
     private static DominioDatosInstitucionales MapearADominio(InfraDatosInstitucionales e)
     {
