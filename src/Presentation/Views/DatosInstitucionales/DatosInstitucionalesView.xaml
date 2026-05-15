@@ -1,0 +1,296 @@
+<UserControl x:Class="SistemaAranceles.Presentation.Views.DatosInstitucionales.DatosInstitucionalesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:SistemaAranceles.Presentation.Converters">
+        <UserControl.Resources>
+                <conv:DecimalStringConverter x:Key="DecimalStringConverter"/>
+        </UserControl.Resources>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <Grid Margin="12">
+                        <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0"
+                                   Text="Datos Institucionales"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="#1A237E"
+                                   Margin="0,0,0,4"/>
+
+                        <TextBlock Grid.Row="1"
+                                   Text="{Binding UltimaActualizacionTexto}"
+                                   Foreground="#555"
+                                   FontStyle="Italic"
+                                   Margin="0,0,0,10"/>
+
+                        <TextBlock Grid.Row="2"
+                                   Text="{Binding MensajeError}"
+                                   Foreground="#C62828"
+                                   FontWeight="SemiBold"
+                                   Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"
+                                   Margin="0,0,0,4"/>
+
+                        <TextBlock Grid.Row="3"
+                                   Text="{Binding MensajeExito}"
+                                   Foreground="#2E7D32"
+                                   FontWeight="SemiBold"
+                                   Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"
+                                   Margin="0,0,0,4"/>
+
+                        <!-- Inputs Poblacion -->
+                        <Border Grid.Row="4"
+                                BorderBrush="#C5CAE9"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="10,8"
+                                Margin="0,0,0,8">
+                                <Grid>
+                                        <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Row="0"
+                                                   Grid.ColumnSpan="4"
+                                                   Text="Poblacion institucional y periodo"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#1A237E"
+                                                   Margin="0,0,0,6"/>
+
+                                        <StackPanel Grid.Row="1"
+                                                    Grid.Column="0"
+                                                    Margin="0,0,6,0">
+                                                <TextBlock Text="Periodo"
+                                                           FontSize="11"/>
+                                                <TextBox Text="{Binding Periodo, UpdateSourceTrigger=PropertyChanged}"
+                                                         IsEnabled="{Binding CamposEditables}"
+                                                         Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1"
+                                                    Grid.Column="1"
+                                                    Margin="0,0,6,0">
+                                                <TextBlock Text="N. estudiantes universidad"
+                                                           FontSize="11"/>
+                                                <TextBox Text="{Binding NumeroEstudiantesUniversidad, UpdateSourceTrigger=PropertyChanged}"
+                                                         IsEnabled="{Binding CamposEditables}"
+                                                         Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1"
+                                                    Grid.Column="2"
+                                                    Margin="0,0,6,0">
+                                                <TextBlock Text="N. docentes universidad"
+                                                           FontSize="11"/>
+                                                <TextBox Text="{Binding NumeroDocentesUniversidad, UpdateSourceTrigger=PropertyChanged}"
+                                                         IsEnabled="{Binding CamposEditables}"
+                                                         Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1"
+                                                    Grid.Column="3">
+                                                <TextBlock Text="N. personas planta central"
+                                                           FontSize="11"/>
+                                                <TextBox Text="{Binding NumeroPersonasPlantaCentral, UpdateSourceTrigger=PropertyChanged}"
+                                                         IsEnabled="{Binding CamposEditables}"
+                                                         Padding="4,2"/>
+                                        </StackPanel>
+                                </Grid>
+                        </Border>
+
+                        <!-- Inputs Rubros monetarios -->
+                        <Border Grid.Row="5"
+                                BorderBrush="#C5CAE9"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="10,8"
+                                Margin="0,0,0,8">
+                                <Grid>
+                                        <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Row="0"
+                                                   Grid.ColumnSpan="4"
+                                                   Text="Planta central: totales mensuales (USD)"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#1A237E"
+                                                   Margin="0,0,0,6"/>
+
+                                        <StackPanel Grid.Row="1"
+                                                    Grid.Column="0"
+                                                    Margin="0,0,6,4">
+                                                <TextBlock Text="Sueldo basico"
+                                                           FontSize="11"/>
+                                                <TextBox Text="{Binding SueldoBasico, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}"
+                                                         Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1"
+                                                    Grid.Column="1"
+                                                    Margin="0,0,6,4">
+                                                <TextBlock Text="Funcional"
+                                                           FontSize="11"/>
+                                                <TextBox Text="{Binding Funcional, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}"
+                                                         Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1"
+                                                    Grid.Column="2"
+                                                    Margin="0,0,6,4">
+                                                <TextBlock Text="Fondo de reserva"
+                                                           FontSize="11"/>
+                                                <TextBox Text="{Binding FondoReserva, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}"
+                                                         Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1"
+                                                    Grid.Column="3"
+                                                    Margin="0,0,0,4">
+                                                <TextBlock Text="Beneficio XIV"
+                                                           FontSize="11"/>
+                                                <TextBox Text="{Binding BeneficioXiv, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}"
+                                                         Padding="4,2"/>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Row="2"
+                                                    Grid.Column="0"
+                                                    Margin="0,0,6,4">
+                                                <TextBlock Text="Beneficio XIII"
+                                                           FontSize="11"/>
+                                                <TextBox Text="{Binding BeneficioXiii, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}"
+                                                         Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="2"
+                                                    Grid.Column="1"
+                                                    Margin="0,0,6,4">
+                                                <TextBlock Text="Aporte patronal"
+                                                           FontSize="11"/>
+                                                <TextBox Text="{Binding AportePatronal, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}"
+                                                         Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="2"
+                                                    Grid.Column="2"
+                                                    Margin="0,0,6,4">
+                                                <TextBlock Text="Varios"
+                                                           FontSize="11"/>
+                                                <TextBox Text="{Binding Varios, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}"
+                                                         Padding="4,2"/>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Row="3"
+                                                    Grid.ColumnSpan="4"
+                                                    Margin="0,8,0,0">
+                                                <TextBlock Text="Notas / fuente documental"
+                                                           FontSize="11"/>
+                                                <TextBox Text="{Binding FuenteNotas, UpdateSourceTrigger=PropertyChanged}"
+                                                         IsEnabled="{Binding CamposEditables}"
+                                                         AcceptsReturn="True"
+                                                         TextWrapping="Wrap"
+                                                         Height="50"
+                                                         Padding="4,2"/>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Row="4"
+                                                    Grid.ColumnSpan="4"
+                                                    Orientation="Horizontal"
+                                                    HorizontalAlignment="Right"
+                                                    Margin="0,10,0,0">
+                                                <Button Content="Editar"
+                                                        Padding="10,4"
+                                                        Margin="0,0,6,0"
+                                                        Command="{Binding HabilitarEdicionCommand}"
+                                                        IsEnabled="{Binding PuedeEditar}"/>
+                                                <Button Content="Cancelar"
+                                                        Padding="10,4"
+                                                        Margin="0,0,6,0"
+                                                        Command="{Binding CancelarEdicionCommand}"
+                                                        Visibility="{Binding EdicionActiva, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                <Button Content="Recargar"
+                                                        Padding="10,4"
+                                                        Margin="0,0,6,0"
+                                                        Command="{Binding CargarCommand}"/>
+                                                <Button Content="Guardar"
+                                                        Padding="14,4"
+                                                        Background="#1A237E"
+                                                        Foreground="White"
+                                                        IsEnabled="{Binding CamposEditables}"
+                                                        Command="{Binding GuardarCommand}"/>
+                                        </StackPanel>
+                                </Grid>
+                        </Border>
+
+                        <!-- Metricas calculadas -->
+                        <Border Grid.Row="6"
+                                BorderBrush="#C5CAE9"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Background="#F8F9FF"
+                                Padding="10,8">
+                                <Grid>
+                                        <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Row="0"
+                                                   Grid.ColumnSpan="4"
+                                                   Text="Metricas calculadas"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#1A237E"
+                                                   Margin="0,0,0,6"/>
+
+                                        <StackPanel Grid.Row="1"
+                                                    Grid.Column="0">
+                                                <TextBlock Text="Masa salarial mensual"
+                                                           FontSize="11"
+                                                           Foreground="#555"/>
+                                                <TextBlock Text="{Binding MasaSalarialMensual, StringFormat=C2}"
+                                                           FontWeight="SemiBold"
+                                                           FontSize="14"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1"
+                                                    Grid.Column="1">
+                                                <TextBlock Text="Total anual planta central"
+                                                           FontSize="11"
+                                                           Foreground="#555"/>
+                                                <TextBlock Text="{Binding TotalAnualPlantaCentral, StringFormat=C2}"
+                                                           FontWeight="SemiBold"
+                                                           FontSize="14"/>
+                                        </StackPanel>
+                                        <!-- Removed Admin por docente and Costo PC por estudiante per request -->
+                                </Grid>
+                        </Border>
+                </Grid>
+        </ScrollViewer>
+</UserControl>

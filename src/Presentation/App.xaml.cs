@@ -15,6 +15,7 @@ using SistemaAranceles.Application.UseCases.Auditoria;
 using SistemaAranceles.Application.UseCases.Autenticacion;
 using SistemaAranceles.Application.UseCases.CargosFacultad;
 using SistemaAranceles.Application.UseCases.Inflacion;
+using SistemaAranceles.Application.UseCases.SueldosPlantaCentral;
 using SistemaAranceles.Application.UseCases.TasaRetencion;
 using SistemaAranceles.Application.UseCases.TasaRetencion.Validadores;
 using SistemaAranceles.Application.UseCases.Estudiantes;
@@ -144,6 +145,11 @@ public partial class App
         servicios.AddTransient<ListarCargoPlantaCentralQuery>();
         servicios.AddTransient<GuardarCargoPlantaCentralCommand>();
         servicios.AddTransient<EliminarCargoPlantaCentralCommand>();
+        // KAN-22: Datos Institucionales + Aporte Planta Central
+        servicios.AddTransient<ConfigurarDatosInstitucionalesCommand>();
+        servicios.AddTransient<ObtenerDatosInstitucionalesVigentesQuery>();
+        servicios.AddTransient<ListarHistoricoDatosInstitucionalesQuery>();
+        servicios.AddTransient<CalcularAportePlantaCentralCarreraQuery>();
         servicios.AddTransient<CalcularProyeccionesCargoPlantaCentralCommand>();
         servicios.AddTransient<ListarProyeccionesCargoPlantaCentralQuery>();
         servicios.AddTransient<ObtenerConsolidadoSueldosPeriodoQuery>();
@@ -219,6 +225,10 @@ public partial class App
         servicios.AddTransient<EditarUsuarioViewModel>();
         servicios.AddTransient<Func<EditarUsuarioViewModel>>(sp =>
             () => sp.GetRequiredService<EditarUsuarioViewModel>());
+        // KAN-22: ViewModels
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.DatosInstitucionales.DatosInstitucionalesViewModel>();
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.PlantaCentral.AportePlantaCentralViewModel>();
+
         servicios.AddTransient<MainViewModel>();
 
         // Views
@@ -226,6 +236,8 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Presentation.Views.Catalogos.CatalogoCargosView>();
         servicios.AddTransient<SistemaAranceles.Presentation.Views.Catalogos.CatalogoMaterialesView>();
         servicios.AddTransient<SistemaAranceles.Presentation.Views.CapitalTrabajo.CapitalTrabajoView>();
+        servicios.AddTransient<SistemaAranceles.Presentation.Views.DatosInstitucionales.DatosInstitucionalesView>();
+        servicios.AddTransient<SistemaAranceles.Presentation.Views.PlantaCentral.AportePlantaCentralView>();
         servicios.AddTransient<MainWindow>();
     }
 
