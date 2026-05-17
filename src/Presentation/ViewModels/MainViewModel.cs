@@ -5,6 +5,9 @@ using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.DTOs.Usuarios;
 using SistemaAranceles.Application.UseCases.Autenticacion;
+using SistemaAranceles.Presentation.ViewModels.CargosFacultad;
+using SistemaAranceles.Presentation.ViewModels.DatosInstitucionales;
+using SistemaAranceles.Presentation.ViewModels.PlantaCentral;
 using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.Services;
 using SistemaAranceles.Presentation.State;
@@ -33,10 +36,14 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ServicioInactividad _servicioInactividad;
     private readonly UsuariosViewModel _usuariosViewModel;
     private readonly AuditoriaViewModel _auditoriaViewModel;
+    private readonly CargosFacultadViewModel _cargosFacultadViewModel;
     private readonly CarrerasViewModel _carrerasViewModel;
+    private readonly SistemaAranceles.Presentation.ViewModels.CapitalTrabajo.CapitalTrabajoViewModel _capitalTrabajoViewModel;
     private readonly EstudiantesViewModel _estudiantesViewModel;
     private readonly InflacionViewModel _inflacionViewModel;
     private readonly ConfiguracionRetencionViewModel _configuracionRetencionViewModel;
+    private readonly DatosInstitucionalesViewModel _datosInstitucionalesViewModel;
+    private readonly AportePlantaCentralViewModel _aportePlantaCentralViewModel;
     private readonly Func<EditarUsuarioViewModel> _editarUsuarioViewModelFactory;
     private int _cerrandoSesion;
     private int _cargandoUsuarios;
@@ -47,10 +54,14 @@ public sealed partial class MainViewModel : ObservableObject
         ServicioInactividad servicioInactividad,
         UsuariosViewModel usuariosViewModel,
         AuditoriaViewModel auditoriaViewModel,
+        CargosFacultadViewModel cargosFacultadViewModel,
+        SistemaAranceles.Presentation.ViewModels.CapitalTrabajo.CapitalTrabajoViewModel capitalTrabajoViewModel,
         CarrerasViewModel carrerasViewModel,
         EstudiantesViewModel estudiantesViewModel,
         InflacionViewModel inflacionViewModel,
         ConfiguracionRetencionViewModel configuracionRetencionViewModel,
+        DatosInstitucionalesViewModel datosInstitucionalesViewModel,
+        AportePlantaCentralViewModel aportePlantaCentralViewModel,
         Func<EditarUsuarioViewModel> editarUsuarioViewModelFactory)
     {
         _serviceProvider = serviceProvider;
@@ -58,10 +69,14 @@ public sealed partial class MainViewModel : ObservableObject
         _servicioInactividad = servicioInactividad;
         _usuariosViewModel = usuariosViewModel;
         _auditoriaViewModel = auditoriaViewModel;
+        _cargosFacultadViewModel = cargosFacultadViewModel;
+        _capitalTrabajoViewModel = capitalTrabajoViewModel;
         _carrerasViewModel = carrerasViewModel;
         _estudiantesViewModel = estudiantesViewModel;
         _inflacionViewModel = inflacionViewModel;
         _configuracionRetencionViewModel = configuracionRetencionViewModel;
+        _datosInstitucionalesViewModel = datosInstitucionalesViewModel;
+        _aportePlantaCentralViewModel = aportePlantaCentralViewModel;
         _editarUsuarioViewModelFactory = editarUsuarioViewModelFactory;
 
         // Subscribirse a actualizaciones de tiempo restante
@@ -91,6 +106,11 @@ public sealed partial class MainViewModel : ObservableObject
         {
             PaginaActual = _inflacionViewModel;
             _ = MostrarInflacionAsync();
+        }
+        else if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
+        {
+            PaginaActual = _cargosFacultadViewModel;
+            _ = MostrarCargosFacultadAsync();
         }
         else
         {
@@ -142,6 +162,17 @@ public sealed partial class MainViewModel : ObservableObject
             });
         }
 
+        // Catálogo maestro: Capital de Trabajo (reemplaza menús separados de catálogos)
+        if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Capital de Trabajo",
+                Icono = string.Empty,
+                Comando = new AsyncRelayCommand(() => MostrarCapitalTrabajoAsync())
+            });
+        }
+
         if (_sesionActual.TienePermiso("INF.VER"))
         {
             MenuItems.Add(new ItemMenu
@@ -152,7 +183,7 @@ public sealed partial class MainViewModel : ObservableObject
             });
         }
 
-        if (_sesionActual.TienePermiso("TRE.VER") || _sesionActual.TienePermiso("PR.VER") || _sesionActual.EsAdministrador)
+        if (_sesionActual.TienePermiso("TRE.VER") || _sesionActual.EsAdministrador)
         {
             MenuItems.Add(new ItemMenu
             {
@@ -172,13 +203,33 @@ public sealed partial class MainViewModel : ObservableObject
             });
         }
 
-        if (_sesionActual.TienePermiso("AF.VER"))
+        if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
         {
             MenuItems.Add(new ItemMenu
             {
-                Titulo = "Análisis Financiero",
+                Titulo = "Sueldos Carrera",
                 Icono = string.Empty,
-                Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Análisis Financiero", "Épica 5"))
+                Comando = new AsyncRelayCommand(() => MostrarCargosFacultadAsync())
+            });
+        }
+
+        if (_sesionActual.TienePermiso("DI.VER") || _sesionActual.EsAdministrador)
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Datos Institucionales",
+                Icono = string.Empty,
+                Comando = new AsyncRelayCommand(() => MostrarDatosInstitucionalesAsync())
+            });
+        }
+
+        if (_sesionActual.TienePermiso("PC.VER") || _sesionActual.EsAdministrador)
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Aporte Planta Central",
+                Icono = string.Empty,
+                Comando = new AsyncRelayCommand(() => MostrarAportePlantaCentralAsync())
             });
         }
 
@@ -271,7 +322,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarTasaRetencionAsync()
     {
-        var puede = _sesionActual.TienePermiso("TRE.VER") || _sesionActual.TienePermiso("PR.VER") || _sesionActual.EsAdministrador;
+        var puede = _sesionActual.TienePermiso("TRE.VER") || _sesionActual.EsAdministrador;
         if (!puede)
         {
             MensajePagina = "Acceso denegado al módulo de Tasa de Retención.";
@@ -338,6 +389,68 @@ public sealed partial class MainViewModel : ObservableObject
         MensajePagina = string.Empty;
         PaginaActual = _inflacionViewModel;
         await _inflacionViewModel.CargarCommand.ExecuteAsync(null);
+    }
+
+    private async Task MostrarDatosInstitucionalesAsync()
+    {
+        if (!(_sesionActual.TienePermiso("DI.VER") || _sesionActual.EsAdministrador))
+        {
+            MensajePagina = "Acceso denegado al modulo Datos Institucionales.";
+            return;
+        }
+
+        MensajePagina = string.Empty;
+        PaginaActual = _datosInstitucionalesViewModel;
+        await _datosInstitucionalesViewModel.CargarCommand.ExecuteAsync(null);
+    }
+
+    private async Task MostrarAportePlantaCentralAsync()
+    {
+        if (!(_sesionActual.TienePermiso("PC.VER") || _sesionActual.EsAdministrador))
+        {
+            MensajePagina = "Acceso denegado al modulo Aporte Planta Central.";
+            return;
+        }
+
+        MensajePagina = string.Empty;
+        PaginaActual = _aportePlantaCentralViewModel;
+        await _aportePlantaCentralViewModel.CargarCommand.ExecuteAsync(null);
+    }
+
+    private async Task MostrarCargosFacultadAsync()
+    {
+        if (!(_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador))
+        {
+            MensajePagina = "Acceso denegado al módulo de Sueldos.";
+            return;
+        }
+
+        MensajePagina = string.Empty;
+        PaginaActual = _cargosFacultadViewModel;
+        await _cargosFacultadViewModel.CargarCommand.ExecuteAsync(null);
+    }
+
+    private Task MostrarCatalogoCargosAsync()
+    {
+        return MostrarCapitalTrabajoAsync();
+    }
+
+    private async Task MostrarCapitalTrabajoAsync()
+    {
+        if (!(_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador))
+        {
+            MensajePagina = "Acceso denegado al módulo Capital de Trabajo.";
+            return;
+        }
+
+        MensajePagina = string.Empty;
+        PaginaActual = _capitalTrabajoViewModel;
+        await _capitalTrabajoViewModel.CargarCommand.ExecuteAsync(null);
+    }
+
+    private Task MostrarCatalogoMaterialesAsync()
+    {
+        return MostrarCapitalTrabajoAsync();
     }
 
     [RelayCommand]

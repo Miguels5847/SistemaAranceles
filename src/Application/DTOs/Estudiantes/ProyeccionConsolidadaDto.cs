@@ -82,10 +82,12 @@ public sealed class FilaParalelosDto
 /// </summary>
 public sealed class FilaDocentePeriodoDto
 {
-    public string  Tipo     { get; init; } = string.Empty;
-    public int[]   Periodos { get; init; } = [];
+    public string     Tipo           { get; init; } = string.Empty;
+    public int[]      Periodos       { get; init; } = [];
     /// <summary>Valor del período final (no suma, sino último acumulado).</summary>
-    public int     Total    { get; init; }
+    public int        Total          { get; init; }
+    /// <summary>Horas asignadas por período. Solo poblada en filas "Horas asignadas Medio Tiempo" y "Horas asignadas Tiempo Parcial". Null en filas de personas.</summary>
+    public decimal[]? HorasAsignadas { get; init; }
 }
 
 /// <summary>Legado — por año (4 columnas fijas).</summary>
@@ -121,6 +123,7 @@ public sealed class FilaConsumoPeriodicDto
     public string Semestre      { get; init; } = string.Empty;
     public int    Docentes      { get; init; }   // personas enteras, nunca fraccionario
     public int    Tecnicos      { get; init; }   // personas enteras, nunca fraccionario
-    public decimal HorasDocencia { get; init; }
-    public decimal HorasPractica { get; init; }
+    // CU-ES-04: editable. set público para soportar edición desde DataGrid (override de horas).
+    public decimal HorasDocencia { get; set; }
+    public decimal HorasPractica { get; set; }
 }

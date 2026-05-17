@@ -6,24 +6,27 @@ using System.Windows;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using FluentValidation;
+using SistemaAranceles.Infrastructure.DI;
+using SistemaAranceles.Infrastructure.Persistence;
+using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Application.Options;
 using SistemaAranceles.Application.UseCases.Auditoria;
 using SistemaAranceles.Application.UseCases.Autenticacion;
+using SistemaAranceles.Application.UseCases.CargosFacultad;
 using SistemaAranceles.Application.UseCases.Inflacion;
+using SistemaAranceles.Application.UseCases.SueldosPlantaCentral;
 using SistemaAranceles.Application.UseCases.TasaRetencion;
 using SistemaAranceles.Application.UseCases.TasaRetencion.Validadores;
 using SistemaAranceles.Application.UseCases.Estudiantes;
 using SistemaAranceles.Application.UseCases.Estudiantes.Validadores;
 using SistemaAranceles.Application.DTOs.Estudiantes;
+using SistemaAranceles.Presentation.ViewModels.CargosFacultad;
 using SistemaAranceles.Presentation.ViewModels.Estudiantes;
 using SistemaAranceles.Application.UseCases.Usuarios;
 using SistemaAranceles.Application.UseCases.Permisos;
-using SistemaAranceles.Application.DTOs.TasaRetencion;
-using FluentValidation;
-using SistemaAranceles.Infrastructure.DI;
-using SistemaAranceles.Infrastructure.Persistence;
-using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.Services;
+using SistemaAranceles.Application.DTOs.TasaRetencion;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.ViewModels;
 using SistemaAranceles.Presentation.ViewModels.Auditoria;
@@ -38,6 +41,7 @@ namespace SistemaAranceles.Presentation;
 public partial class App
 {
     private ServiceProvider? _proveedor;
+    public static IServiceProvider? ServiceProvider { get; private set; }
     private TextWriterTraceListener? _traceListener;
     private ServicioInactividad? _servicioInactividad;
     private DateTime _lastWindowDeactivated = DateTime.MinValue;
@@ -57,6 +61,7 @@ public partial class App
         var servicios = new ServiceCollection();
         ConfigurarServicios(servicios, cadenaConexion, config);
         _proveedor = servicios.BuildServiceProvider();
+        ServiceProvider = _proveedor;
 
         _servicioInactividad = _proveedor.GetRequiredService<ServicioInactividad>();
 
@@ -130,6 +135,32 @@ public partial class App
         servicios.AddTransient<ObtenerPermisosEfectivosUsuarioUseCase>();
         servicios.AddTransient<ActualizarPermisosUsuarioUseCase>();
         servicios.AddTransient<ConsultarAuditoriaUseCase>();
+        servicios.AddTransient<ObtenerCargosFacultadPorCarreraQuery>();
+        servicios.AddTransient<AgregarCargoFacultadCommand>();
+        servicios.AddTransient<ActualizarCargoFacultadCommand>();
+        servicios.AddTransient<EliminarCargoFacultadCommand>();
+        servicios.AddTransient<ListarProyeccionesCargoFacultadPorCarreraQuery>();
+        servicios.AddTransient<GuardarProyeccionCargoFacultadCommand>();
+        servicios.AddTransient<EliminarProyeccionCargoFacultadCommand>();
+        servicios.AddTransient<ListarCargoPlantaCentralQuery>();
+        servicios.AddTransient<GuardarCargoPlantaCentralCommand>();
+        servicios.AddTransient<EliminarCargoPlantaCentralCommand>();
+        // KAN-22: Datos Institucionales + Aporte Planta Central
+        servicios.AddTransient<ConfigurarDatosInstitucionalesCommand>();
+        servicios.AddTransient<ObtenerDatosInstitucionalesVigentesQuery>();
+        servicios.AddTransient<ListarHistoricoDatosInstitucionalesQuery>();
+        servicios.AddTransient<CalcularAportePlantaCentralCarreraQuery>();
+        servicios.AddTransient<CalcularProyeccionesCargoPlantaCentralCommand>();
+        servicios.AddTransient<ListarProyeccionesCargoPlantaCentralQuery>();
+        servicios.AddTransient<ObtenerConsolidadoSueldosPeriodoQuery>();
+        servicios.AddTransient<GenerarTablaSueldosPeriodoQuery>();
+        servicios.AddTransient<GenerarResumenSueldosQuery>();
+        servicios.AddTransient<ListarCarrerasConProyeccionQuery>();
+        servicios.AddTransient<ListarEscenariosConProyeccionPorCarreraQuery>();
+        servicios.AddTransient<ListarPeriodosDeProyeccionEstudiantesQuery>();
+        servicios.AddTransient<ListarPeriodosAcademicosQuery>();
+        servicios.AddTransient<ListarOpcionesInflacionPorAnioQuery>();
+        servicios.AddTransient<ObtenerInflacionPorAnioQuery>();
         servicios.AddTransient<ListarInflacionAnualUseCase>();
         servicios.AddTransient<CrearInflacionAnualUseCase>();
         servicios.AddTransient<ActualizarInflacionAnualUseCase>();
@@ -139,6 +170,7 @@ public partial class App
         servicios.AddTransient<ImportarInflacionBceArchivoUseCase>();
         servicios.AddTransient<ProyectarInflacionUseCase>();
         servicios.AddTransient<ObtenerInflacionProyectadaParaDependientesUseCase>();
+        servicios.AddTransient<SemillaCapitalTrabajoService>();
 
         // KAN-13: Tasa de Retención — Configuración
         servicios.AddTransient<IValidator<CrearConfiguracionRetencionDto>, CrearConfiguracionRetencionDtoValidador>();
@@ -161,16 +193,29 @@ public partial class App
         servicios.AddTransient<LimpiarSimulacionesRetencionUseCase>();
         servicios.AddScoped<ObtenerValoresSugeridosParaEscenarioUseCase>();
 
+        // Catálogos: vistas y viewmodels
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.Catalogos.CatalogoCargosViewModel>();
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.Catalogos.CatalogoMaterialesViewModel>();
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.CapitalTrabajo.CapitalTrabajoViewModel>();
+
         // Épica 5 — Estudiantes (KAN-17)
         servicios.AddTransient<IValidator<GenerarProyeccionEstudiantesDto>, GenerarProyeccionEstudiantesDtoValidador>();
         servicios.AddTransient<GenerarProyeccionEstudiantesUseCase>();
         servicios.AddTransient<ObtenerProyeccionEstudiantesUseCase>();
         servicios.AddTransient<ListarProyeccionesEstudiantesUseCase>();
         servicios.AddTransient<EliminarProyeccionEstudiantesUseCase>();
+        servicios.AddTransient<EditarConsumoPeriodoUseCase>();
+        servicios.AddTransient<RestaurarConsumoPeriodoUseCase>();
+        servicios.AddTransient<ListarOverridesHorasPeriodoUseCase>();
+        servicios.AddSingleton<ConsolidadoEstudiantesActualState>();
+        servicios.AddTransient<CargosFacultadViewModel>();
         servicios.AddTransient<EstudiantesViewModel>();
 
         // ViewModels
         servicios.AddTransient<LoginViewModel>();
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.Catalogos.CatalogoCargosViewModel>();
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.Catalogos.CatalogoMaterialesViewModel>();
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.CapitalTrabajo.CapitalTrabajoViewModel>();
         servicios.AddTransient<UsuariosViewModel>();
         servicios.AddTransient<AuditoriaViewModel>();
         servicios.AddTransient<CarrerasViewModel>();
@@ -180,10 +225,19 @@ public partial class App
         servicios.AddTransient<EditarUsuarioViewModel>();
         servicios.AddTransient<Func<EditarUsuarioViewModel>>(sp =>
             () => sp.GetRequiredService<EditarUsuarioViewModel>());
+        // KAN-22: ViewModels
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.DatosInstitucionales.DatosInstitucionalesViewModel>();
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.PlantaCentral.AportePlantaCentralViewModel>();
+
         servicios.AddTransient<MainViewModel>();
 
         // Views
         servicios.AddTransient<LoginView>();
+        servicios.AddTransient<SistemaAranceles.Presentation.Views.Catalogos.CatalogoCargosView>();
+        servicios.AddTransient<SistemaAranceles.Presentation.Views.Catalogos.CatalogoMaterialesView>();
+        servicios.AddTransient<SistemaAranceles.Presentation.Views.CapitalTrabajo.CapitalTrabajoView>();
+        servicios.AddTransient<SistemaAranceles.Presentation.Views.DatosInstitucionales.DatosInstitucionalesView>();
+        servicios.AddTransient<SistemaAranceles.Presentation.Views.PlantaCentral.AportePlantaCentralView>();
         servicios.AddTransient<MainWindow>();
     }
 

@@ -1,0 +1,104 @@
+<Window x:Class="SistemaAranceles.Presentation.Views.CargosFacultad.ResumenSueldosWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Resumen Sueldos Personal"
+        Width="1280"
+        Height="700"
+        WindowStartupLocation="CenterOwner"
+        Background="#F5F7FF">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0"
+                    Margin="0,0,0,12">
+            <TextBlock Text="Resumen Sueldos Personal"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       Foreground="#1A237E"/>
+            <TextBlock x:Name="TxtSubtitulo"
+                       FontSize="12"
+                       Foreground="#546E7A"
+                       Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <Border Grid.Row="1"
+                BorderBrush="#C5CAE9"
+                BorderThickness="1"
+                CornerRadius="10"
+                Background="White"
+                Padding="0">
+            <DataGrid x:Name="dgResumen"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      CanUserAddRows="False"
+                      CanUserResizeColumns="False"
+                      CanUserSortColumns="False"
+                      CanUserReorderColumns="False"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      AlternatingRowBackground="#F8F9FF"
+                      BorderThickness="0"
+                      HorizontalScrollBarVisibility="Auto"/>
+        </Border>
+
+        <Border Grid.Row="2"
+                BorderBrush="#C5CAE9"
+                BorderThickness="1"
+                CornerRadius="8"
+                Background="#EEF3FF"
+                Padding="0"
+                Margin="0,8,0,0">
+            <DataGrid x:Name="dgTotales"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      HeadersVisibility="None"
+                      GridLinesVisibility="None"
+                      CanUserAddRows="False"
+                      CanUserResizeColumns="False"
+                      CanUserSortColumns="False"
+                      CanUserReorderColumns="False"
+                      Background="Transparent"
+                      BorderThickness="0"
+                      RowBackground="Transparent"
+                      HorizontalScrollBarVisibility="Hidden"/>
+        </Border>
+
+        <Border Grid.Row="3"
+                BorderBrush="#1A237E"
+                BorderThickness="1"
+                CornerRadius="8"
+                Background="#1A237E"
+                Padding="12,10"
+                Margin="0,8,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left banner removed as per UI tweak request -->
+
+                <StackPanel Grid.Column="1"
+                            Orientation="Vertical"
+                            HorizontalAlignment="Right">
+                    <TextBlock x:Name="TxtLabelTotalAcumulado"
+                               Text="Total acumulado (suma todos los períodos × 6 meses)"
+                               FontSize="11"
+                               Foreground="#C5CAE9"
+                               HorizontalAlignment="Right"/>
+                    <TextBlock x:Name="TxtGranTotal"
+                               FontSize="20"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               HorizontalAlignment="Right"
+                               Margin="0,2,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

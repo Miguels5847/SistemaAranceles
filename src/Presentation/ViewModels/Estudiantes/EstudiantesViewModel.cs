@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -14,68 +15,75 @@ namespace SistemaAranceles.Presentation.ViewModels.Estudiantes;
 // ── Opciones para ComboBoxes ────────────────────────────────────────────
 public sealed class CarreraOpcion
 {
-    public int    Id          { get; init; }
+    public int Id { get; init; }
     public string Descripcion { get; init; } = string.Empty;
 }
 
 public sealed class EscenarioOpcion
 {
-    public int    Id          { get; init; }
-    public int    CarreraId   { get; init; }
+    public int Id { get; init; }
+    public int CarreraId { get; init; }
     public string Descripcion { get; init; } = string.Empty;
 }
 
 public sealed class SimulacionOpcion
 {
-    public int    Id          { get; init; }
-    public int    CohorteAnio { get; init; }
+    public int Id { get; init; }
+    public int CohorteAnio { get; init; }
     public string Descripcion { get; init; } = string.Empty;
 }
 
 // ── Ítem de la lista de proyecciones ───────────────────────────────────
 public sealed class ProyeccionEstudiantesItemViewModel
 {
-    public int    Id                 { get; init; }
-    public int    CarreraId          { get; init; }
-    public int    EscenarioId        { get; init; }
-    public int    AnioBase           { get; init; }
-    public string CarreraNombre      { get; init; } = string.Empty;
-    public string CarreraCodigo      { get; init; } = string.Empty;
-    public string EscenarioNombre    { get; init; } = string.Empty;
-    public int    SemanasPorSemestre { get; init; }
-    public string CreadoEnTexto      { get; init; } = string.Empty;
+    public int Id { get; init; }
+    public int CarreraId { get; init; }
+    public int EscenarioId { get; init; }
+    public int AnioBase { get; init; }
+    public string CarreraNombre { get; init; } = string.Empty;
+    public string CarreraCodigo { get; init; } = string.Empty;
+    public string EscenarioNombre { get; init; } = string.Empty;
+    public int SemanasPorSemestre { get; init; }
+    public string CreadoEnTexto { get; init; } = string.Empty;
 }
 
 // ── ViewModel principal ─────────────────────────────────────────────
 public sealed partial class EstudiantesViewModel : ObservableObject
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly SesionActual     _sesionActual;
+    private readonly SesionActual _sesionActual;
+    private readonly ConsolidadoEstudiantesActualState _consolidadoActualState;
 
     private IReadOnlyList<EscenarioOpcion> _todosLosEscenarios = [];
 
     // Guardamos el último contexto de cálculo para poder recalcular sin ir a la BD
-    private ProyeccionEstudiantesDto?     _ultimaProyeccion;
-    private ConfiguracionRetencionDto?    _ultimaConfig;
+    private ProyeccionEstudiantesDto? _ultimaProyeccion;
+    private ConfiguracionRetencionDto? _ultimaConfig;
+    private decimal[]? _overrideHorasDocencia;
+    private decimal[]? _overrideHorasPractica;
 
-    public EstudiantesViewModel(IServiceProvider serviceProvider, SesionActual sesionActual)
+    public EstudiantesViewModel(
+        IServiceProvider serviceProvider,
+        SesionActual sesionActual,
+        ConsolidadoEstudiantesActualState consolidadoActualState)
     {
         _serviceProvider = serviceProvider;
-        _sesionActual    = sesionActual;
+        _sesionActual = sesionActual;
+        _consolidadoActualState = consolidadoActualState;
     }
 
     // ── Listas ──────────────────────────────────────────────────
     [ObservableProperty] private ObservableCollection<ProyeccionEstudiantesItemViewModel> _proyecciones = [];
     [ObservableProperty] private ProyeccionEstudiantesItemViewModel? _proyeccionSeleccionada;
 
-    [ObservableProperty] private ObservableCollection<CarreraOpcion>    _carreras    = [];
-    [ObservableProperty] private CarreraOpcion?                         _carreraSeleccionada;
+    [ObservableProperty] private ObservableCollection<CarreraOpcion> _carreras = [];
+    [ObservableProperty] private CarreraOpcion? _carreraSeleccionada;
 
-    [ObservableProperty] private ObservableCollection<EscenarioOpcion>  _escenarios  = [];
-    [ObservableProperty] private EscenarioOpcion?                       _escenarioSeleccionado;
+    [ObservableProperty] private ObservableCollection<EscenarioOpcion> _escenarios = [];
+    [ObservableProperty] private EscenarioOpcion? _escenarioSeleccionado;
 
     [ObservableProperty] private ObservableCollection<SimulacionOpcion> _simulaciones = [];
-    [ObservableProperty] private SimulacionOpcion?                      _simulacionSeleccionada;
+    [ObservableProperty] private SimulacionOpcion? _simulacionSeleccionada;
 
     // ── Formulario ───────────────────────────────────────────────
     [ObservableProperty] private string _semanasPorSemestre = "16";
@@ -105,33 +113,74 @@ public sealed partial class EstudiantesViewModel : ObservableObject
     }
 
     // ── Estado ──────────────────────────────────────────────────
-    [ObservableProperty] private bool   _estaCargando;
-    [ObservableProperty] private bool   _estaGenerando;
-    [ObservableProperty] private bool   _estaEliminando;
-    [ObservableProperty] private bool   _estaCargandoDetalle;
+    [ObservableProperty] private bool _estaCargando;
+    [ObservableProperty] private bool _estaGenerando;
+    [ObservableProperty] private bool _estaEliminando;
+    [ObservableProperty] private bool _estaCargandoDetalle;
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
 
     // ── Consolidado (tablas) ──────────────────────────────────────────
     [ObservableProperty] private ProyeccionConsolidadaDto? _detalleConsolidado;
+    [ObservableProperty] private FilaConsumoPeriodicDto? _periodoConsumoSeleccionado;
+
+    [ObservableProperty] private bool _estaEditandoHorasMalla;
+    [ObservableProperty] private string _horasDocenciaEdicion = string.Empty;
+    [ObservableProperty] private string _horasPracticaEdicion = string.Empty;
+    [ObservableProperty] private string _resumenPeriodoEdicion = string.Empty;
 
     public bool TieneDetalleConsolidado => DetalleConsolidado is not null;
+    public bool PuedeEditarConsumo =>
+        _sesionActual.EsAdministrador
+        || _sesionActual.TienePermiso("ES.EDITAR")
+        || _sesionActual.TienePermiso("ES.CREAR");
+    public bool PuedeAbrirEdicionHorasMalla => PuedeEditarConsumo && PeriodoConsumoSeleccionado is not null;
+
+    public decimal TotalHorasDocenciaConsumo =>
+        DetalleConsolidado?.TablaPeriodos.Sum(x => x.HorasDocencia) ?? 0m;
+    public decimal TotalHorasPracticaConsumo =>
+        DetalleConsolidado?.TablaPeriodos.Sum(x => x.HorasPractica) ?? 0m;
+    public decimal TotalHorasCombinadasConsumo => TotalHorasDocenciaConsumo + TotalHorasPracticaConsumo;
 
     partial void OnDetalleConsolidadoChanged(ProyeccionConsolidadaDto? value)
     {
         _ = value;
         OnPropertyChanged(nameof(TieneDetalleConsolidado));
+        OnPropertyChanged(nameof(TotalHorasDocenciaConsumo));
+        OnPropertyChanged(nameof(TotalHorasPracticaConsumo));
+        OnPropertyChanged(nameof(TotalHorasCombinadasConsumo));
+        ReaplicarSeleccionConsumo();
+    }
+
+    partial void OnPeriodoConsumoSeleccionadoChanged(FilaConsumoPeriodicDto? value)
+    {
+        if (!EstaEditandoHorasMalla)
+        {
+            ResumenPeriodoEdicion = value is null
+                ? string.Empty
+                : $"Período {value.Periodo} · {value.Anio} · {value.Semestre}";
+        }
+        OnPropertyChanged(nameof(PuedeAbrirEdicionHorasMalla));
+    }
+
+    partial void OnEstaEditandoHorasMallaChanged(bool value)
+    {
+        if (!value)
+        {
+            HorasDocenciaEdicion = string.Empty;
+            HorasPracticaEdicion = string.Empty;
+        }
     }
 
     // ── Permisos ────────────────────────────────────────────────
-    public bool PuedeVer      => _sesionActual.TienePermiso("ES.VER")      || _sesionActual.EsAdministrador;
-    public bool PuedeGenerar  => _sesionActual.TienePermiso("ES.CREAR")    || _sesionActual.EsAdministrador;
+    public bool PuedeVer => _sesionActual.TienePermiso("ES.VER") || _sesionActual.EsAdministrador;
+    public bool PuedeGenerar => _sesionActual.TienePermiso("ES.CREAR") || _sesionActual.EsAdministrador;
     public bool PuedeEliminar => _sesionActual.TienePermiso("ES.ELIMINAR") || _sesionActual.EsAdministrador;
 
     // ── Cascada: Carrera → Escenarios ───────────────────────────────────
     partial void OnCarreraSeleccionadaChanged(CarreraOpcion? value)
     {
-        EscenarioSeleccionado  = null;
+        EscenarioSeleccionado = null;
         SimulacionSeleccionada = null;
         Simulaciones.Clear();
         MensajeError = string.Empty;
@@ -157,7 +206,7 @@ public sealed partial class EstudiantesViewModel : ObservableObject
     partial void OnProyeccionSeleccionadaChanged(ProyeccionEstudiantesItemViewModel? value)
     {
         DetalleConsolidado = null;
-        MensajeError       = string.Empty;
+        MensajeError = string.Empty;
         // Solo cargar detalle si el ítem tiene datos completos (CarreraId > 0).
         // Evita disparar la búsqueda de config con un ítem fantasma (solo Id).
         if (value is not null && value.CarreraId > 0)
@@ -168,9 +217,9 @@ public sealed partial class EstudiantesViewModel : ObservableObject
     private void RecalcularConsolidado()
     {
         if (_ultimaProyeccion is null || _ultimaConfig is null) return;
-        if (_horasDocenteSemana <= 0 || _horasTecnicoSemana <= 0)   return;
+        if (_horasDocenteSemana <= 0 || _horasTecnicoSemana <= 0) return;
 
-        var tasaRet  = _ultimaConfig.MetaRetencionPorcentaje  ?? _ultimaConfig.TasaRetencionPorcentaje;
+        var tasaRet = _ultimaConfig.MetaRetencionPorcentaje ?? _ultimaConfig.TasaRetencionPorcentaje;
         var tasaGrad = _ultimaConfig.MetaGraduacionPorcentaje ?? _ultimaConfig.TasaGraduacionPorcentaje;
 
         DetalleConsolidado = ConsolidadorProyeccionEstudiantes.Calcular(
@@ -179,8 +228,12 @@ public sealed partial class EstudiantesViewModel : ObservableObject
             _ultimaConfig.ParalelosPeriodo2,
             tasaRet,
             tasaGrad,
+            horasDocSemestralesOverride: _overrideHorasDocencia,
+            horasTecSemestralesOverride: _overrideHorasPractica,
             horasDocSemanaOverride: _horasDocenteSemana,
             horasTecSemanaOverride: _horasTecnicoSemana);
+
+        ReaplicarSeleccionConsumo();
     }
 
     // ── Carga consolidado desde BD ───────────────────────────────────────
@@ -190,8 +243,9 @@ public sealed partial class EstudiantesViewModel : ObservableObject
         try
         {
             using var scope = _serviceProvider.CreateScope();
-            var ucObtener   = scope.ServiceProvider.GetRequiredService<ObtenerProyeccionEstudiantesUseCase>();
-            var repoConfig  = scope.ServiceProvider.GetRequiredService<IRepositorioConfiguracionRetencion>();
+            var ucObtener = scope.ServiceProvider.GetRequiredService<ObtenerProyeccionEstudiantesUseCase>();
+            var ucOverrides = scope.ServiceProvider.GetRequiredService<ListarOverridesHorasPeriodoUseCase>();
+            var repoConfig = scope.ServiceProvider.GetRequiredService<IRepositorioConfiguracionRetencion>();
 
             var proyeccion = await ucObtener.EjecutarAsync(item.Id);
             if (proyeccion is null)
@@ -208,8 +262,8 @@ public sealed partial class EstudiantesViewModel : ObservableObject
             }
 
             var configs = await repoConfig.ListarDtoAsync();
-            var config  = configs.FirstOrDefault(c =>
-                c.CarreraId             == item.CarreraId &&
+            var config = configs.FirstOrDefault(c =>
+                c.CarreraId == item.CarreraId &&
                 c.EscenarioProyeccionId == item.EscenarioId);
 
             if (config is null)
@@ -222,9 +276,12 @@ public sealed partial class EstudiantesViewModel : ObservableObject
 
             // Guardar contexto para recalcular sin BD
             _ultimaProyeccion = proyeccion;
-            _ultimaConfig     = config;
+            _ultimaConfig = config;
 
-            var tasaRet  = config.MetaRetencionPorcentaje  ?? config.TasaRetencionPorcentaje;
+            var overrides = await ucOverrides.EjecutarAsync(item.Id);
+            (_overrideHorasDocencia, _overrideHorasPractica) = ConstruirArreglosOverride(overrides, proyeccion);
+
+            var tasaRet = config.MetaRetencionPorcentaje ?? config.TasaRetencionPorcentaje;
             var tasaGrad = config.MetaGraduacionPorcentaje ?? config.TasaGraduacionPorcentaje;
 
             DetalleConsolidado = ConsolidadorProyeccionEstudiantes.Calcular(
@@ -233,8 +290,14 @@ public sealed partial class EstudiantesViewModel : ObservableObject
                 config.ParalelosPeriodo2,
                 tasaRet,
                 tasaGrad,
+                horasDocSemestralesOverride: _overrideHorasDocencia,
+                horasTecSemestralesOverride: _overrideHorasPractica,
                 horasDocSemanaOverride: _horasDocenteSemana,
                 horasTecSemanaOverride: _horasTecnicoSemana);
+
+            _consolidadoActualState.Establecer(item.CarreraId, item.EscenarioId, DetalleConsolidado);
+
+            ReaplicarSeleccionConsumo();
         }
         catch (Exception ex)
         {
@@ -265,20 +328,20 @@ public sealed partial class EstudiantesViewModel : ObservableObject
 
         try
         {
-            using var scope   = _serviceProvider.CreateScope();
-            var repoCarrera   = scope.ServiceProvider.GetRequiredService<IRepositorioCarrera>();
+            using var scope = _serviceProvider.CreateScope();
+            var repoCarrera = scope.ServiceProvider.GetRequiredService<IRepositorioCarrera>();
             var repoEscenario = scope.ServiceProvider.GetRequiredService<IRepositorioEscenarioProyeccion>();
-            var ucListar      = scope.ServiceProvider.GetRequiredService<ListarProyeccionesEstudiantesUseCase>();
+            var ucListar = scope.ServiceProvider.GetRequiredService<ListarProyeccionesEstudiantesUseCase>();
 
-            var carreras     = await repoCarrera.ListarAsync();
-            var escenarios   = await repoEscenario.ListarAsync();
+            var carreras = await repoCarrera.ListarAsync();
+            var escenarios = await repoEscenario.ListarAsync();
             var proyecciones = await ucListar.EjecutarAsync();
 
             Carreras = new ObservableCollection<CarreraOpcion>(
                 carreras.OrderBy(c => c.Codigo)
                         .Select(c => new CarreraOpcion
                         {
-                            Id          = c.Id,
+                            Id = c.Id,
                             Descripcion = $"{c.Codigo} — {c.Nombre}"
                         }));
 
@@ -286,8 +349,8 @@ public sealed partial class EstudiantesViewModel : ObservableObject
                 .OrderBy(e => e.Nombre)
                 .Select(e => new EscenarioOpcion
                 {
-                    Id          = e.Id,
-                    CarreraId   = e.CarreraId,
+                    Id = e.Id,
+                    CarreraId = e.CarreraId,
                     Descripcion = e.Nombre
                 })
                 .ToList();
@@ -297,15 +360,15 @@ public sealed partial class EstudiantesViewModel : ObservableObject
             Proyecciones = new ObservableCollection<ProyeccionEstudiantesItemViewModel>(
                 proyecciones.Select(p => new ProyeccionEstudiantesItemViewModel
                 {
-                    Id                 = p.Id,
-                    CarreraId          = p.CarreraId,
-                    EscenarioId        = p.EscenarioProyeccionId,
-                    AnioBase           = p.AnioBase,
-                    CarreraNombre      = p.CarreraNombre,
-                    CarreraCodigo      = p.CarreraCodigo,
-                    EscenarioNombre    = p.EscenarioNombre,
+                    Id = p.Id,
+                    CarreraId = p.CarreraId,
+                    EscenarioId = p.EscenarioProyeccionId,
+                    AnioBase = p.AnioBase,
+                    CarreraNombre = p.CarreraNombre,
+                    CarreraCodigo = p.CarreraCodigo,
+                    EscenarioNombre = p.EscenarioNombre,
                     SemanasPorSemestre = p.SemanasPorSemestre,
-                    CreadoEnTexto      = p.CreadoEn.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                    CreadoEnTexto = p.CreadoEn.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
                 }));
 
             if (idSeleccionadoAntes.HasValue)
@@ -331,8 +394,8 @@ public sealed partial class EstudiantesViewModel : ObservableObject
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
 
-        if (CarreraSeleccionada    is null) { MensajeError = "Seleccione una carrera."; return; }
-        if (EscenarioSeleccionado  is null) { MensajeError = "Seleccione un escenario de proyección."; return; }
+        if (CarreraSeleccionada is null) { MensajeError = "Seleccione una carrera."; return; }
+        if (EscenarioSeleccionado is null) { MensajeError = "Seleccione un escenario de proyección."; return; }
         if (SimulacionSeleccionada is null) { MensajeError = "Seleccione una simulación de retención base."; return; }
 
         if (!int.TryParse(SemanasPorSemestre, out var semanas) || semanas < 8 || semanas > 30)
@@ -349,10 +412,10 @@ public sealed partial class EstudiantesViewModel : ObservableObject
 
             var id = await uc.EjecutarAsync(new GenerarProyeccionEstudiantesDto
             {
-                CarreraId             = CarreraSeleccionada.Id,
+                CarreraId = CarreraSeleccionada.Id,
                 EscenarioProyeccionId = EscenarioSeleccionado.Id,
                 SimulacionRetencionId = SimulacionSeleccionada.Id,
-                SemanasPorSemestre    = semanas
+                SemanasPorSemestre = semanas
             }, _sesionActual.UsuarioId);
 
             // FIX: primero recargar la lista completa desde BD,
@@ -389,8 +452,8 @@ public sealed partial class EstudiantesViewModel : ObservableObject
         if (EstaEliminando) return;
 
         EstaEliminando = true;
-        MensajeError   = string.Empty;
-        MensajeExito   = string.Empty;
+        MensajeError = string.Empty;
+        MensajeExito = string.Empty;
 
         try
         {
@@ -398,8 +461,10 @@ public sealed partial class EstudiantesViewModel : ObservableObject
             var uc = scope.ServiceProvider.GetRequiredService<EliminarProyeccionEstudiantesUseCase>();
             await uc.EjecutarAsync(ProyeccionSeleccionada.Id, _sesionActual.UsuarioId);
             DetalleConsolidado = null;
-            _ultimaProyeccion  = null;
-            _ultimaConfig      = null;
+            _ultimaProyeccion = null;
+            _ultimaConfig = null;
+            _overrideHorasDocencia = null;
+            _overrideHorasPractica = null;
             await CargarAsync();
             MensajeExito = "Proyección eliminada correctamente.";
         }
@@ -422,14 +487,14 @@ public sealed partial class EstudiantesViewModel : ObservableObject
             var repo = scope.ServiceProvider.GetRequiredService<IRepositorioSimulacionRetencion>();
 
             var lista = await repo.ListarResumenAsync(
-                carreraId:             carreraId,
+                carreraId: carreraId,
                 escenarioProyeccionId: escenarioProyeccionId);
 
             Simulaciones = new ObservableCollection<SimulacionOpcion>(
                 lista.OrderByDescending(s => s.FechaSimulacion)
                      .Select(s => new SimulacionOpcion
                      {
-                         Id          = s.Id,
+                         Id = s.Id,
                          CohorteAnio = s.CohorteAnio,
                          Descripcion = $"Cohorte {s.CohorteAnio}  —  {s.FechaSimulacion:dd/MM/yyyy HH:mm}"
                      }));
@@ -445,4 +510,188 @@ public sealed partial class EstudiantesViewModel : ObservableObject
 
     private static string ObtenerDetalle(Exception ex)
         => ex.InnerException?.Message ?? ex.Message;
+
+    private void ReaplicarSeleccionConsumo(int? periodoPreferido = null)
+    {
+        if (DetalleConsolidado is null || DetalleConsolidado.TablaPeriodos.Count == 0)
+        {
+            PeriodoConsumoSeleccionado = null;
+            return;
+        }
+
+        var periodoObjetivo = periodoPreferido ?? PeriodoConsumoSeleccionado?.Periodo;
+        if (periodoObjetivo is null)
+        {
+            PeriodoConsumoSeleccionado = DetalleConsolidado.TablaPeriodos[0];
+            return;
+        }
+
+        PeriodoConsumoSeleccionado = DetalleConsolidado.TablaPeriodos
+            .FirstOrDefault(x => x.Periodo == periodoObjetivo.Value)
+            ?? DetalleConsolidado.TablaPeriodos[0];
+    }
+
+    [RelayCommand]
+    private void AbrirEdicionHorasMalla()
+    {
+        if (!PuedeEditarConsumo)
+        {
+            MensajeError = "No tiene permiso para editar consumo por período.";
+            return;
+        }
+
+        if (PeriodoConsumoSeleccionado is null)
+        {
+            MensajeError = "Seleccione un período para editar.";
+            return;
+        }
+
+        MensajeError = string.Empty;
+        ResumenPeriodoEdicion = $"Período {PeriodoConsumoSeleccionado.Periodo} · {PeriodoConsumoSeleccionado.Anio} · {PeriodoConsumoSeleccionado.Semestre}";
+        HorasDocenciaEdicion = PeriodoConsumoSeleccionado.HorasDocencia.ToString("0.##", CultureInfo.CurrentCulture);
+        HorasPracticaEdicion = PeriodoConsumoSeleccionado.HorasPractica.ToString("0.##", CultureInfo.CurrentCulture);
+        EstaEditandoHorasMalla = true;
+    }
+
+    [RelayCommand]
+    private void CancelarEdicionHorasMalla()
+    {
+        EstaEditandoHorasMalla = false;
+        MensajeError = string.Empty;
+        MensajeExito = string.Empty;
+    }
+
+    [RelayCommand]
+    private async Task GuardarEdicionHorasMallaAsync()
+    {
+        if (PeriodoConsumoSeleccionado is null)
+        {
+            MensajeError = "Seleccione un período para editar.";
+            return;
+        }
+
+        if (!decimal.TryParse(HorasDocenciaEdicion, NumberStyles.Number, CultureInfo.CurrentCulture, out var horasDoc)
+            && !decimal.TryParse(HorasDocenciaEdicion, NumberStyles.Number, CultureInfo.InvariantCulture, out horasDoc))
+        {
+            MensajeError = "H. Docencia debe ser un valor numérico.";
+            return;
+        }
+
+        if (!decimal.TryParse(HorasPracticaEdicion, NumberStyles.Number, CultureInfo.CurrentCulture, out var horasPrac)
+            && !decimal.TryParse(HorasPracticaEdicion, NumberStyles.Number, CultureInfo.InvariantCulture, out horasPrac))
+        {
+            MensajeError = "H. Práctica debe ser un valor numérico.";
+            return;
+        }
+
+        if (horasDoc <= 0m || horasPrac <= 0m)
+        {
+            MensajeError = "H. Docencia y H. Práctica deben ser mayores a 0.";
+            return;
+        }
+
+        var periodo = PeriodoConsumoSeleccionado.Periodo;
+        var ok = await EditarConsumoAsync(periodo, horasDoc, horasPrac);
+        if (!ok) return;
+
+        ReaplicarSeleccionConsumo(periodo);
+        EstaEditandoHorasMalla = false;
+        MensajeError = string.Empty;
+        MensajeExito = $"Horas malla actualizadas para período {periodo}.";
+    }
+
+    // ── CU-ES-04: override de horas por período ───────────────────────────
+    private static (decimal[]? doc, decimal[]? prac) ConstruirArreglosOverride(
+        IReadOnlyList<SistemaAranceles.Domain.Entities.OverrideHorasPeriodo> overrides,
+        ProyeccionEstudiantesDto proyeccion)
+    {
+        if (overrides.Count == 0) return (null, null);
+
+        var totalPeriodos = proyeccion.Detalles.Select(d => d.NumeroPeriodo).DefaultIfEmpty(0).Max();
+        if (totalPeriodos <= 0) return (null, null);
+
+        decimal[] doc = new decimal[totalPeriodos];
+        decimal[] prac = new decimal[totalPeriodos];
+        bool hayDoc = false;
+        bool hayPrac = false;
+
+        foreach (var o in overrides)
+        {
+            var idx = o.Periodo - 1;
+            if (idx < 0 || idx >= totalPeriodos) continue;
+            if (o.HorasDocencia is { } hd) { doc[idx] = hd; hayDoc = true; }
+            if (o.HorasPractica is { } hp) { prac[idx] = hp; hayPrac = true; }
+        }
+
+        return (hayDoc ? doc : null, hayPrac ? prac : null);
+    }
+
+    public async Task<bool> EditarConsumoAsync(int periodo, decimal? horasDocencia, decimal? horasPractica)
+    {
+        if (_ultimaProyeccion is null) return false;
+
+        try
+        {
+            // Use separate scopes to avoid sharing the same EF Core DbContext for write + subsequent read,
+            // which can produce "read operation pending" errors on some ADO providers.
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var ucEditar = scope.ServiceProvider.GetRequiredService<EditarConsumoPeriodoUseCase>();
+                await ucEditar.EjecutarAsync(
+                    _ultimaProyeccion.Id, periodo, horasDocencia, horasPractica, _sesionActual.UsuarioId);
+            }
+
+            // Create a new scope for reading overrides to ensure a fresh DbContext/connection.
+            IReadOnlyList<SistemaAranceles.Domain.Entities.OverrideHorasPeriodo> overrides;
+            using (var scope2 = _serviceProvider.CreateScope())
+            {
+                var ucOverrides = scope2.ServiceProvider.GetRequiredService<ListarOverridesHorasPeriodoUseCase>();
+                overrides = await ucOverrides.EjecutarAsync(_ultimaProyeccion.Id);
+            }
+            (_overrideHorasDocencia, _overrideHorasPractica) =
+                ConstruirArreglosOverride(overrides, _ultimaProyeccion);
+
+            RecalcularConsolidado();
+            ReaplicarSeleccionConsumo(periodo);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            MensajeError = $"Error al editar consumo: {ObtenerDetalle(ex)}";
+            return false;
+        }
+    }
+
+    public async Task<bool> RestaurarConsumoAsync(int periodo)
+    {
+        if (_ultimaProyeccion is null) return false;
+
+        try
+        {
+            // Separate scopes for write + read to avoid overlapping reader on same connection
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var ucRestaurar = scope.ServiceProvider.GetRequiredService<RestaurarConsumoPeriodoUseCase>();
+                await ucRestaurar.EjecutarAsync(_ultimaProyeccion.Id, periodo, _sesionActual.UsuarioId);
+            }
+
+            IReadOnlyList<SistemaAranceles.Domain.Entities.OverrideHorasPeriodo> overrides;
+            using (var scope2 = _serviceProvider.CreateScope())
+            {
+                var ucOverrides = scope2.ServiceProvider.GetRequiredService<ListarOverridesHorasPeriodoUseCase>();
+                overrides = await ucOverrides.EjecutarAsync(_ultimaProyeccion.Id);
+            }
+            (_overrideHorasDocencia, _overrideHorasPractica) =
+                ConstruirArreglosOverride(overrides, _ultimaProyeccion);
+
+            RecalcularConsolidado();
+            ReaplicarSeleccionConsumo(periodo);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            MensajeError = $"Error al restaurar consumo: {ObtenerDetalle(ex)}";
+            return false;
+        }
+    }
 }
