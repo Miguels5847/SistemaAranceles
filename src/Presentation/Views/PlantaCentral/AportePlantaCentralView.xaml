@@ -9,7 +9,8 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
@@ -108,58 +109,112 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
+                        <TextBlock Text="Aporte mensual promedio" FontSize="11" Foreground="#555"/>
+                        <TextBlock Text="{Binding AporteMensualPromedio, StringFormat=C2}" FontWeight="Bold" FontSize="16" Foreground="#1A237E"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1">
                         <TextBlock Text="Aporte acumulado" FontSize="11" Foreground="#555"/>
                         <TextBlock Text="{Binding AporteAcumulado, StringFormat=C2}" FontWeight="Bold" FontSize="16" Foreground="#1A237E"/>
                     </StackPanel>
-                    <StackPanel Grid.Column="1">
+                    <StackPanel Grid.Column="2">
                         <TextBlock Text="Aporte promedio anual" FontSize="11" Foreground="#555"/>
                         <TextBlock Text="{Binding AportePromedioAnual, StringFormat=C2}" FontWeight="Bold" FontSize="16" Foreground="#1A237E"/>
                     </StackPanel>
-                    <StackPanel Grid.Column="2">
+                    <StackPanel Grid.Column="3">
                         <TextBlock Text="% promedio sobre total anual" FontSize="11" Foreground="#555"/>
                         <TextBlock Text="{Binding PorcentajePromedio, StringFormat=P2}" FontWeight="Bold" FontSize="16" Foreground="#1A237E"/>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Tabla por periodo -->
-            <DataGrid Grid.Row="5"
-                      ItemsSource="{Binding Periodos}"
+            <Border Grid.Row="5"
+                    BorderBrush="#C5CAE9"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Background="#F8F9FF"
+                    Padding="8,6"
+                    Margin="0,0,0,6"
+                    Visibility="{Binding TieneResultado, Converter={StaticResource BoolToVisibilityConverter}}">
+                <TextBlock Text="{Binding TextoAyudaCalculo}"
+                           TextWrapping="Wrap"
+                           FontSize="11"
+                           Foreground="#3949AB"/>
+            </Border>
+
+            <!-- Tabla horizontal resumida -->
+            <DataGrid x:Name="dgTablaAporte"
+                      Grid.Row="6"
+                      ItemsSource="{Binding TablaResumenAporte}"
                       AutoGenerateColumns="False"
                       IsReadOnly="True"
                       CanUserResizeColumns="False"
                       CanUserSortColumns="False"
                       CanUserReorderColumns="False"
                       HeadersVisibility="Column"
-                      GridLinesVisibility="Horizontal"
-                      AlternatingRowBackground="#F8F9FF"
+                      GridLinesVisibility="All"
+                      RowHeaderWidth="0"
+                      MinHeight="170"
+                      FontSize="12"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                      AlternatingRowBackground="White"
                       BorderBrush="#C5CAE9"
                       Visibility="{Binding TieneResultado, Converter={StaticResource BoolToVisibilityConverter}}">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Anio"
-                                        Binding="{Binding Anio}"
-                                        Width="65"/>
-                    <DataGridTextColumn Header="Semestre"
-                                        Binding="{Binding NumeroPeriodoEnAnio}"
-                                        Width="75"/>
-                    <DataGridTextColumn Header="Etiqueta"
-                                        Binding="{Binding Etiqueta}"
-                                        Width="*"/>
-                    <DataGridTextColumn Header="Alumnos carrera"
-                                        Binding="{Binding AlumnosCarrera, StringFormat=N2}"
-                                        Width="120"/>
-                    <DataGridTextColumn Header="Aporte semestral"
-                                        Binding="{Binding AporteSemestral, StringFormat=C2}"
-                                        Width="140"/>
-                    <DataGridTextColumn Header="% total anual"
-                                        Binding="{Binding PorcentajeSobreTotalAnual, StringFormat=P2}"
-                                        Width="110"/>
-                </DataGrid.Columns>
+                <DataGrid.Resources>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="FontWeight" Value="Bold"/>
+                        <Setter Property="Background" Value="#E8EAF6"/>
+                        <Setter Property="Foreground" Value="#1A237E"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                        <Setter Property="Padding" Value="6,4"/>
+                    </Style>
+                </DataGrid.Resources>
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="MinHeight" Value="34"/>
+                        <Setter Property="Foreground" Value="#1A237E"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding EsFilaPrincipal}" Value="True">
+                                <Setter Property="Background" Value="#63CEF0"/>
+                                <Setter Property="Foreground" Value="#000000"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding EsFilaAporte}" Value="True">
+                                <Setter Property="Background" Value="#F8F9FF"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding EsFilaTotal}" Value="True">
+                                <Setter Property="Background" Value="#E8EAF6"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+                <DataGrid.CellStyle>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="BorderBrush" Value="#C5CAE9"/>
+                        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                        <Setter Property="VerticalContentAlignment" Value="Center"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding EsFilaPrincipal}" Value="True">
+                                <Setter Property="Background" Value="#63CEF0"/>
+                                <Setter Property="Foreground" Value="#000000"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding EsFilaAporte}" Value="True">
+                                <Setter Property="Background" Value="#F8F9FF"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding EsFilaTotal}" Value="True">
+                                <Setter Property="Background" Value="#E8EAF6"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.CellStyle>
             </DataGrid>
 
-            <TextBlock Grid.Row="6"
+            <TextBlock Grid.Row="7"
                        Text="{Binding TextoInterpretativo}"
                        TextWrapping="Wrap"
                        FontStyle="Italic"

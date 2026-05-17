@@ -46,6 +46,69 @@ public class Kan22AportePlantaCentralTests
     }
 
     [Fact]
+    public async Task Calcular_AgrupaCiclosDelMismoPeriodoAntesDeCalcular()
+    {
+        var datos = NuevoDatos(totalMensual: 100000m, estudiantesUniv: 10000);
+        var proyeccion = new ProyeccionEstudiantesDto
+        {
+            Id = 99,
+            CarreraId = 1,
+            CarreraNombre = "Ingenieria Test",
+            CarreraCodigo = "TEST",
+            EscenarioProyeccionId = 1,
+            EscenarioNombre = "Base",
+            AnioBase = 2026,
+            SemanasPorSemestre = 16,
+            CreadoEn = DateTime.UtcNow,
+            Detalles =
+            [
+                new()
+                {
+                    Id = 1,
+                    PeriodoAcademicoId = 1,
+                    Anio = 2026,
+                    NumeroPeriodo = 1,
+                    EtiquetaPeriodo = "Abr 2026",
+                    NumeroCiclo = 1,
+                    CantidadParalelos = 1,
+                    TotalEstudiantes = 100m,
+                },
+                new()
+                {
+                    Id = 2,
+                    PeriodoAcademicoId = 1,
+                    Anio = 2026,
+                    NumeroPeriodo = 1,
+                    EtiquetaPeriodo = "Abr 2026",
+                    NumeroCiclo = 2,
+                    CantidadParalelos = 1,
+                    TotalEstudiantes = 50m,
+                },
+                new()
+                {
+                    Id = 3,
+                    PeriodoAcademicoId = 2,
+                    Anio = 2026,
+                    NumeroPeriodo = 2,
+                    EtiquetaPeriodo = "Sep 2026",
+                    NumeroCiclo = 1,
+                    CantidadParalelos = 1,
+                    TotalEstudiantes = 80m,
+                },
+            ],
+        };
+
+        var query = ConstruirQuery(datos, proyeccion);
+        var resultado = await query.EjecutarAsync(1, 1);
+
+        Assert.Equal(2, resultado.Periodos.Count);
+        Assert.Equal(150m, resultado.Periodos[0].AlumnosCarrera);
+        Assert.Equal(9000m, resultado.Periodos[0].AporteSemestral);
+        Assert.Equal(80m, resultado.Periodos[1].AlumnosCarrera);
+        Assert.Equal(4800m, resultado.Periodos[1].AporteSemestral);
+    }
+
+    [Fact]
     public async Task Calcular_PorcentajeSobreTotalAnualEsAporteSobreTotalAnual()
     {
         var datos = NuevoDatos(totalMensual: 100000m, estudiantesUniv: 10000);

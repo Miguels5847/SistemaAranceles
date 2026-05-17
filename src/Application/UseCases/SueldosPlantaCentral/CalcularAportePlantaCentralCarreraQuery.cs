@@ -42,13 +42,21 @@ public sealed class CalcularAportePlantaCentralCarreraQuery(
         var estudiantesUniversidad = datos.NumeroEstudiantesUniversidad;
 
         var periodos = proyeccion.Detalles
-            .OrderBy(d => d.Anio)
-            .ThenBy(d => d.NumeroPeriodo)
-            .Select(d =>
+            .GroupBy(d => new
             {
+                d.PeriodoAcademicoId,
+                d.EtiquetaPeriodo,
+                d.Anio,
+                d.NumeroPeriodo,
+            })
+            .OrderBy(g => g.Key.Anio)
+            .ThenBy(g => g.Key.NumeroPeriodo)
+            .Select(g =>
+            {
+                var alumnosPeriodo = g.Sum(d => d.TotalEstudiantes);
                 var aporteSemestral = estudiantesUniversidad <= 0
                     ? 0m
-                    : Math.Round((totalMensualPc / estudiantesUniversidad) * d.TotalEstudiantes * 6m, 2);
+                    : Math.Round((totalMensualPc / estudiantesUniversidad) * alumnosPeriodo * 6m, 2);
 
                 var porcentaje = totalAnualPc <= 0m
                     ? 0m
@@ -56,11 +64,11 @@ public sealed class CalcularAportePlantaCentralCarreraQuery(
 
                 return new AportePeriodoDto
                 {
-                    PeriodoAcademicoId = d.PeriodoAcademicoId,
-                    Etiqueta = d.EtiquetaPeriodo,
-                    Anio = d.Anio,
-                    NumeroPeriodoEnAnio = d.NumeroPeriodo,
-                    AlumnosCarrera = d.TotalEstudiantes,
+                    PeriodoAcademicoId = g.Key.PeriodoAcademicoId,
+                    Etiqueta = g.Key.EtiquetaPeriodo,
+                    Anio = g.Key.Anio,
+                    NumeroPeriodoEnAnio = g.Key.NumeroPeriodo,
+                    AlumnosCarrera = alumnosPeriodo,
                     AporteSemestral = aporteSemestral,
                     PorcentajeSobreTotalAnual = porcentaje,
                 };
