@@ -25,6 +25,7 @@ public sealed class ActualizarActivoFijoCommand(
         activo.CambiarVidaUtil(dto.VidaUtilAnios);
         activo.CambiarPorcentajeResidual(dto.PorcentajeResidual);
         activo.CambiarFechaAdquisicion(dto.FechaAdquisicion);
+        activo.CambiarCalculoCantidad(dto.TipoCalculoCantidad, dto.FactorMultiplicador, dto.OffsetCantidad);
 
         repositorioActivoFijo.Actualizar(activo);
         await unidadTrabajo.GuardarCambiosAsync(cancellationToken);

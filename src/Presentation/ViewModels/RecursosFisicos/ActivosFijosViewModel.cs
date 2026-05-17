@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.DTOs.RecursosFisicosDepreciacion;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion;
+using SistemaAranceles.Domain.Entities;
 using SistemaAranceles.Domain.Enums;
 using SistemaAranceles.Presentation.State;
 
@@ -24,10 +25,17 @@ public sealed class CategoriaOpcion
     public string Etiqueta { get; init; } = string.Empty;
 }
 
+public sealed class TipoCalculoOpcion
+{
+    public TipoCalculoCantidad Valor { get; init; }
+    public string Etiqueta { get; init; } = string.Empty;
+}
+
 public sealed partial class ActivosFijosViewModel : ObservableObject
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
+    private bool _suprimirRecargaAutomatica;
 
     public ActivosFijosViewModel(IServiceProvider serviceProvider, SesionActual sesionActual)
     {
@@ -38,10 +46,17 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
             Enum.GetValues<CategoriaActivoFijo>()
                 .Select(c => new CategoriaOpcion { Valor = c, Etiqueta = MapeoActivoFijoUi.Nombre(c) }));
         CategoriaForm = Categorias.First();
+
+        TiposCalculo = new ObservableCollection<TipoCalculoOpcion>(
+            Enum.GetValues<TipoCalculoCantidad>()
+                .Select(t => new TipoCalculoOpcion { Valor = t, Etiqueta = MapeoActivoFijoUi.NombreTipo(t) }));
+        TipoCalculoForm = TiposCalculo.First();
     }
 
     [ObservableProperty] private ObservableCollection<CarreraOpcion> _carreras = [];
     [ObservableProperty] private CarreraOpcion? _carreraSeleccionada;
+    [ObservableProperty] private ObservableCollection<EscenarioProyeccion> _escenarios = [];
+    [ObservableProperty] private EscenarioProyeccion? _escenarioSeleccionado;
     [ObservableProperty] private ObservableCollection<CategoriaOpcion> _categorias = [];
     [ObservableProperty] private ObservableCollection<ActivoFijoDto> _activos = [];
     [ObservableProperty] private ActivoFijoDto? _activoSeleccionado;
@@ -55,6 +70,26 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
     [ObservableProperty] private string _valorUnitario = "0";
     [ObservableProperty] private string _vidaUtilAnios = "10";
     [ObservableProperty] private string _porcentajeResidual = "5";
+    [ObservableProperty] private ObservableCollection<TipoCalculoOpcion> _tiposCalculo = [];
+    [ObservableProperty] private TipoCalculoOpcion? _tipoCalculoForm;
+    [ObservableProperty] private string _factorMultiplicador = "1";
+    [ObservableProperty] private string _offsetCantidad = "0";
+
+    public bool CantidadEsManual =>
+        TipoCalculoForm is null
+        || TipoCalculoForm.Valor is TipoCalculoCantidad.Manual or TipoCalculoCantidad.PorHito;
+    public bool UsaFactor =>
+        TipoCalculoForm is not null
+        && TipoCalculoForm.Valor is TipoCalculoCantidad.PorEstudiante or TipoCalculoCantidad.PorDocente;
+    public bool UsaOffset =>
+        TipoCalculoForm is not null && TipoCalculoForm.Valor == TipoCalculoCantidad.PorDocente;
+
+    partial void OnTipoCalculoFormChanged(TipoCalculoOpcion? value)
+    {
+        OnPropertyChanged(nameof(CantidadEsManual));
+        OnPropertyChanged(nameof(UsaFactor));
+        OnPropertyChanged(nameof(UsaOffset));
+    }
 
     [ObservableProperty] private bool _estaEditando;
     [ObservableProperty] private bool _estaCargando;
@@ -75,8 +110,20 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
 
     partial void OnCarreraSeleccionadaChanged(CarreraOpcion? value)
     {
-        if (value is not null)
-            _ = RecargarActivosAsync();
+        _ = value;
+        if (_suprimirRecargaAutomatica || EstaCargando)
+            return;
+
+        _ = CargarEscenariosAsync();
+    }
+
+    partial void OnEscenarioSeleccionadoChanged(EscenarioProyeccion? value)
+    {
+        _ = value;
+        if (_suprimirRecargaAutomatica || EstaCargando)
+            return;
+
+        _ = RecargarActivosAsync();
     }
 
     partial void OnCategoriaFormChanged(CategoriaOpcion? value)
@@ -102,17 +149,37 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
 
         try
         {
+            var carreraIdActual = CarreraSeleccionada?.Id;
+            var escenarioIdActual = EscenarioSeleccionado?.Id;
+
             using var scope = _serviceProvider.CreateScope();
             var repoCarrera = scope.ServiceProvider.GetRequiredService<IRepositorioCarrera>();
             var lista = await repoCarrera.ListarAsync();
 
-            Carreras = new ObservableCollection<CarreraOpcion>(
-                lista.OrderBy(x => x.Codigo)
-                    .Select(x => new CarreraOpcion { Id = x.Id, Etiqueta = $"{x.Codigo} - {x.Nombre}" }));
+            _suprimirRecargaAutomatica = true;
+            try
+            {
+                Carreras = new ObservableCollection<CarreraOpcion>(
+                    lista.OrderBy(x => x.Codigo)
+                        .Select(x => new CarreraOpcion { Id = x.Id, Etiqueta = $"{x.Codigo} - {x.Nombre}" }));
 
-            CarreraSeleccionada = Carreras.FirstOrDefault();
+                CarreraSeleccionada = Carreras.FirstOrDefault(x => x.Id == carreraIdActual) ?? Carreras.FirstOrDefault();
+            }
+            finally
+            {
+                _suprimirRecargaAutomatica = false;
+            }
+
             if (CarreraSeleccionada is null)
+            {
+                Escenarios = [];
+                EscenarioSeleccionado = null;
+                LimpiarActivos();
                 MensajeError = "No hay carreras registradas. Cree una carrera antes de registrar activos.";
+                return;
+            }
+
+            await CargarEscenariosAsync(escenarioIdActual);
         }
         catch (Exception ex)
         {
@@ -124,33 +191,105 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
         }
     }
 
+    private async Task CargarEscenariosAsync(int? escenarioIdPreferido = null)
+    {
+        if (CarreraSeleccionada is null)
+        {
+            _suprimirRecargaAutomatica = true;
+            try
+            {
+                EscenarioSeleccionado = null;
+                Escenarios = [];
+            }
+            finally
+            {
+                _suprimirRecargaAutomatica = false;
+            }
+
+            await RecargarActivosAsync();
+            return;
+        }
+
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var query = scope.ServiceProvider.GetRequiredService<SistemaAranceles.Application.UseCases.CargosFacultad.ListarEscenariosConProyeccionPorCarreraQuery>();
+            var lista = await query.EjecutarAsync(CarreraSeleccionada.Id);
+
+            _suprimirRecargaAutomatica = true;
+            try
+            {
+                Escenarios = new ObservableCollection<EscenarioProyeccion>(lista);
+                EscenarioSeleccionado = Escenarios.FirstOrDefault(x => x.Id == escenarioIdPreferido)
+                    ?? Escenarios.FirstOrDefault();
+            }
+            finally
+            {
+                _suprimirRecargaAutomatica = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            MensajeError = $"Error al cargar escenarios: {Detalle(ex)}";
+            _suprimirRecargaAutomatica = true;
+            try
+            {
+                EscenarioSeleccionado = null;
+                Escenarios = [];
+            }
+            finally
+            {
+                _suprimirRecargaAutomatica = false;
+            }
+        }
+
+        await RecargarActivosAsync();
+    }
+
     private async Task RecargarActivosAsync()
     {
-        if (CarreraSeleccionada is null) return;
+        if (CarreraSeleccionada is null)
+        {
+            LimpiarActivos();
+            return;
+        }
 
         EstaCargando = true;
         MensajeError = string.Empty;
         try
         {
             using var scope = _serviceProvider.CreateScope();
+            var sembrar = scope.ServiceProvider.GetRequiredService<SembrarActivosFijosDesdeCatalogoCommand>();
             var listar = scope.ServiceProvider.GetRequiredService<ListarActivosFijosQuery>();
             var totalesQuery = scope.ServiceProvider.GetRequiredService<ObtenerTotalesActivosQuery>();
+            var escenarioProyeccionId = EscenarioSeleccionado?.Id;
 
-            var activos = await listar.EjecutarAsync(CarreraSeleccionada.Id);
+            await sembrar.EjecutarAsync(CarreraSeleccionada.Id);
+
+            var activos = await listar.EjecutarAsync(CarreraSeleccionada.Id, escenarioProyeccionId);
             Activos = new ObservableCollection<ActivoFijoDto>(activos);
 
-            var totales = await totalesQuery.EjecutarAsync(CarreraSeleccionada.Id);
+            var totales = await totalesQuery.EjecutarAsync(CarreraSeleccionada.Id, escenarioProyeccionId);
             TotalesPorCategoria = new ObservableCollection<TotalCategoriaActivosDto>(totales.PorCategoria);
             TotalGeneral = totales.TotalGeneral;
         }
         catch (Exception ex)
         {
             MensajeError = $"Error al cargar activos: {Detalle(ex)}";
+            LimpiarActivos();
         }
         finally
         {
             EstaCargando = false;
         }
+    }
+
+    private void LimpiarActivos()
+    {
+        Activos = [];
+        ActivoSeleccionado = null;
+        TotalesPorCategoria = [];
+        TotalGeneral = 0m;
     }
 
     [RelayCommand]
@@ -166,6 +305,9 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
         VidaUtilAnios = Domain.Entities.ActivoFijo.VidaUtilPorDefecto(CategoriaForm!.Valor)
             .ToString(CultureInfo.InvariantCulture);
         PorcentajeResidual = "5";
+        TipoCalculoForm = TiposCalculo.First();
+        FactorMultiplicador = "1";
+        OffsetCantidad = "0";
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
         OnPropertyChanged(nameof(TituloFormulario));
@@ -189,11 +331,14 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
         EstaEditando = true;
         Descripcion = ActivoSeleccionado.Descripcion;
         CategoriaForm = Categorias.FirstOrDefault(c => c.Valor == ActivoSeleccionado.Categoria) ?? Categorias.First();
-        Cantidad = ActivoSeleccionado.Cantidad.ToString(CultureInfo.InvariantCulture);
+        Cantidad = ActivoSeleccionado.CantidadBase.ToString(CultureInfo.InvariantCulture);
         UnidadMedida = ActivoSeleccionado.UnidadMedida;
         ValorUnitario = ActivoSeleccionado.ValorUnitario.ToString(CultureInfo.InvariantCulture);
         VidaUtilAnios = ActivoSeleccionado.VidaUtilAnios.ToString(CultureInfo.InvariantCulture);
         PorcentajeResidual = (ActivoSeleccionado.PorcentajeResidual * 100m).ToString(CultureInfo.InvariantCulture);
+        TipoCalculoForm = TiposCalculo.FirstOrDefault(t => t.Valor == ActivoSeleccionado.TipoCalculoCantidad) ?? TiposCalculo.First();
+        FactorMultiplicador = ActivoSeleccionado.FactorMultiplicador.ToString(CultureInfo.InvariantCulture);
+        OffsetCantidad = ActivoSeleccionado.OffsetCantidad.ToString(CultureInfo.InvariantCulture);
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
         OnPropertyChanged(nameof(TituloFormulario));
@@ -254,6 +399,23 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
             return;
         }
 
+        var tipoCalculo = TipoCalculoForm?.Valor ?? TipoCalculoCantidad.Manual;
+        var cantidadPersistida = tipoCalculo is TipoCalculoCantidad.PorEstudiante or TipoCalculoCantidad.PorDocente
+            ? 0m
+            : cantidad;
+
+        if (!TryDecimal(FactorMultiplicador, out var factor) || factor < 0)
+        {
+            MensajeError = "Factor multiplicador invalido.";
+            return;
+        }
+
+        if (!TryDecimal(OffsetCantidad, out var offset) || offset < 0)
+        {
+            MensajeError = "Offset de cantidad invalido.";
+            return;
+        }
+
         EstaGuardando = true;
         try
         {
@@ -267,12 +429,15 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
                     Id = ActivoSeleccionado.Id,
                     Descripcion = Descripcion,
                     Categoria = CategoriaForm.Valor,
-                    Cantidad = cantidad,
+                    Cantidad = cantidadPersistida,
                     UnidadMedida = UnidadMedida,
                     ValorUnitario = valorUnitario,
                     VidaUtilAnios = vidaUtil,
                     PorcentajeResidual = residualPct / 100m,
-                    FechaAdquisicion = ActivoSeleccionado.FechaAdquisicion
+                    FechaAdquisicion = ActivoSeleccionado.FechaAdquisicion,
+                    TipoCalculoCantidad = tipoCalculo,
+                    FactorMultiplicador = factor,
+                    OffsetCantidad = offset
                 });
                 MensajeExito = "Activo actualizado correctamente.";
             }
@@ -284,11 +449,14 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
                     CarreraId = CarreraSeleccionada.Id,
                     Descripcion = Descripcion,
                     Categoria = CategoriaForm.Valor,
-                    Cantidad = cantidad,
+                    Cantidad = cantidadPersistida,
                     UnidadMedida = UnidadMedida,
                     ValorUnitario = valorUnitario,
                     VidaUtilAnios = vidaUtil,
-                    PorcentajeResidual = residualPct / 100m
+                    PorcentajeResidual = residualPct / 100m,
+                    TipoCalculoCantidad = tipoCalculo,
+                    FactorMultiplicador = factor,
+                    OffsetCantidad = offset
                 });
                 MensajeExito = "Activo creado correctamente.";
             }
@@ -370,5 +538,14 @@ internal static class MapeoActivoFijoUi
         CategoriaActivoFijo.EquipoComputo => "Equipo de computo",
         CategoriaActivoFijo.EquipoOficina => "Equipo de oficina",
         _ => c.ToString()
+    };
+
+    public static string NombreTipo(TipoCalculoCantidad t) => t switch
+    {
+        TipoCalculoCantidad.Manual => "Manual",
+        TipoCalculoCantidad.PorEstudiante => "Por estudiante",
+        TipoCalculoCantidad.PorDocente => "Por docente",
+        TipoCalculoCantidad.PorHito => "Por hito",
+        _ => t.ToString()
     };
 }

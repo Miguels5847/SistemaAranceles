@@ -26,6 +26,15 @@
                       ItemsSource="{Binding Carreras}"
                       SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}"
                       DisplayMemberPath="Etiqueta"/>
+            <TextBlock Text="Escenario"
+                       FontSize="11"
+                       Foreground="#546E7A"
+                       VerticalAlignment="Center"
+                       Margin="16,0,8,0"/>
+            <ComboBox Width="220"
+                      ItemsSource="{Binding Escenarios}"
+                      SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}"
+                      DisplayMemberPath="Nombre"/>
             <Button Content="Refrescar"
                     Command="{Binding CargarCommand}"
                     Margin="12,0,0,0"
@@ -80,6 +89,7 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*"/>
                             <DataGridTextColumn Header="Categoría" Binding="{Binding CategoriaNombre}" Width="Auto"/>
+                            <DataGridTextColumn Header="Tipo cálc." Binding="{Binding TipoCalculoNombre}" Width="Auto"/>
                             <DataGridTextColumn Header="Cant." Binding="{Binding Cantidad}" Width="Auto"/>
                             <DataGridTextColumn Header="Unidad" Binding="{Binding UnidadMedida}" Width="Auto"/>
                             <DataGridTextColumn Header="V. Unitario" Binding="{Binding ValorUnitarioDisplay}" Width="Auto"/>
@@ -151,8 +161,28 @@
                     </StackPanel>
 
                     <StackPanel Grid.Row="3" Margin="0,0,0,8">
-                        <TextBlock Text="Cantidad" FontSize="11" Foreground="#546E7A"/>
-                        <TextBox Text="{Binding Cantidad, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="Tipo de cálculo de cantidad" FontSize="11" Foreground="#546E7A"/>
+                        <ComboBox ItemsSource="{Binding TiposCalculo}"
+                                  SelectedItem="{Binding TipoCalculoForm, Mode=TwoWay}"
+                                  DisplayMemberPath="Etiqueta"/>
+
+                        <StackPanel Margin="0,6,0,0"
+                                    Visibility="{Binding CantidadEsManual, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="Cantidad" FontSize="11" Foreground="#546E7A"/>
+                            <TextBox Text="{Binding Cantidad, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,6,0,0"
+                                    Visibility="{Binding UsaFactor, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="Factor multiplicador (× estudiantes/docentes)" FontSize="11" Foreground="#546E7A"/>
+                            <TextBox Text="{Binding FactorMultiplicador, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,6,0,0"
+                                    Visibility="{Binding UsaOffset, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="Offset (cantidad fija adicional, semestre inicial)" FontSize="11" Foreground="#546E7A"/>
+                            <TextBox Text="{Binding OffsetCantidad, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
                     </StackPanel>
 
                     <StackPanel Grid.Row="4" Margin="0,0,0,8">

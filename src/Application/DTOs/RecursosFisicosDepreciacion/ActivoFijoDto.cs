@@ -10,12 +10,18 @@ public sealed class ActivoFijoDto
     public CategoriaActivoFijo Categoria { get; init; }
     public string CategoriaNombre { get; init; } = string.Empty;
     public decimal Cantidad { get; init; }
+    public decimal CantidadBase { get; init; }
     public string UnidadMedida { get; init; } = "UNI";
     public decimal ValorUnitario { get; init; }
     public decimal ValorTotal { get; init; }
     public int VidaUtilAnios { get; init; }
     public decimal PorcentajeResidual { get; init; }
     public DateTimeOffset FechaAdquisicion { get; init; }
+    public TipoCalculoCantidad TipoCalculoCantidad { get; init; }
+    public string TipoCalculoNombre { get; init; } = string.Empty;
+    public decimal FactorMultiplicador { get; init; } = 1m;
+    public decimal OffsetCantidad { get; init; }
+    public bool UsaCantidadCalculada { get; init; }
 
     public string ValorUnitarioDisplay => ValorUnitario.ToString("C2");
     public string ValorTotalDisplay => ValorTotal.ToString("C2");
@@ -33,6 +39,9 @@ public sealed class CrearActivoFijoDto
     public int? VidaUtilAnios { get; init; }
     public decimal? PorcentajeResidual { get; init; }
     public DateTimeOffset? FechaAdquisicion { get; init; }
+    public TipoCalculoCantidad TipoCalculoCantidad { get; init; } = TipoCalculoCantidad.Manual;
+    public decimal FactorMultiplicador { get; init; } = 1m;
+    public decimal OffsetCantidad { get; init; }
 }
 
 public sealed class ActualizarActivoFijoDto
@@ -46,6 +55,9 @@ public sealed class ActualizarActivoFijoDto
     public int VidaUtilAnios { get; init; }
     public decimal PorcentajeResidual { get; init; }
     public DateTimeOffset FechaAdquisicion { get; init; }
+    public TipoCalculoCantidad TipoCalculoCantidad { get; init; } = TipoCalculoCantidad.Manual;
+    public decimal FactorMultiplicador { get; init; } = 1m;
+    public decimal OffsetCantidad { get; init; }
 }
 
 /// <summary>Replica la fila TOTAL del bloque 1 de "3 Recursos fisicos" (Excel E62).</summary>

@@ -199,6 +199,15 @@ public sealed partial class CarrerasViewModel : ObservableObject
                 var nueva = new Carrera(Codigo, Nombre, FacultadNombre, ciclos);
                 await repo.AgregarAsync(nueva);
                 await unidadTrabajo.GuardarCambiosAsync();
+
+                var creada = await repo.ObtenerPorCodigoAsync(Codigo);
+                if (creada is not null)
+                {
+                    var sembrar = scope.ServiceProvider
+                        .GetRequiredService<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.SembrarActivosFijosDesdeCatalogoCommand>();
+                    await sembrar.EjecutarAsync(creada.Id);
+                }
+
                 await CargarAsync();
                 LimpiarFormulario(mantenerMensajes: true);
                 MensajeExito = "Carrera creada correctamente.";

@@ -36,6 +36,17 @@ public sealed class RepositorioActivoFijo(ContextoAplicacion contextoAplicacion)
         return lista.Select(MapearADominio).ToList();
     }
 
+    public async Task<IReadOnlyCollection<string>> ListarDescripcionesRegistradasPorCarreraAsync(
+        int carreraId,
+        CancellationToken ct = default)
+    {
+        return await contextoAplicacion.ActivosFijos
+            .AsNoTracking()
+            .Where(x => x.CarreraId == carreraId)
+            .Select(x => x.Descripcion)
+            .ToListAsync(ct);
+    }
+
     public async Task AgregarAsync(DominioActivoFijo activo, CancellationToken ct = default)
         => await contextoAplicacion.ActivosFijos.AddAsync(MapearAInfra(activo), ct);
 
@@ -80,6 +91,7 @@ public sealed class RepositorioActivoFijo(ContextoAplicacion contextoAplicacion)
 
         dominio.RehidratarId(e.Id);
         dominio.RehidratarFechaAdquisicion(e.FechaAdquisicion);
+        dominio.CambiarCalculoCantidad(e.TipoCalculoCantidad, e.FactorMultiplicador, e.OffsetCantidad);
         return dominio;
     }
 
@@ -95,6 +107,9 @@ public sealed class RepositorioActivoFijo(ContextoAplicacion contextoAplicacion)
         VidaUtilAnios = d.VidaUtilAnios,
         PorcentajeResidual = d.PorcentajeResidual,
         FechaAdquisicion = d.FechaAdquisicion,
+        TipoCalculoCantidad = d.TipoCalculoCantidad,
+        FactorMultiplicador = d.FactorMultiplicador,
+        OffsetCantidad = d.OffsetCantidad,
         EstaActivo = true
     };
 }

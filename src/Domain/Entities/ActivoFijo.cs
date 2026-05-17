@@ -23,7 +23,10 @@ public sealed class ActivoFijo : EntidadDominioBase
         decimal valorUnitario,
         int? vidaUtilAnios = null,
         decimal? porcentajeResidual = null,
-        DateTimeOffset? fechaAdquisicion = null)
+        DateTimeOffset? fechaAdquisicion = null,
+        TipoCalculoCantidad tipoCalculoCantidad = TipoCalculoCantidad.Manual,
+        decimal factorMultiplicador = 1m,
+        decimal offsetCantidad = 0m)
     {
         CambiarCarrera(carreraId);
         CambiarDescripcion(descripcion);
@@ -33,6 +36,7 @@ public sealed class ActivoFijo : EntidadDominioBase
         CambiarValorUnitario(valorUnitario);
         CambiarVidaUtil(vidaUtilAnios ?? VidaUtilPorDefecto(categoria));
         CambiarPorcentajeResidual(porcentajeResidual ?? PorcentajeResidualPorDefecto);
+        CambiarCalculoCantidad(tipoCalculoCantidad, factorMultiplicador, offsetCantidad);
         FechaAdquisicion = fechaAdquisicion ?? DateTimeOffset.UtcNow;
     }
 
@@ -47,6 +51,15 @@ public sealed class ActivoFijo : EntidadDominioBase
     public int VidaUtilAnios { get; private set; }
     public decimal PorcentajeResidual { get; private set; } = PorcentajeResidualPorDefecto;
     public DateTimeOffset FechaAdquisicion { get; private set; } = DateTimeOffset.UtcNow;
+
+    /// <summary>Origen de la cantidad (KAN-24): MANUAL o derivada de demanda academica.</summary>
+    public TipoCalculoCantidad TipoCalculoCantidad { get; private set; } = TipoCalculoCantidad.Manual;
+
+    /// <summary>Factor que multiplica estudiantes/docentes del semestre (Excel: factor).</summary>
+    public decimal FactorMultiplicador { get; private set; } = 1m;
+
+    /// <summary>Cantidad fija adicional (Excel: Licencias Zoom = docentes + 10).</summary>
+    public decimal OffsetCantidad { get; private set; }
 
     /// <summary>VALOR TOTAL = CANTIDAD x VALOR UNITARIO (Excel columna E, RN-95).</summary>
     public decimal ValorTotal => decimal.Round(Cantidad * ValorUnitario, 2);
@@ -111,6 +124,36 @@ public sealed class ActivoFijo : EntidadDominioBase
         }
 
         PorcentajeResidual = decimal.Round(porcentajeResidual, 4);
+    }
+
+    public void CambiarCalculoCantidad(
+        TipoCalculoCantidad tipo,
+        decimal factorMultiplicador,
+        decimal offsetCantidad)
+    {
+        if (!Enum.IsDefined(tipo))
+        {
+            throw new DominioException("Tipo de calculo de cantidad no valido.");
+        }
+
+        TipoCalculoCantidad = tipo;
+        FactorMultiplicador = GuardiaDominio.DecimalNoNegativo(factorMultiplicador, "Factor multiplicador", 4);
+        OffsetCantidad = GuardiaDominio.DecimalNoNegativo(offsetCantidad, "Offset de cantidad", 4);
+    }
+
+    /// <summary>
+    /// Resuelve la cantidad para un semestre segun el tipo de calculo (KAN-24).
+    /// MANUAL/POR_HITO devuelven la cantidad almacenada; las derivadas usan demanda academica.
+    /// </summary>
+    public decimal ResolverCantidad(decimal totalEstudiantesSemestre, decimal totalDocentesSemestre, bool esSemestreInicial)
+    {
+        return TipoCalculoCantidad switch
+        {
+            TipoCalculoCantidad.PorEstudiante => decimal.Round(totalEstudiantesSemestre * FactorMultiplicador, 4),
+            TipoCalculoCantidad.PorDocente => decimal.Round(
+                (totalDocentesSemestre * FactorMultiplicador) + (esSemestreInicial ? OffsetCantidad : 0m), 4),
+            _ => Cantidad
+        };
     }
 
     public void CambiarFechaAdquisicion(DateTimeOffset fecha)

@@ -21,7 +21,10 @@ public sealed class CrearActivoFijoCommand(
             dto.ValorUnitario,
             dto.VidaUtilAnios,
             dto.PorcentajeResidual,
-            dto.FechaAdquisicion);
+            dto.FechaAdquisicion,
+            dto.TipoCalculoCantidad,
+            dto.FactorMultiplicador,
+            dto.OffsetCantidad);
 
         await repositorioActivoFijo.AgregarAsync(activo, cancellationToken);
         await unidadTrabajo.GuardarCambiosAsync(cancellationToken);

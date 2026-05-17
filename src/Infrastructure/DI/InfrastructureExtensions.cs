@@ -36,6 +36,7 @@ public static class InfrastructureExtensions
         services.AddTransient<IRepositorioCargoPlantaCentral, RepositorioCargoPlantaCentral>();
         services.AddTransient<IRepositorioProyeccionCargoPlantaCentral, RepositorioProyeccionCargoPlantaCentral>();
         services.AddTransient<IRepositorioDatosInstitucionales, RepositorioDatosInstitucionales>();
+        services.AddTransient<IRepositorioCatalogoActivoBase, RepositorioCatalogoActivoBase>();
         services.AddTransient<IRepositorioActivoFijo, RepositorioActivoFijo>();
         services.AddTransient<IRepositorioPeriodoAcademico, RepositorioPeriodoAcademico>();
         services.AddTransient<IRepositorioRol, RepositorioRol>();
@@ -50,6 +51,9 @@ public static class InfrastructureExtensions
         services.AddTransient<IServicioImportacionExcel, ServicioImportacionExcel>();
         services.AddTransient<IServicioImportacionBceArchivo, ServicioImportacionBceArchivo>();
         services.AddTransient<IServicioProyeccion, ServicioProyeccion>();
+        services.AddTransient<IServicioEstudiantesTotales, ServicioEstudiantesTotales>();
+        services.AddTransient<IServicioDocentesTotales, ServicioDocentesTotales>();
+        services.AddTransient<IServicioInflacionFactor, ServicioInflacionFactorStub>();
 
         return services;
     }
