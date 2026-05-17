@@ -1,0 +1,33 @@
+<UserControl x:Class="SistemaAranceles.Presentation.Views.Catalogos.CatalogoMaterialesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:SistemaAranceles.Presentation.ViewModels.Catalogos">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Catálogo de Materiales y Suministros"
+                FontSize="16"
+                FontWeight="SemiBold"/>
+
+        <DataGrid Grid.Row="1"
+                ItemsSource="{Binding Items}"
+                AutoGenerateColumns="False"
+                IsReadOnly="True"
+                Margin="0,8,0,0">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Concepto"
+                        Binding="{Binding Nombre}"
+                        Width="*"/>
+                <DataGridTextColumn Header="Valor unitario"
+                        Binding="{Binding ValorUnitario, StringFormat={}{0:N2}}"
+                        Width="140"/>
+                <DataGridTextColumn Header="Categoría"
+                        Binding="{Binding Categoria}"
+                        Width="160"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>

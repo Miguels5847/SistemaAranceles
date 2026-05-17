@@ -23,22 +23,22 @@ Presentation    ← WPF Views/ViewModels/State (SesionActual)
 
 ## Estado por épica
 
-| #   | Épica                                              | KANs      | SP  | Estado      |
-|-----|----------------------------------------------------|-----------|-----|-------------|
-| 1   | Setup & Arquitectura                               | 01–05     | —   | ✅           |
-| 2   | Usuarios (CRUD + Login + Menú dinámico + AuditLog) | 06–09     | —   | ✅           |
-| 3   | Inflación (CRUD + Proyección + Solo lectura)       | 10–12     | —   | ✅           |
-| —   | Infra / RBAC / QA                                  | 13–14     | —   | ✅           |
-| 4   | Tasa Retención                                     | 15–16\*   | —   | ✅           |
-| 5   | Estudiantes                                        | 17–19     | 13  | ✅           |
-| 6   | Sueldos Planta Central                             | 20–xx     | —   | ⏳           |
-| 7   | Recursos Físicos / Depreciación                    | xx        | —   | ⏳           |
-| 8   | Costos y Gastos                                    | xx        | —   | ⏳           |
-| 9   | Demanda / Ingresos                                 | xx        | —   | ⏳           |
-| 10  | Mantenimiento / Capital Trabajo / Inversión        | xx        | —   | ⏳           |
-| 11  | Financiamiento / Balance / Reportes                | xx        | —   | ⏳           |
-| 12  | Análisis Financiero                                | xx        | —   | ⏳           |
-| 13  | Cierre & Validación                                | 50–53     | —   | ⏳           |
+| #   | Épica                                              | KANs    | SP  | Estado |
+| --- | -------------------------------------------------- | ------- | --- | ------ |
+| 1   | Setup & Arquitectura                               | 01–05   | —   | ✅     |
+| 2   | Usuarios (CRUD + Login + Menú dinámico + AuditLog) | 06–09   | —   | ✅     |
+| 3   | Inflación (CRUD + Proyección + Solo lectura)       | 10–12   | —   | ✅     |
+| —   | Infra / RBAC / QA                                  | 13–14   | —   | ✅     |
+| 4   | Tasa Retención                                     | 15–16\* | —   | ✅     |
+| 5   | Estudiantes                                        | 17–19   | 13  | ✅     |
+| 6   | Sueldos Planta Central                             | 20–xx   | —   | ⏳     |
+| 7   | Recursos Físicos / Depreciación                    | xx      | —   | ⏳     |
+| 8   | Costos y Gastos                                    | xx      | —   | ⏳     |
+| 9   | Demanda / Ingresos                                 | xx      | —   | ⏳     |
+| 10  | Mantenimiento / Capital Trabajo / Inversión        | xx      | —   | ⏳     |
+| 11  | Financiamiento / Balance / Reportes                | xx      | —   | ⏳     |
+| 12  | Análisis Financiero                                | xx      | —   | ⏳     |
+| 13  | Cierre & Validación                                | 50–53   | —   | ⏳     |
 
 \* KANs 13/14 originales (Épica 4) renombrados internamente; los KAN-13/14 ejecutados son tareas de infraestructura.
 
@@ -58,6 +58,18 @@ Presentation    ← WPF Views/ViewModels/State (SesionActual)
   - KAN-17 · Proyección de estudiantes por período: generación por carrera, escenario y simulación de retención base; tabla consolidada de matrícula por período y paralelos
   - KAN-18 · Horas de docencia por paralelos: cálculo de horas de docencia asistida y aplicación práctica; inputs editables Horas Docente / Horas Técnico con recálculo en tiempo real
   - KAN-19 · Desglose de docentes por tipo: distinción Titular / Ocasional Tipo 1 / Ocasional Tipo 2 (Técnico); DataGrid con filas destacadas por tipo; fix de compatibilidad MahApps.Metro (CellStyle + RowStyle completo en todos los DataGrids del módulo)
+
+## Progreso reciente
+
+- Tab 4 (Consumo por período): UI + ViewModel editables implementados — botón "Editar horas malla", panel de edición, persistencia de overrides y recálculo en cascada.
+- Persistencia: tabla `override_horas_periodo`, entidad, repositorio y use cases (`Editar`, `Restaurar`, `Listar`) implementados.
+- Auditoría: `IAuditoriaServicio.RegistrarAsync` integrado y esperando correctamente para evitar uso en background tras disposal del scope.
+- Concurrencia: solucionado el error "This method may not be called when another read operation is pending" mediante scopes separados para write/read y await en auditoría.
+- Formato horas: columnas, totales y editor usan formato `0.##` para evitar mostrar `.00` innecesarios.
+- Tests: `Application.Tests` (14/14) y `Presentation.Tests` (2/2) pasan localmente.
+- Menú: reordenado según flujo lógico y renombrado "Sueldos" → "Sueldos Carrera".
+
+Estado: cambios aplicados, compilación y tests OK. Próximo: indicar nuevas tareas para avanzar.
 
 ## Estructura del repo
 

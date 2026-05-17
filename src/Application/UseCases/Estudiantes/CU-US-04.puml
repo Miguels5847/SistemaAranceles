@@ -1,0 +1,43 @@
+@startuml CU-US-04
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam actor {
+    BorderColor Black
+}
+
+left to right direction
+
+actor "Administrador" as admin
+actor "Sistema" as sistema
+
+rectangle "Sistema de Cálculo de Aranceles" {
+    usecase "Registrar auditoría\nbásica de actividades" as UC04
+    usecase "Registrar acción\ncrítica automáticamente" as UC04a
+    usecase "Consultar log\nde auditoría" as UC04b
+    usecase "Capturar datos\nde la acción" as UC04c
+    usecase "Filtrar registros" as UC04d
+    usecase "Paginar resultados" as UC04e
+
+    sistema --> UC04a
+    admin --> UC04b
+
+    UC04 ..> UC04a : <<include>>
+    UC04 ..> UC04b : <<include>>
+
+    UC04a ..> UC04c : <<include>>
+    UC04b ..> UC04d : <<include>>
+    UC04b ..> UC04e : <<extend>>
+}
+
+note right of UC04
+    RF-US-04: Registrar log
+    de acciones críticas.
+    Inmutable e inalterable.
+end note
+
+@enduml

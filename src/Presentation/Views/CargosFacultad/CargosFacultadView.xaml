@@ -1,0 +1,227 @@
+<UserControl x:Class="SistemaAranceles.Presentation.Views.CargosFacultad.CargosFacultadView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock Text="{Binding TituloModulo}"
+                       FontSize="22"
+                       FontWeight="Bold"
+                       Foreground="#1A237E"/>
+            <TextBlock Text="Vista autogenerada por carrera, escenario y período. Datos: Capital de Trabajo + Proyección de Estudiantes + Inflación."
+                       FontSize="12"
+                       Foreground="#546E7A"
+                       Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Margin="0,0,0,8">
+            <TextBlock Text="{Binding MensajeError}"
+                       Foreground="#C62828"
+                       FontSize="12"
+                       TextWrapping="Wrap"
+                       Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding MensajeExito}"
+                       Foreground="#2E7D32"
+                       FontSize="12"
+                       TextWrapping="Wrap"
+                       Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
+        </StackPanel>
+
+        <Border Grid.Row="2"
+                BorderBrush="#C5CAE9"
+                BorderThickness="1"
+                CornerRadius="10"
+                Background="#FDFEFF"
+                Padding="10"
+                Margin="0,0,0,8">
+            <StackPanel Orientation="Horizontal">
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Text="Carrera" FontSize="11" Foreground="#546E7A"/>
+                    <ComboBox ItemsSource="{Binding Carreras}"
+                              SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}"
+                              DisplayMemberPath="Nombre"
+                              MinWidth="220"
+                              Padding="6,4"/>
+                </StackPanel>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Text="Escenario" FontSize="11" Foreground="#546E7A"/>
+                    <ComboBox ItemsSource="{Binding Escenarios}"
+                              SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}"
+                              DisplayMemberPath="Nombre"
+                              MinWidth="180"
+                              Padding="6,4"/>
+                </StackPanel>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Text="Período" FontSize="11" Foreground="#546E7A"/>
+                    <ComboBox ItemsSource="{Binding Periodos}"
+                              SelectedItem="{Binding PeriodoSeleccionado, Mode=TwoWay}"
+                              DisplayMemberPath="DisplayText"
+                              MinWidth="200"
+                              Padding="6,4"/>
+                </StackPanel>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Text="Estudiantes UA" FontSize="11" Foreground="#546E7A"/>
+                    <TextBox Text="{Binding EstudiantesUAInput, UpdateSourceTrigger=PropertyChanged}"
+                             MinWidth="100"
+                             Padding="6,4"/>
+                </StackPanel>
+                <StackPanel VerticalAlignment="Bottom" Orientation="Horizontal">
+                    <Button Content="Generar / Recalcular"
+                            Command="{Binding GenerarCommand}"
+                            Padding="12,6"
+                            Background="#3949AB"
+                            Foreground="White"
+                            BorderThickness="0"/>
+                    <Button Content="Resumen Sueldos"
+                            Command="{Binding MostrarResumenSueldosCommand}"
+                            Padding="12,6"
+                            Margin="8,0,0,0"
+                            Background="#00897B"
+                            Foreground="White"
+                            BorderThickness="0"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="3"
+                BorderBrush="#C5CAE9"
+                BorderThickness="1"
+                CornerRadius="10"
+                Background="#FCFDFF"
+                Padding="10"
+                Margin="0,0,0,8">
+            <UniformGrid Rows="1" Columns="2">
+                <StackPanel Margin="0,0,8,0">
+                    <TextBlock Text="Estudiantes carrera (período)" FontSize="11" Foreground="#546E7A"/>
+                    <TextBlock Text="{Binding TextoEstudiantesCarrera}"
+                               FontSize="16" FontWeight="SemiBold" Foreground="#1A237E"/>
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="Inflación del año del período" FontSize="11" Foreground="#546E7A"/>
+                    <TextBlock Text="{Binding TextoInflacionPeriodo}"
+                               FontSize="16" FontWeight="SemiBold" Foreground="#1A237E"/>
+                </StackPanel>
+            </UniformGrid>
+        </Border>
+
+        <Border Grid.Row="4"
+                BorderBrush="#C5CAE9"
+                BorderThickness="1"
+                CornerRadius="10"
+                Background="White"
+                Padding="10">
+            <DataGrid ItemsSource="{Binding Filas}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      CanUserAddRows="False"
+                      CanUserResizeColumns="False"
+                      CanUserSortColumns="False"
+                      CanUserReorderColumns="False"
+                      SelectionMode="Single"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      AlternatingRowBackground="#F8F9FF"
+                      BorderBrush="#C5CAE9">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="PESO"
+                                        Binding="{Binding Peso, StringFormat={}{0:N4}}"
+                                        Width="80"/>
+                    <DataGridTextColumn Header="Nº PERSONAS"
+                                        Binding="{Binding NumeroPersonas, StringFormat={}{0:N2}}"
+                                        Width="100"/>
+                    <DataGridTextColumn Header="CARGO"
+                                        Binding="{Binding NombreCargo}"
+                                        Width="*"
+                                        MinWidth="180"/>
+                    <DataGridTextColumn Header="SUELDO MENSUAL"
+                                        Binding="{Binding SueldoMensual, StringFormat={}{0:N2}}"
+                                        Width="120"/>
+                    <DataGridTextColumn Header="DÉCIMO XIII"
+                                        Binding="{Binding DecimoTerceroSemestral, StringFormat={}{0:N2}}"
+                                        Width="100"/>
+                    <DataGridTextColumn Header="DÉCIMO IV"
+                                        Binding="{Binding DecimoCuartoSemestral, StringFormat={}{0:N2}}"
+                                        Width="100"/>
+                    <DataGridTextColumn Header="VACACIONES"
+                                        Binding="{Binding VacacionesSemestral, StringFormat={}{0:N2}}"
+                                        Width="100"/>
+                    <DataGridTextColumn Header="FONDO RESERVA"
+                                        Binding="{Binding FondoReservaMensual, StringFormat={}{0:N2}}"
+                                        Width="120"/>
+                    <DataGridTextColumn Header="APORTE PATRONAL"
+                                        Binding="{Binding AportePatronalMensual, StringFormat={}{0:N2}}"
+                                        Width="130"/>
+                    <DataGridTextColumn Header="TOTAL"
+                                        Binding="{Binding TotalSemestre, StringFormat={}{0:N2}}"
+                                        Width="120"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <Border Grid.Row="5"
+                BorderBrush="#1A237E"
+                BorderThickness="1"
+                CornerRadius="8"
+                Background="#EEF3FF"
+                Padding="0"
+                Margin="0,8,0,0">
+            <StackPanel>
+                <Grid Background="#E3E8FF" Margin="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="*" MinWidth="180"/>
+                        <ColumnDefinition Width="120"/>
+                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="120"/>
+                        <ColumnDefinition Width="130"/>
+                        <ColumnDefinition Width="120"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="" Padding="6,6"/>
+                    <TextBlock Grid.Column="1" Text="" Padding="6,6"/>
+                    <TextBlock Grid.Column="2" Text="TOTALES"
+                               FontWeight="Bold" Foreground="#1A237E" Padding="6,6"/>
+                    <TextBlock Grid.Column="3" Text="{Binding TotalSueldoMensual, StringFormat={}{0:N2}}"
+                               FontWeight="SemiBold" Foreground="#1A237E" Padding="6,6"/>
+                    <TextBlock Grid.Column="4" Text="{Binding TotalDecimoTercero, StringFormat={}{0:N2}}"
+                               FontWeight="SemiBold" Foreground="#1A237E" Padding="6,6"/>
+                    <TextBlock Grid.Column="5" Text="{Binding TotalDecimoCuarto, StringFormat={}{0:N2}}"
+                               FontWeight="SemiBold" Foreground="#1A237E" Padding="6,6"/>
+                    <TextBlock Grid.Column="6" Text="{Binding TotalVacaciones, StringFormat={}{0:N2}}"
+                               FontWeight="SemiBold" Foreground="#1A237E" Padding="6,6"/>
+                    <TextBlock Grid.Column="7" Text="{Binding TotalFondoReserva, StringFormat={}{0:N2}}"
+                               FontWeight="SemiBold" Foreground="#1A237E" Padding="6,6"/>
+                    <TextBlock Grid.Column="8" Text="{Binding TotalAportePatronal, StringFormat={}{0:N2}}"
+                               FontWeight="SemiBold" Foreground="#1A237E" Padding="6,6"/>
+                    <TextBlock Grid.Column="9" Text="{Binding TotalSemestrePeriodo, StringFormat={}{0:N2}}"
+                               FontWeight="Bold" Foreground="#1A237E" Padding="6,6"/>
+                </Grid>
+                <Border Background="#1A237E" Padding="12,8">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="TOTAL DEL PERÍODO:"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Foreground="White"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,12,0"/>
+                        <TextBlock Text="{Binding TotalSemestrePeriodo, StringFormat={}{0:N2}}"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   Foreground="White"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>
