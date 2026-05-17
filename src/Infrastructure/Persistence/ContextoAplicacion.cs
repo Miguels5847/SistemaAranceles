@@ -37,6 +37,7 @@ public sealed class ContextoAplicacion(DbContextOptions<ContextoAplicacion> opti
     public DbSet<ResumenProyeccionFinanciera> ResumenesProyeccionFinanciera => Set<ResumenProyeccionFinanciera>();
     public DbSet<OverrideHorasPeriodo> OverridesHorasPeriodo => Set<OverrideHorasPeriodo>();
     public DbSet<DatosInstitucionales> DatosInstitucionales => Set<DatosInstitucionales>();
+    public DbSet<ActivoFijo> ActivosFijos => Set<ActivoFijo>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

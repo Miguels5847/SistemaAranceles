@@ -36,6 +36,7 @@ public static class InfrastructureExtensions
         services.AddTransient<IRepositorioCargoPlantaCentral, RepositorioCargoPlantaCentral>();
         services.AddTransient<IRepositorioProyeccionCargoPlantaCentral, RepositorioProyeccionCargoPlantaCentral>();
         services.AddTransient<IRepositorioDatosInstitucionales, RepositorioDatosInstitucionales>();
+        services.AddTransient<IRepositorioActivoFijo, RepositorioActivoFijo>();
         services.AddTransient<IRepositorioPeriodoAcademico, RepositorioPeriodoAcademico>();
         services.AddTransient<IRepositorioRol, RepositorioRol>();
         services.AddTransient<IRepositorioPermiso, RepositorioPermiso>();
