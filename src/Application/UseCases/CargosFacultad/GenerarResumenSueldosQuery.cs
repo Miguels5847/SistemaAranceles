@@ -1,5 +1,8 @@
 using SistemaAranceles.Application.DTOs.CargosFacultad;
 using SistemaAranceles.Application.DTOs.Estudiantes;
+using SistemaAranceles.Application.DTOs.SueldosPlantaCentral;
+using SistemaAranceles.Application.UseCases.SueldosPlantaCentral;
+using SistemaAranceles.Domain.Common;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Domain.Constantes;
 using SistemaAranceles.Domain.Entities;
@@ -16,7 +19,8 @@ public sealed class GenerarResumenSueldosQuery(
     IRepositorioCargoFacultad repositorioCargo,
     IRepositorioInflacionAnual repositorioInflacion,
     IRepositorioProyeccionEstudiantes repositorioProyeccionEstudiantes,
-    IRepositorioCarrera repositorioCarrera)
+    IRepositorioCarrera repositorioCarrera,
+    IRepositorioDatosInstitucionales repositorioDatosInstitucionales)
 {
     private static readonly string[] OrdenCargos =
     [
@@ -122,6 +126,25 @@ public sealed class GenerarResumenSueldosQuery(
             totalesPorPeriodo[i] = Math.Round(totalesPorPeriodo[i], 2);
 
         var ultimoPeriodo = periodos[^1];
+
+        var granTotal = Math.Round(totalesPorPeriodo.Sum(), 2);
+
+        // Intentar calcular aporte a Planta Central; si no hay datos institucionales, no interrumpimos el resumen.
+        AportePlantaCentralCarreraDto? aporte = null;
+        try
+        {
+            var calcular = new CalcularAportePlantaCentralCarreraQuery(
+                repositorioDatosInstitucionales,
+                repositorioProyeccionEstudiantes,
+                repositorioCarrera);
+
+            aporte = await calcular.EjecutarAsync(carreraId, escenarioProyeccionId, cancellationToken);
+        }
+        catch (DominioException)
+        {
+            aporte = null;
+        }
+
         return new ResumenSueldosVistaDto
         {
             CarreraId = carreraId,
@@ -129,9 +152,11 @@ public sealed class GenerarResumenSueldosQuery(
             Periodos = periodos,
             Filas = filas,
             TotalesPorPeriodo = totalesPorPeriodo,
-            GranTotal = Math.Round(totalesPorPeriodo.Sum(), 2),
+            GranTotal = granTotal,
             TotalSemestralPeriodoFinal = totalesPorPeriodo[^1],
             EtiquetaPeriodoFinal = $"P{ultimoPeriodo.NumeroPeriodo}-{ultimoPeriodo.Anio}",
+            PlantaCentralDistribucion = aporte,
+            TotalSueldosMasPlantaCentral = Math.Round(granTotal + (aporte?.AporteAcumulado ?? 0m), 2),
         };
     }
 

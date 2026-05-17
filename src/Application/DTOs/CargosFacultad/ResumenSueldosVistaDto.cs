@@ -1,4 +1,5 @@
 using SistemaAranceles.Application.UseCases.CargosFacultad;
+using SistemaAranceles.Application.DTOs.SueldosPlantaCentral;
 
 namespace SistemaAranceles.Application.DTOs.CargosFacultad;
 
@@ -27,4 +28,9 @@ public sealed class ResumenSueldosVistaDto
     public decimal TotalSemestralPeriodoFinal { get; init; }
     /// <summary>Etiqueta del último período (ej. "P8-2026"). Vacío si no hay períodos.</summary>
     public string EtiquetaPeriodoFinal { get; init; } = string.Empty;
+    // Aporte de la carrera a Planta Central (si está disponible)
+    public AportePlantaCentralCarreraDto? PlantaCentralDistribucion { get; init; }
+
+    // GranTotal + Aporte acumulado de Planta Central (si aplica)
+    public decimal TotalSueldosMasPlantaCentral { get; init; }
 }
