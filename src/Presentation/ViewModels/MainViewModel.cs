@@ -183,7 +183,7 @@ public sealed partial class MainViewModel : ObservableObject
             });
         }
 
-        if (_sesionActual.TienePermiso("TRE.VER") || _sesionActual.TienePermiso("PR.VER") || _sesionActual.EsAdministrador)
+        if (_sesionActual.TienePermiso("TRE.VER") || _sesionActual.EsAdministrador)
         {
             MenuItems.Add(new ItemMenu
             {
@@ -322,7 +322,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarTasaRetencionAsync()
     {
-        var puede = _sesionActual.TienePermiso("TRE.VER") || _sesionActual.TienePermiso("PR.VER") || _sesionActual.EsAdministrador;
+        var puede = _sesionActual.TienePermiso("TRE.VER") || _sesionActual.EsAdministrador;
         if (!puede)
         {
             MensajePagina = "Acceso denegado al módulo de Tasa de Retención.";
