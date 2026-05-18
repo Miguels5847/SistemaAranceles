@@ -120,8 +120,8 @@ public sealed class ObtenerMatrizInversionesQuery(
     {
         return activo.TipoCalculoCantidad switch
         {
-            TipoCalculoCantidad.PorEstudiante => await servicioEstudiantesTotales.ObtenerTotalEstudiantesPorSemestreAsync(carreraId, escenarioId, periodo.Anio, periodo.Semestre, ct),
-            TipoCalculoCantidad.PorDocente => await servicioDocentesTotales.ObtenerTotalDocentesPorSemestreAsync(carreraId, escenarioId, periodo.Anio, periodo.Semestre, ct),
+            TipoCalculoCantidad.PorEstudiante => RedondearUnidad(await servicioEstudiantesTotales.ObtenerTotalEstudiantesPorSemestreAsync(carreraId, escenarioId, periodo.Anio, periodo.Semestre, ct)),
+            TipoCalculoCantidad.PorDocente => RedondearUnidad(await servicioDocentesTotales.ObtenerTotalDocentesPorSemestreAsync(carreraId, escenarioId, periodo.Anio, periodo.Semestre, ct)),
             _ => activo.Cantidad
         };
     }
@@ -130,9 +130,12 @@ public sealed class ObtenerMatrizInversionesQuery(
     {
         return activo.TipoCalculoCantidad switch
         {
-            TipoCalculoCantidad.PorEstudiante => await servicioEstudiantesTotales.ObtenerTotalEstudiantesPorSemestreAsync(carreraId, escenarioId, periodo.Anio, periodo.Semestre, ct),
-            TipoCalculoCantidad.PorDocente => await servicioDocentesTotales.ObtenerTotalDocentesPorSemestreAsync(carreraId, escenarioId, periodo.Anio, periodo.Semestre, ct),
+            TipoCalculoCantidad.PorEstudiante => RedondearUnidad(await servicioEstudiantesTotales.ObtenerTotalEstudiantesPorSemestreAsync(carreraId, escenarioId, periodo.Anio, periodo.Semestre, ct)),
+            TipoCalculoCantidad.PorDocente => RedondearUnidad(await servicioDocentesTotales.ObtenerTotalDocentesPorSemestreAsync(carreraId, escenarioId, periodo.Anio, periodo.Semestre, ct)),
             _ => manuales.TryGetValue($"{activo.Id}|{periodo.Anio}|{periodo.Semestre}", out var cantidad) ? cantidad : 0m
         };
     }
+
+    private static decimal RedondearUnidad(decimal valor)
+        => decimal.Round(valor, 0, MidpointRounding.AwayFromZero);
 }
