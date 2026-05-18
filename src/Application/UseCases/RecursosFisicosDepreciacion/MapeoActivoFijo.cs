@@ -12,6 +12,9 @@ internal static class MapeoActivoFijo
         CategoriaActivoFijo.LaboratoriosEquipos => "Laboratorios y equipos",
         CategoriaActivoFijo.EquipoComputo => "Equipo de computo",
         CategoriaActivoFijo.EquipoOficina => "Equipo de oficina",
+        CategoriaActivoFijo.Edificacion => "Edificación",
+        CategoriaActivoFijo.Vehiculos => "Vehículos",
+        CategoriaActivoFijo.Nueva => "Nueva",
         _ => categoria.ToString()
     };
 
