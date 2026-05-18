@@ -83,6 +83,8 @@
                               SelectedItem="{Binding ActivoSeleccionado, Mode=TwoWay}"
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
+                              SelectionMode="Single"
+                              SelectionUnit="FullRow"
                               HeadersVisibility="Column"
                               GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F8F9FE">
@@ -113,7 +115,7 @@
                                         <Setter Property="Foreground" Value="#1A237E"/>
                                     </Trigger>
                                     <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="Background" Value="#E0E7FF"/>
                                         <Setter Property="Foreground" Value="#1A237E"/>
                                     </Trigger>
                                 </Style.Triggers>
