@@ -101,9 +101,7 @@ public sealed partial class ActivosFijosViewModel
             var query = scope.ServiceProvider.GetRequiredService<ObtenerMatrizInversionesQuery>();
             var matriz = await query.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
             CargarMatrizEnPantalla(matriz);
-            MensajeInversiones = matriz.Filas.Count == 0
-                ? "No existen activos fijos para construir la matriz de inversiones."
-                : "Matriz de inversiones cargada correctamente.";
+            MensajeInversiones = ConstruirMensajeCargaMatriz(matriz);
         }
         catch (Exception ex)
         {
@@ -217,6 +215,21 @@ public sealed partial class ActivosFijosViewModel
                 Etiqueta = t.Etiqueta,
                 Total = t.Total
             }));
+    }
+
+    private static string ConstruirMensajeCargaMatriz(MatrizInversionesDto matriz)
+    {
+        if (matriz.Periodos.Count == 0)
+        {
+            return "No se encontraron períodos de proyección para la carrera y escenario seleccionados. Genere primero la Proyección de Estudiantes para ese escenario.";
+        }
+
+        if (matriz.Filas.Count == 0)
+        {
+            return "No existen activos fijos activos para construir la matriz. Revise la pestaña Activos Fijos y presione Refrescar.";
+        }
+
+        return $"Matriz de inversiones cargada correctamente: {matriz.Filas.Count} activos y {matriz.Periodos.Count} períodos.";
     }
 
     private void LimpiarMatrizInversiones()
