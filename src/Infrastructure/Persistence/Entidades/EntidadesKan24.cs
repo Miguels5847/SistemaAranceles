@@ -21,6 +21,7 @@ public sealed class ActivoFijo : EntidadBase
     public decimal OffsetCantidad { get; set; }
 
     public Carrera? Carrera { get; set; }
+    public ICollection<InversionFutura> InversionesFuturas { get; set; } = [];
 }
 
 /// <summary>
@@ -39,4 +40,18 @@ public sealed class CatalogoActivoBase : EntidadBase
     public decimal OffsetCantidad { get; set; }
     public int VidaUtilAnios { get; set; }
     public decimal PorcentajeResidual { get; set; } = 0.05m;
+}
+
+/// <summary>
+/// Cantidad manual proyectada por periodo para inversiones futuras (KAN-25).
+/// Solo se persisten manuales; estudiantes/docentes se calculan al leer.
+/// </summary>
+public sealed class InversionFutura : EntidadBase
+{
+    public int ActivoFijoId { get; set; }
+    public int Anio { get; set; }
+    public int Semestre { get; set; }
+    public decimal CantidadProyectada { get; set; }
+
+    public ActivoFijo? ActivoFijo { get; set; }
 }
