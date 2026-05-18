@@ -71,6 +71,9 @@ public sealed class ActivoFijo : EntidadDominioBase
         CategoriaActivoFijo.LaboratoriosEquipos => 10,
         CategoriaActivoFijo.EquipoComputo => 3,
         CategoriaActivoFijo.EquipoOficina => 1,
+        CategoriaActivoFijo.Edificacion => 20,
+        CategoriaActivoFijo.Vehiculos => 5,
+        CategoriaActivoFijo.Nueva => 10,
         _ => 10
     };
 
