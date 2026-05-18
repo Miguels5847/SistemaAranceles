@@ -49,6 +49,7 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
 
         TiposCalculo = new ObservableCollection<TipoCalculoOpcion>(
             Enum.GetValues<TipoCalculoCantidad>()
+                .Where(t => t != TipoCalculoCantidad.PorHito)
                 .Select(t => new TipoCalculoOpcion { Valor = t, Etiqueta = MapeoActivoFijoUi.NombreTipo(t) }));
         TipoCalculoForm = TiposCalculo.First();
     }
