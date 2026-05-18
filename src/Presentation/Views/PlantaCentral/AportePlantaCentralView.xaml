@@ -150,6 +150,8 @@
                       ItemsSource="{Binding TablaResumenAporte}"
                       AutoGenerateColumns="False"
                       IsReadOnly="True"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
                       CanUserResizeColumns="False"
                       CanUserSortColumns="False"
                       CanUserReorderColumns="False"
@@ -192,6 +194,7 @@
                                 <Setter Property="Foreground" Value="#1A237E"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#E0E7FF"/>
                                 <Setter Property="Foreground" Value="#1A237E"/>
                             </Trigger>
                         </Style.Triggers>
@@ -222,7 +225,7 @@
                                 <Setter Property="Foreground" Value="#1A237E"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="Background" Value="#E0E7FF"/>
                                 <Setter Property="Foreground" Value="#1A237E"/>
                             </Trigger>
                         </Style.Triggers>
