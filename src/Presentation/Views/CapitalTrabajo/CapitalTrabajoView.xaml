@@ -37,7 +37,7 @@
                     <Setter Property="Foreground" Value="#1A237E"/>
                 </Trigger>
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Background" Value="#E0E7FF"/>
                     <Setter Property="Foreground" Value="#1A237E"/>
                 </Trigger>
             </Style.Triggers>
@@ -92,6 +92,7 @@
 
                     <DataGrid Grid.Row="2" ItemsSource="{Binding MaterialesSuministros}"
                               AutoGenerateColumns="False" IsReadOnly="True"
+                              SelectionMode="Single" SelectionUnit="FullRow"
                               CanUserResizeColumns="False" CanUserSortColumns="False" CanUserReorderColumns="False"
                               HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
@@ -170,6 +171,7 @@
 
                     <DataGrid Grid.Row="1" ItemsSource="{Binding AseoLimpieza}"
                               AutoGenerateColumns="False" IsReadOnly="True"
+                              SelectionMode="Single" SelectionUnit="FullRow"
                               CanUserResizeColumns="False" CanUserSortColumns="False" CanUserReorderColumns="False"
                               HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
@@ -248,6 +250,7 @@
 
                     <DataGrid Grid.Row="1" ItemsSource="{Binding AccesoriosMateriales}"
                               AutoGenerateColumns="False" IsReadOnly="True"
+                              SelectionMode="Single" SelectionUnit="FullRow"
                               CanUserResizeColumns="False" CanUserSortColumns="False" CanUserReorderColumns="False"
                               HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
