@@ -80,8 +80,6 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
         TipoCalculoForm is null
         || TipoCalculoForm.Valor is TipoCalculoCantidad.Manual or TipoCalculoCantidad.PorHito;
 
-    // Factor y offset se mantienen internamente por compatibilidad con BD/modelo,
-    // pero no se exponen como campos editables en la pantalla.
     public bool UsaFactor => false;
     public bool UsaOffset => false;
 
@@ -271,6 +269,11 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
 
             Activos = new ObservableCollection<ActivoFijoDto>(activosNormalizados);
             RecalcularTotalesDesdePantalla(activosNormalizados);
+
+            if (EscenarioSeleccionado is not null)
+            {
+                await CargarMatrizInversionesAsync();
+            }
         }
         catch (Exception ex)
         {
@@ -289,6 +292,7 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
         ActivoSeleccionado = null;
         TotalesPorCategoria = [];
         TotalGeneral = 0m;
+        LimpiarMatrizInversiones();
     }
 
     [RelayCommand]
@@ -403,9 +407,7 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
             ? 0m
             : cantidad;
 
-        // Los derivados se calculan desde el escenario seleccionado: estudiantes o docentes requeridos.
-        // No se permite que el usuario altere factor/offset desde la pantalla.
-        var factor = tipoCalculo is TipoCalculoCantidad.PorEstudiante or TipoCalculoCantidad.PorDocente ? 1m : 1m;
+        var factor = 1m;
         var offset = 0m;
 
         EstaGuardando = true;
