@@ -66,6 +66,7 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
 
     [ObservableProperty] private string _descripcion = string.Empty;
     [ObservableProperty] private CategoriaOpcion? _categoriaForm;
+    [ObservableProperty] private string _categoriaNuevaNombre = string.Empty;
     [ObservableProperty] private string _cantidad = "1";
     [ObservableProperty] private string _unidadMedida = "UNI";
     [ObservableProperty] private string _valorUnitario = "0";
@@ -80,6 +81,7 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
         TipoCalculoForm is null
         || TipoCalculoForm.Valor is TipoCalculoCantidad.Manual or TipoCalculoCantidad.PorHito;
 
+    public bool CategoriaEsNueva => CategoriaForm?.Valor == CategoriaActivoFijo.Nueva;
     public bool UsaFactor => false;
     public bool UsaOffset => false;
 
@@ -127,6 +129,8 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
 
     partial void OnCategoriaFormChanged(CategoriaOpcion? value)
     {
+        OnPropertyChanged(nameof(CategoriaEsNueva));
+
         if (value is not null && !EstaEditando)
             VidaUtilAnios = Domain.Entities.ActivoFijo.VidaUtilPorDefecto(value.Valor)
                 .ToString(CultureInfo.InvariantCulture);
@@ -302,6 +306,7 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
         EstaEditando = false;
         Descripcion = string.Empty;
         CategoriaForm = Categorias.First();
+        CategoriaNuevaNombre = string.Empty;
         Cantidad = "1";
         UnidadMedida = "UNI";
         ValorUnitario = "0";
@@ -334,6 +339,7 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
         EstaEditando = true;
         Descripcion = ActivoSeleccionado.Descripcion;
         CategoriaForm = Categorias.FirstOrDefault(c => c.Valor == ActivoSeleccionado.Categoria) ?? Categorias.First();
+        CategoriaNuevaNombre = ActivoSeleccionado.Categoria == CategoriaActivoFijo.Nueva ? ActivoSeleccionado.CategoriaNombre : string.Empty;
         Cantidad = ActivoSeleccionado.CantidadBase.ToString(CultureInfo.InvariantCulture);
         UnidadMedida = ActivoSeleccionado.UnidadMedida;
         ValorUnitario = ActivoSeleccionado.ValorUnitario.ToString(CultureInfo.InvariantCulture);
@@ -375,6 +381,12 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
         if (CategoriaForm is null)
         {
             MensajeError = "Seleccione una categoria.";
+            return;
+        }
+
+        if (CategoriaEsNueva && string.IsNullOrWhiteSpace(CategoriaNuevaNombre))
+        {
+            MensajeError = "Ingrese el nombre referencial de la nueva categoria.";
             return;
         }
 
@@ -614,6 +626,9 @@ internal static class MapeoActivoFijoUi
         CategoriaActivoFijo.LaboratoriosEquipos => "Laboratorios y equipos",
         CategoriaActivoFijo.EquipoComputo => "Equipo de computo",
         CategoriaActivoFijo.EquipoOficina => "Equipo de oficina",
+        CategoriaActivoFijo.Edificacion => "Edificación",
+        CategoriaActivoFijo.Vehiculos => "Vehículos",
+        CategoriaActivoFijo.Nueva => "Nueva",
         _ => c.ToString()
     };
 
