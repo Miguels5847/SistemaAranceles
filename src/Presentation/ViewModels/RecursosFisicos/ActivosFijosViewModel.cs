@@ -339,7 +339,7 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
         EstaEditando = true;
         Descripcion = ActivoSeleccionado.Descripcion;
         CategoriaForm = Categorias.FirstOrDefault(c => c.Valor == ActivoSeleccionado.Categoria) ?? Categorias.First();
-        CategoriaNuevaNombre = ActivoSeleccionado.Categoria == CategoriaActivoFijo.Nueva ? ActivoSeleccionado.CategoriaNombre : string.Empty;
+        CategoriaNuevaNombre = ActivoSeleccionado.Categoria == CategoriaActivoFijo.Nueva ? ActivoSeleccionado.CategoriaPersonalizada : string.Empty;
         Cantidad = ActivoSeleccionado.CantidadBase.ToString(CultureInfo.InvariantCulture);
         UnidadMedida = ActivoSeleccionado.UnidadMedida;
         ValorUnitario = ActivoSeleccionado.ValorUnitario.ToString(CultureInfo.InvariantCulture);
@@ -419,6 +419,7 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
             ? 0m
             : cantidad;
 
+        var categoriaPersonalizada = CategoriaEsNueva ? CategoriaNuevaNombre.Trim() : string.Empty;
         var factor = 1m;
         var offset = 0m;
 
@@ -435,6 +436,7 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
                     Id = ActivoSeleccionado.Id,
                     Descripcion = Descripcion,
                     Categoria = CategoriaForm.Valor,
+                    CategoriaPersonalizada = categoriaPersonalizada,
                     Cantidad = cantidadPersistida,
                     UnidadMedida = UnidadMedida,
                     ValorUnitario = valorUnitario,
@@ -455,6 +457,7 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
                     CarreraId = CarreraSeleccionada.Id,
                     Descripcion = Descripcion,
                     Categoria = CategoriaForm.Valor,
+                    CategoriaPersonalizada = categoriaPersonalizada,
                     Cantidad = cantidadPersistida,
                     UnidadMedida = UnidadMedida,
                     ValorUnitario = valorUnitario,
@@ -562,6 +565,7 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
             Descripcion = activo.Descripcion,
             Categoria = activo.Categoria,
             CategoriaNombre = activo.CategoriaNombre,
+            CategoriaPersonalizada = activo.CategoriaPersonalizada,
             Cantidad = cantidad,
             CantidadBase = activo.TipoCalculoCantidad is TipoCalculoCantidad.PorEstudiante or TipoCalculoCantidad.PorDocente
                 ? 0m
@@ -599,15 +603,15 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
     private void RecalcularTotalesDesdePantalla(IReadOnlyList<ActivoFijoDto> activos)
     {
         var totales = activos
-            .GroupBy(x => x.Categoria)
+            .GroupBy(x => x.CategoriaNombre)
             .Select(g => new TotalCategoriaActivosDto
             {
-                Categoria = g.Key,
-                CategoriaNombre = g.First().CategoriaNombre,
+                Categoria = g.First().Categoria,
+                CategoriaNombre = g.Key,
                 CantidadItems = g.Count(),
                 SubtotalValorTotal = g.Sum(x => x.ValorTotal)
             })
-            .OrderBy(x => x.Categoria)
+            .OrderBy(x => x.CategoriaNombre)
             .ToList();
 
         TotalesPorCategoria = new ObservableCollection<TotalCategoriaActivosDto>(totales);
