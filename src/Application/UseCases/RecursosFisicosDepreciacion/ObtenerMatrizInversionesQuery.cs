@@ -41,7 +41,10 @@ public sealed class ObtenerMatrizInversionesQuery(
             foreach (var periodo in periodos)
             {
                 var esInicial = periodo.NumeroPeriodo == 1;
-                var cantidad = esInicial ? 0m : await ResolverCantidadAsync(activo, periodo, manuales, carreraId, escenarioProyeccionId, ct);
+                var cantidad = esInicial
+                    ? await ResolverCantidadInicialAsync(activo, periodo, carreraId, escenarioProyeccionId, ct)
+                    : await ResolverCantidadAsync(activo, periodo, manuales, carreraId, escenarioProyeccionId, ct);
+
                 var factor = CalculoInflacionAplicada.CalcularFactorPeriodo(inflaciones, proyeccion.AnioBase, periodo.Anio, periodo.Semestre);
                 celdas.Add(new CeldaInversionDto
                 {
@@ -53,9 +56,9 @@ public sealed class ObtenerMatrizInversionesQuery(
                     ValorUnitario = activo.ValorUnitario,
                     FactorInflacion = factor,
                     Monto = decimal.Round(cantidad * activo.ValorUnitario * factor, 2),
-                    EsEditable = !esInicial && activo.TipoCalculoCantidad is TipoCalculoCantidad.Manual or TipoCalculoCantidad.PorHito,
+                    EsEditable = !esInicial && (activo.TipoCalculoCantidad is TipoCalculoCantidad.Manual or TipoCalculoCantidad.PorHito),
                     EsPeriodoInicial = esInicial,
-                    OrigenCantidad = MapeoActivoFijo.NombreTipoCalculo(activo.TipoCalculoCantidad)
+                    OrigenCantidad = esInicial ? "Inicial" : MapeoActivoFijo.NombreTipoCalculo(activo.TipoCalculoCantidad)
                 });
             }
 
@@ -111,6 +114,16 @@ public sealed class ObtenerMatrizInversionesQuery(
         }).OrderBy(p => p.NumeroPeriodo).ToList();
 
         return anios is > 0 ? periodos.Take(anios.Value * 2) : periodos;
+    }
+
+    private async Task<decimal> ResolverCantidadInicialAsync(ActivoFijo activo, PeriodoInversionDto periodo, int carreraId, int escenarioId, CancellationToken ct)
+    {
+        return activo.TipoCalculoCantidad switch
+        {
+            TipoCalculoCantidad.PorEstudiante => await servicioEstudiantesTotales.ObtenerTotalEstudiantesPorSemestreAsync(carreraId, escenarioId, periodo.Anio, periodo.Semestre, ct),
+            TipoCalculoCantidad.PorDocente => await servicioDocentesTotales.ObtenerTotalDocentesPorSemestreAsync(carreraId, escenarioId, periodo.Anio, periodo.Semestre, ct),
+            _ => activo.Cantidad
+        };
     }
 
     private async Task<decimal> ResolverCantidadAsync(ActivoFijo activo, PeriodoInversionDto periodo, IReadOnlyDictionary<string, decimal> manuales, int carreraId, int escenarioId, CancellationToken ct)
