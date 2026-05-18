@@ -28,7 +28,7 @@
                                         <Setter Property="Foreground" Value="#1A237E"/>
                                 </Trigger>
                                 <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="Background" Value="#E0E7FF"/>
                                         <Setter Property="Foreground" Value="#1A237E"/>
                                 </Trigger>
                         </Style.Triggers>
@@ -72,6 +72,8 @@
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           SelectedItem="{Binding CargoSeleccionado}"
+                          SelectionMode="Single"
+                          SelectionUnit="FullRow"
                           CanUserResizeColumns="False"
                           CanUserSortColumns="False"
                           CanUserReorderColumns="False"
