@@ -18,7 +18,7 @@ public sealed class ActualizarActivoFijoCommand(
             ?? throw new KeyNotFoundException($"No se encontro el activo fijo con Id {dto.Id}.");
 
         activo.CambiarDescripcion(dto.Descripcion);
-        activo.CambiarCategoria(dto.Categoria);
+        activo.CambiarCategoria(dto.Categoria, dto.CategoriaPersonalizada);
         activo.CambiarCantidad(dto.Cantidad);
         activo.CambiarUnidadMedida(dto.UnidadMedida);
         activo.CambiarValorUnitario(dto.ValorUnitario);
