@@ -14,6 +14,7 @@ internal sealed class ConfiguracionActivoFijo : IEntityTypeConfiguration<ActivoF
         builder.Property(x => x.CarreraId).HasColumnName("carrera_id").IsRequired();
         builder.Property(x => x.Descripcion).HasColumnName("descripcion").HasMaxLength(200).IsRequired();
         builder.Property(x => x.Categoria).HasColumnName("categoria").HasConversion<string>().HasMaxLength(40).IsRequired();
+        builder.Property(x => x.CategoriaPersonalizada).HasColumnName("categoria_personalizada").HasMaxLength(80).HasDefaultValue(string.Empty).IsRequired();
         builder.Property(x => x.Cantidad).HasColumnName("cantidad").HasColumnType("numeric(18,4)").IsRequired();
         builder.Property(x => x.UnidadMedida).HasColumnName("unidad_medida").HasMaxLength(20).IsRequired();
         builder.Property(x => x.ValorUnitario).HasColumnName("valor_unitario").HasColumnType("numeric(18,2)").IsRequired();
