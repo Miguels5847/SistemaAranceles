@@ -157,6 +157,10 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.ObtenerTotalesActivosQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.SembrarActivosFijosDesdeCatalogoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.ListarCatalogoActivoBaseQuery>();
+        // KAN-25: Inversiones Futuras
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.ObtenerMatrizInversionesQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.GuardarInversionFuturaCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.QuitarInversionFuturaCommand>();
         servicios.AddTransient<CalcularAportePlantaCentralCarreraQuery>();
         servicios.AddTransient<CalcularProyeccionesCargoPlantaCentralCommand>();
         servicios.AddTransient<ListarProyeccionesCargoPlantaCentralQuery>();
@@ -236,7 +240,7 @@ public partial class App
         // KAN-22: ViewModels
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.DatosInstitucionales.DatosInstitucionalesViewModel>();
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.PlantaCentral.AportePlantaCentralViewModel>();
-        // KAN-24: ViewModel
+        // KAN-24/KAN-25: ViewModel
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.RecursosFisicos.ActivosFijosViewModel>();
 
         servicios.AddTransient<MainViewModel>();
