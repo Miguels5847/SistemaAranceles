@@ -6,7 +6,7 @@ namespace SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion;
 
 internal static class MapeoActivoFijo
 {
-    public static string NombreCategoria(CategoriaActivoFijo categoria) => categoria switch
+    public static string NombreCategoria(CategoriaActivoFijo categoria, string? categoriaPersonalizada = null) => categoria switch
     {
         CategoriaActivoFijo.MueblesEnseres => "Muebles y enseres",
         CategoriaActivoFijo.LaboratoriosEquipos => "Laboratorios y equipos",
@@ -14,7 +14,7 @@ internal static class MapeoActivoFijo
         CategoriaActivoFijo.EquipoOficina => "Equipo de oficina",
         CategoriaActivoFijo.Edificacion => "Edificación",
         CategoriaActivoFijo.Vehiculos => "Vehículos",
-        CategoriaActivoFijo.Nueva => "Nueva",
+        CategoriaActivoFijo.Nueva => string.IsNullOrWhiteSpace(categoriaPersonalizada) ? "Nueva" : categoriaPersonalizada.Trim(),
         _ => categoria.ToString()
     };
 
@@ -72,7 +72,8 @@ internal static class MapeoActivoFijo
             CarreraId = a.CarreraId,
             Descripcion = a.Descripcion,
             Categoria = a.Categoria,
-            CategoriaNombre = NombreCategoria(a.Categoria),
+            CategoriaNombre = NombreCategoria(a.Categoria, a.CategoriaPersonalizada),
+            CategoriaPersonalizada = a.CategoriaPersonalizada,
             Cantidad = cantidadMostrada,
             CantidadBase = a.Cantidad,
             UnidadMedida = a.UnidadMedida,
