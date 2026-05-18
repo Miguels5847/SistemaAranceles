@@ -9,5 +9,8 @@ public enum CategoriaActivoFijo
     MueblesEnseres = 0,
     LaboratoriosEquipos = 1,
     EquipoComputo = 2,
-    EquipoOficina = 3
+    EquipoOficina = 3,
+    Edificacion = 4,
+    Vehiculos = 5,
+    Nueva = 6
 }
