@@ -192,7 +192,14 @@
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Text="{Binding TituloFormulario}" FontWeight="Bold" FontSize="14" Margin="0,0,0,8"/>
                             <StackPanel Grid.Row="1" Margin="0,0,0,8"><TextBlock Text="Descripción" FontSize="11" Foreground="#546E7A"/><TextBox Text="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}"/></StackPanel>
-                            <StackPanel Grid.Row="2" Margin="0,0,0,8"><TextBlock Text="Categoría" FontSize="11" Foreground="#546E7A"/><ComboBox ItemsSource="{Binding Categorias}" SelectedItem="{Binding CategoriaForm, Mode=TwoWay}" DisplayMemberPath="Etiqueta"/></StackPanel>
+                            <StackPanel Grid.Row="2" Margin="0,0,0,8">
+                                <TextBlock Text="Categoría" FontSize="11" Foreground="#546E7A"/>
+                                <ComboBox ItemsSource="{Binding Categorias}" SelectedItem="{Binding CategoriaForm, Mode=TwoWay}" DisplayMemberPath="Etiqueta"/>
+                                <StackPanel Margin="0,6,0,0" Visibility="{Binding CategoriaEsNueva, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <TextBlock Text="Nombre de nueva categoría (referencial, no se agrega al listado)" FontSize="11" Foreground="#546E7A"/>
+                                    <TextBox Text="{Binding CategoriaNuevaNombre, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                            </StackPanel>
                             <StackPanel Grid.Row="3" Margin="0,0,0,8">
                                 <TextBlock Text="Tipo de cálculo de cantidad" FontSize="11" Foreground="#546E7A"/>
                                 <ComboBox ItemsSource="{Binding TiposCalculo}" SelectedItem="{Binding TipoCalculoForm, Mode=TwoWay}" DisplayMemberPath="Etiqueta"/>
