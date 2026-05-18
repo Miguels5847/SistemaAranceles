@@ -87,11 +87,14 @@ public sealed class RepositorioActivoFijo(ContextoAplicacion contextoAplicacion)
             e.ValorUnitario,
             e.VidaUtilAnios,
             e.PorcentajeResidual,
-            e.FechaAdquisicion);
+            e.FechaAdquisicion,
+            e.TipoCalculoCantidad,
+            e.FactorMultiplicador,
+            e.OffsetCantidad,
+            e.CategoriaPersonalizada);
 
         dominio.RehidratarId(e.Id);
         dominio.RehidratarFechaAdquisicion(e.FechaAdquisicion);
-        dominio.CambiarCalculoCantidad(e.TipoCalculoCantidad, e.FactorMultiplicador, e.OffsetCantidad);
         return dominio;
     }
 
@@ -101,6 +104,7 @@ public sealed class RepositorioActivoFijo(ContextoAplicacion contextoAplicacion)
         CarreraId = d.CarreraId,
         Descripcion = d.Descripcion,
         Categoria = d.Categoria,
+        CategoriaPersonalizada = d.CategoriaPersonalizada,
         Cantidad = d.Cantidad,
         UnidadMedida = d.UnidadMedida,
         ValorUnitario = d.ValorUnitario,
