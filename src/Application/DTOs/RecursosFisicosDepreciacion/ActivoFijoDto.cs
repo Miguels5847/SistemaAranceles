@@ -9,6 +9,7 @@ public sealed class ActivoFijoDto
     public string Descripcion { get; init; } = string.Empty;
     public CategoriaActivoFijo Categoria { get; init; }
     public string CategoriaNombre { get; init; } = string.Empty;
+    public string CategoriaPersonalizada { get; init; } = string.Empty;
     public decimal Cantidad { get; init; }
     public decimal CantidadBase { get; init; }
     public string UnidadMedida { get; init; } = "UNI";
@@ -33,6 +34,7 @@ public sealed class CrearActivoFijoDto
     public int CarreraId { get; init; }
     public string Descripcion { get; init; } = string.Empty;
     public CategoriaActivoFijo Categoria { get; init; }
+    public string CategoriaPersonalizada { get; init; } = string.Empty;
     public decimal Cantidad { get; init; }
     public string UnidadMedida { get; init; } = "UNI";
     public decimal ValorUnitario { get; init; }
@@ -49,6 +51,7 @@ public sealed class ActualizarActivoFijoDto
     public int Id { get; init; }
     public string Descripcion { get; init; } = string.Empty;
     public CategoriaActivoFijo Categoria { get; init; }
+    public string CategoriaPersonalizada { get; init; } = string.Empty;
     public decimal Cantidad { get; init; }
     public string UnidadMedida { get; init; } = "UNI";
     public decimal ValorUnitario { get; init; }
