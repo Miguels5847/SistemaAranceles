@@ -26,11 +26,12 @@ public sealed class ActivoFijo : EntidadDominioBase
         DateTimeOffset? fechaAdquisicion = null,
         TipoCalculoCantidad tipoCalculoCantidad = TipoCalculoCantidad.Manual,
         decimal factorMultiplicador = 1m,
-        decimal offsetCantidad = 0m)
+        decimal offsetCantidad = 0m,
+        string? categoriaPersonalizada = null)
     {
         CambiarCarrera(carreraId);
         CambiarDescripcion(descripcion);
-        CambiarCategoria(categoria);
+        CambiarCategoria(categoria, categoriaPersonalizada);
         CambiarCantidad(cantidad);
         CambiarUnidadMedida(unidadMedida);
         CambiarValorUnitario(valorUnitario);
@@ -45,6 +46,7 @@ public sealed class ActivoFijo : EntidadDominioBase
     public int CarreraId { get; private set; }
     public string Descripcion { get; private set; } = string.Empty;
     public CategoriaActivoFijo Categoria { get; private set; }
+    public string CategoriaPersonalizada { get; private set; } = string.Empty;
     public decimal Cantidad { get; private set; }
     public string UnidadMedida { get; private set; } = "UNI";
     public decimal ValorUnitario { get; private set; }
@@ -87,7 +89,7 @@ public sealed class ActivoFijo : EntidadDominioBase
         Descripcion = GuardiaDominio.Requerido(descripcion, "Descripcion del activo", 200);
     }
 
-    public void CambiarCategoria(CategoriaActivoFijo categoria)
+    public void CambiarCategoria(CategoriaActivoFijo categoria, string? categoriaPersonalizada = null)
     {
         if (!Enum.IsDefined(categoria))
         {
@@ -95,6 +97,9 @@ public sealed class ActivoFijo : EntidadDominioBase
         }
 
         Categoria = categoria;
+        CategoriaPersonalizada = categoria == CategoriaActivoFijo.Nueva
+            ? GuardiaDominio.Requerido(categoriaPersonalizada ?? string.Empty, "Nombre de nueva categoria", 80)
+            : string.Empty;
     }
 
     public void CambiarCantidad(decimal cantidad)
