@@ -78,11 +78,11 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
     public bool CantidadEsManual =>
         TipoCalculoForm is null
         || TipoCalculoForm.Valor is TipoCalculoCantidad.Manual or TipoCalculoCantidad.PorHito;
-    public bool UsaFactor =>
-        TipoCalculoForm is not null
-        && TipoCalculoForm.Valor is TipoCalculoCantidad.PorEstudiante or TipoCalculoCantidad.PorDocente;
-    public bool UsaOffset =>
-        TipoCalculoForm is not null && TipoCalculoForm.Valor == TipoCalculoCantidad.PorDocente;
+
+    // Factor y offset se mantienen internamente por compatibilidad con BD/modelo,
+    // pero no se exponen como campos editables en la pantalla.
+    public bool UsaFactor => false;
+    public bool UsaOffset => false;
 
     partial void OnTipoCalculoFormChanged(TipoCalculoOpcion? value)
     {
@@ -261,17 +261,15 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
             using var scope = _serviceProvider.CreateScope();
             var sembrar = scope.ServiceProvider.GetRequiredService<SembrarActivosFijosDesdeCatalogoCommand>();
             var listar = scope.ServiceProvider.GetRequiredService<ListarActivosFijosQuery>();
-            var totalesQuery = scope.ServiceProvider.GetRequiredService<ObtenerTotalesActivosQuery>();
             var escenarioProyeccionId = EscenarioSeleccionado?.Id;
 
             await sembrar.EjecutarAsync(CarreraSeleccionada.Id);
 
             var activos = await listar.EjecutarAsync(CarreraSeleccionada.Id, escenarioProyeccionId);
-            Activos = new ObservableCollection<ActivoFijoDto>(activos);
+            var activosNormalizados = activos.Select(NormalizarActivoParaPantalla).ToList();
 
-            var totales = await totalesQuery.EjecutarAsync(CarreraSeleccionada.Id, escenarioProyeccionId);
-            TotalesPorCategoria = new ObservableCollection<TotalCategoriaActivosDto>(totales.PorCategoria);
-            TotalGeneral = totales.TotalGeneral;
+            Activos = new ObservableCollection<ActivoFijoDto>(activosNormalizados);
+            RecalcularTotalesDesdePantalla(activosNormalizados);
         }
         catch (Exception ex)
         {
@@ -337,8 +335,8 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
         VidaUtilAnios = ActivoSeleccionado.VidaUtilAnios.ToString(CultureInfo.InvariantCulture);
         PorcentajeResidual = (ActivoSeleccionado.PorcentajeResidual * 100m).ToString(CultureInfo.InvariantCulture);
         TipoCalculoForm = TiposCalculo.FirstOrDefault(t => t.Valor == ActivoSeleccionado.TipoCalculoCantidad) ?? TiposCalculo.First();
-        FactorMultiplicador = ActivoSeleccionado.FactorMultiplicador.ToString(CultureInfo.InvariantCulture);
-        OffsetCantidad = ActivoSeleccionado.OffsetCantidad.ToString(CultureInfo.InvariantCulture);
+        FactorMultiplicador = "1";
+        OffsetCantidad = "0";
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
         OnPropertyChanged(nameof(TituloFormulario));
@@ -404,17 +402,10 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
             ? 0m
             : cantidad;
 
-        if (!TryDecimal(FactorMultiplicador, out var factor) || factor < 0)
-        {
-            MensajeError = "Factor multiplicador invalido.";
-            return;
-        }
-
-        if (!TryDecimal(OffsetCantidad, out var offset) || offset < 0)
-        {
-            MensajeError = "Offset de cantidad invalido.";
-            return;
-        }
+        // Los derivados se calculan desde el escenario seleccionado: estudiantes o docentes requeridos.
+        // No se permite que el usuario altere factor/offset desde la pantalla.
+        var factor = tipoCalculo is TipoCalculoCantidad.PorEstudiante or TipoCalculoCantidad.PorDocente ? 1m : 1m;
+        var offset = 0m;
 
         EstaGuardando = true;
         try
@@ -527,6 +518,89 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
         => decimal.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
 
     private static string Detalle(Exception ex) => ex.InnerException?.Message ?? ex.Message;
+
+    private static ActivoFijoDto NormalizarActivoParaPantalla(ActivoFijoDto activo)
+    {
+        var cantidad = activo.Cantidad;
+
+        if (activo.TipoCalculoCantidad == TipoCalculoCantidad.PorDocente)
+        {
+            cantidad = ResolverDerivadoSinFactorNiOffset(
+                activo.Cantidad,
+                activo.FactorMultiplicador,
+                activo.OffsetCantidad);
+        }
+        else if (activo.TipoCalculoCantidad == TipoCalculoCantidad.PorEstudiante)
+        {
+            cantidad = ResolverDerivadoSinFactorNiOffset(
+                activo.Cantidad,
+                activo.FactorMultiplicador,
+                offsetCantidad: 0m);
+        }
+
+        cantidad = QuitarCerosDecimales(cantidad);
+
+        return new ActivoFijoDto
+        {
+            Id = activo.Id,
+            CarreraId = activo.CarreraId,
+            Descripcion = activo.Descripcion,
+            Categoria = activo.Categoria,
+            CategoriaNombre = activo.CategoriaNombre,
+            Cantidad = cantidad,
+            CantidadBase = activo.TipoCalculoCantidad is TipoCalculoCantidad.PorEstudiante or TipoCalculoCantidad.PorDocente
+                ? 0m
+                : QuitarCerosDecimales(activo.CantidadBase),
+            UnidadMedida = activo.UnidadMedida,
+            ValorUnitario = activo.ValorUnitario,
+            ValorTotal = decimal.Round(cantidad * activo.ValorUnitario, 2),
+            VidaUtilAnios = activo.VidaUtilAnios,
+            PorcentajeResidual = activo.PorcentajeResidual,
+            FechaAdquisicion = activo.FechaAdquisicion,
+            TipoCalculoCantidad = activo.TipoCalculoCantidad,
+            TipoCalculoNombre = activo.TipoCalculoNombre,
+            FactorMultiplicador = 1m,
+            OffsetCantidad = 0m,
+            UsaCantidadCalculada = activo.UsaCantidadCalculada
+        };
+    }
+
+    private static decimal ResolverDerivadoSinFactorNiOffset(decimal cantidadCalculada, decimal factorMultiplicador, decimal offsetCantidad)
+    {
+        var cantidadSinOffset = cantidadCalculada - offsetCantidad;
+        if (cantidadSinOffset < 0m)
+        {
+            cantidadSinOffset = 0m;
+        }
+
+        if (factorMultiplicador > 0m && factorMultiplicador != 1m)
+        {
+            cantidadSinOffset /= factorMultiplicador;
+        }
+
+        return cantidadSinOffset;
+    }
+
+    private void RecalcularTotalesDesdePantalla(IReadOnlyList<ActivoFijoDto> activos)
+    {
+        var totales = activos
+            .GroupBy(x => x.Categoria)
+            .Select(g => new TotalCategoriaActivosDto
+            {
+                Categoria = g.Key,
+                CategoriaNombre = g.First().CategoriaNombre,
+                CantidadItems = g.Count(),
+                SubtotalValorTotal = g.Sum(x => x.ValorTotal)
+            })
+            .OrderBy(x => x.Categoria)
+            .ToList();
+
+        TotalesPorCategoria = new ObservableCollection<TotalCategoriaActivosDto>(totales);
+        TotalGeneral = totales.Sum(x => x.SubtotalValorTotal);
+    }
+
+    private static decimal QuitarCerosDecimales(decimal valor)
+        => decimal.Parse(valor.ToString("0.####", CultureInfo.InvariantCulture), CultureInfo.InvariantCulture);
 }
 
 internal static class MapeoActivoFijoUi
