@@ -6,6 +6,74 @@
         Height="700"
         WindowStartupLocation="CenterOwner"
         Background="#F5F7FF">
+    <Window.Resources>
+        <Style x:Key="ResumenDataGridRowStyle" TargetType="DataGridRow">
+            <Setter Property="Foreground" Value="#263238"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#EEF2FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#E0E7FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ResumenDataGridCellStyle" TargetType="DataGridCell">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#263238"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#E0E7FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ResumenTotalesRowStyle" TargetType="DataGridRow">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#1A237E"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#E0E7FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#E0E7FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ResumenTotalesCellStyle" TargetType="DataGridCell">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#1A237E"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#E0E7FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#E0E7FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
     <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -39,10 +107,14 @@
                       CanUserResizeColumns="False"
                       CanUserSortColumns="False"
                       CanUserReorderColumns="False"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
                       HeadersVisibility="Column"
                       GridLinesVisibility="Horizontal"
                       AlternatingRowBackground="#F8F9FF"
                       BorderThickness="0"
+                      RowStyle="{StaticResource ResumenDataGridRowStyle}"
+                      CellStyle="{StaticResource ResumenDataGridCellStyle}"
                       HorizontalScrollBarVisibility="Auto"/>
         </Border>
 
@@ -62,9 +134,13 @@
                       CanUserResizeColumns="False"
                       CanUserSortColumns="False"
                       CanUserReorderColumns="False"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
                       Background="Transparent"
                       BorderThickness="0"
                       RowBackground="Transparent"
+                      RowStyle="{StaticResource ResumenTotalesRowStyle}"
+                      CellStyle="{StaticResource ResumenTotalesCellStyle}"
                       HorizontalScrollBarVisibility="Hidden"/>
         </Border>
 
