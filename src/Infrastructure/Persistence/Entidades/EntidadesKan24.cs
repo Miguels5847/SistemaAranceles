@@ -10,6 +10,7 @@ public sealed class ActivoFijo : EntidadBase
     public int CarreraId { get; set; }
     public string Descripcion { get; set; } = string.Empty;
     public CategoriaActivoFijo Categoria { get; set; }
+    public string CategoriaPersonalizada { get; set; } = string.Empty;
     public decimal Cantidad { get; set; }
     public string UnidadMedida { get; set; } = "UNI";
     public decimal ValorUnitario { get; set; }
