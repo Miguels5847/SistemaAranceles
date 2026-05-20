@@ -16,19 +16,31 @@ public sealed class RepositorioServicioMantenimiento(ContextoAplicacion ctx) : I
     }
 
     public async Task<IReadOnlyList<DominioServicio>> ListarPorCarreraAsync(
-        int carreraId, TipoRubroMantenimiento? tipo = null, CancellationToken ct = default)
+        int carreraId,
+        TipoRubroMantenimiento? tipo = null,
+        int? escenarioProyeccionId = null,
+        CancellationToken ct = default)
     {
-        var q = ctx.ServiciosMantenimiento.AsNoTracking()
-            .Where(x => x.CarreraId == carreraId && x.EstaActivo);
+        var q = FiltrarPorCarreraYEscenario(carreraId, escenarioProyeccionId);
+
         if (tipo.HasValue)
             q = q.Where(x => x.TipoRubro == tipo.Value);
-        var lista = await q.OrderBy(x => x.TipoRubro).ThenBy(x => x.NombreRubro).ToListAsync(ct);
+
+        var lista = await q
+            .OrderBy(x => x.TipoRubro)
+            .ThenBy(x => x.NombreRubro)
+            .ToListAsync(ct);
+
         return lista.Select(MapearADominio).ToList();
     }
 
-    public async Task<decimal> SumarCostoAnualPorTipoAsync(int carreraId, TipoRubroMantenimiento tipo, CancellationToken ct = default)
-        => await ctx.ServiciosMantenimiento.AsNoTracking()
-            .Where(x => x.CarreraId == carreraId && x.EstaActivo && x.TipoRubro == tipo)
+    public async Task<decimal> SumarCostoAnualPorTipoAsync(
+        int carreraId,
+        TipoRubroMantenimiento tipo,
+        int? escenarioProyeccionId = null,
+        CancellationToken ct = default)
+        => await FiltrarPorCarreraYEscenario(carreraId, escenarioProyeccionId)
+            .Where(x => x.TipoRubro == tipo)
             .SumAsync(x => x.CostoAnualUniversidad, ct);
 
     public async Task AgregarAsync(DominioServicio servicio, CancellationToken ct = default)
@@ -56,9 +68,37 @@ public sealed class RepositorioServicioMantenimiento(ContextoAplicacion ctx) : I
         ctx.ServiciosMantenimiento.Update(infra);
     }
 
+    private IQueryable<InfraServicio> FiltrarPorCarreraYEscenario(int carreraId, int? escenarioProyeccionId)
+    {
+        var baseQuery = ctx.ServiciosMantenimiento
+            .AsNoTracking()
+            .Where(x => x.CarreraId == carreraId && x.EstaActivo);
+
+        if (escenarioProyeccionId is null or <= 0)
+        {
+            return baseQuery.Where(x => x.EscenarioProyeccionId == null);
+        }
+
+        var tieneEspecificos = ctx.ServiciosMantenimiento
+            .AsNoTracking()
+            .Any(x => x.CarreraId == carreraId
+                      && x.EstaActivo
+                      && x.EscenarioProyeccionId == escenarioProyeccionId.Value);
+
+        return tieneEspecificos
+            ? baseQuery.Where(x => x.EscenarioProyeccionId == escenarioProyeccionId.Value)
+            : baseQuery.Where(x => x.EscenarioProyeccionId == null);
+    }
+
     private static DominioServicio MapearADominio(InfraServicio e)
     {
-        var d = new DominioServicio(e.CarreraId, e.TipoRubro, e.NombreRubro, e.CostoAnualUniversidad);
+        var d = new DominioServicio(
+            e.CarreraId,
+            e.TipoRubro,
+            e.NombreRubro,
+            e.CostoAnualUniversidad,
+            e.EscenarioProyeccionId,
+            e.Sede);
         d.RehidratarId(e.Id);
         return d;
     }
@@ -67,6 +107,8 @@ public sealed class RepositorioServicioMantenimiento(ContextoAplicacion ctx) : I
     {
         Id = d.Id,
         CarreraId = d.CarreraId,
+        EscenarioProyeccionId = d.EscenarioProyeccionId,
+        Sede = d.Sede,
         TipoRubro = d.TipoRubro,
         NombreRubro = d.NombreRubro,
         CostoAnualUniversidad = d.CostoAnualUniversidad,
