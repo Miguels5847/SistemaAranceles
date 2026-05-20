@@ -5,8 +5,8 @@ namespace SistemaAranceles.Domain.Entities;
 
 /// <summary>
 /// Rubro de servicios básicos o mantenimiento institucional (KAN-28).
-/// Refleja las hojas "8 Mantenimiento" A7:B12 (ServicioBasico) y A14:B20 (Mantenimiento).
-/// El costo se registra a nivel universidad; se prorrata por alumno al proyectar.
+/// Refleja la hoja "8 Mantenimiento" y permite configuración por carrera con escenario opcional.
+/// El costo anual se prorratea por alumno al proyectar.
 /// </summary>
 public sealed class ServicioMantenimiento : EntidadDominioBase
 {
@@ -16,21 +16,42 @@ public sealed class ServicioMantenimiento : EntidadDominioBase
         int carreraId,
         TipoRubroMantenimiento tipoRubro,
         string nombreRubro,
-        decimal costoAnualUniversidad)
+        decimal costoAnualUniversidad,
+        int? escenarioProyeccionId = null,
+        string? sede = null)
     {
         CambiarCarrera(carreraId);
+        CambiarEscenario(escenarioProyeccionId);
+        CambiarSede(sede);
         CambiarTipoRubro(tipoRubro);
         CambiarNombreRubro(nombreRubro);
         CambiarCosto(costoAnualUniversidad);
     }
 
     public int CarreraId { get; private set; }
+    public int? EscenarioProyeccionId { get; private set; }
+    public string Sede { get; private set; } = "General";
     public TipoRubroMantenimiento TipoRubro { get; private set; }
     public string NombreRubro { get; private set; } = string.Empty;
     public decimal CostoAnualUniversidad { get; private set; }
 
     public void CambiarCarrera(int carreraId)
         => CarreraId = GuardiaDominio.EnteroPositivo(carreraId, "Carrera");
+
+    public void CambiarEscenario(int? escenarioProyeccionId)
+    {
+        if (escenarioProyeccionId is <= 0)
+            throw new DominioException("Escenario de proyección no válido.");
+
+        EscenarioProyeccionId = escenarioProyeccionId;
+    }
+
+    public void CambiarSede(string? sede)
+    {
+        Sede = string.IsNullOrWhiteSpace(sede)
+            ? "General"
+            : GuardiaDominio.Requerido(sede, "Sede", 100);
+    }
 
     public void CambiarTipoRubro(TipoRubroMantenimiento tipo)
     {
