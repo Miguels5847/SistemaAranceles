@@ -10,6 +10,8 @@ internal static class MapeoServicioMantenimiento
     {
         Id = s.Id,
         CarreraId = s.CarreraId,
+        EscenarioProyeccionId = s.EscenarioProyeccionId,
+        Sede = s.Sede,
         TipoRubro = s.TipoRubro,
         TipoRubroNombre = NombreTipo(s.TipoRubro),
         NombreRubro = s.NombreRubro,
