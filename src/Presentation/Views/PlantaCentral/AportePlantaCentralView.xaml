@@ -150,6 +150,8 @@
                       ItemsSource="{Binding TablaResumenAporte}"
                       AutoGenerateColumns="False"
                       IsReadOnly="True"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
                       CanUserResizeColumns="False"
                       CanUserSortColumns="False"
                       CanUserReorderColumns="False"
@@ -188,6 +190,13 @@
                                 <Setter Property="Background" Value="#E8EAF6"/>
                                 <Setter Property="FontWeight" Value="Bold"/>
                             </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="#1A237E"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#E0E7FF"/>
+                                <Setter Property="Foreground" Value="#1A237E"/>
+                            </Trigger>
                         </Style.Triggers>
                     </Style>
                 </DataGrid.RowStyle>
@@ -196,6 +205,7 @@
                         <Setter Property="BorderBrush" Value="#C5CAE9"/>
                         <Setter Property="BorderThickness" Value="0,0,1,1"/>
                         <Setter Property="VerticalContentAlignment" Value="Center"/>
+                        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding EsFilaPrincipal}" Value="True">
                                 <Setter Property="Background" Value="#63CEF0"/>
@@ -203,12 +213,21 @@
                             </DataTrigger>
                             <DataTrigger Binding="{Binding EsFilaAporte}" Value="True">
                                 <Setter Property="Background" Value="#F8F9FF"/>
+                                <Setter Property="Foreground" Value="#1A237E"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding EsFilaTotal}" Value="True">
                                 <Setter Property="Background" Value="#E8EAF6"/>
+                                <Setter Property="Foreground" Value="#1A237E"/>
                                 <Setter Property="FontWeight" Value="Bold"/>
                             </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="#1A237E"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#E0E7FF"/>
+                                <Setter Property="Foreground" Value="#1A237E"/>
+                            </Trigger>
                         </Style.Triggers>
                     </Style>
                 </DataGrid.CellStyle>

@@ -44,6 +44,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ConfiguracionRetencionViewModel _configuracionRetencionViewModel;
     private readonly DatosInstitucionalesViewModel _datosInstitucionalesViewModel;
     private readonly AportePlantaCentralViewModel _aportePlantaCentralViewModel;
+    private readonly SistemaAranceles.Presentation.ViewModels.RecursosFisicos.ActivosFijosViewModel _activosFijosViewModel;
     private readonly Func<EditarUsuarioViewModel> _editarUsuarioViewModelFactory;
     private int _cerrandoSesion;
     private int _cargandoUsuarios;
@@ -62,6 +63,7 @@ public sealed partial class MainViewModel : ObservableObject
         ConfiguracionRetencionViewModel configuracionRetencionViewModel,
         DatosInstitucionalesViewModel datosInstitucionalesViewModel,
         AportePlantaCentralViewModel aportePlantaCentralViewModel,
+        SistemaAranceles.Presentation.ViewModels.RecursosFisicos.ActivosFijosViewModel activosFijosViewModel,
         Func<EditarUsuarioViewModel> editarUsuarioViewModelFactory)
     {
         _serviceProvider = serviceProvider;
@@ -77,6 +79,7 @@ public sealed partial class MainViewModel : ObservableObject
         _configuracionRetencionViewModel = configuracionRetencionViewModel;
         _datosInstitucionalesViewModel = datosInstitucionalesViewModel;
         _aportePlantaCentralViewModel = aportePlantaCentralViewModel;
+        _activosFijosViewModel = activosFijosViewModel;
         _editarUsuarioViewModelFactory = editarUsuarioViewModelFactory;
 
         // Subscribirse a actualizaciones de tiempo restante
@@ -230,6 +233,16 @@ public sealed partial class MainViewModel : ObservableObject
                 Titulo = "Aporte Planta Central",
                 Icono = string.Empty,
                 Comando = new AsyncRelayCommand(() => MostrarAportePlantaCentralAsync())
+            });
+        }
+
+        if (_sesionActual.TienePermiso("RD.VER") || _sesionActual.EsAdministrador)
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Recursos y Depreciación",
+                Icono = string.Empty,
+                Comando = new AsyncRelayCommand(() => MostrarActivosFijosAsync())
             });
         }
 
@@ -415,6 +428,19 @@ public sealed partial class MainViewModel : ObservableObject
         MensajePagina = string.Empty;
         PaginaActual = _aportePlantaCentralViewModel;
         await _aportePlantaCentralViewModel.CargarCommand.ExecuteAsync(null);
+    }
+
+    private async Task MostrarActivosFijosAsync()
+    {
+        if (!(_sesionActual.TienePermiso("RD.VER") || _sesionActual.EsAdministrador))
+        {
+            MensajePagina = "Acceso denegado al módulo de Recursos y Depreciación.";
+            return;
+        }
+
+        MensajePagina = string.Empty;
+        PaginaActual = _activosFijosViewModel;
+        await _activosFijosViewModel.CargarCommand.ExecuteAsync(null);
     }
 
     private async Task MostrarCargosFacultadAsync()

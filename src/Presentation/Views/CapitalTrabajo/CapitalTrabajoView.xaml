@@ -13,6 +13,35 @@
             <Setter Property="Background" Value="#C62828"/>
             <Setter Property="Foreground" Value="White"/>
         </Style>
+        <Style TargetType="DataGridRow">
+            <Setter Property="Foreground" Value="#263238"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#EEF2FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#E0E7FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="DataGridCell">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#263238"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#E0E7FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
     <Grid Margin="12">
@@ -63,6 +92,7 @@
 
                     <DataGrid Grid.Row="2" ItemsSource="{Binding MaterialesSuministros}"
                               AutoGenerateColumns="False" IsReadOnly="True"
+                              SelectionMode="Single" SelectionUnit="FullRow"
                               CanUserResizeColumns="False" CanUserSortColumns="False" CanUserReorderColumns="False"
                               HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
@@ -141,6 +171,7 @@
 
                     <DataGrid Grid.Row="1" ItemsSource="{Binding AseoLimpieza}"
                               AutoGenerateColumns="False" IsReadOnly="True"
+                              SelectionMode="Single" SelectionUnit="FullRow"
                               CanUserResizeColumns="False" CanUserSortColumns="False" CanUserReorderColumns="False"
                               HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
@@ -219,6 +250,7 @@
 
                     <DataGrid Grid.Row="1" ItemsSource="{Binding AccesoriosMateriales}"
                               AutoGenerateColumns="False" IsReadOnly="True"
+                              SelectionMode="Single" SelectionUnit="FullRow"
                               CanUserResizeColumns="False" CanUserSortColumns="False" CanUserReorderColumns="False"
                               HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
