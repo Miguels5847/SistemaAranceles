@@ -11,7 +11,14 @@ public sealed class CrearServicioMantenimientoCommand(
     public async Task EjecutarAsync(CrearServicioMantenimientoDto dto, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(dto);
-        var servicio = new ServicioMantenimiento(dto.CarreraId, dto.TipoRubro, dto.NombreRubro, dto.CostoAnualUniversidad);
+        var servicio = new ServicioMantenimiento(
+            dto.CarreraId,
+            dto.TipoRubro,
+            dto.NombreRubro,
+            dto.CostoAnualUniversidad,
+            dto.EscenarioProyeccionId,
+            dto.Sede);
+
         await repositorio.AgregarAsync(servicio, ct);
         await unidadTrabajo.GuardarCambiosAsync(ct);
     }
