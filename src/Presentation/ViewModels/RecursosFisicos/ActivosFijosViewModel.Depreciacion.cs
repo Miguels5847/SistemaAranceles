@@ -39,6 +39,13 @@ public sealed class FilaDepreciacionVm
     public string ValorResidualDisplay => ValorResidual == 0m ? "$ -" : ValorResidual.ToString("C2");
 }
 
+public sealed class CategoriaDepreciacionVm
+{
+    public string Nombre { get; init; } = string.Empty;
+    public ObservableCollection<FilaDepreciacionVm> Filas { get; init; } = [];
+    public ObservableCollection<TotalPeriodoDepreciacionVm> Totales { get; init; } = [];
+}
+
 public sealed class TotalPeriodoDepreciacionVm
 {
     public int Anio { get; init; }
@@ -55,6 +62,7 @@ public sealed partial class ActivosFijosViewModel
 {
     [ObservableProperty] private ObservableCollection<PeriodoDepreciacionVm> _periodosDepreciacion = [];
     [ObservableProperty] private ObservableCollection<FilaDepreciacionVm> _filasDepreciacion = [];
+    [ObservableProperty] private ObservableCollection<CategoriaDepreciacionVm> _categoriasDepreciacion = [];
     [ObservableProperty] private ObservableCollection<TotalPeriodoDepreciacionVm> _totalesDepreciacion = [];
     [ObservableProperty] private bool _estaCargandoDepreciacion;
     [ObservableProperty] private string _mensajeDepreciacion = string.Empty;
@@ -149,6 +157,38 @@ public sealed partial class ActivosFijosViewModel
                 DepreciacionPeriodo = t.DepreciacionPeriodo,
                 DepreciacionAcumulada = t.DepreciacionAcumulada
             }));
+
+        CategoriasDepreciacion = ConstruirCategoriasDepreciacion(FilasDepreciacion, PeriodosDepreciacion);
+    }
+
+    private static ObservableCollection<CategoriaDepreciacionVm> ConstruirCategoriasDepreciacion(
+        IEnumerable<FilaDepreciacionVm> filas,
+        IEnumerable<PeriodoDepreciacionVm> periodos)
+    {
+        var periodosOrdenados = periodos.OrderBy(p => p.NumeroPeriodo).ToList();
+
+        return new ObservableCollection<CategoriaDepreciacionVm>(
+            filas.GroupBy(f => string.IsNullOrWhiteSpace(f.CategoriaNombre) ? "Sin categoría" : f.CategoriaNombre)
+                .OrderBy(g => g.Key)
+                .Select(g => new CategoriaDepreciacionVm
+                {
+                    Nombre = g.Key,
+                    Filas = new ObservableCollection<FilaDepreciacionVm>(g.OrderBy(f => f.Descripcion)),
+                    Totales = new ObservableCollection<TotalPeriodoDepreciacionVm>(
+                        periodosOrdenados.Select(p => new TotalPeriodoDepreciacionVm
+                        {
+                            Anio = p.Anio,
+                            Semestre = p.Semestre,
+                            NumeroPeriodo = p.NumeroPeriodo,
+                            Etiqueta = p.Etiqueta,
+                            DepreciacionPeriodo = decimal.Round(
+                                g.Sum(f => f.Celdas.FirstOrDefault(c => c.NumeroPeriodo == p.NumeroPeriodo)?.DepreciacionPeriodo ?? 0m),
+                                2),
+                            DepreciacionAcumulada = decimal.Round(
+                                g.Sum(f => f.Celdas.FirstOrDefault(c => c.NumeroPeriodo == p.NumeroPeriodo)?.DepreciacionAcumulada ?? 0m),
+                                2)
+                        }))
+                }));
     }
 
     private static string ConstruirMensajeCargaDepreciacion(MatrizDepreciacionDto matriz)
@@ -163,13 +203,19 @@ public sealed partial class ActivosFijosViewModel
             return "No existen activos fijos activos para calcular depreciación.";
         }
 
-        return $"Matriz de depreciación cargada correctamente: {matriz.Filas.Count} activos y {matriz.Periodos.Count} períodos.";
+        var categorias = matriz.Filas
+            .Select(f => string.IsNullOrWhiteSpace(f.CategoriaNombre) ? "Sin categoría" : f.CategoriaNombre)
+            .Distinct()
+            .Count();
+
+        return $"Matriz de depreciación cargada correctamente: {matriz.Filas.Count} activos, {categorias} categorías y {matriz.Periodos.Count} períodos.";
     }
 
     private void LimpiarMatrizDepreciacion()
     {
         PeriodosDepreciacion = [];
         FilasDepreciacion = [];
+        CategoriasDepreciacion = [];
         TotalesDepreciacion = [];
         MensajeDepreciacion = string.Empty;
     }
