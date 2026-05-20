@@ -3,7 +3,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.DTOs.Mantenimiento;
+using SistemaAranceles.Application.Interfaces.Persistencia;
+using SistemaAranceles.Application.UseCases.CargosFacultad;
 using SistemaAranceles.Application.UseCases.Mantenimiento;
+using SistemaAranceles.Domain.Entities;
 using SistemaAranceles.Domain.Enums;
 using SistemaAranceles.Presentation.State;
 
@@ -15,11 +18,17 @@ public sealed class TipoRubroOpcion
     public string Etiqueta { get; init; } = string.Empty;
 }
 
+public sealed class CarreraMantenimientoOpcion
+{
+    public int Id { get; init; }
+    public string Etiqueta { get; init; } = string.Empty;
+}
+
 public sealed partial class MantenimientoViewModel : ObservableObject
 {
     private readonly IServiceProvider _sp;
     private readonly SesionActual _sesion;
-    private int _carreraId = 1;
+    private bool _suprimirRecarga;
 
     public MantenimientoViewModel(IServiceProvider sp, SesionActual sesion)
     {
@@ -33,26 +42,28 @@ public sealed partial class MantenimientoViewModel : ObservableObject
         TipoRubroForm = TiposRubro[0];
     }
 
-    // --- Listas ---
+    [ObservableProperty] private ObservableCollection<CarreraMantenimientoOpcion> _carreras = [];
+    [ObservableProperty] private CarreraMantenimientoOpcion? _carreraSeleccionada;
+    [ObservableProperty] private ObservableCollection<EscenarioProyeccion> _escenarios = [];
+    [ObservableProperty] private EscenarioProyeccion? _escenarioSeleccionado;
+
     [ObservableProperty] private ObservableCollection<ServicioMantenimientoDto> _serviciosBasicos = [];
     [ObservableProperty] private ObservableCollection<ServicioMantenimientoDto> _itemsMantenimiento = [];
     [ObservableProperty] private ServicioMantenimientoDto? _seleccionado;
-
-    // --- Resumen / proyección ---
     [ObservableProperty] private ResumenMantenimientoDto? _resumen;
 
-    // --- Estado ---
     [ObservableProperty] private bool _estaCargando;
     [ObservableProperty] private bool _estaGuardando;
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
 
-    // --- Formulario ---
     [ObservableProperty] private bool _formVisible;
     [ObservableProperty] private bool _formEsEdicion;
     [ObservableProperty] private int _formId;
     [ObservableProperty] private string _formNombre = string.Empty;
     [ObservableProperty] private string _formCosto = "0";
+    [ObservableProperty] private string _formSede = "General";
+    [ObservableProperty] private bool _formUsaEscenarioEspecifico;
     [ObservableProperty] private ObservableCollection<TipoRubroOpcion> _tiposRubro = [];
     [ObservableProperty] private TipoRubroOpcion? _tipoRubroForm;
 
@@ -60,28 +71,141 @@ public sealed partial class MantenimientoViewModel : ObservableObject
     public bool PuedeEditar => _sesion.EsAdministrador || _sesion.TienePermiso("MI.EDITAR");
     public bool PuedeEliminar => _sesion.EsAdministrador || _sesion.TienePermiso("MI.ELIMINAR");
 
-    [RelayCommand]
-    private async Task CargarAsync(int? carreraId = null)
+    partial void OnCarreraSeleccionadaChanged(CarreraMantenimientoOpcion? value)
     {
-        _carreraId = carreraId ?? _carreraId;
+        _ = value;
+        if (_suprimirRecarga || EstaCargando)
+            return;
+
+        _ = CargarEscenariosAsync();
+    }
+
+    partial void OnEscenarioSeleccionadoChanged(EscenarioProyeccion? value)
+    {
+        _ = value;
+        if (_suprimirRecarga || EstaCargando)
+            return;
+
+        _ = RecargarDatosAsync();
+    }
+
+    [RelayCommand]
+    private async Task CargarAsync()
+    {
         if (EstaCargando) return;
         EstaCargando = true;
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
+
         try
         {
-            await RefrescarListasAsync();
-            await CargarResumenAsync();
+            var carreraIdActual = CarreraSeleccionada?.Id;
+            var escenarioIdActual = EscenarioSeleccionado?.Id;
+
+            using var scope = _sp.CreateScope();
+            var repoCarrera = scope.ServiceProvider.GetRequiredService<IRepositorioCarrera>();
+            var lista = await repoCarrera.ListarAsync();
+
+            _suprimirRecarga = true;
+            try
+            {
+                Carreras = new ObservableCollection<CarreraMantenimientoOpcion>(
+                    lista.OrderBy(x => x.Codigo)
+                        .Select(x => new CarreraMantenimientoOpcion
+                        {
+                            Id = x.Id,
+                            Etiqueta = $"{x.Codigo} - {x.Nombre}"
+                        }));
+
+                CarreraSeleccionada = Carreras.FirstOrDefault(x => x.Id == carreraIdActual) ?? Carreras.FirstOrDefault();
+            }
+            finally
+            {
+                _suprimirRecarga = false;
+            }
+
+            if (CarreraSeleccionada is null)
+            {
+                LimpiarDatos();
+                MensajeError = "No hay carreras registradas para configurar servicios y mantenimiento.";
+                return;
+            }
+
+            await CargarEscenariosAsync(escenarioIdActual);
         }
-        catch (Exception ex) { MensajeError = ex.Message; }
-        finally { EstaCargando = false; }
+        catch (Exception ex)
+        {
+            MensajeError = Detalle(ex);
+            LimpiarDatos();
+        }
+        finally
+        {
+            EstaCargando = false;
+        }
+    }
+
+    private async Task CargarEscenariosAsync(int? escenarioIdPreferido = null)
+    {
+        if (CarreraSeleccionada is null)
+        {
+            LimpiarDatos();
+            return;
+        }
+
+        try
+        {
+            using var scope = _sp.CreateScope();
+            var query = scope.ServiceProvider.GetRequiredService<ListarEscenariosConProyeccionPorCarreraQuery>();
+            var lista = await query.EjecutarAsync(CarreraSeleccionada.Id);
+
+            _suprimirRecarga = true;
+            try
+            {
+                Escenarios = new ObservableCollection<EscenarioProyeccion>(lista);
+                EscenarioSeleccionado = Escenarios.FirstOrDefault(x => x.Id == escenarioIdPreferido)
+                    ?? Escenarios.FirstOrDefault();
+            }
+            finally
+            {
+                _suprimirRecarga = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            MensajeError = $"Error al cargar escenarios: {Detalle(ex)}";
+            _suprimirRecarga = true;
+            try
+            {
+                Escenarios = [];
+                EscenarioSeleccionado = null;
+            }
+            finally
+            {
+                _suprimirRecarga = false;
+            }
+        }
+
+        await RecargarDatosAsync();
+    }
+
+    private async Task RecargarDatosAsync()
+    {
+        if (CarreraSeleccionada is null)
+        {
+            LimpiarDatos();
+            return;
+        }
+
+        await RefrescarListasAsync();
+        await CargarResumenAsync();
     }
 
     private async Task RefrescarListasAsync()
     {
         using var scope = _sp.CreateScope();
         var query = scope.ServiceProvider.GetRequiredService<ListarServiciosMantenimientoQuery>();
-        var todos = await query.EjecutarAsync(_carreraId);
+        var todos = await query.EjecutarAsync(CarreraSeleccionada!.Id, escenarioProyeccionId: EscenarioSeleccionado?.Id);
+
         ServiciosBasicos = new ObservableCollection<ServicioMantenimientoDto>(
             todos.Where(x => x.TipoRubro == TipoRubroMantenimiento.ServicioBasico));
         ItemsMantenimiento = new ObservableCollection<ServicioMantenimientoDto>(
@@ -90,20 +214,37 @@ public sealed partial class MantenimientoViewModel : ObservableObject
 
     private async Task CargarResumenAsync()
     {
+        if (CarreraSeleccionada is null || EscenarioSeleccionado is null)
+        {
+            Resumen = null;
+            MensajeError = EscenarioSeleccionado is null
+                ? "Seleccione un escenario con proyección para calcular la proyección semestral."
+                : string.Empty;
+            return;
+        }
+
         using var scope = _sp.CreateScope();
         var query = scope.ServiceProvider.GetRequiredService<ObtenerResumenMantenimientoQuery>();
-        Resumen = await query.EjecutarAsync(_carreraId, escenarioProyeccionId: 1);
+        Resumen = await query.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
     }
 
     [RelayCommand]
     private void AbrirNuevo(string tipoStr)
     {
+        if (!PuedeCrear)
+        {
+            MensajeError = "No tiene permiso para crear rubros de mantenimiento.";
+            return;
+        }
+
         var tipo = tipoStr == "Mantenimiento"
             ? TipoRubroMantenimiento.Mantenimiento
             : TipoRubroMantenimiento.ServicioBasico;
         FormId = 0;
         FormNombre = string.Empty;
         FormCosto = "0";
+        FormSede = "General";
+        FormUsaEscenarioEspecifico = false;
         TipoRubroForm = TiposRubro.First(t => t.Valor == tipo);
         FormEsEdicion = false;
         FormVisible = true;
@@ -112,9 +253,17 @@ public sealed partial class MantenimientoViewModel : ObservableObject
     [RelayCommand]
     private void AbrirEditar(ServicioMantenimientoDto item)
     {
+        if (!PuedeEditar)
+        {
+            MensajeError = "No tiene permiso para editar rubros de mantenimiento.";
+            return;
+        }
+
         FormId = item.Id;
         FormNombre = item.NombreRubro;
         FormCosto = item.CostoAnualUniversidad.ToString("F2");
+        FormSede = string.IsNullOrWhiteSpace(item.Sede) ? "General" : item.Sede;
+        FormUsaEscenarioEspecifico = item.EscenarioProyeccionId.HasValue;
         TipoRubroForm = TiposRubro.First(t => t.Valor == item.TipoRubro);
         FormEsEdicion = true;
         FormVisible = true;
@@ -131,12 +280,33 @@ public sealed partial class MantenimientoViewModel : ObservableObject
     private async Task GuardarAsync()
     {
         MensajeError = string.Empty;
+
+        if (!FormEsEdicion && !PuedeCrear)
+        {
+            MensajeError = "No tiene permiso para crear rubros de mantenimiento.";
+            return;
+        }
+
+        if (FormEsEdicion && !PuedeEditar)
+        {
+            MensajeError = "No tiene permiso para editar rubros de mantenimiento.";
+            return;
+        }
+
+        if (CarreraSeleccionada is null)
+        {
+            MensajeError = "Seleccione una carrera.";
+            return;
+        }
+
         if (!decimal.TryParse(FormCosto.Replace(',', '.'), System.Globalization.NumberStyles.Any,
                 System.Globalization.CultureInfo.InvariantCulture, out var costo))
         {
             MensajeError = "Costo inválido.";
             return;
         }
+
+        var escenarioId = FormUsaEscenarioEspecifico ? EscenarioSeleccionado?.Id : null;
         EstaGuardando = true;
         try
         {
@@ -146,7 +316,9 @@ public sealed partial class MantenimientoViewModel : ObservableObject
                 var cmd = scope.ServiceProvider.GetRequiredService<CrearServicioMantenimientoCommand>();
                 await cmd.EjecutarAsync(new CrearServicioMantenimientoDto
                 {
-                    CarreraId = _carreraId,
+                    CarreraId = CarreraSeleccionada.Id,
+                    EscenarioProyeccionId = escenarioId,
+                    Sede = FormSede,
                     TipoRubro = TipoRubroForm!.Valor,
                     NombreRubro = FormNombre,
                     CostoAnualUniversidad = costo,
@@ -158,6 +330,8 @@ public sealed partial class MantenimientoViewModel : ObservableObject
                 await cmd.EjecutarAsync(new ActualizarServicioMantenimientoDto
                 {
                     Id = FormId,
+                    EscenarioProyeccionId = escenarioId,
+                    Sede = FormSede,
                     TipoRubro = TipoRubroForm!.Valor,
                     NombreRubro = FormNombre,
                     CostoAnualUniversidad = costo,
@@ -165,16 +339,21 @@ public sealed partial class MantenimientoViewModel : ObservableObject
             }
             FormVisible = false;
             MensajeExito = FormEsEdicion ? "Rubro actualizado." : "Rubro creado.";
-            await RefrescarListasAsync();
-            await CargarResumenAsync();
+            await RecargarDatosAsync();
         }
-        catch (Exception ex) { MensajeError = ex.Message; }
+        catch (Exception ex) { MensajeError = Detalle(ex); }
         finally { EstaGuardando = false; }
     }
 
     [RelayCommand]
     private async Task EliminarAsync(ServicioMantenimientoDto item)
     {
+        if (!PuedeEliminar)
+        {
+            MensajeError = "No tiene permiso para eliminar rubros de mantenimiento.";
+            return;
+        }
+
         MensajeError = string.Empty;
         EstaGuardando = true;
         try
@@ -183,10 +362,20 @@ public sealed partial class MantenimientoViewModel : ObservableObject
             var cmd = scope.ServiceProvider.GetRequiredService<EliminarServicioMantenimientoCommand>();
             await cmd.EjecutarAsync(item.Id, _sesion.UsuarioId);
             MensajeExito = "Rubro eliminado.";
-            await RefrescarListasAsync();
-            await CargarResumenAsync();
+            await RecargarDatosAsync();
         }
-        catch (Exception ex) { MensajeError = ex.Message; }
+        catch (Exception ex) { MensajeError = Detalle(ex); }
         finally { EstaGuardando = false; }
     }
+
+    private void LimpiarDatos()
+    {
+        ServiciosBasicos = [];
+        ItemsMantenimiento = [];
+        Resumen = null;
+        Escenarios = [];
+        EscenarioSeleccionado = null;
+    }
+
+    private static string Detalle(Exception ex) => ex.InnerException?.Message ?? ex.Message;
 }
