@@ -13,9 +13,13 @@ public sealed class ActualizarServicioMantenimientoCommand(
         ArgumentNullException.ThrowIfNull(dto);
         var servicio = await repositorio.ObtenerPorIdAsync(dto.Id, ct)
             ?? throw new DominioException($"Servicio/Mantenimiento con Id={dto.Id} no encontrado.");
+
+        servicio.CambiarEscenario(dto.EscenarioProyeccionId);
+        servicio.CambiarSede(dto.Sede);
         servicio.CambiarTipoRubro(dto.TipoRubro);
         servicio.CambiarNombreRubro(dto.NombreRubro);
         servicio.CambiarCosto(dto.CostoAnualUniversidad);
+
         repositorio.Actualizar(servicio);
         await unidadTrabajo.GuardarCambiosAsync(ct);
     }
