@@ -23,22 +23,22 @@ Presentation    ← WPF Views/ViewModels/State (SesionActual)
 
 ## Estado por épica
 
-| #   | Épica                                              | KANs    | SP  | Estado |
-| --- | -------------------------------------------------- | ------- | --- | ------ |
-| 1   | Setup & Arquitectura                               | 01–05   | —   | ✅     |
-| 2   | Usuarios (CRUD + Login + Menú dinámico + AuditLog) | 06–09   | —   | ✅     |
-| 3   | Inflación (CRUD + Proyección + Solo lectura)       | 10–12   | —   | ✅     |
-| —   | Infra / RBAC / QA                                  | 13–14   | —   | ✅     |
-| 4   | Tasa Retención                                     | 15–16\* | —   | ✅     |
-| 5   | Estudiantes                                        | 17–19   | 13  | ✅     |
-| 6   | Sueldos Planta Central                             | 20–xx   | —   | ⏳     |
-| 7   | Recursos Físicos / Depreciación                    | xx      | —   | ⏳     |
-| 8   | Costos y Gastos                                    | xx      | —   | ⏳     |
-| 9   | Demanda / Ingresos                                 | xx      | —   | ⏳     |
-| 10  | Mantenimiento / Capital Trabajo / Inversión        | xx      | —   | ⏳     |
-| 11  | Financiamiento / Balance / Reportes                | xx      | —   | ⏳     |
-| 12  | Análisis Financiero                                | xx      | —   | ⏳     |
-| 13  | Cierre & Validación                                | 50–53   | —   | ⏳     |
+| #   | Épica                                              | KANs    | SP  | Estado          |
+| --- | -------------------------------------------------- | ------- | --- | --------------- |
+| 1   | Setup & Arquitectura                               | 01–05   | —   | ✅              |
+| 2   | Usuarios (CRUD + Login + Menú dinámico + AuditLog) | 06–09   | —   | ✅              |
+| 3   | Inflación (CRUD + Proyección + Solo lectura)       | 10–12   | —   | ✅              |
+| —   | Infra / RBAC / QA                                  | 13–14   | —   | ✅              |
+| 4   | Tasa Retención                                     | 15–16\* | —   | ✅              |
+| 5   | Estudiantes                                        | 17–19   | 13  | ✅              |
+| 6   | Sueldos Planta Central                             | 20–xx   | —   | ⏳              |
+| 7   | Recursos Físicos / Depreciación                    | 24–27   | —   | ⏳ (KAN-24: ✅) |
+| 8   | Costos y Gastos                                    | xx      | —   | ⏳              |
+| 9   | Demanda / Ingresos                                 | xx      | —   | ⏳              |
+| 10  | Mantenimiento / Capital Trabajo / Inversión        | xx      | —   | ⏳              |
+| 11  | Financiamiento / Balance / Reportes                | xx      | —   | ⏳              |
+| 12  | Análisis Financiero                                | xx      | —   | ⏳              |
+| 13  | Cierre & Validación                                | 50–53   | —   | ⏳              |
 
 \* KANs 13/14 originales (Épica 4) renombrados internamente; los KAN-13/14 ejecutados son tareas de infraestructura.
 
@@ -59,6 +59,15 @@ Presentation    ← WPF Views/ViewModels/State (SesionActual)
   - KAN-18 · Horas de docencia por paralelos: cálculo de horas de docencia asistida y aplicación práctica; inputs editables Horas Docente / Horas Técnico con recálculo en tiempo real
   - KAN-19 · Desglose de docentes por tipo: distinción Titular / Ocasional Tipo 1 / Ocasional Tipo 2 (Técnico); DataGrid con filas destacadas por tipo; fix de compatibilidad MahApps.Metro (CellStyle + RowStyle completo en todos los DataGrids del módulo)
 
+  - **Recursos Físicos (KAN-24) — Avance completado:**
+  - CRUD `ActivoFijo` implementado en `Domain` (`ActivoFijo`), repositorio e implementación `IRepositorioActivoFijo` / `RepositorioActivoFijo`.
+  - Configuración EF (`ConfiguracionActivoFijo`) y `DbSet<ActivoFijo>` en `ContextoAplicacion`.
+  - Scripts SQL versionados: `sql/KAN24_activo_fijo.sql`, `sql/KAN24_permisos.sql`, `sql/KAN24_catalogo_y_tipo_calculo.sql` (idempotentes, incluyen marca en `__EFMigrationsHistory`).
+  - Use cases: `Crear`, `Actualizar`, `Eliminar` (soft), `ListarActivosFijosQuery`, `ObtenerTotalesActivosQuery`, `SembrarActivosFijosDesdeCatalogoCommand`.
+  - Presentación: `ActivosFijosView` + `ActivosFijosViewModel` registrados en DI y accesibles desde el menú (permiso `RD.VER`).
+  - Tests unitarios cubriendo dominio y casos de sembrado (`tests/Application.Tests/RecursosFisicosDepreciacion`).
+  - UI: se ha eliminado la opción `PorHito` del desplegable de `TipoCalculoCantidad` en la vista de activos (cambio no disruptivo, compilación OK).
+
 ## Progreso reciente
 
 - Tab 4 (Consumo por período): UI + ViewModel editables implementados — botón "Editar horas malla", panel de edición, persistencia de overrides y recálculo en cascada.
@@ -68,6 +77,13 @@ Presentation    ← WPF Views/ViewModels/State (SesionActual)
 - Formato horas: columnas, totales y editor usan formato `0.##` para evitar mostrar `.00` innecesarios.
 - Tests: `Application.Tests` (14/14) y `Presentation.Tests` (2/2) pasan localmente.
 - Menú: reordenado según flujo lógico y renombrado "Sueldos" → "Sueldos Carrera".
+
+- KAN-24 (Recursos Físicos) — estado actual:
+  - `ActivoFijo` CRUD implementado (Domain + Repositorio + EF config + DbSet).
+  - Scripts SQL versionados y presentes en `sql/` (create + permisos + catalogo).
+  - Use cases, DTOs y mapeos implementados; tests unitarios añadidos.
+  - UI: `ActivosFijosView` + `ActivosFijosViewModel` integrados; opción `PorHito` removida del selector de `TipoCalculoCantidad`.
+  - Compilación del proyecto Presentation y ejecución de tests exitosa tras cambios.
 
 Estado: cambios aplicados, compilación y tests OK. Próximo: indicar nuevas tareas para avanzar.
 

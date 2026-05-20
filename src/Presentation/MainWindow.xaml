@@ -13,6 +13,7 @@
         xmlns:vmCap="clr-namespace:SistemaAranceles.Presentation.ViewModels.CapitalTrabajo"
         xmlns:vmDI="clr-namespace:SistemaAranceles.Presentation.ViewModels.DatosInstitucionales"
         xmlns:vmPC="clr-namespace:SistemaAranceles.Presentation.ViewModels.PlantaCentral"
+        xmlns:vmRF="clr-namespace:SistemaAranceles.Presentation.ViewModels.RecursosFisicos"
         xmlns:vU="clr-namespace:SistemaAranceles.Presentation.Views.Usuarios"
         xmlns:vA="clr-namespace:SistemaAranceles.Presentation.Views.Auditoria"
         xmlns:vCF="clr-namespace:SistemaAranceles.Presentation.Views.CargosFacultad"
@@ -24,6 +25,7 @@
         xmlns:vCap="clr-namespace:SistemaAranceles.Presentation.Views.CapitalTrabajo"
         xmlns:vDI="clr-namespace:SistemaAranceles.Presentation.Views.DatosInstitucionales"
         xmlns:vPC="clr-namespace:SistemaAranceles.Presentation.Views.PlantaCentral"
+        xmlns:vRF="clr-namespace:SistemaAranceles.Presentation.Views.RecursosFisicos"
         Title="Sistema de Aranceles Universitarios"
         Width="1400"
         Height="820"
@@ -73,6 +75,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmPC:AportePlantaCentralViewModel}">
             <vPC:AportePlantaCentralView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmRF:ActivosFijosViewModel}">
+            <vRF:ActivosFijosView/>
         </DataTemplate>
     </Window.Resources>
 
