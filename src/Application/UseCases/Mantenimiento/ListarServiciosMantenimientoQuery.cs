@@ -9,9 +9,10 @@ public sealed class ListarServiciosMantenimientoQuery(IRepositorioServicioManten
     public async Task<IReadOnlyList<ServicioMantenimientoDto>> EjecutarAsync(
         int carreraId,
         TipoRubroMantenimiento? tipo = null,
+        int? escenarioProyeccionId = null,
         CancellationToken ct = default)
     {
-        var lista = await repositorio.ListarPorCarreraAsync(carreraId, tipo, ct);
+        var lista = await repositorio.ListarPorCarreraAsync(carreraId, tipo, escenarioProyeccionId, ct);
         return lista.Select(MapeoServicioMantenimiento.ADto).ToList();
     }
 }
