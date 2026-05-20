@@ -15,6 +15,7 @@ using SistemaAranceles.Presentation.ViewModels.Auditoria;
 using SistemaAranceles.Presentation.ViewModels.Carreras;
 using SistemaAranceles.Presentation.ViewModels.Estudiantes;
 using SistemaAranceles.Presentation.ViewModels.Inflacion;
+using SistemaAranceles.Presentation.ViewModels.MantenimientoInversion;
 using SistemaAranceles.Presentation.ViewModels.TasaRetencion;
 using SistemaAranceles.Presentation.ViewModels.Usuarios;
 using System.Diagnostics;
@@ -82,7 +83,6 @@ public sealed partial class MainViewModel : ObservableObject
         _activosFijosViewModel = activosFijosViewModel;
         _editarUsuarioViewModelFactory = editarUsuarioViewModelFactory;
 
-        // Subscribirse a actualizaciones de tiempo restante
         _servicioInactividad.TiempoRestanteActualizado += (_, tiempoRestante) =>
         {
             TiempoRestanteSesion = FormatearTiempoRestante(tiempoRestante);
@@ -147,171 +147,75 @@ public sealed partial class MainViewModel : ObservableObject
 
         if (_sesionActual.TienePermiso("US.VER"))
         {
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Usuarios",
-                Icono = string.Empty,
-                Comando = new AsyncRelayCommand(() => MostrarUsuariosAsync())
-            });
+            MenuItems.Add(new ItemMenu { Titulo = "Usuarios", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarUsuariosAsync()) });
         }
 
         if (_sesionActual.TienePermiso("CA.VER"))
         {
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Carreras",
-                Icono = string.Empty,
-                Comando = new AsyncRelayCommand(() => MostrarCarrerasAsync())
-            });
+            MenuItems.Add(new ItemMenu { Titulo = "Carreras", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarCarrerasAsync()) });
         }
 
-        // Catálogo maestro: Capital de Trabajo (reemplaza menús separados de catálogos)
         if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
         {
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Capital de Trabajo",
-                Icono = string.Empty,
-                Comando = new AsyncRelayCommand(() => MostrarCapitalTrabajoAsync())
-            });
+            MenuItems.Add(new ItemMenu { Titulo = "Capital de Trabajo", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarCapitalTrabajoAsync()) });
         }
 
         if (_sesionActual.TienePermiso("INF.VER"))
         {
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Inflación",
-                Icono = string.Empty,
-                Comando = new AsyncRelayCommand(() => MostrarInflacionAsync())
-            });
+            MenuItems.Add(new ItemMenu { Titulo = "Inflación", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarInflacionAsync()) });
         }
 
         if (_sesionActual.TienePermiso("TRE.VER") || _sesionActual.EsAdministrador)
         {
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Tasa de Retención y Graduación",
-                Icono = string.Empty,
-                Comando = new AsyncRelayCommand(() => MostrarTasaRetencionAsync())
-            });
+            MenuItems.Add(new ItemMenu { Titulo = "Tasa de Retención y Graduación", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarTasaRetencionAsync()) });
         }
 
         if (_sesionActual.TienePermiso("ES.VER") || _sesionActual.EsAdministrador)
         {
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Proyección de Estudiantes",
-                Icono = string.Empty,
-                Comando = new AsyncRelayCommand(() => MostrarEstudiantesAsync())
-            });
+            MenuItems.Add(new ItemMenu { Titulo = "Proyección de Estudiantes", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarEstudiantesAsync()) });
         }
 
         if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
         {
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Sueldos Carrera",
-                Icono = string.Empty,
-                Comando = new AsyncRelayCommand(() => MostrarCargosFacultadAsync())
-            });
+            MenuItems.Add(new ItemMenu { Titulo = "Sueldos Carrera", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarCargosFacultadAsync()) });
         }
 
         if (_sesionActual.TienePermiso("DI.VER") || _sesionActual.EsAdministrador)
         {
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Datos Institucionales",
-                Icono = string.Empty,
-                Comando = new AsyncRelayCommand(() => MostrarDatosInstitucionalesAsync())
-            });
+            MenuItems.Add(new ItemMenu { Titulo = "Datos Institucionales", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarDatosInstitucionalesAsync()) });
         }
 
         if (_sesionActual.TienePermiso("PC.VER") || _sesionActual.EsAdministrador)
         {
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Aporte Planta Central",
-                Icono = string.Empty,
-                Comando = new AsyncRelayCommand(() => MostrarAportePlantaCentralAsync())
-            });
+            MenuItems.Add(new ItemMenu { Titulo = "Aporte Planta Central", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarAportePlantaCentralAsync()) });
         }
 
         if (_sesionActual.TienePermiso("RD.VER") || _sesionActual.EsAdministrador)
         {
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Recursos y Depreciación",
-                Icono = string.Empty,
-                Comando = new AsyncRelayCommand(() => MostrarActivosFijosAsync())
-            });
+            MenuItems.Add(new ItemMenu { Titulo = "Recursos y Depreciación", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarActivosFijosAsync()) });
         }
 
         if (_sesionActual.EsAdministrador || _sesionActual.TienePermiso("MI.VER"))
         {
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Mantenimiento",
-                Icono = string.Empty,
-                Comando = new AsyncRelayCommand(() => MostrarMantenimientoAsync())
-            });
-        }
-
-        if (_sesionActual.EsAdministrador || _sesionActual.TienePermiso("MI.VER"))
-        {
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Activos Diferidos",
-                Icono = string.Empty,
-                Comando = new AsyncRelayCommand(() => MostrarActivoDiferidoAsync())
-            });
-        }
-
-        if (_sesionActual.EsAdministrador || _sesionActual.TienePermiso("MI.VER"))
-        {
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Inversión Inicial",
-                Icono = string.Empty,
-                Comando = new AsyncRelayCommand(() => MostrarInversionInicialAsync())
-            });
+            MenuItems.Add(new ItemMenu { Titulo = "Mantenimiento e Inversión", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarMantenimientoInversionAsync()) });
         }
 
         if (_sesionActual.TienePermiso("CFG.VER"))
         {
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Configuración",
-                Icono = string.Empty,
-                Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Configuración", "Pendiente"))
-            });
+            MenuItems.Add(new ItemMenu { Titulo = "Configuración", Icono = string.Empty, Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Configuración", "Pendiente")) });
         }
 
         if (_sesionActual.TienePermiso("REP.VER"))
         {
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Reportes",
-                Icono = string.Empty,
-                Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Reportes", "Pendiente"))
-            });
+            MenuItems.Add(new ItemMenu { Titulo = "Reportes", Icono = string.Empty, Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Reportes", "Pendiente")) });
         }
 
         if (_sesionActual.EsAdministrador && _sesionActual.TienePermiso("AUD.VER"))
         {
-            MenuItems.Add(new ItemMenu
-            {
-                Titulo = "Auditoría",
-                Icono = string.Empty,
-                Comando = new AsyncRelayCommand(() => MostrarAuditoriaAsync())
-            });
+            MenuItems.Add(new ItemMenu { Titulo = "Auditoría", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarAuditoriaAsync()) });
         }
 
-        MenuItems.Add(new ItemMenu
-        {
-            Titulo = "Cerrar Sesión",
-            Icono = string.Empty,
-            Comando = new RelayCommand(() => _ = CerrarSesionAsync())
-        });
+        MenuItems.Add(new ItemMenu { Titulo = "Cerrar Sesión", Icono = string.Empty, Comando = new RelayCommand(() => _ = CerrarSesionAsync()) });
 
         Bienvenida = $"Bienvenido, {_sesionActual.NombreCompleto}  |  Rol: {_sesionActual.RolNombre}";
     }
@@ -322,29 +226,15 @@ public sealed partial class MainViewModel : ObservableObject
         MensajePagina = $"Módulo {modulo} — en desarrollo ({epica}). Se habilitó menú por permisos para pruebas de acceso por rol.";
     }
 
-    [RelayCommand]
-    private Task MostrarUsuarios() => MostrarUsuariosAsync();
-
-    [RelayCommand]
-    private Task MostrarAuditoria() => MostrarAuditoriaAsync();
-
-    [RelayCommand]
-    private Task MostrarInflacion() => MostrarInflacionAsync();
-
-    [RelayCommand]
-    private Task MostrarCarreras() => MostrarCarrerasAsync();
-
-    [RelayCommand]
-    private Task MostrarTasaRetencion() => MostrarTasaRetencionAsync();
+    [RelayCommand] private Task MostrarUsuarios() => MostrarUsuariosAsync();
+    [RelayCommand] private Task MostrarAuditoria() => MostrarAuditoriaAsync();
+    [RelayCommand] private Task MostrarInflacion() => MostrarInflacionAsync();
+    [RelayCommand] private Task MostrarCarreras() => MostrarCarrerasAsync();
+    [RelayCommand] private Task MostrarTasaRetencion() => MostrarTasaRetencionAsync();
 
     private async Task MostrarEstudiantesAsync()
     {
-        if (!(_sesionActual.TienePermiso("ES.VER") || _sesionActual.EsAdministrador))
-        {
-            MensajePagina = "Acceso denegado al módulo de Proyección de Estudiantes.";
-            return;
-        }
-
+        if (!(_sesionActual.TienePermiso("ES.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo de Proyección de Estudiantes."; return; }
         MensajePagina = string.Empty;
         PaginaActual = _estudiantesViewModel;
         await _estudiantesViewModel.CargarCommand.ExecuteAsync(null);
@@ -352,12 +242,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarCarrerasAsync()
     {
-        if (!(_sesionActual.TienePermiso("CA.VER") || _sesionActual.EsAdministrador))
-        {
-            MensajePagina = "Acceso denegado al módulo de Carreras.";
-            return;
-        }
-
+        if (!(_sesionActual.TienePermiso("CA.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo de Carreras."; return; }
         MensajePagina = string.Empty;
         PaginaActual = _carrerasViewModel;
         await _carrerasViewModel.CargarCommand.ExecuteAsync(null);
@@ -366,12 +251,7 @@ public sealed partial class MainViewModel : ObservableObject
     private async Task MostrarTasaRetencionAsync()
     {
         var puede = _sesionActual.TienePermiso("TRE.VER") || _sesionActual.EsAdministrador;
-        if (!puede)
-        {
-            MensajePagina = "Acceso denegado al módulo de Tasa de Retención.";
-            return;
-        }
-
+        if (!puede) { MensajePagina = "Acceso denegado al módulo de Tasa de Retención."; return; }
         MensajePagina = string.Empty;
         PaginaActual = _configuracionRetencionViewModel;
         await _configuracionRetencionViewModel.CargarCommand.ExecuteAsync(null);
@@ -379,43 +259,21 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarUsuariosAsync(string? mensajeExito = null)
     {
-        if (!_sesionActual.TienePermiso("US.VER"))
-        {
-            MensajePagina = "Acceso denegado a Gestión de Usuarios.";
-            return;
-        }
-
-        if (Interlocked.Exchange(ref _cargandoUsuarios, 1) == 1)
-        {
-            Trace.TraceInformation($"[{DateTime.UtcNow:O}] MainViewModel: MostrarUsuariosAsync ignorado por carga en curso.");
-            return;
-        }
-
+        if (!_sesionActual.TienePermiso("US.VER")) { MensajePagina = "Acceso denegado a Gestión de Usuarios."; return; }
+        if (Interlocked.Exchange(ref _cargandoUsuarios, 1) == 1) { Trace.TraceInformation($"[{DateTime.UtcNow:O}] MainViewModel: MostrarUsuariosAsync ignorado por carga en curso."); return; }
         MensajePagina = string.Empty;
         try
         {
             PaginaActual = _usuariosViewModel;
             await _usuariosViewModel.CargarCommand.ExecuteAsync(null);
-
-            if (!string.IsNullOrWhiteSpace(mensajeExito))
-            {
-                _usuariosViewModel.MensajeExito = mensajeExito;
-            }
+            if (!string.IsNullOrWhiteSpace(mensajeExito)) _usuariosViewModel.MensajeExito = mensajeExito;
         }
-        finally
-        {
-            Interlocked.Exchange(ref _cargandoUsuarios, 0);
-        }
+        finally { Interlocked.Exchange(ref _cargandoUsuarios, 0); }
     }
 
     private Task MostrarAuditoriaAsync()
     {
-        if (!(_sesionActual.EsAdministrador && _sesionActual.TienePermiso("AUD.VER")))
-        {
-            MensajePagina = "Acceso denegado a Auditoría.";
-            return Task.CompletedTask;
-        }
-
+        if (!(_sesionActual.EsAdministrador && _sesionActual.TienePermiso("AUD.VER"))) { MensajePagina = "Acceso denegado a Auditoría."; return Task.CompletedTask; }
         MensajePagina = string.Empty;
         PaginaActual = _auditoriaViewModel;
         return Task.CompletedTask;
@@ -423,12 +281,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarInflacionAsync()
     {
-        if (!_sesionActual.TienePermiso("INF.VER"))
-        {
-            MensajePagina = "Acceso denegado al módulo de Inflación.";
-            return;
-        }
-
+        if (!_sesionActual.TienePermiso("INF.VER")) { MensajePagina = "Acceso denegado al módulo de Inflación."; return; }
         MensajePagina = string.Empty;
         PaginaActual = _inflacionViewModel;
         await _inflacionViewModel.CargarCommand.ExecuteAsync(null);
@@ -436,12 +289,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarDatosInstitucionalesAsync()
     {
-        if (!(_sesionActual.TienePermiso("DI.VER") || _sesionActual.EsAdministrador))
-        {
-            MensajePagina = "Acceso denegado al modulo Datos Institucionales.";
-            return;
-        }
-
+        if (!(_sesionActual.TienePermiso("DI.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al modulo Datos Institucionales."; return; }
         MensajePagina = string.Empty;
         PaginaActual = _datosInstitucionalesViewModel;
         await _datosInstitucionalesViewModel.CargarCommand.ExecuteAsync(null);
@@ -449,12 +297,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarAportePlantaCentralAsync()
     {
-        if (!(_sesionActual.TienePermiso("PC.VER") || _sesionActual.EsAdministrador))
-        {
-            MensajePagina = "Acceso denegado al modulo Aporte Planta Central.";
-            return;
-        }
-
+        if (!(_sesionActual.TienePermiso("PC.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al modulo Aporte Planta Central."; return; }
         MensajePagina = string.Empty;
         PaginaActual = _aportePlantaCentralViewModel;
         await _aportePlantaCentralViewModel.CargarCommand.ExecuteAsync(null);
@@ -462,12 +305,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarActivosFijosAsync()
     {
-        if (!(_sesionActual.TienePermiso("RD.VER") || _sesionActual.EsAdministrador))
-        {
-            MensajePagina = "Acceso denegado al módulo de Recursos y Depreciación.";
-            return;
-        }
-
+        if (!(_sesionActual.TienePermiso("RD.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo de Recursos y Depreciación."; return; }
         MensajePagina = string.Empty;
         PaginaActual = _activosFijosViewModel;
         await _activosFijosViewModel.CargarCommand.ExecuteAsync(null);
@@ -475,96 +313,41 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarCargosFacultadAsync()
     {
-        if (!(_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador))
-        {
-            MensajePagina = "Acceso denegado al módulo de Sueldos.";
-            return;
-        }
-
+        if (!(_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo de Sueldos."; return; }
         MensajePagina = string.Empty;
         PaginaActual = _cargosFacultadViewModel;
         await _cargosFacultadViewModel.CargarCommand.ExecuteAsync(null);
     }
 
-    private Task MostrarCatalogoCargosAsync()
-    {
-        return MostrarCapitalTrabajoAsync();
-    }
+    private Task MostrarCatalogoCargosAsync() => MostrarCapitalTrabajoAsync();
 
     private async Task MostrarCapitalTrabajoAsync()
     {
-        if (!(_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador))
-        {
-            MensajePagina = "Acceso denegado al módulo Capital de Trabajo.";
-            return;
-        }
-
+        if (!(_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo Capital de Trabajo."; return; }
         MensajePagina = string.Empty;
         PaginaActual = _capitalTrabajoViewModel;
         await _capitalTrabajoViewModel.CargarCommand.ExecuteAsync(null);
     }
 
-    private Task MostrarCatalogoMaterialesAsync()
-    {
-        return MostrarCapitalTrabajoAsync();
-    }
+    private Task MostrarCatalogoMaterialesAsync() => MostrarCapitalTrabajoAsync();
 
-    private async Task MostrarMantenimientoAsync()
+    private async Task MostrarMantenimientoInversionAsync()
     {
-        if (!(_sesionActual.EsAdministrador || _sesionActual.TienePermiso("MI.VER")))
-        {
-            MensajePagina = "Acceso denegado al módulo de Mantenimiento.";
-            return;
-        }
+        if (!(_sesionActual.EsAdministrador || _sesionActual.TienePermiso("MI.VER"))) { MensajePagina = "Acceso denegado al módulo de Mantenimiento e Inversión."; return; }
         MensajePagina = string.Empty;
-        var vm = _serviceProvider.GetRequiredService<SistemaAranceles.Presentation.ViewModels.Mantenimiento.MantenimientoViewModel>();
+        var vm = _serviceProvider.GetRequiredService<MantenimientoInversionViewModel>();
         PaginaActual = vm;
-        await vm.CargarCommand.ExecuteAsync(null);
-    }
-
-    private async Task MostrarActivoDiferidoAsync()
-    {
-        if (!(_sesionActual.EsAdministrador || _sesionActual.TienePermiso("MI.VER")))
-        {
-            MensajePagina = "Acceso denegado al módulo de Activos Diferidos.";
-            return;
-        }
-        MensajePagina = string.Empty;
-        var vm = _serviceProvider.GetRequiredService<SistemaAranceles.Presentation.ViewModels.ActivoDiferido.ActivoDiferidoViewModel>();
-        PaginaActual = vm;
-        await vm.CargarCommand.ExecuteAsync(null);
-    }
-
-    private async Task MostrarInversionInicialAsync()
-    {
-        if (!(_sesionActual.EsAdministrador || _sesionActual.TienePermiso("MI.VER")))
-        {
-            MensajePagina = "Acceso denegado al módulo de Inversión Inicial.";
-            return;
-        }
-        MensajePagina = string.Empty;
-        var vm = _serviceProvider.GetRequiredService<SistemaAranceles.Presentation.ViewModels.InversionInicial.InversionInicialViewModel>();
-        PaginaActual = vm;
-        await vm.CargarCommand.ExecuteAsync(null);
+        await vm.CargarAsync();
     }
 
     [RelayCommand]
     private async Task MostrarNuevoUsuarioAsync()
     {
-        if (!_sesionActual.TienePermiso("US.CREAR"))
-        {
-            MensajePagina = "Acceso denegado. No tiene permiso para crear usuarios.";
-            return;
-        }
-
+        if (!_sesionActual.TienePermiso("US.CREAR")) { MensajePagina = "Acceso denegado. No tiene permiso para crear usuarios."; return; }
         var vm = _editarUsuarioViewModelFactory();
         PaginaActual = vm;
         MensajePagina = string.Empty;
-
-        try
-        {
-            await vm.InicializarAsync();
-        }
+        try { await vm.InicializarAsync(); }
         catch (Exception ex)
         {
             Trace.TraceError($"[{DateTime.UtcNow:O}] MainViewModel: error al inicializar nuevo usuario -> {ex.Message}.");
@@ -574,21 +357,11 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarEditarUsuarioAsync(UsuarioDto usuario)
     {
-        if (!_sesionActual.TienePermiso("US.EDITAR"))
-        {
-            MensajePagina = "Acceso denegado. No tiene permiso para editar usuarios.";
-            return;
-        }
-
+        if (!_sesionActual.TienePermiso("US.EDITAR")) { MensajePagina = "Acceso denegado. No tiene permiso para editar usuarios."; return; }
         var vm = _editarUsuarioViewModelFactory();
         PaginaActual = vm;
         MensajePagina = string.Empty;
-
-        try
-        {
-            // Mostrar primero la vista para que el overlay "Cargando datos" sea visible durante la inicialización.
-            await vm.InicializarAsync(usuario);
-        }
+        try { await vm.InicializarAsync(usuario); }
         catch (Exception ex)
         {
             Trace.TraceError($"[{DateTime.UtcNow:O}] MainViewModel: error al inicializar edición de usuario -> {ex.Message}.");
@@ -598,26 +371,16 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task CerrarSesionAsync()
     {
-        if (Interlocked.Exchange(ref _cerrandoSesion, 1) == 1)
-        {
-            Trace.TraceInformation($"[{DateTime.UtcNow:O}] MainViewModel: CerrarSesionAsync ignorado por ejecución en curso.");
-            return;
-        }
-
+        if (Interlocked.Exchange(ref _cerrandoSesion, 1) == 1) { Trace.TraceInformation($"[{DateTime.UtcNow:O}] MainViewModel: CerrarSesionAsync ignorado por ejecución en curso."); return; }
         EstaCerrandoSesion = true;
         Trace.TraceInformation($"[{DateTime.UtcNow:O}] MainViewModel: inicio CerrarSesionAsync.");
         try
         {
             using var scope = _serviceProvider.CreateScope();
             var cerrarSesionUseCase = scope.ServiceProvider.GetRequiredService<CerrarSesionUseCase>();
-            await cerrarSesionUseCase.EjecutarAsync(
-                _sesionActual.UsuarioId,
-                _sesionActual.TokenSesion);
+            await cerrarSesionUseCase.EjecutarAsync(_sesionActual.UsuarioId, _sesionActual.TokenSesion);
         }
-        catch (Exception ex)
-        {
-            Trace.TraceError($"[{DateTime.UtcNow:O}] MainViewModel: error en CerrarSesionAsync -> {ex.Message}.");
-        }
+        catch (Exception ex) { Trace.TraceError($"[{DateTime.UtcNow:O}] MainViewModel: error en CerrarSesionAsync -> {ex.Message}."); }
         finally
         {
             _sesionActual.CerrarSesion();
