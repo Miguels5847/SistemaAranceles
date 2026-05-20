@@ -58,12 +58,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0"
-                   Text="Recursos y Depreciación"
-                   FontSize="22"
-                   FontWeight="Bold"
-                   Foreground="#1A237E"
-                   Margin="0,0,0,10"/>
+        <TextBlock Grid.Row="0" Text="Recursos y Depreciación" FontSize="22" FontWeight="Bold" Foreground="#1A237E" Margin="0,0,0,10"/>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
             <TextBlock Text="Carrera" FontSize="11" Foreground="#546E7A" VerticalAlignment="Center" Margin="0,0,8,0"/>
@@ -75,12 +70,10 @@
         </StackPanel>
 
         <StackPanel Grid.Row="2" Margin="0,0,0,10">
-            <TextBlock Text="{Binding MensajeError}" Foreground="#C62828" FontSize="12"
-                       Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
-            <TextBlock Text="{Binding MensajeExito}" Foreground="#2E7D32" FontSize="12"
-                       Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
-            <TextBlock Text="{Binding MensajeInversiones}" Foreground="#3949AB" FontSize="12"
-                       Visibility="{Binding MensajeInversiones, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding MensajeError}" Foreground="#C62828" FontSize="12" Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding MensajeExito}" Foreground="#2E7D32" FontSize="12" Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding MensajeInversiones}" Foreground="#3949AB" FontSize="12" Visibility="{Binding MensajeInversiones, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding MensajeDepreciacion}" Foreground="#3949AB" FontSize="12" Visibility="{Binding MensajeDepreciacion, Converter={StaticResource StringToVisibilityConverter}}"/>
         </StackPanel>
 
         <TabControl Grid.Row="3">
@@ -102,28 +95,13 @@
 
                             <TextBlock Grid.Row="0" Text="Activos registrados" FontWeight="Bold" FontSize="14" Margin="0,0,0,8"/>
 
-                            <DataGrid Grid.Row="1"
-                                      ItemsSource="{Binding Activos}"
-                                      SelectedItem="{Binding ActivoSeleccionado, Mode=TwoWay}"
-                                      AutoGenerateColumns="False"
-                                      IsReadOnly="True"
-                                      SelectionMode="Single"
-                                      SelectionUnit="FullRow"
-                                      HeadersVisibility="Column"
-                                      GridLinesVisibility="Horizontal"
-                                      AlternatingRowBackground="#F8F9FE">
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding Activos}" SelectedItem="{Binding ActivoSeleccionado, Mode=TwoWay}" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" SelectionUnit="FullRow" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F8F9FE">
                                 <DataGrid.RowStyle>
                                     <Style TargetType="DataGridRow">
                                         <Setter Property="Foreground" Value="#263238"/>
                                         <Style.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Background" Value="#EEF2FF"/>
-                                                <Setter Property="Foreground" Value="#1A237E"/>
-                                            </Trigger>
-                                            <Trigger Property="IsSelected" Value="True">
-                                                <Setter Property="Background" Value="#E0E7FF"/>
-                                                <Setter Property="Foreground" Value="#1A237E"/>
-                                            </Trigger>
+                                            <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#EEF2FF"/><Setter Property="Foreground" Value="#1A237E"/></Trigger>
+                                            <Trigger Property="IsSelected" Value="True"><Setter Property="Background" Value="#E0E7FF"/><Setter Property="Foreground" Value="#1A237E"/></Trigger>
                                         </Style.Triggers>
                                     </Style>
                                 </DataGrid.RowStyle>
@@ -135,10 +113,7 @@
                                         <Setter Property="BorderThickness" Value="0"/>
                                         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
                                         <Style.Triggers>
-                                            <Trigger Property="IsSelected" Value="True">
-                                                <Setter Property="Background" Value="#E0E7FF"/>
-                                                <Setter Property="Foreground" Value="#1A237E"/>
-                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="True"><Setter Property="Background" Value="#E0E7FF"/><Setter Property="Foreground" Value="#1A237E"/></Trigger>
                                         </Style.Triggers>
                                     </Style>
                                 </DataGrid.CellStyle>
@@ -180,15 +155,8 @@
                     <Border Grid.Column="2" BorderBrush="#C5CAE9" BorderThickness="1" CornerRadius="8" Padding="10" Background="#FCFDFF">
                         <Grid>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Text="{Binding TituloFormulario}" FontWeight="Bold" FontSize="14" Margin="0,0,0,8"/>
                             <StackPanel Grid.Row="1" Margin="0,0,0,8"><TextBlock Text="Descripción" FontSize="11" Foreground="#546E7A"/><TextBox Text="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}"/></StackPanel>
@@ -223,10 +191,7 @@
 
             <TabItem Header="Proyección en Unidades">
                 <Grid Margin="0,8,0,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                     <DockPanel Grid.Row="0" Margin="0,0,0,8">
                         <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
                             <Button Content="Cargar / Recalcular" Command="{Binding CargarMatrizInversionesCommand}" Padding="10,5" Margin="0,0,8,0"/>
@@ -240,31 +205,9 @@
                                 <DockPanel>
                                     <Border Style="{StaticResource MatrixHeader}" MinWidth="260"><TextBlock Text="Descripción" FontWeight="Bold"/></Border>
                                     <Border Style="{StaticResource MatrixHeader}" MinWidth="120"><TextBlock Text="Tipo" FontWeight="Bold"/></Border>
-                                    <ItemsControl ItemsSource="{Binding PeriodosInversion}">
-                                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixHeader}"><TextBlock Text="{Binding Etiqueta}" FontWeight="Bold" HorizontalAlignment="Center"/></Border></DataTemplate></ItemsControl.ItemTemplate>
-                                    </ItemsControl>
+                                    <ItemsControl ItemsSource="{Binding PeriodosInversion}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixHeader}"><TextBlock Text="{Binding Etiqueta}" FontWeight="Bold" HorizontalAlignment="Center"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
                                 </DockPanel>
-                                <ItemsControl ItemsSource="{Binding FilasInversion}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <DockPanel>
-                                                <Border Style="{StaticResource MatrixCell}" MinWidth="260"><TextBlock Text="{Binding Descripcion}"/></Border>
-                                                <Border Style="{StaticResource MatrixCell}" MinWidth="120"><TextBlock Text="{Binding TipoCalculoNombre}"/></Border>
-                                                <ItemsControl ItemsSource="{Binding Celdas}">
-                                                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <Border Style="{StaticResource MatrixDataCell}">
-                                                                <TextBox Style="{StaticResource MatrixValueTextBox}" Text="{Binding CantidadTexto, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding EsSoloLectura}"/>
-                                                            </Border>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                            </DockPanel>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                <ItemsControl ItemsSource="{Binding FilasInversion}"><ItemsControl.ItemTemplate><DataTemplate><DockPanel><Border Style="{StaticResource MatrixCell}" MinWidth="260"><TextBlock Text="{Binding Descripcion}"/></Border><Border Style="{StaticResource MatrixCell}" MinWidth="120"><TextBlock Text="{Binding TipoCalculoNombre}"/></Border><ItemsControl ItemsSource="{Binding Celdas}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixDataCell}"><TextBox Style="{StaticResource MatrixValueTextBox}" Text="{Binding CantidadTexto, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding EsSoloLectura}"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></DockPanel></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
                             </StackPanel>
                         </ScrollViewer>
                     </Border>
@@ -274,46 +217,46 @@
             <TabItem Header="Proyección Monetaria">
                 <Grid Margin="0,8,0,0">
                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                    <DockPanel Grid.Row="0" Margin="0,0,0,8"><Button Content="Cargar / Recalcular" Command="{Binding CargarMatrizInversionesCommand}" Padding="10,5" DockPanel.Dock="Right"/><TextBlock Text="Proyección de necesidades en unidades monetarias. Se calcula con cantidad × valor unitario × inflación aplicada al período." VerticalAlignment="Center" Foreground="#546E7A"/></DockPanel>
+                    <Border Grid.Row="1" BorderBrush="#C5CAE9" BorderThickness="1" CornerRadius="8" Background="White">
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"><StackPanel><DockPanel><Border Style="{StaticResource MatrixHeader}" MinWidth="260"><TextBlock Text="Descripción" FontWeight="Bold"/></Border><Border Style="{StaticResource MatrixHeader}" MinWidth="120"><TextBlock Text="V. Unitario" FontWeight="Bold"/></Border><ItemsControl ItemsSource="{Binding PeriodosInversion}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixHeader}"><TextBlock Text="{Binding Etiqueta}" FontWeight="Bold" HorizontalAlignment="Center"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></DockPanel><ItemsControl ItemsSource="{Binding FilasInversion}"><ItemsControl.ItemTemplate><DataTemplate><DockPanel><Border Style="{StaticResource MatrixCell}" MinWidth="260"><TextBlock Text="{Binding Descripcion}"/></Border><Border Style="{StaticResource MatrixCell}" MinWidth="120"><TextBlock Text="{Binding ValorUnitarioDisplay}" HorizontalAlignment="Right"/></Border><ItemsControl ItemsSource="{Binding Celdas}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixDataCell}"><TextBlock Style="{StaticResource MatrixMoneyText}" Text="{Binding MontoDisplay}"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></DockPanel></DataTemplate></ItemsControl.ItemTemplate></ItemsControl><DockPanel Background="#E8EAF6"><Border Style="{StaticResource MatrixCell}" MinWidth="380"><TextBlock Text="INVERSIONES NECESARIAS" FontWeight="Bold" Foreground="#1A237E"/></Border><ItemsControl ItemsSource="{Binding TotalesInversion}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixCell}"><TextBlock Text="{Binding TotalDisplay}" HorizontalAlignment="Right" FontWeight="Bold" Foreground="#1A237E"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></DockPanel></StackPanel></ScrollViewer>
+                    </Border>
+                    <TextBlock Grid.Row="2" Text="La fila Inversiones Necesarias queda lista para ser consumida por Inversión Inicial." FontStyle="Italic" Foreground="#1A237E" Margin="0,8,0,0"/>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Depreciación">
+                <Grid Margin="0,8,0,0">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                     <DockPanel Grid.Row="0" Margin="0,0,0,8">
-                        <Button Content="Cargar / Recalcular" Command="{Binding CargarMatrizInversionesCommand}" Padding="10,5" DockPanel.Dock="Right"/>
-                        <TextBlock Text="Proyección de necesidades en unidades monetarias. Se calcula con cantidad × valor unitario × inflación aplicada al período." VerticalAlignment="Center" Foreground="#546E7A"/>
+                        <Button Content="Cargar / Recalcular depreciación" Command="{Binding CargarMatrizDepreciacionCommand}" Padding="10,5" DockPanel.Dock="Right"/>
+                        <TextBlock Text="Depreciación calculada automáticamente desde Activos Fijos y Proyección Monetaria. No requiere guardado." VerticalAlignment="Center" Foreground="#546E7A"/>
                     </DockPanel>
                     <Border Grid.Row="1" BorderBrush="#C5CAE9" BorderThickness="1" CornerRadius="8" Background="White">
                         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                             <StackPanel>
+                                <TextBlock Text="Depreciación por período" FontWeight="Bold" FontSize="14" Margin="8,8,8,4" Foreground="#1A237E"/>
                                 <DockPanel>
                                     <Border Style="{StaticResource MatrixHeader}" MinWidth="260"><TextBlock Text="Descripción" FontWeight="Bold"/></Border>
-                                    <Border Style="{StaticResource MatrixHeader}" MinWidth="120"><TextBlock Text="V. Unitario" FontWeight="Bold"/></Border>
-                                    <ItemsControl ItemsSource="{Binding PeriodosInversion}">
-                                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixHeader}"><TextBlock Text="{Binding Etiqueta}" FontWeight="Bold" HorizontalAlignment="Center"/></Border></DataTemplate></ItemsControl.ItemTemplate>
-                                    </ItemsControl>
+                                    <Border Style="{StaticResource MatrixHeader}" MinWidth="120"><TextBlock Text="Categoría" FontWeight="Bold"/></Border>
+                                    <Border Style="{StaticResource MatrixHeader}" MinWidth="100"><TextBlock Text="Valor" FontWeight="Bold"/></Border>
+                                    <Border Style="{StaticResource MatrixHeader}" MinWidth="100"><TextBlock Text="Valor residual" FontWeight="Bold"/></Border>
+                                    <Border Style="{StaticResource MatrixHeader}" MinWidth="70"><TextBlock Text="Tiempo" FontWeight="Bold"/></Border>
+                                    <ItemsControl ItemsSource="{Binding PeriodosDepreciacion}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixHeader}"><TextBlock Text="{Binding Etiqueta}" FontWeight="Bold" HorizontalAlignment="Center"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
                                 </DockPanel>
-                                <ItemsControl ItemsSource="{Binding FilasInversion}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <DockPanel>
-                                                <Border Style="{StaticResource MatrixCell}" MinWidth="260"><TextBlock Text="{Binding Descripcion}"/></Border>
-                                                <Border Style="{StaticResource MatrixCell}" MinWidth="120"><TextBlock Text="{Binding ValorUnitarioDisplay}" HorizontalAlignment="Right"/></Border>
-                                                <ItemsControl ItemsSource="{Binding Celdas}">
-                                                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                                                    <ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixDataCell}"><TextBlock Style="{StaticResource MatrixMoneyText}" Text="{Binding MontoDisplay}"/></Border></DataTemplate></ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                            </DockPanel>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                                <DockPanel Background="#E8EAF6">
-                                    <Border Style="{StaticResource MatrixCell}" MinWidth="380"><TextBlock Text="INVERSIONES NECESARIAS" FontWeight="Bold" Foreground="#1A237E"/></Border>
-                                    <ItemsControl ItemsSource="{Binding TotalesInversion}">
-                                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixCell}"><TextBlock Text="{Binding TotalDisplay}" HorizontalAlignment="Right" FontWeight="Bold" Foreground="#1A237E"/></Border></DataTemplate></ItemsControl.ItemTemplate>
-                                    </ItemsControl>
+                                <ItemsControl ItemsSource="{Binding FilasDepreciacion}"><ItemsControl.ItemTemplate><DataTemplate><DockPanel><Border Style="{StaticResource MatrixCell}" MinWidth="260"><TextBlock Text="{Binding Descripcion}"/></Border><Border Style="{StaticResource MatrixCell}" MinWidth="120"><TextBlock Text="{Binding CategoriaNombre}"/></Border><Border Style="{StaticResource MatrixCell}" MinWidth="100"><TextBlock Text="{Binding ValorInicialDisplay}" HorizontalAlignment="Right"/></Border><Border Style="{StaticResource MatrixCell}" MinWidth="100"><TextBlock Text="{Binding ValorResidualDisplay}" HorizontalAlignment="Right"/></Border><Border Style="{StaticResource MatrixCell}" MinWidth="70"><TextBlock Text="{Binding VidaUtilAnios}" HorizontalAlignment="Center"/></Border><ItemsControl ItemsSource="{Binding Celdas}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixCell}"><TextBlock Text="{Binding DepreciacionPeriodoDisplay}" HorizontalAlignment="Right"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></DockPanel></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+                                <DockPanel Background="#E8EAF6"><Border Style="{StaticResource MatrixCell}" MinWidth="650"><TextBlock Text="TOTAL DEPRECIACIÓN" FontWeight="Bold" Foreground="#1A237E"/></Border><ItemsControl ItemsSource="{Binding TotalesDepreciacion}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixCell}"><TextBlock Text="{Binding DepreciacionPeriodoDisplay}" HorizontalAlignment="Right" FontWeight="Bold" Foreground="#1A237E"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></DockPanel>
+
+                                <TextBlock Text="Depreciación acumulada" FontWeight="Bold" FontSize="14" Margin="8,18,8,4" Foreground="#1A237E"/>
+                                <DockPanel>
+                                    <Border Style="{StaticResource MatrixHeader}" MinWidth="260"><TextBlock Text="Descripción" FontWeight="Bold"/></Border>
+                                    <ItemsControl ItemsSource="{Binding PeriodosDepreciacion}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixHeader}"><TextBlock Text="{Binding Etiqueta}" FontWeight="Bold" HorizontalAlignment="Center"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
                                 </DockPanel>
+                                <ItemsControl ItemsSource="{Binding FilasDepreciacion}"><ItemsControl.ItemTemplate><DataTemplate><DockPanel><Border Style="{StaticResource MatrixCell}" MinWidth="260"><TextBlock Text="{Binding Descripcion}"/></Border><ItemsControl ItemsSource="{Binding Celdas}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixCell}"><TextBlock Text="{Binding DepreciacionAcumuladaDisplay}" HorizontalAlignment="Right"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></DockPanel></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+                                <DockPanel Background="#E8EAF6"><Border Style="{StaticResource MatrixCell}" MinWidth="260"><TextBlock Text="TOTAL ACUMULADO" FontWeight="Bold" Foreground="#1A237E"/></Border><ItemsControl ItemsSource="{Binding TotalesDepreciacion}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixCell}"><TextBlock Text="{Binding DepreciacionAcumuladaDisplay}" HorizontalAlignment="Right" FontWeight="Bold" Foreground="#1A237E"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></DockPanel>
                             </StackPanel>
                         </ScrollViewer>
                     </Border>
-                    <TextBlock Grid.Row="2" Text="La fila Inversiones Necesarias queda lista para ser consumida por Inversión Inicial." FontStyle="Italic" Foreground="#1A237E" Margin="0,8,0,0"/>
                 </Grid>
             </TabItem>
         </TabControl>
