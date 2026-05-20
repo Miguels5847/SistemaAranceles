@@ -92,7 +92,7 @@ public sealed partial class ActivosFijosViewModel
         try
         {
             using var scope = _serviceProvider.CreateScope();
-            var query = ActivatorUtilities.CreateInstance<ObtenerMatrizDepreciacionQuery>(scope.ServiceProvider);
+            var query = scope.ServiceProvider.GetRequiredService<ObtenerMatrizDepreciacionQuery>();
             var matriz = await query.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
             CargarDepreciacionEnPantalla(matriz);
             MensajeDepreciacion = ConstruirMensajeCargaDepreciacion(matriz);
