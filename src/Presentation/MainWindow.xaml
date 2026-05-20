@@ -14,6 +14,9 @@
         xmlns:vmDI="clr-namespace:SistemaAranceles.Presentation.ViewModels.DatosInstitucionales"
         xmlns:vmPC="clr-namespace:SistemaAranceles.Presentation.ViewModels.PlantaCentral"
         xmlns:vmRF="clr-namespace:SistemaAranceles.Presentation.ViewModels.RecursosFisicos"
+        xmlns:vmM="clr-namespace:SistemaAranceles.Presentation.ViewModels.Mantenimiento"
+        xmlns:vmAD="clr-namespace:SistemaAranceles.Presentation.ViewModels.ActivoDiferido"
+        xmlns:vmII="clr-namespace:SistemaAranceles.Presentation.ViewModels.InversionInicial"
         xmlns:vmMI="clr-namespace:SistemaAranceles.Presentation.ViewModels.MantenimientoInversion"
         xmlns:vU="clr-namespace:SistemaAranceles.Presentation.Views.Usuarios"
         xmlns:vA="clr-namespace:SistemaAranceles.Presentation.Views.Auditoria"
@@ -27,6 +30,9 @@
         xmlns:vDI="clr-namespace:SistemaAranceles.Presentation.Views.DatosInstitucionales"
         xmlns:vPC="clr-namespace:SistemaAranceles.Presentation.Views.PlantaCentral"
         xmlns:vRF="clr-namespace:SistemaAranceles.Presentation.Views.RecursosFisicos"
+        xmlns:vM="clr-namespace:SistemaAranceles.Presentation.Views.Mantenimiento"
+        xmlns:vAD="clr-namespace:SistemaAranceles.Presentation.Views.ActivoDiferido"
+        xmlns:vII="clr-namespace:SistemaAranceles.Presentation.Views.InversionInicial"
         xmlns:vMI="clr-namespace:SistemaAranceles.Presentation.Views.MantenimientoInversion"
         Title="Sistema de Aranceles Universitarios"
         Width="1400"
@@ -80,6 +86,15 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmRF:ActivosFijosViewModel}">
             <vRF:ActivosFijosView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmM:MantenimientoViewModel}">
+            <vM:MantenimientoView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmAD:ActivoDiferidoViewModel}">
+            <vAD:ActivoDiferidoView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmII:InversionInicialViewModel}">
+            <vII:InversionInicialView/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmMI:MantenimientoInversionViewModel}">
             <vMI:MantenimientoInversionView/>
