@@ -11,6 +11,10 @@
         <Style x:Key="MatrixHeader" TargetType="Border" BasedOn="{StaticResource MatrixCell}">
             <Setter Property="Background" Value="#E8EAF6"/>
         </Style>
+        <Style x:Key="MatrixGroupHeader" TargetType="Border" BasedOn="{StaticResource MatrixCell}">
+            <Setter Property="Background" Value="#EEF1FB"/>
+            <Setter Property="Padding" Value="6,6"/>
+        </Style>
         <Style x:Key="MatrixDataCell" TargetType="Border" BasedOn="{StaticResource MatrixCell}">
             <Setter Property="Background" Value="White"/>
             <Style.Triggers>
@@ -238,21 +242,44 @@
                                 <TextBlock Text="Depreciación por período" FontWeight="Bold" FontSize="14" Margin="8,8,8,4" Foreground="#1A237E"/>
                                 <DockPanel>
                                     <Border Style="{StaticResource MatrixHeader}" MinWidth="260"><TextBlock Text="Descripción" FontWeight="Bold"/></Border>
-                                    <Border Style="{StaticResource MatrixHeader}" MinWidth="120"><TextBlock Text="Categoría" FontWeight="Bold"/></Border>
                                     <Border Style="{StaticResource MatrixHeader}" MinWidth="100"><TextBlock Text="Valor" FontWeight="Bold"/></Border>
                                     <Border Style="{StaticResource MatrixHeader}" MinWidth="100"><TextBlock Text="Valor residual" FontWeight="Bold"/></Border>
                                     <Border Style="{StaticResource MatrixHeader}" MinWidth="70"><TextBlock Text="Tiempo" FontWeight="Bold"/></Border>
                                     <ItemsControl ItemsSource="{Binding PeriodosDepreciacion}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixHeader}"><TextBlock Text="{Binding Etiqueta}" FontWeight="Bold" HorizontalAlignment="Center"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
                                 </DockPanel>
-                                <ItemsControl ItemsSource="{Binding FilasDepreciacion}"><ItemsControl.ItemTemplate><DataTemplate><DockPanel><Border Style="{StaticResource MatrixCell}" MinWidth="260"><TextBlock Text="{Binding Descripcion}"/></Border><Border Style="{StaticResource MatrixCell}" MinWidth="120"><TextBlock Text="{Binding CategoriaNombre}"/></Border><Border Style="{StaticResource MatrixCell}" MinWidth="100"><TextBlock Text="{Binding ValorInicialDisplay}" HorizontalAlignment="Right"/></Border><Border Style="{StaticResource MatrixCell}" MinWidth="100"><TextBlock Text="{Binding ValorResidualDisplay}" HorizontalAlignment="Right"/></Border><Border Style="{StaticResource MatrixCell}" MinWidth="70"><TextBlock Text="{Binding VidaUtilAnios}" HorizontalAlignment="Center"/></Border><ItemsControl ItemsSource="{Binding Celdas}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixCell}"><TextBlock Text="{Binding DepreciacionPeriodoDisplay}" HorizontalAlignment="Right"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></DockPanel></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
-                                <DockPanel Background="#E8EAF6"><Border Style="{StaticResource MatrixCell}" MinWidth="650"><TextBlock Text="TOTAL DEPRECIACIÓN" FontWeight="Bold" Foreground="#1A237E"/></Border><ItemsControl ItemsSource="{Binding TotalesDepreciacion}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixCell}"><TextBlock Text="{Binding DepreciacionPeriodoDisplay}" HorizontalAlignment="Right" FontWeight="Bold" Foreground="#1A237E"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></DockPanel>
+                                <ItemsControl ItemsSource="{Binding CategoriasDepreciacion}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel>
+                                                <DockPanel Background="#EEF1FB">
+                                                    <Border Style="{StaticResource MatrixGroupHeader}" MinWidth="530"><TextBlock Text="{Binding Nombre}" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#1A237E"/></Border>
+                                                    <ItemsControl ItemsSource="{Binding Totales}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixGroupHeader}"><TextBlock Text="{Binding DepreciacionPeriodoDisplay}" HorizontalAlignment="Right" FontWeight="Bold" Foreground="#1A237E"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+                                                </DockPanel>
+                                                <ItemsControl ItemsSource="{Binding Filas}"><ItemsControl.ItemTemplate><DataTemplate><DockPanel><Border Style="{StaticResource MatrixCell}" MinWidth="260"><TextBlock Text="{Binding Descripcion}"/></Border><Border Style="{StaticResource MatrixCell}" MinWidth="100"><TextBlock Text="{Binding ValorInicialDisplay}" HorizontalAlignment="Right"/></Border><Border Style="{StaticResource MatrixCell}" MinWidth="100"><TextBlock Text="{Binding ValorResidualDisplay}" HorizontalAlignment="Right"/></Border><Border Style="{StaticResource MatrixCell}" MinWidth="70"><TextBlock Text="{Binding VidaUtilAnios}" HorizontalAlignment="Center"/></Border><ItemsControl ItemsSource="{Binding Celdas}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixCell}"><TextBlock Text="{Binding DepreciacionPeriodoDisplay}" HorizontalAlignment="Right"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></DockPanel></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <DockPanel Background="#E8EAF6"><Border Style="{StaticResource MatrixCell}" MinWidth="530"><TextBlock Text="TOTAL DEPRECIACIÓN" FontWeight="Bold" Foreground="#1A237E"/></Border><ItemsControl ItemsSource="{Binding TotalesDepreciacion}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixCell}"><TextBlock Text="{Binding DepreciacionPeriodoDisplay}" HorizontalAlignment="Right" FontWeight="Bold" Foreground="#1A237E"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></DockPanel>
 
                                 <TextBlock Text="Depreciación acumulada" FontWeight="Bold" FontSize="14" Margin="8,18,8,4" Foreground="#1A237E"/>
                                 <DockPanel>
                                     <Border Style="{StaticResource MatrixHeader}" MinWidth="260"><TextBlock Text="Descripción" FontWeight="Bold"/></Border>
                                     <ItemsControl ItemsSource="{Binding PeriodosDepreciacion}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixHeader}"><TextBlock Text="{Binding Etiqueta}" FontWeight="Bold" HorizontalAlignment="Center"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
                                 </DockPanel>
-                                <ItemsControl ItemsSource="{Binding FilasDepreciacion}"><ItemsControl.ItemTemplate><DataTemplate><DockPanel><Border Style="{StaticResource MatrixCell}" MinWidth="260"><TextBlock Text="{Binding Descripcion}"/></Border><ItemsControl ItemsSource="{Binding Celdas}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixCell}"><TextBlock Text="{Binding DepreciacionAcumuladaDisplay}" HorizontalAlignment="Right"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></DockPanel></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+                                <ItemsControl ItemsSource="{Binding CategoriasDepreciacion}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel>
+                                                <DockPanel Background="#EEF1FB">
+                                                    <Border Style="{StaticResource MatrixGroupHeader}" MinWidth="260"><TextBlock Text="{Binding Nombre}" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#1A237E"/></Border>
+                                                    <ItemsControl ItemsSource="{Binding Totales}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixGroupHeader}"><TextBlock Text="{Binding DepreciacionAcumuladaDisplay}" HorizontalAlignment="Right" FontWeight="Bold" Foreground="#1A237E"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+                                                </DockPanel>
+                                                <ItemsControl ItemsSource="{Binding Filas}"><ItemsControl.ItemTemplate><DataTemplate><DockPanel><Border Style="{StaticResource MatrixCell}" MinWidth="260"><TextBlock Text="{Binding Descripcion}"/></Border><ItemsControl ItemsSource="{Binding Celdas}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixCell}"><TextBlock Text="{Binding DepreciacionAcumuladaDisplay}" HorizontalAlignment="Right"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></DockPanel></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                                 <DockPanel Background="#E8EAF6"><Border Style="{StaticResource MatrixCell}" MinWidth="260"><TextBlock Text="TOTAL ACUMULADO" FontWeight="Bold" Foreground="#1A237E"/></Border><ItemsControl ItemsSource="{Binding TotalesDepreciacion}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Border Style="{StaticResource MatrixCell}"><TextBlock Text="{Binding DepreciacionAcumuladaDisplay}" HorizontalAlignment="Right" FontWeight="Bold" Foreground="#1A237E"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></DockPanel>
                             </StackPanel>
                         </ScrollViewer>
