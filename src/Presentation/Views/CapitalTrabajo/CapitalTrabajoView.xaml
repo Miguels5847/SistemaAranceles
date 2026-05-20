@@ -311,6 +311,57 @@
                 </Grid>
             </TabItem>
 
+            <!-- TAB E: Resumen Total -->
+            <TabItem Header="E. Resumen Capital de Trabajo">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="Resumen mensual — Capital de Trabajo"
+                               FontSize="15" FontWeight="SemiBold" Margin="0,0,0,12"/>
+
+                    <Border Grid.Row="1" Background="#1A237E" CornerRadius="6" Padding="16,12">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="8"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="160"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="A. Gastos de Servicio y Administración" Foreground="#BBDEFB"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Resumen.SubtotalCargos, StringFormat=N2, FallbackValue='—'}" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="B. Materiales y Suministros" Foreground="#BBDEFB" Margin="0,4,0,0"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Resumen.SubtotalMateriales, StringFormat=N2, FallbackValue='—'}" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Right" Margin="0,4,0,0"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="C. Suministros Aseo y Limpieza" Foreground="#BBDEFB" Margin="0,4,0,0"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Resumen.SubtotalAseo, StringFormat=N2, FallbackValue='—'}" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Right" Margin="0,4,0,0"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="D. Accesorios y Materiales" Foreground="#BBDEFB" Margin="0,4,0,0"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Resumen.SubtotalAccesorios, StringFormat=N2, FallbackValue='—'}" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Right" Margin="0,4,0,0"/>
+
+                            <Separator Grid.Row="4" Grid.ColumnSpan="2" Background="#5C6BC0" Margin="0,4"/>
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="TOTAL MENSUAL" Foreground="White" FontSize="14" FontWeight="Bold" Margin="0,4,0,0"/>
+                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding Resumen.TotalMensualDisplay, FallbackValue='—'}" Foreground="#FFD54F" FontSize="16" FontWeight="Bold" HorizontalAlignment="Right" Margin="0,4,0,0"/>
+
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Capital de Trabajo (2 meses)" Foreground="#BBDEFB" Margin="0,4,0,0"/>
+                            <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding Resumen.TotalDosMesesDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="13" HorizontalAlignment="Right" Margin="0,4,0,0"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
         </TabControl>
     </Grid>
 </UserControl>

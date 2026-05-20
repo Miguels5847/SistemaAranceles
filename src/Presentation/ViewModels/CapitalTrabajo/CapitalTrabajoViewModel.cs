@@ -6,6 +6,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using SistemaAranceles.Application.DTOs.CapitalTrabajo;
+using SistemaAranceles.Application.UseCases.CapitalTrabajo;
 using SistemaAranceles.Domain.Entities;
 using SistemaAranceles.Infrastructure.Persistence;
 using SistemaAranceles.Infrastructure.Persistence.Entidades;
@@ -38,6 +40,7 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
 
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
+    [ObservableProperty] private ResumenCapitalTrabajoDto? _resumen;
 
     // --- Formulario CRUD Materiales ---
     [ObservableProperty] private bool _formMatVisible;
@@ -79,6 +82,13 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
             Trace.TraceInformation($"[{DateTime.UtcNow:O}] CapitalTrabajoVM: refrescando materiales...");
             await RefrescarMaterialesAsync();
             Trace.TraceInformation($"[{DateTime.UtcNow:O}] CapitalTrabajoVM: materiales OK. MensajeError materiales='{_catalogoMateriales.MensajeError}' Total={Materiales.Count}");
+
+            // --- Resumen (totales) ---
+            using (var scopeResumen = _serviceProvider.CreateScope())
+            {
+                var query = scopeResumen.ServiceProvider.GetRequiredService<ObtenerResumenCapitalTrabajoQuery>();
+                Resumen = await query.EjecutarAsync(carreraId ?? 1);
+            }
         }
         catch (System.Exception ex)
         {

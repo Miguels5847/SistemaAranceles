@@ -163,6 +163,22 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.QuitarInversionFuturaCommand>();
         // KAN-26: Depreciación lineal
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.ObtenerMatrizDepreciacionQuery>();
+        // KAN-28: Servicios + Mantenimiento
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.CrearServicioMantenimientoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.ActualizarServicioMantenimientoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.EliminarServicioMantenimientoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.ListarServiciosMantenimientoQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.ObtenerResumenMantenimientoQuery>();
+        // KAN-29: Capital de Trabajo — resumen
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.CapitalTrabajo.ObtenerResumenCapitalTrabajoQuery>();
+        // KAN-31: Activos Diferidos
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.CrearActivoDiferidoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.ActualizarActivoDiferidoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.EliminarActivoDiferidoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.ListarActivosDiferidosQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.ObtenerTablaAmortizacionQuery>();
+        // KAN-30: Inversión Inicial Total
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.InversionInicial.ObtenerInversionInicialTotalQuery>();
         servicios.AddTransient<CalcularAportePlantaCentralCarreraQuery>();
         servicios.AddTransient<CalcularProyeccionesCargoPlantaCentralCommand>();
         servicios.AddTransient<ListarProyeccionesCargoPlantaCentralQuery>();
@@ -244,6 +260,12 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.PlantaCentral.AportePlantaCentralViewModel>();
         // KAN-24/KAN-25/KAN-26: ViewModel
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.RecursosFisicos.ActivosFijosViewModel>();
+        // KAN-28: Mantenimiento
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.Mantenimiento.MantenimientoViewModel>();
+        // KAN-31: Activos Diferidos
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.ActivoDiferido.ActivoDiferidoViewModel>();
+        // KAN-30: Inversión Inicial Total
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.InversionInicial.InversionInicialViewModel>();
 
         servicios.AddTransient<MainViewModel>();
 
@@ -255,6 +277,9 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Presentation.Views.DatosInstitucionales.DatosInstitucionalesView>();
         servicios.AddTransient<SistemaAranceles.Presentation.Views.PlantaCentral.AportePlantaCentralView>();
         servicios.AddTransient<SistemaAranceles.Presentation.Views.RecursosFisicos.ActivosFijosView>();
+        servicios.AddTransient<SistemaAranceles.Presentation.Views.Mantenimiento.MantenimientoView>();
+        servicios.AddTransient<SistemaAranceles.Presentation.Views.ActivoDiferido.ActivoDiferidoView>();
+        servicios.AddTransient<SistemaAranceles.Presentation.Views.InversionInicial.InversionInicialView>();
         servicios.AddTransient<MainWindow>();
     }
 

@@ -40,6 +40,8 @@ public sealed class ContextoAplicacion(DbContextOptions<ContextoAplicacion> opti
     public DbSet<CatalogoActivoBase> CatalogosActivoBase => Set<CatalogoActivoBase>();
     public DbSet<ActivoFijo> ActivosFijos => Set<ActivoFijo>();
     public DbSet<InversionFutura> InversionesFuturas => Set<InversionFutura>();
+    public DbSet<ServicioMantenimiento> ServiciosMantenimiento => Set<ServicioMantenimiento>();
+    public DbSet<ActivoDiferido> ActivosDiferidos => Set<ActivoDiferido>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

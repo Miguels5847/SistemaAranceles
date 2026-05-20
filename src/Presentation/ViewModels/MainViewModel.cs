@@ -246,6 +246,36 @@ public sealed partial class MainViewModel : ObservableObject
             });
         }
 
+        if (_sesionActual.EsAdministrador || _sesionActual.TienePermiso("MI.VER"))
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Mantenimiento",
+                Icono = string.Empty,
+                Comando = new AsyncRelayCommand(() => MostrarMantenimientoAsync())
+            });
+        }
+
+        if (_sesionActual.EsAdministrador || _sesionActual.TienePermiso("MI.VER"))
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Activos Diferidos",
+                Icono = string.Empty,
+                Comando = new AsyncRelayCommand(() => MostrarActivoDiferidoAsync())
+            });
+        }
+
+        if (_sesionActual.EsAdministrador || _sesionActual.TienePermiso("MI.VER"))
+        {
+            MenuItems.Add(new ItemMenu
+            {
+                Titulo = "Inversión Inicial",
+                Icono = string.Empty,
+                Comando = new AsyncRelayCommand(() => MostrarInversionInicialAsync())
+            });
+        }
+
         if (_sesionActual.TienePermiso("CFG.VER"))
         {
             MenuItems.Add(new ItemMenu
@@ -477,6 +507,45 @@ public sealed partial class MainViewModel : ObservableObject
     private Task MostrarCatalogoMaterialesAsync()
     {
         return MostrarCapitalTrabajoAsync();
+    }
+
+    private async Task MostrarMantenimientoAsync()
+    {
+        if (!(_sesionActual.EsAdministrador || _sesionActual.TienePermiso("MI.VER")))
+        {
+            MensajePagina = "Acceso denegado al módulo de Mantenimiento.";
+            return;
+        }
+        MensajePagina = string.Empty;
+        var vm = _serviceProvider.GetRequiredService<SistemaAranceles.Presentation.ViewModels.Mantenimiento.MantenimientoViewModel>();
+        PaginaActual = vm;
+        await vm.CargarCommand.ExecuteAsync(null);
+    }
+
+    private async Task MostrarActivoDiferidoAsync()
+    {
+        if (!(_sesionActual.EsAdministrador || _sesionActual.TienePermiso("MI.VER")))
+        {
+            MensajePagina = "Acceso denegado al módulo de Activos Diferidos.";
+            return;
+        }
+        MensajePagina = string.Empty;
+        var vm = _serviceProvider.GetRequiredService<SistemaAranceles.Presentation.ViewModels.ActivoDiferido.ActivoDiferidoViewModel>();
+        PaginaActual = vm;
+        await vm.CargarCommand.ExecuteAsync(null);
+    }
+
+    private async Task MostrarInversionInicialAsync()
+    {
+        if (!(_sesionActual.EsAdministrador || _sesionActual.TienePermiso("MI.VER")))
+        {
+            MensajePagina = "Acceso denegado al módulo de Inversión Inicial.";
+            return;
+        }
+        MensajePagina = string.Empty;
+        var vm = _serviceProvider.GetRequiredService<SistemaAranceles.Presentation.ViewModels.InversionInicial.InversionInicialViewModel>();
+        PaginaActual = vm;
+        await vm.CargarCommand.ExecuteAsync(null);
     }
 
     [RelayCommand]
