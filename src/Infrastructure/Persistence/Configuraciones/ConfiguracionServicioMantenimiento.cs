@@ -12,6 +12,8 @@ internal sealed class ConfiguracionServicioMantenimiento : IEntityTypeConfigurat
 
         builder.Property(x => x.Id).HasColumnName("id");
         builder.Property(x => x.CarreraId).HasColumnName("carrera_id").IsRequired();
+        builder.Property(x => x.EscenarioProyeccionId).HasColumnName("escenario_proyeccion_id");
+        builder.Property(x => x.Sede).HasColumnName("sede").HasMaxLength(100).HasDefaultValue("General").IsRequired();
         builder.Property(x => x.TipoRubro).HasColumnName("tipo_rubro").HasConversion<string>().HasMaxLength(30).IsRequired();
         builder.Property(x => x.NombreRubro).HasColumnName("nombre_rubro").HasMaxLength(150).IsRequired();
         builder.Property(x => x.CostoAnualUniversidad).HasColumnName("costo_anual_universidad").HasColumnType("numeric(18,2)").IsRequired();
@@ -25,10 +27,16 @@ internal sealed class ConfiguracionServicioMantenimiento : IEntityTypeConfigurat
         builder.Property(x => x.EliminadoPorUsuarioId).HasColumnName("eliminado_por_usuario_id");
 
         builder.HasIndex(x => new { x.CarreraId, x.TipoRubro });
+        builder.HasIndex(x => x.EscenarioProyeccionId);
 
         builder.HasOne(x => x.Carrera)
             .WithMany()
             .HasForeignKey(x => x.CarreraId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(x => x.EscenarioProyeccion)
+            .WithMany()
+            .HasForeignKey(x => x.EscenarioProyeccionId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
