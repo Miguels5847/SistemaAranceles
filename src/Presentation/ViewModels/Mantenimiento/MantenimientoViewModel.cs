@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
@@ -51,6 +52,7 @@ public sealed partial class MantenimientoViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<ServicioMantenimientoDto> _itemsMantenimiento = [];
     [ObservableProperty] private ServicioMantenimientoDto? _seleccionado;
     [ObservableProperty] private ResumenMantenimientoDto? _resumen;
+    [ObservableProperty] private DataView? _proyeccionSemestralVista;
 
     [ObservableProperty] private bool _estaCargando;
     [ObservableProperty] private bool _estaGuardando;
@@ -217,6 +219,7 @@ public sealed partial class MantenimientoViewModel : ObservableObject
         if (CarreraSeleccionada is null || EscenarioSeleccionado is null)
         {
             Resumen = null;
+            ProyeccionSemestralVista = null;
             MensajeError = EscenarioSeleccionado is null
                 ? "Seleccione un escenario con proyección para calcular la proyección semestral."
                 : string.Empty;
@@ -226,6 +229,66 @@ public sealed partial class MantenimientoViewModel : ObservableObject
         using var scope = _sp.CreateScope();
         var query = scope.ServiceProvider.GetRequiredService<ObtenerResumenMantenimientoQuery>();
         Resumen = await query.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
+        ConstruirMatrizProyeccionSemestral();
+    }
+
+    private void ConstruirMatrizProyeccionSemestral()
+    {
+        if (Resumen is null)
+        {
+            ProyeccionSemestralVista = null;
+            return;
+        }
+
+        var tabla = new DataTable();
+        tabla.Columns.Add("DESCRIPCIÓN", typeof(string));
+        tabla.Columns.Add("VALOR", typeof(string));
+        tabla.Columns.Add("UNIDAD", typeof(string));
+        tabla.Columns.Add("AÑO", typeof(string));
+
+        var periodos = Resumen.Proyeccion
+            .OrderBy(p => p.NumeroPeriodo)
+            .Take(8)
+            .ToList();
+
+        foreach (var periodo in periodos)
+        {
+            var etiquetaSemestre = periodo.Semestre == 1 ? "ABR" : "SEP";
+            tabla.Columns.Add($"{periodo.Anio} {etiquetaSemestre}", typeof(string));
+        }
+
+        var filaAlumnos = tabla.NewRow();
+        filaAlumnos["DESCRIPCIÓN"] = "Refacciones";
+        filaAlumnos["VALOR"] = string.Empty;
+        filaAlumnos["UNIDAD"] = "Mensual";
+        filaAlumnos["AÑO"] = "No. Alumnos";
+
+        var filaServicios = tabla.NewRow();
+        filaServicios["DESCRIPCIÓN"] = "Garantía";
+        filaServicios["VALOR"] = string.Empty;
+        filaServicios["UNIDAD"] = "Anual";
+        filaServicios["AÑO"] = "Servicios Básicos";
+
+        var filaMantenimiento = tabla.NewRow();
+        filaMantenimiento["DESCRIPCIÓN"] = "Servicios Básicos";
+        filaMantenimiento["VALOR"] = $"$ {Resumen.ValorMensualServiciosBasicosPorAlumnoDisplay}";
+        filaMantenimiento["UNIDAD"] = "Mensual";
+        filaMantenimiento["AÑO"] = "Mantenimiento";
+
+        foreach (var periodo in periodos)
+        {
+            var etiquetaSemestre = periodo.Semestre == 1 ? "ABR" : "SEP";
+            var columna = $"{periodo.Anio} {etiquetaSemestre}";
+            filaAlumnos[columna] = periodo.DemandaDisplay;
+            filaServicios[columna] = periodo.CostoServiciosBasicosDisplay;
+            filaMantenimiento[columna] = periodo.CostoMantenimientoDisplay;
+        }
+
+        tabla.Rows.Add(filaAlumnos);
+        tabla.Rows.Add(filaServicios);
+        tabla.Rows.Add(filaMantenimiento);
+
+        ProyeccionSemestralVista = tabla.DefaultView;
     }
 
     [RelayCommand]
@@ -373,6 +436,7 @@ public sealed partial class MantenimientoViewModel : ObservableObject
         ServiciosBasicos = [];
         ItemsMantenimiento = [];
         Resumen = null;
+        ProyeccionSemestralVista = null;
         Escenarios = [];
         EscenarioSeleccionado = null;
     }
