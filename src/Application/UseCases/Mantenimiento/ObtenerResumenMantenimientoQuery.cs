@@ -7,7 +7,8 @@ namespace SistemaAranceles.Application.UseCases.Mantenimiento;
 
 /// <summary>
 /// Calcula totales de servicios/mantenimiento y proyección semestral (KAN-28).
-/// Fórmula: (TotalTipo / AlumnosReferenciaServicios / 2) × DemandaPeriodo × FactorInflacion
+/// Fórmula Excel: (TotalTipo / AlumnosReferenciaServicios / 2) × DemandaTotalPeriodo × FactorInflacion.
+/// La demanda se consolida por período, no por ciclo, para replicar la hoja "8 Mantenimiento".
 /// </summary>
 public sealed class ObtenerResumenMantenimientoQuery(
     IRepositorioServicioMantenimiento repositorio,
@@ -44,12 +45,24 @@ public sealed class ObtenerResumenMantenimientoQuery(
             var proyeccion = await repositorioProyeccion.ObtenerDtoPorIdAsync(proyeccionId.Value, ct);
             if (proyeccion is not null && proyeccion.Detalles.Count > 0)
             {
-                var anioMin = proyeccion.Detalles.Min(d => d.Anio);
-                var anioMax = proyeccion.Detalles.Max(d => d.Anio);
+                var periodosConsolidados = proyeccion.Detalles
+                    .GroupBy(d => new { d.NumeroPeriodo, d.Anio, d.EtiquetaPeriodo })
+                    .Select(g => new
+                    {
+                        g.Key.NumeroPeriodo,
+                        g.Key.Anio,
+                        g.Key.EtiquetaPeriodo,
+                        TotalEstudiantes = g.Sum(x => x.TotalEstudiantes)
+                    })
+                    .OrderBy(x => x.NumeroPeriodo)
+                    .ToList();
+
+                var anioMin = periodosConsolidados.Min(d => d.Anio);
+                var anioMax = periodosConsolidados.Max(d => d.Anio);
                 var inflaciones = await repositorioInflacion.ListarPorRangoAsync(anioMin, anioMax, ct);
 
                 var lista = new List<PeriodoMantenimientoDto>();
-                foreach (var detalle in proyeccion.Detalles.OrderBy(d => d.NumeroPeriodo))
+                foreach (var detalle in periodosConsolidados)
                 {
                     var semestre = detalle.NumeroPeriodo % 2 == 1 ? 1 : 2;
                     var factor = CalculoInflacionAplicada.CalcularFactorPeriodo(
