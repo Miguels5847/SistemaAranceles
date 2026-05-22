@@ -20,7 +20,16 @@ public sealed partial class MantenimientoInversionViewModel(
     {
         Mensaje = string.Empty;
         await Mantenimiento.CargarCommand.ExecuteAsync(null);
-        await ActivoDiferido.CargarCommand.ExecuteAsync(null);
-        await InversionInicial.CargarCommand.ExecuteAsync(null);
+
+        var carreraId = Mantenimiento.CarreraSeleccionada?.Id;
+        if (carreraId is null or <= 0)
+        {
+            await ActivoDiferido.CargarCommand.ExecuteAsync(null);
+            await InversionInicial.CargarCommand.ExecuteAsync(null);
+            return;
+        }
+
+        await ActivoDiferido.CargarCommand.ExecuteAsync(carreraId);
+        await InversionInicial.CargarCommand.ExecuteAsync(carreraId);
     }
 }
