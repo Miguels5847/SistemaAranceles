@@ -28,8 +28,8 @@
         <Style TargetType="DataGridCell">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="#263238"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderBrush" Value="#D6DAEA"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Style.Triggers>
                 <Trigger Property="IsSelected" Value="True">
@@ -284,41 +284,43 @@
                         <StackPanel Orientation="Horizontal">
                             <StackPanel Margin="0,0,32,0">
                                 <TextBlock Text="Total Servicios Básicos" Foreground="White" FontSize="11"/>
-                                <TextBlock Text="{Binding Resumen.TotalServiciosDisplay, FallbackValue='—'}"
-                                           Foreground="White" FontWeight="Bold" FontSize="14"/>
+                                <TextBlock Text="{Binding Resumen.TotalServiciosDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="14"/>
                             </StackPanel>
                             <StackPanel Margin="0,0,32,0">
                                 <TextBlock Text="Total Mantenimiento" Foreground="White" FontSize="11"/>
-                                <TextBlock Text="{Binding Resumen.TotalMantenimientoDisplay, FallbackValue='—'}"
-                                           Foreground="White" FontWeight="Bold" FontSize="14"/>
+                                <TextBlock Text="{Binding Resumen.TotalMantenimientoDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="14"/>
                             </StackPanel>
                             <StackPanel Margin="0,0,32,0">
                                 <TextBlock Text="Alumnos referencia" Foreground="White" FontSize="11"/>
-                                <TextBlock Text="{Binding Resumen.AlumnosReferenciaDisplay, FallbackValue='—'}"
-                                           Foreground="White" FontWeight="Bold" FontSize="14"/>
+                                <TextBlock Text="{Binding Resumen.AlumnosReferenciaDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="14"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,32,0">
+                                <TextBlock Text="Valor mensual S. Básicos / alumno" Foreground="White" FontSize="11"/>
+                                <TextBlock Text="{Binding Resumen.ValorMensualServiciosBasicosPorAlumnoDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="14"/>
                             </StackPanel>
                             <StackPanel>
                                 <TextBlock Text="TOTAL GENERAL" Foreground="#BBDEFB" FontSize="11"/>
-                                <TextBlock Text="{Binding Resumen.TotalGeneralDisplay, FallbackValue='—'}"
-                                           Foreground="White" FontWeight="Bold" FontSize="16"/>
+                                <TextBlock Text="{Binding Resumen.TotalGeneralDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="16"/>
                             </StackPanel>
                         </StackPanel>
                     </Border>
 
-                    <DataGrid Grid.Row="2" ItemsSource="{Binding Resumen.Proyeccion}"
-                              AutoGenerateColumns="False" IsReadOnly="True"
+                    <DataGrid Grid.Row="2" ItemsSource="{Binding ProyeccionSemestralVista}"
+                              AutoGenerateColumns="True" IsReadOnly="True"
                               SelectionMode="Single" SelectionUnit="FullRow"
                               CanUserResizeColumns="False" CanUserSortColumns="False" CanUserReorderColumns="False"
-                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
-                              AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Período" Binding="{Binding Etiqueta}" Width="120"/>
-                            <DataGridTextColumn Header="Demanda" Binding="{Binding DemandaDisplay}" Width="100"/>
-                            <DataGridTextColumn Header="Factor inflación" Binding="{Binding FactorInflacionDisplay}" Width="120"/>
-                            <DataGridTextColumn Header="Servicios Básicos" Binding="{Binding CostoServiciosBasicos, StringFormat=N2}" Width="140"/>
-                            <DataGridTextColumn Header="Mantenimiento" Binding="{Binding CostoMantenimiento, StringFormat=N2}" Width="130"/>
-                            <DataGridTextColumn Header="Total" Binding="{Binding CostoTotalDisplay}" Width="120"/>
-                        </DataGrid.Columns>
+                              HeadersVisibility="Column" GridLinesVisibility="All"
+                              AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9"
+                              FontSize="13">
+                        <DataGrid.Resources>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="#E8EAF6"/>
+                                <Setter Property="Foreground" Value="#000000"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                <Setter Property="Padding" Value="8,6"/>
+                            </Style>
+                        </DataGrid.Resources>
                     </DataGrid>
                 </Grid>
             </TabItem>
