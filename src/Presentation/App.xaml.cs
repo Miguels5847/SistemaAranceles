@@ -158,7 +158,10 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.EliminarServicioMantenimientoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.ListarServiciosMantenimientoQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.ObtenerResumenMantenimientoQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.CapitalTrabajo.ObtenerCapitalTrabajoPorCarreraQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.CapitalTrabajo.ObtenerResumenCapitalTrabajoQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.CapitalTrabajo.GuardarItemCapitalTrabajoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.CapitalTrabajo.EliminarItemCapitalTrabajoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.CrearActivoDiferidoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.ActualizarActivoDiferidoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.EliminarActivoDiferidoCommand>();

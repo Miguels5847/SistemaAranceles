@@ -25,7 +25,7 @@ public sealed class ObtenerInversionInicialTotalQuery(
     {
         var activosDiferidos = await repositorioActivoDiferido.SumarValorPorCarreraAsync(carreraId, ct);
         var totalesActivos = await totalesActivosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
-        var resumenCap = await resumenCapitalQuery.EjecutarAsync(carreraId, ct);
+        var resumenCap = await resumenCapitalQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
 
         decimal Get(CategoriaActivoFijo cat) =>
             totalesActivos.PorCategoria.FirstOrDefault(x => x.Categoria == cat)?.SubtotalValorTotal ?? 0m;

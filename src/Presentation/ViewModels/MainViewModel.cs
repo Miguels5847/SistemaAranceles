@@ -155,11 +155,6 @@ public sealed partial class MainViewModel : ObservableObject
             MenuItems.Add(new ItemMenu { Titulo = "Carreras", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarCarrerasAsync()) });
         }
 
-        if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
-        {
-            MenuItems.Add(new ItemMenu { Titulo = "Capital de Trabajo", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarCapitalTrabajoAsync()) });
-        }
-
         if (_sesionActual.TienePermiso("INF.VER"))
         {
             MenuItems.Add(new ItemMenu { Titulo = "Inflación", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarInflacionAsync()) });
@@ -198,6 +193,11 @@ public sealed partial class MainViewModel : ObservableObject
         if (_sesionActual.EsAdministrador || _sesionActual.TienePermiso("MI.VER"))
         {
             MenuItems.Add(new ItemMenu { Titulo = "Mantenimiento e Inversión", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarMantenimientoInversionAsync()) });
+        }
+
+        if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
+        {
+            MenuItems.Add(new ItemMenu { Titulo = "Capital de Trabajo", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarCapitalTrabajoAsync()) });
         }
 
         if (_sesionActual.TienePermiso("CFG.VER"))
