@@ -37,6 +37,17 @@ ALTER TABLE public.activo_diferido ADD COLUMN IF NOT EXISTS esta_activo BOOLEAN;
 ALTER TABLE public.activo_diferido ADD COLUMN IF NOT EXISTS eliminado_en TIMESTAMPTZ;
 ALTER TABLE public.activo_diferido ADD COLUMN IF NOT EXISTS eliminado_por_usuario_id INTEGER;
 
+-- Reparar ID autoincremental en tablas antiguas que quedaron con id integer sin DEFAULT.
+CREATE SEQUENCE IF NOT EXISTS public.activo_diferido_id_seq;
+ALTER SEQUENCE public.activo_diferido_id_seq OWNED BY public.activo_diferido.id;
+ALTER TABLE public.activo_diferido
+    ALTER COLUMN id SET DEFAULT nextval('public.activo_diferido_id_seq'::regclass);
+SELECT setval(
+    'public.activo_diferido_id_seq',
+    GREATEST(COALESCE((SELECT MAX(id) FROM public.activo_diferido), 0), 1),
+    TRUE
+);
+
 -- Reparar defaults en columnas que ya existían sin DEFAULT por versiones anteriores.
 ALTER TABLE public.activo_diferido ALTER COLUMN valor SET DEFAULT 0;
 ALTER TABLE public.activo_diferido ALTER COLUMN tasa_amortizacion_anual SET DEFAULT 0.2000;
