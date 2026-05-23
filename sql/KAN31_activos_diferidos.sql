@@ -10,6 +10,7 @@ BEGIN;
 CREATE TABLE IF NOT EXISTS public.activo_diferido (
     id                         SERIAL PRIMARY KEY,
     carrera_id                 INTEGER,
+    escenario_proyeccion_id    INTEGER,
     nombre_rubro               VARCHAR(150) NOT NULL,
     valor                      NUMERIC(18,2) NOT NULL DEFAULT 0,
     tasa_amortizacion_anual    NUMERIC(6,4)  NOT NULL DEFAULT 0.2000,
@@ -25,6 +26,18 @@ CREATE TABLE IF NOT EXISTS public.activo_diferido (
 -- Compatibilidad con versiones anteriores de la tabla.
 ALTER TABLE public.activo_diferido
 ADD COLUMN IF NOT EXISTS carrera_id INTEGER;
+
+-- Algunas versiones anteriores crearon esta columna como NOT NULL.
+-- Para KAN-31 el escenario es opcional: los activos diferidos aplican por carrera,
+-- y pueden especializarse por escenario más adelante sin romper la carga actual.
+ALTER TABLE public.activo_diferido
+ADD COLUMN IF NOT EXISTS escenario_proyeccion_id INTEGER;
+
+ALTER TABLE public.activo_diferido
+ALTER COLUMN escenario_proyeccion_id DROP NOT NULL;
+
+ALTER TABLE public.activo_diferido
+ALTER COLUMN escenario_proyeccion_id DROP DEFAULT;
 
 ALTER TABLE public.activo_diferido
 ADD COLUMN IF NOT EXISTS nombre_rubro VARCHAR(150);
@@ -86,19 +99,37 @@ BEGIN
         REFERENCES public.carrera(id)
         ON DELETE RESTRICT;
     END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'fk_activo_diferido_escenario'
+    ) THEN
+        ALTER TABLE public.activo_diferido
+        ADD CONSTRAINT fk_activo_diferido_escenario
+        FOREIGN KEY (escenario_proyeccion_id)
+        REFERENCES public.escenario_proyeccion(id)
+        ON DELETE SET NULL;
+    END IF;
 END $$;
 
 CREATE INDEX IF NOT EXISTS ix_activo_diferido_carrera
     ON public.activo_diferido (carrera_id)
     WHERE esta_activo = TRUE;
 
+CREATE INDEX IF NOT EXISTS ix_activo_diferido_escenario
+    ON public.activo_diferido (escenario_proyeccion_id)
+    WHERE esta_activo = TRUE;
+
 CREATE UNIQUE INDEX IF NOT EXISTS ux_activo_diferido_activo
-    ON public.activo_diferido (carrera_id, nombre_rubro)
+    ON public.activo_diferido (carrera_id, COALESCE(escenario_proyeccion_id, 0), nombre_rubro)
     WHERE esta_activo = TRUE;
 
 -- Seed por carrera. Quedan en 0 hasta que el administrador cargue valores reales.
-INSERT INTO public.activo_diferido (carrera_id, nombre_rubro, valor, tasa_amortizacion_anual)
-SELECT c.id, v.nombre_rubro, 0::NUMERIC, 0.2000::NUMERIC
+-- escenario_proyeccion_id queda NULL para que sea configuración general de la carrera.
+INSERT INTO public.activo_diferido
+    (carrera_id, escenario_proyeccion_id, nombre_rubro, valor, tasa_amortizacion_anual)
+SELECT c.id, NULL, v.nombre_rubro, 0::NUMERIC, 0.2000::NUMERIC
 FROM public.carrera c
 CROSS JOIN (VALUES
     ('Permiso Municipal'),
@@ -108,6 +139,7 @@ WHERE NOT EXISTS (
     SELECT 1
     FROM public.activo_diferido ad
     WHERE ad.carrera_id = c.id
+      AND ad.escenario_proyeccion_id IS NULL
       AND ad.nombre_rubro = v.nombre_rubro
       AND ad.esta_activo = TRUE
 );
@@ -115,7 +147,7 @@ WHERE NOT EXISTS (
 COMMIT;
 
 -- Verificación
-SELECT column_name, data_type
+SELECT column_name, data_type, is_nullable
 FROM information_schema.columns
 WHERE table_schema = 'public'
   AND table_name = 'activo_diferido'
