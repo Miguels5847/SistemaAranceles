@@ -47,6 +47,15 @@ ADD COLUMN IF NOT EXISTS escenario_proyeccion_id INTEGER;
 ALTER TABLE public.mantenimiento_servicio
 ADD COLUMN IF NOT EXISTS sede VARCHAR(100) NOT NULL DEFAULT 'General';
 
+ALTER TABLE public.mantenimiento_servicio
+ALTER COLUMN costo_anual_universidad SET DEFAULT 0;
+
+ALTER TABLE public.mantenimiento_servicio
+ALTER COLUMN creado_en SET DEFAULT NOW();
+
+ALTER TABLE public.mantenimiento_servicio
+ALTER COLUMN esta_activo SET DEFAULT TRUE;
+
 DO $$
 BEGIN
     IF NOT EXISTS (
@@ -77,6 +86,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_mantenimiento_servicio_activo
 
 -- Seed base por cada carrera existente. Se deja escenario_proyeccion_id NULL para que aplique
 -- como configuración general de la carrera, sin amarrarla a un escenario específico.
+-- Refacciones y Garantía quedan en B. Mantenimiento porque son rubros de mantenimiento,
+-- aunque también se muestran como valores rápidos en la matriz de Proyección Semestral.
 INSERT INTO public.mantenimiento_servicio
     (carrera_id, escenario_proyeccion_id, sede, tipo_rubro, nombre_rubro, costo_anual_universidad)
 SELECT c.id, NULL, 'General', v.tipo_rubro, v.nombre_rubro, v.costo_anual_universidad
@@ -90,6 +101,7 @@ CROSS JOIN (VALUES
     ('Mantenimiento',  'Seguros',             720000::NUMERIC),
     ('Mantenimiento',  'Seguridad',           960000::NUMERIC),
     ('Mantenimiento',  'Refacciones',         399400::NUMERIC),
+    ('Mantenimiento',  'Garantía',                 0::NUMERIC),
     ('Mantenimiento',  'Infraestructura',     400000::NUMERIC)
 ) AS v(tipo_rubro, nombre_rubro, costo_anual_universidad)
 WHERE NOT EXISTS (
