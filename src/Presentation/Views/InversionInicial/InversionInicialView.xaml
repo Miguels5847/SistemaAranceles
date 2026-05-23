@@ -57,9 +57,9 @@
                             <ColumnDefinition Width="160"/>
                             <ColumnDefinition Width="160"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="1" Text="Componente" Foreground="White" FontWeight="Bold"/>
-                        <TextBlock Grid.Column="2" Text="Subtotal" Foreground="White" FontWeight="Bold" HorizontalAlignment="Right"/>
-                        <TextBlock Grid.Column="3" Text="Total" Foreground="White" FontWeight="Bold" HorizontalAlignment="Right"/>
+                        <TextBlock Grid.Column="1" Text="Tipo de Inversión" Foreground="White" FontWeight="Bold"/>
+                        <TextBlock Grid.Column="2" Text="Valor" Foreground="White" FontWeight="Bold" HorizontalAlignment="Right"/>
+                        <TextBlock Grid.Column="3" Text="Monto total" Foreground="White" FontWeight="Bold" HorizontalAlignment="Right"/>
                     </Grid>
                 </Border>
 

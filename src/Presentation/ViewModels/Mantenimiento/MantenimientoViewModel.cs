@@ -259,6 +259,12 @@ public sealed partial class MantenimientoViewModel : ObservableObject
             .Take(8)
             .ToList();
 
+        var filaTotal = tabla.NewRow();
+        filaTotal["DESCRIPCIÓN"] = "TOTAL SEMESTRAL";
+        filaTotal["VALOR"] = string.Empty;
+        filaTotal["UNIDAD"] = string.Empty;
+        filaTotal["AÑO"] = "Total";
+
         foreach (var periodo in periodos)
         {
             var etiquetaSemestre = periodo.Semestre == 1 ? "ABR" : "SEP";
@@ -296,11 +302,13 @@ public sealed partial class MantenimientoViewModel : ObservableObject
             filaRefacciones[columna] = periodo.DemandaDisplay;
             filaGarantia[columna] = periodo.CostoServiciosBasicosDisplay;
             filaServicios[columna] = periodo.CostoMantenimientoDisplay;
+            filaTotal[columna] = periodo.CostoTotalDisplay;
         }
 
         tabla.Rows.Add(filaRefacciones);
         tabla.Rows.Add(filaGarantia);
         tabla.Rows.Add(filaServicios);
+        tabla.Rows.Add(filaTotal);
 
         ProyeccionSemestralVista = tabla.DefaultView;
     }
