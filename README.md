@@ -49,20 +49,20 @@ Si el build falla por archivo bloqueado (`MSB3027`), cerrar la app WPF en ejecuc
 
 ## Estado General
 
-| Area | Estado |
-| --- | --- |
-| Seguridad, login, usuarios, RBAC y auditoria | Implementado |
-| Inflacion | Implementado |
-| Tasa de Retencion | Implementado |
-| Proyeccion de Estudiantes | Implementado |
-| Sueldos Carrera | Implementado |
-| Recursos y Depreciacion | Implementado en su flujo principal |
-| Mantenimiento e Inversion | Implementado en servicios/mantenimiento, activos diferidos e inversion inicial |
-| Capital de Trabajo | Implementado como modulo por carrera |
-| Demanda/Ingresos | Parcial/documentado |
-| Costos/Gastos | Parcial/documentado |
-| Sueldos Planta Central | Parcial/documentado |
-| Financiamiento, Balance, Reportes, Analisis Financiero | Pendiente/parcial |
+| Area                                                   | Estado                                                                         |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| Seguridad, login, usuarios, RBAC y auditoria           | Implementado                                                                   |
+| Inflacion                                              | Implementado                                                                   |
+| Tasa de Retencion                                      | Implementado                                                                   |
+| Proyeccion de Estudiantes                              | Implementado                                                                   |
+| Sueldos Carrera                                        | Implementado                                                                   |
+| Recursos y Depreciacion                                | Implementado en su flujo principal                                             |
+| Mantenimiento e Inversion                              | Implementado en servicios/mantenimiento, activos diferidos e inversion inicial |
+| Capital de Trabajo                                     | Implementado como modulo por carrera                                           |
+| Demanda/Ingresos                                       | Parcial/documentado                                                            |
+| Costos/Gastos                                          | Parcial/documentado                                                            |
+| Sueldos Planta Central                                 | Parcial/documentado                                                            |
+| Financiamiento, Balance, Reportes, Analisis Financiero | Pendiente/parcial                                                              |
 
 ## Modulos Principales
 
@@ -275,16 +275,16 @@ Rutas:
 
 ## Mapeo Excel a Sistema
 
-| Hoja / Bloque Excel | Modulo del sistema |
-| --- | --- |
-| 1 Estudiantes | Proyeccion de Estudiantes |
-| 2 Tasa de Retencion | Tasa de Retencion |
-| 6 Capital de trabajo | Capital de Trabajo |
-| 7 Sueldos | Sueldos Carrera |
-| 8 Mantenimiento | Mantenimiento e Inversion / Mantenimiento |
-| Activos fijos | Recursos y Depreciacion |
-| Activos diferidos | Mantenimiento e Inversion / Activos Diferidos |
-| Inversion inicial | Mantenimiento e Inversion / Inversion Inicial |
+| Hoja / Bloque Excel  | Modulo del sistema                            |
+| -------------------- | --------------------------------------------- |
+| 1 Estudiantes        | Proyeccion de Estudiantes                     |
+| 2 Tasa de Retencion  | Tasa de Retencion                             |
+| 6 Capital de trabajo | Capital de Trabajo                            |
+| 7 Sueldos            | Sueldos Carrera                               |
+| 8 Mantenimiento      | Mantenimiento e Inversion / Mantenimiento     |
+| Activos fijos        | Recursos y Depreciacion                       |
+| Activos diferidos    | Mantenimiento e Inversion / Activos Diferidos |
+| Inversion inicial    | Mantenimiento e Inversion / Inversion Inicial |
 
 ## Scripts SQL Relevantes
 
@@ -351,6 +351,12 @@ Rama observada al actualizar esta documentacion:
 
 ```text
 feature/KAN-31-Activos-Diferidos
+```
+
+Rama base sincronizada previamente con:
+
+```text
+feature/KAN-30-Inversion-Inicial
 ```
 
 ## Documentacion Adicional
