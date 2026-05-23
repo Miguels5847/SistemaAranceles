@@ -12,6 +12,7 @@ public sealed partial class InversionInicialViewModel : ObservableObject
     private readonly IServiceProvider _sp;
     private readonly SesionActual _sesion;
     private int _carreraId = 1;
+    private int? _escenarioProyeccionId;
 
     public InversionInicialViewModel(IServiceProvider sp, SesionActual sesion)
     {
@@ -24,9 +25,13 @@ public sealed partial class InversionInicialViewModel : ObservableObject
     [ObservableProperty] private string _mensajeError = string.Empty;
 
     [RelayCommand]
-    private async Task CargarAsync(int? carreraId = null)
+    private Task CargarAsync(int? carreraId = null)
+        => CargarParaContextoAsync(carreraId, _escenarioProyeccionId);
+
+    public async Task CargarParaContextoAsync(int? carreraId = null, int? escenarioProyeccionId = null)
     {
         _carreraId = carreraId ?? _carreraId;
+        _escenarioProyeccionId = escenarioProyeccionId;
         if (EstaCargando) return;
         EstaCargando = true;
         MensajeError = string.Empty;
@@ -34,7 +39,7 @@ public sealed partial class InversionInicialViewModel : ObservableObject
         {
             using var scope = _sp.CreateScope();
             var query = scope.ServiceProvider.GetRequiredService<ObtenerInversionInicialTotalQuery>();
-            Inversion = await query.EjecutarAsync(_carreraId);
+            Inversion = await query.EjecutarAsync(_carreraId, _escenarioProyeccionId);
         }
         catch (Exception ex) { MensajeError = ex.Message; }
         finally { EstaCargando = false; }

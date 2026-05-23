@@ -21,7 +21,7 @@
                        Margin="0,4,0,0"/>
         </StackPanel>
 
-        <TabControl Grid.Row="1">
+        <TabControl Grid.Row="1" SelectedIndex="{Binding PestanaSeleccionada, Mode=TwoWay}">
             <TabItem Header="Mantenimiento">
                 <vM:MantenimientoView DataContext="{Binding Mantenimiento}"/>
             </TabItem>

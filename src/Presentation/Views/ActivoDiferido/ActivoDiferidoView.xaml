@@ -17,17 +17,26 @@
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#EEF2FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
                 </Trigger>
                 <Trigger Property="IsSelected" Value="True">
                     <Setter Property="Background" Value="#E0E7FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
         <Style TargetType="DataGridCell">
             <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#263238"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#E0E7FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
     </UserControl.Resources>
 
@@ -141,14 +150,35 @@
                     <TextBlock Grid.Row="0" FontSize="12" Foreground="#546E7A" Margin="0,0,0,6"
                                Text="Amortización lineal al 20% anual durante 5 años (tasa configurable por rubro)."/>
 
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding TablaAmortizacion.Filas}"
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding TablaAmortizacion.FilasConTotales}"
                               AutoGenerateColumns="False" IsReadOnly="True"
                               CanUserResizeColumns="False" CanUserSortColumns="False" CanUserReorderColumns="False"
                               HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Foreground" Value="#263238"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#EEF2FF"/>
+                                        <Setter Property="Foreground" Value="#1A237E"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#E0E7FF"/>
+                                        <Setter Property="Foreground" Value="#1A237E"/>
+                                    </Trigger>
+                                    <DataTrigger Binding="{Binding EsTotal}" Value="True">
+                                        <Setter Property="Background" Value="#E8EAF6"/>
+                                        <Setter Property="Foreground" Value="#1A237E"/>
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Rubro" Binding="{Binding NombreRubro}" Width="*" MinWidth="160"/>
                             <DataGridTextColumn Header="Valor Total" Binding="{Binding ValorTotalDisplay}" Width="120"/>
+                            <DataGridTextColumn Header="Tasa" Binding="{Binding TasaDisplay}" Width="70"/>
                             <DataGridTextColumn Header="Año 1" Binding="{Binding CuotasPorAnio[0], StringFormat=N2}" Width="90"/>
                             <DataGridTextColumn Header="Año 2" Binding="{Binding CuotasPorAnio[1], StringFormat=N2}" Width="90"/>
                             <DataGridTextColumn Header="Año 3" Binding="{Binding CuotasPorAnio[2], StringFormat=N2}" Width="90"/>
