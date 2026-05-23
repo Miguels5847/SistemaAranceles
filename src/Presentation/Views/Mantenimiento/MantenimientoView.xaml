@@ -106,7 +106,7 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Concepto" Binding="{Binding NombreRubro}" Width="*" MinWidth="180"/>
                             <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" Width="120"/>
-                            <DataGridTextColumn Header="Costo Anual (USD)" Binding="{Binding CostoAnualDisplay}" Width="160"/>
+                            <DataGridTextColumn Header="Costo Anual" Binding="{Binding CostoAnualDisplay}" Width="160"/>
                             <DataGridTemplateColumn Header="Acciones" Width="150">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -139,7 +139,7 @@
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="160"/>
                                 <ColumnDefinition Width="120"/>
                                 <ColumnDefinition Width="150"/>
                                 <ColumnDefinition Width="Auto"/>
@@ -149,8 +149,8 @@
                                 <TextBox Text="{Binding FormNombre, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
                             </StackPanel>
                             <StackPanel Grid.Column="1" Margin="0,0,6,0">
-                                <TextBlock Text="Costo Anual (USD)" FontSize="11"/>
-                                <TextBox Text="{Binding FormCosto, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
+                                <TextBlock Text="Costo anual" FontSize="11"/>
+                                <TextBox Text="{Binding FormCosto, UpdateSourceTrigger=PropertyChanged}" Padding="4,2" ToolTip="Ejemplos válidos: 1000, 1.000, 1.000,50"/>
                             </StackPanel>
                             <StackPanel Grid.Column="2" Margin="0,0,6,0">
                                 <TextBlock Text="Sede" FontSize="11"/>
@@ -200,7 +200,7 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Concepto" Binding="{Binding NombreRubro}" Width="*" MinWidth="180"/>
                             <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" Width="120"/>
-                            <DataGridTextColumn Header="Costo Anual (USD)" Binding="{Binding CostoAnualDisplay}" Width="160"/>
+                            <DataGridTextColumn Header="Costo Anual" Binding="{Binding CostoAnualDisplay}" Width="160"/>
                             <DataGridTemplateColumn Header="Acciones" Width="150">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -233,7 +233,7 @@
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="160"/>
                                 <ColumnDefinition Width="120"/>
                                 <ColumnDefinition Width="150"/>
                                 <ColumnDefinition Width="Auto"/>
@@ -243,8 +243,8 @@
                                 <TextBox Text="{Binding FormNombre, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
                             </StackPanel>
                             <StackPanel Grid.Column="1" Margin="0,0,6,0">
-                                <TextBlock Text="Costo Anual (USD)" FontSize="11"/>
-                                <TextBox Text="{Binding FormCosto, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
+                                <TextBlock Text="Costo anual" FontSize="11"/>
+                                <TextBox Text="{Binding FormCosto, UpdateSourceTrigger=PropertyChanged}" Padding="4,2" ToolTip="Ejemplos válidos: 1000, 1.000, 1.000,50"/>
                             </StackPanel>
                             <StackPanel Grid.Column="2" Margin="0,0,6,0">
                                 <TextBlock Text="Sede" FontSize="11"/>
@@ -281,46 +281,28 @@
                                FontSize="15" FontWeight="SemiBold" Margin="0,0,0,8"/>
 
                     <Border Grid.Row="1" Background="#1A237E" CornerRadius="4" Padding="12,8" Margin="0,0,0,8">
-                        <StackPanel>
-                            <WrapPanel Margin="0,0,0,8">
-                                <StackPanel Margin="0,0,32,0">
-                                    <TextBlock Text="Total Servicios Básicos" Foreground="White" FontSize="11"/>
-                                    <TextBlock Text="{Binding Resumen.TotalServiciosDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="14"/>
-                                </StackPanel>
-                                <StackPanel Margin="0,0,32,0">
-                                    <TextBlock Text="Total Mantenimiento" Foreground="White" FontSize="11"/>
-                                    <TextBlock Text="{Binding Resumen.TotalMantenimientoDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="14"/>
-                                </StackPanel>
-                                <StackPanel Margin="0,0,32,0">
-                                    <TextBlock Text="Alumnos referencia" Foreground="White" FontSize="11"/>
-                                    <TextBlock Text="{Binding Resumen.AlumnosReferenciaDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="14"/>
-                                </StackPanel>
-                                <StackPanel Margin="0,0,32,0">
-                                    <TextBlock Text="Valor mensual S. Básicos / alumno" Foreground="White" FontSize="11"/>
-                                    <TextBlock Text="{Binding Resumen.ValorMensualServiciosBasicosPorAlumnoDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="14"/>
-                                </StackPanel>
-                                <StackPanel>
-                                    <TextBlock Text="TOTAL GENERAL" Foreground="#BBDEFB" FontSize="11"/>
-                                    <TextBlock Text="{Binding Resumen.TotalGeneralDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="16"/>
-                                </StackPanel>
-                            </WrapPanel>
-
-                            <Border Background="#283593" CornerRadius="4" Padding="8">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="Valores editables para la matriz:" Foreground="White" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                                    <StackPanel Margin="0,0,12,0">
-                                        <TextBlock Text="Refacciones mensual" Foreground="#C5CAE9" FontSize="11"/>
-                                        <TextBox Width="110" Text="{Binding RefaccionesMensual, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
-                                    </StackPanel>
-                                    <StackPanel Margin="0,0,12,0">
-                                        <TextBlock Text="Garantía anual" Foreground="#C5CAE9" FontSize="11"/>
-                                        <TextBox Width="110" Text="{Binding GarantiaAnual, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
-                                    </StackPanel>
-                                    <Button Content="Guardar valores" Command="{Binding GuardarValoresRapidosCommand}" Padding="10,4" VerticalAlignment="Bottom"/>
-                                    <TextBlock Text="   Se guardan como rubros de B. Mantenimiento." Foreground="#C5CAE9" VerticalAlignment="Bottom" Margin="8,0,0,4"/>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
+                        <WrapPanel>
+                            <StackPanel Margin="0,0,32,0">
+                                <TextBlock Text="Total Servicios Básicos" Foreground="White" FontSize="11"/>
+                                <TextBlock Text="{Binding Resumen.TotalServiciosDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="14"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,32,0">
+                                <TextBlock Text="Total Mantenimiento" Foreground="White" FontSize="11"/>
+                                <TextBlock Text="{Binding Resumen.TotalMantenimientoDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="14"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,32,0">
+                                <TextBlock Text="Alumnos referencia" Foreground="White" FontSize="11"/>
+                                <TextBlock Text="{Binding Resumen.AlumnosReferenciaDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="14"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,32,0">
+                                <TextBlock Text="Valor mensual S. Básicos / alumno" Foreground="White" FontSize="11"/>
+                                <TextBlock Text="{Binding Resumen.ValorMensualServiciosBasicosPorAlumnoDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="14"/>
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="TOTAL GENERAL" Foreground="#BBDEFB" FontSize="11"/>
+                                <TextBlock Text="{Binding Resumen.TotalGeneralDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="16"/>
+                            </StackPanel>
+                        </WrapPanel>
                     </Border>
 
                     <DataGrid Grid.Row="2" ItemsSource="{Binding ProyeccionSemestralVista}"
