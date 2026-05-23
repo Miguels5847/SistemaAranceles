@@ -59,6 +59,9 @@ public sealed partial class MantenimientoViewModel : ObservableObject
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
 
+    [ObservableProperty] private string _refaccionesMensual = "0";
+    [ObservableProperty] private string _garantiaAnual = "0";
+
     [ObservableProperty] private bool _formVisible;
     [ObservableProperty] private bool _formEsEdicion;
     [ObservableProperty] private int _formId;
@@ -212,7 +215,27 @@ public sealed partial class MantenimientoViewModel : ObservableObject
             todos.Where(x => x.TipoRubro == TipoRubroMantenimiento.ServicioBasico));
         ItemsMantenimiento = new ObservableCollection<ServicioMantenimientoDto>(
             todos.Where(x => x.TipoRubro == TipoRubroMantenimiento.Mantenimiento));
+
+        SincronizarValoresRapidos();
     }
+
+    private void SincronizarValoresRapidos()
+    {
+        var refacciones = BuscarMantenimiento("Refacciones");
+        var garantia = BuscarMantenimiento("Garantía") ?? BuscarMantenimiento("Garantia");
+
+        RefaccionesMensual = refacciones is null
+            ? "0"
+            : decimal.Round(refacciones.CostoAnualUniversidad / 12m, 2).ToString("F2");
+
+        GarantiaAnual = garantia is null
+            ? "0"
+            : garantia.CostoAnualUniversidad.ToString("F2");
+    }
+
+    private ServicioMantenimientoDto? BuscarMantenimiento(string nombre)
+        => ItemsMantenimiento.FirstOrDefault(x =>
+            string.Equals(x.NombreRubro.Trim(), nombre, StringComparison.OrdinalIgnoreCase));
 
     private async Task CargarResumenAsync()
     {
@@ -257,38 +280,123 @@ public sealed partial class MantenimientoViewModel : ObservableObject
             tabla.Columns.Add($"{periodo.Anio} {etiquetaSemestre}", typeof(string));
         }
 
-        var filaAlumnos = tabla.NewRow();
-        filaAlumnos["DESCRIPCIÓN"] = "Refacciones";
-        filaAlumnos["VALOR"] = string.Empty;
-        filaAlumnos["UNIDAD"] = "Mensual";
-        filaAlumnos["AÑO"] = "No. Alumnos";
+        var refaccionesMensual = ObtenerDecimalSeguro(RefaccionesMensual);
+        var garantiaAnual = ObtenerDecimalSeguro(GarantiaAnual);
+
+        var filaRefacciones = tabla.NewRow();
+        filaRefacciones["DESCRIPCIÓN"] = "Refacciones";
+        filaRefacciones["VALOR"] = refaccionesMensual == 0m ? string.Empty : refaccionesMensual.ToString("N2");
+        filaRefacciones["UNIDAD"] = "Mensual";
+        filaRefacciones["AÑO"] = "No. Alumnos";
+
+        var filaGarantia = tabla.NewRow();
+        filaGarantia["DESCRIPCIÓN"] = "Garantía";
+        filaGarantia["VALOR"] = garantiaAnual == 0m ? string.Empty : garantiaAnual.ToString("N2");
+        filaGarantia["UNIDAD"] = "Anual";
+        filaGarantia["AÑO"] = "Servicios Básicos";
 
         var filaServicios = tabla.NewRow();
-        filaServicios["DESCRIPCIÓN"] = "Garantía";
-        filaServicios["VALOR"] = string.Empty;
-        filaServicios["UNIDAD"] = "Anual";
-        filaServicios["AÑO"] = "Servicios Básicos";
-
-        var filaMantenimiento = tabla.NewRow();
-        filaMantenimiento["DESCRIPCIÓN"] = "Servicios Básicos";
-        filaMantenimiento["VALOR"] = $"$ {Resumen.ValorMensualServiciosBasicosPorAlumnoDisplay}";
-        filaMantenimiento["UNIDAD"] = "Mensual";
-        filaMantenimiento["AÑO"] = "Mantenimiento";
+        filaServicios["DESCRIPCIÓN"] = "Servicios Básicos";
+        filaServicios["VALOR"] = $"$ {Resumen.ValorMensualServiciosBasicosPorAlumnoDisplay}";
+        filaServicios["UNIDAD"] = "Mensual";
+        filaServicios["AÑO"] = "Mantenimiento";
 
         foreach (var periodo in periodos)
         {
             var etiquetaSemestre = periodo.Semestre == 1 ? "ABR" : "SEP";
             var columna = $"{periodo.Anio} {etiquetaSemestre}";
-            filaAlumnos[columna] = periodo.DemandaDisplay;
-            filaServicios[columna] = periodo.CostoServiciosBasicosDisplay;
-            filaMantenimiento[columna] = periodo.CostoMantenimientoDisplay;
+
+            filaRefacciones[columna] = periodo.DemandaDisplay;
+            filaGarantia[columna] = periodo.CostoServiciosBasicosDisplay;
+            filaServicios[columna] = periodo.CostoMantenimientoDisplay;
         }
 
-        tabla.Rows.Add(filaAlumnos);
+        tabla.Rows.Add(filaRefacciones);
+        tabla.Rows.Add(filaGarantia);
         tabla.Rows.Add(filaServicios);
-        tabla.Rows.Add(filaMantenimiento);
 
         ProyeccionSemestralVista = tabla.DefaultView;
+    }
+
+    [RelayCommand]
+    private async Task GuardarValoresRapidosAsync()
+    {
+        if (!PuedeEditar && !PuedeCrear)
+        {
+            MensajeError = "No tiene permiso para modificar refacciones y garantía.";
+            return;
+        }
+
+        if (CarreraSeleccionada is null)
+        {
+            MensajeError = "Seleccione una carrera.";
+            return;
+        }
+
+        if (!TryDecimal(RefaccionesMensual, out var refaccionesMensual) || refaccionesMensual < 0m)
+        {
+            MensajeError = "El valor mensual de refacciones no es válido.";
+            return;
+        }
+
+        if (!TryDecimal(GarantiaAnual, out var garantiaAnual) || garantiaAnual < 0m)
+        {
+            MensajeError = "El valor anual de garantía no es válido.";
+            return;
+        }
+
+        EstaGuardando = true;
+        MensajeError = string.Empty;
+        MensajeExito = string.Empty;
+
+        try
+        {
+            await GuardarRubroMantenimientoAsync("Refacciones", refaccionesMensual * 12m);
+            await GuardarRubroMantenimientoAsync("Garantía", garantiaAnual);
+            MensajeExito = "Valores de refacciones y garantía actualizados.";
+            await RecargarDatosAsync();
+        }
+        catch (Exception ex)
+        {
+            MensajeError = Detalle(ex);
+        }
+        finally
+        {
+            EstaGuardando = false;
+        }
+    }
+
+    private async Task GuardarRubroMantenimientoAsync(string nombre, decimal costoAnual)
+    {
+        var rubro = BuscarMantenimiento(nombre) ?? (nombre == "Garantía" ? BuscarMantenimiento("Garantia") : null);
+        var escenarioId = (rubro?.EscenarioProyeccionId).HasValue == true ? rubro.EscenarioProyeccionId : null;
+
+        using var scope = _sp.CreateScope();
+        if (rubro is null)
+        {
+            var crear = scope.ServiceProvider.GetRequiredService<CrearServicioMantenimientoCommand>();
+            await crear.EjecutarAsync(new CrearServicioMantenimientoDto
+            {
+                CarreraId = CarreraSeleccionada!.Id,
+                EscenarioProyeccionId = null,
+                Sede = "General",
+                TipoRubro = TipoRubroMantenimiento.Mantenimiento,
+                NombreRubro = nombre,
+                CostoAnualUniversidad = costoAnual,
+            });
+            return;
+        }
+
+        var actualizar = scope.ServiceProvider.GetRequiredService<ActualizarServicioMantenimientoCommand>();
+        await actualizar.EjecutarAsync(new ActualizarServicioMantenimientoDto
+        {
+            Id = rubro.Id,
+            EscenarioProyeccionId = escenarioId,
+            Sede = rubro.Sede,
+            TipoRubro = TipoRubroMantenimiento.Mantenimiento,
+            NombreRubro = rubro.NombreRubro,
+            CostoAnualUniversidad = costoAnual,
+        });
     }
 
     [RelayCommand]
@@ -362,8 +470,7 @@ public sealed partial class MantenimientoViewModel : ObservableObject
             return;
         }
 
-        if (!decimal.TryParse(FormCosto.Replace(',', '.'), System.Globalization.NumberStyles.Any,
-                System.Globalization.CultureInfo.InvariantCulture, out var costo))
+        if (!TryDecimal(FormCosto, out var costo) || costo < 0m)
         {
             MensajeError = "Costo inválido.";
             return;
@@ -437,9 +544,18 @@ public sealed partial class MantenimientoViewModel : ObservableObject
         ItemsMantenimiento = [];
         Resumen = null;
         ProyeccionSemestralVista = null;
+        RefaccionesMensual = "0";
+        GarantiaAnual = "0";
         Escenarios = [];
         EscenarioSeleccionado = null;
     }
+
+    private static bool TryDecimal(string? value, out decimal result)
+        => decimal.TryParse(value?.Replace(',', '.'), System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.InvariantCulture, out result);
+
+    private static decimal ObtenerDecimalSeguro(string? value)
+        => TryDecimal(value, out var result) ? result : 0m;
 
     private static string Detalle(Exception ex) => ex.InnerException?.Message ?? ex.Message;
 }
