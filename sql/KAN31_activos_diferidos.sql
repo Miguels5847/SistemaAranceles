@@ -24,50 +24,50 @@ CREATE TABLE IF NOT EXISTS public.activo_diferido (
 );
 
 -- Compatibilidad con versiones anteriores de la tabla.
-ALTER TABLE public.activo_diferido
-ADD COLUMN IF NOT EXISTS carrera_id INTEGER;
+ALTER TABLE public.activo_diferido ADD COLUMN IF NOT EXISTS carrera_id INTEGER;
+ALTER TABLE public.activo_diferido ADD COLUMN IF NOT EXISTS escenario_proyeccion_id INTEGER;
+ALTER TABLE public.activo_diferido ADD COLUMN IF NOT EXISTS nombre_rubro VARCHAR(150);
+ALTER TABLE public.activo_diferido ADD COLUMN IF NOT EXISTS valor NUMERIC(18,2);
+ALTER TABLE public.activo_diferido ADD COLUMN IF NOT EXISTS tasa_amortizacion_anual NUMERIC(6,4);
+ALTER TABLE public.activo_diferido ADD COLUMN IF NOT EXISTS creado_en TIMESTAMPTZ;
+ALTER TABLE public.activo_diferido ADD COLUMN IF NOT EXISTS creado_por_usuario_id INTEGER;
+ALTER TABLE public.activo_diferido ADD COLUMN IF NOT EXISTS actualizado_en TIMESTAMPTZ;
+ALTER TABLE public.activo_diferido ADD COLUMN IF NOT EXISTS actualizado_por_usuario_id INTEGER;
+ALTER TABLE public.activo_diferido ADD COLUMN IF NOT EXISTS esta_activo BOOLEAN;
+ALTER TABLE public.activo_diferido ADD COLUMN IF NOT EXISTS eliminado_en TIMESTAMPTZ;
+ALTER TABLE public.activo_diferido ADD COLUMN IF NOT EXISTS eliminado_por_usuario_id INTEGER;
 
--- Algunas versiones anteriores crearon esta columna como NOT NULL.
+-- Reparar defaults en columnas que ya existían sin DEFAULT por versiones anteriores.
+ALTER TABLE public.activo_diferido ALTER COLUMN valor SET DEFAULT 0;
+ALTER TABLE public.activo_diferido ALTER COLUMN tasa_amortizacion_anual SET DEFAULT 0.2000;
+ALTER TABLE public.activo_diferido ALTER COLUMN creado_en SET DEFAULT NOW();
+ALTER TABLE public.activo_diferido ALTER COLUMN esta_activo SET DEFAULT TRUE;
+
 -- Para KAN-31 el escenario es opcional: los activos diferidos aplican por carrera,
 -- y pueden especializarse por escenario más adelante sin romper la carga actual.
-ALTER TABLE public.activo_diferido
-ADD COLUMN IF NOT EXISTS escenario_proyeccion_id INTEGER;
+ALTER TABLE public.activo_diferido ALTER COLUMN escenario_proyeccion_id DROP NOT NULL;
+ALTER TABLE public.activo_diferido ALTER COLUMN escenario_proyeccion_id DROP DEFAULT;
 
-ALTER TABLE public.activo_diferido
-ALTER COLUMN escenario_proyeccion_id DROP NOT NULL;
+-- Reparar datos existentes con NULL antes de aplicar NOT NULL.
+UPDATE public.activo_diferido
+SET valor = 0
+WHERE valor IS NULL;
 
-ALTER TABLE public.activo_diferido
-ALTER COLUMN escenario_proyeccion_id DROP DEFAULT;
+UPDATE public.activo_diferido
+SET tasa_amortizacion_anual = 0.2000
+WHERE tasa_amortizacion_anual IS NULL;
 
-ALTER TABLE public.activo_diferido
-ADD COLUMN IF NOT EXISTS nombre_rubro VARCHAR(150);
+UPDATE public.activo_diferido
+SET creado_en = NOW()
+WHERE creado_en IS NULL;
 
-ALTER TABLE public.activo_diferido
-ADD COLUMN IF NOT EXISTS valor NUMERIC(18,2) NOT NULL DEFAULT 0;
+UPDATE public.activo_diferido
+SET esta_activo = TRUE
+WHERE esta_activo IS NULL;
 
-ALTER TABLE public.activo_diferido
-ADD COLUMN IF NOT EXISTS tasa_amortizacion_anual NUMERIC(6,4) NOT NULL DEFAULT 0.2000;
-
-ALTER TABLE public.activo_diferido
-ADD COLUMN IF NOT EXISTS creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW();
-
-ALTER TABLE public.activo_diferido
-ADD COLUMN IF NOT EXISTS creado_por_usuario_id INTEGER;
-
-ALTER TABLE public.activo_diferido
-ADD COLUMN IF NOT EXISTS actualizado_en TIMESTAMPTZ;
-
-ALTER TABLE public.activo_diferido
-ADD COLUMN IF NOT EXISTS actualizado_por_usuario_id INTEGER;
-
-ALTER TABLE public.activo_diferido
-ADD COLUMN IF NOT EXISTS esta_activo BOOLEAN NOT NULL DEFAULT TRUE;
-
-ALTER TABLE public.activo_diferido
-ADD COLUMN IF NOT EXISTS eliminado_en TIMESTAMPTZ;
-
-ALTER TABLE public.activo_diferido
-ADD COLUMN IF NOT EXISTS eliminado_por_usuario_id INTEGER;
+UPDATE public.activo_diferido
+SET nombre_rubro = 'Activo diferido ' || id::TEXT
+WHERE nombre_rubro IS NULL OR BTRIM(nombre_rubro) = '';
 
 -- Si había registros antiguos sin carrera, asignarlos a la primera carrera existente.
 UPDATE public.activo_diferido ad
@@ -80,11 +80,12 @@ FROM (
 ) c
 WHERE ad.carrera_id IS NULL;
 
-ALTER TABLE public.activo_diferido
-ALTER COLUMN carrera_id SET NOT NULL;
-
-ALTER TABLE public.activo_diferido
-ALTER COLUMN nombre_rubro SET NOT NULL;
+ALTER TABLE public.activo_diferido ALTER COLUMN carrera_id SET NOT NULL;
+ALTER TABLE public.activo_diferido ALTER COLUMN nombre_rubro SET NOT NULL;
+ALTER TABLE public.activo_diferido ALTER COLUMN valor SET NOT NULL;
+ALTER TABLE public.activo_diferido ALTER COLUMN tasa_amortizacion_anual SET NOT NULL;
+ALTER TABLE public.activo_diferido ALTER COLUMN creado_en SET NOT NULL;
+ALTER TABLE public.activo_diferido ALTER COLUMN esta_activo SET NOT NULL;
 
 DO $$
 BEGIN
@@ -128,8 +129,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_activo_diferido_activo
 -- Seed por carrera. Quedan en 0 hasta que el administrador cargue valores reales.
 -- escenario_proyeccion_id queda NULL para que sea configuración general de la carrera.
 INSERT INTO public.activo_diferido
-    (carrera_id, escenario_proyeccion_id, nombre_rubro, valor, tasa_amortizacion_anual)
-SELECT c.id, NULL, v.nombre_rubro, 0::NUMERIC, 0.2000::NUMERIC
+    (carrera_id, escenario_proyeccion_id, nombre_rubro, valor, tasa_amortizacion_anual, creado_en, esta_activo)
+SELECT c.id, NULL, v.nombre_rubro, 0::NUMERIC, 0.2000::NUMERIC, NOW(), TRUE
 FROM public.carrera c
 CROSS JOIN (VALUES
     ('Permiso Municipal'),
@@ -147,7 +148,7 @@ WHERE NOT EXISTS (
 COMMIT;
 
 -- Verificación
-SELECT column_name, data_type, is_nullable
+SELECT column_name, data_type, is_nullable, column_default
 FROM information_schema.columns
 WHERE table_schema = 'public'
   AND table_name = 'activo_diferido'
