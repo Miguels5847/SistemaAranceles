@@ -18,9 +18,11 @@ public sealed class ObtenerCapitalTrabajoPorCarreraQuery(
     IRepositorioConfiguracionRetencion repositorioConfiguracion,
     IRepositorioOverrideHorasPeriodo repositorioOverrides,
     IRepositorioItemMaterialInsumo repositorioMateriales,
+    IRepositorioDatosInstitucionales repositorioDatosInstitucionales,
     GenerarTablaSueldosPeriodoQuery generarTablaSueldosPeriodoQuery)
 {
-    private const int MesesCapitalTrabajoPorDefecto = 2;
+    private const int MesesCapitalTrabajoFallback = DatosInstitucionales.MesesCapitalTrabajoPorDefecto;
+    // TODO KAN-29: obtener este valor desde Sueldos Carrera, Proyeccion o Datos Institucionales.
     private const decimal EstudiantesUnidadAcademicaPorDefecto = 285m;
     public const string CategoriaMateriales = "MATERIALES_SUMINISTROS";
     public const string CategoriaAseo = "ASEO_LIMPIEZA";
@@ -48,6 +50,7 @@ public sealed class ObtenerCapitalTrabajoPorCarreraQuery(
                 escenarioProyeccionId!.Value,
                 periodoBase.PeriodoAcademicoId,
                 ct);
+        var mesesCapitalTrabajo = await ObtenerMesesCapitalTrabajoAsync(ct);
 
         return new CapitalTrabajoPorCarreraDto
         {
@@ -57,12 +60,20 @@ public sealed class ObtenerCapitalTrabajoPorCarreraQuery(
             EscenarioNombre = escenario?.Nombre ?? string.Empty,
             PeriodoBaseId = periodoBase?.PeriodoAcademicoId,
             PeriodoBaseDisplay = periodoBase?.DisplayText ?? "Sin periodo base",
-            MesesCapitalTrabajo = MesesCapitalTrabajoPorDefecto,
+            MesesCapitalTrabajo = mesesCapitalTrabajo,
             GastosServicioAdministracion = gastos,
             MaterialesSuministros = materiales,
             AseoLimpieza = aseo,
             AccesoriosMateriales = accesorios
         };
+    }
+
+    private async Task<int> ObtenerMesesCapitalTrabajoAsync(CancellationToken ct)
+    {
+        var datos = await repositorioDatosInstitucionales.ObtenerVigenteAsync(ct);
+        return datos?.MesesCapitalTrabajo is > 0
+            ? datos.MesesCapitalTrabajo
+            : MesesCapitalTrabajoFallback;
     }
 
     private async Task<PeriodoDisponibleSueldosDto?> ResolverPeriodoBaseAsync(

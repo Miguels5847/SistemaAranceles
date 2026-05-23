@@ -1,7 +1,32 @@
 <UserControl x:Class="SistemaAranceles.Presentation.Views.InversionInicial.InversionInicialView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             Height="Auto" Width="Auto">
+             Height="Auto"
+             Width="Auto">
+    <UserControl.Resources>
+        <DataTemplate x:Key="CategoriaActivoTemplate">
+            <Border BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                <Grid MinHeight="28">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="24"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="160"/>
+                        <ColumnDefinition Width="160"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding CategoriaNombre}"
+                               Margin="24,5,8,5"
+                               Foreground="#455A64"/>
+                    <TextBlock Grid.Column="2"
+                               Text="{Binding ValorDisplay}"
+                               HorizontalAlignment="Right"
+                               Margin="0,5,8,5"
+                               Foreground="#455A64"/>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
 
     <Grid Margin="12">
         <Grid.RowDefinitions>
@@ -10,46 +35,28 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="Inversión Inicial Total"
-                   FontSize="18" FontWeight="Bold" Foreground="#1A237E" Margin="0,0,0,8"/>
+        <TextBlock Grid.Row="0"
+                   Text="Inversion Inicial Total"
+                   FontSize="18"
+                   FontWeight="Bold"
+                   Foreground="#1A237E"
+                   Margin="0,0,0,8"/>
 
-        <TextBlock Grid.Row="1" Text="{Binding MensajeError}" Foreground="#C62828" FontWeight="SemiBold"
+        <TextBlock Grid.Row="1"
+                   Text="{Binding MensajeError}"
+                   Foreground="#C62828"
+                   FontWeight="SemiBold"
                    Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"
                    Margin="0,0,0,8"/>
 
-        <!-- Tabla resumen estilo balance -->
-        <Border Grid.Row="2" BorderBrush="#C5CAE9" BorderThickness="1" CornerRadius="6" Padding="0">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <!-- encabezado -->
-                    <RowDefinition Height="Auto"/>
-                    <!-- A: Activos diferidos -->
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <!-- B: Activos fijos -->
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <!-- C: Capital de trabajo -->
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <!-- D: Imprevistos -->
-                    <RowDefinition Height="Auto"/>
-                    <!-- Total -->
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="24"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="160"/>
-                    <ColumnDefinition Width="160"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- Encabezado -->
-                <Border Grid.Row="0" Grid.ColumnSpan="4" Background="#1A237E" Padding="12,8">
+        <Border Grid.Row="2"
+                BorderBrush="#C5CAE9"
+                BorderThickness="1"
+                CornerRadius="6"
+                Padding="0"
+                Visibility="{Binding TieneInversion, Converter={StaticResource BoolToVisibilityConverter}}">
+            <StackPanel>
+                <Border Background="#1A237E" Padding="12,8">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="24"/>
@@ -57,54 +64,102 @@
                             <ColumnDefinition Width="160"/>
                             <ColumnDefinition Width="160"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="1" Text="Tipo de Inversión" Foreground="White" FontWeight="Bold"/>
+                        <TextBlock Grid.Column="1" Text="Tipo de Inversion" Foreground="White" FontWeight="Bold"/>
                         <TextBlock Grid.Column="2" Text="Valor" Foreground="White" FontWeight="Bold" HorizontalAlignment="Right"/>
                         <TextBlock Grid.Column="3" Text="Monto total" Foreground="White" FontWeight="Bold" HorizontalAlignment="Right"/>
                     </Grid>
                 </Border>
 
-                <!-- Activos Diferidos -->
-                <TextBlock Grid.Row="1" Grid.Column="1" Text="A. Activos Diferidos (permisos legales)"
-                           FontWeight="SemiBold" Foreground="#1A237E" Margin="8,6,0,2"/>
-                <TextBlock Grid.Row="2" Grid.Column="1" Text="Permisos municipales y bomberos" Margin="24,2,0,4" Foreground="#546E7A"/>
-                <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding Inversion.ActivosDiferidosDisplay, FallbackValue='—'}"
-                           HorizontalAlignment="Right" Margin="0,2,8,4" Foreground="#546E7A"/>
+                <Border BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Background="#F8F9FF">
+                    <Grid MinHeight="32">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="24"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="160"/>
+                            <ColumnDefinition Width="160"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="1" Text="A. Activos Diferidos" FontWeight="SemiBold" Foreground="#1A237E" Margin="8,7,8,7"/>
+                        <TextBlock Grid.Column="3" Text="{Binding Inversion.ActivosDiferidosDisplay}" HorizontalAlignment="Right" FontWeight="SemiBold" Margin="0,7,8,7"/>
+                    </Grid>
+                </Border>
 
-                <!-- Activos Fijos -->
-                <Border Grid.Row="3" Grid.ColumnSpan="4" Background="#F8F9FF" Height="1" Margin="8,0"/>
-                <TextBlock Grid.Row="4" Grid.Column="1" Text="B. Activos Fijos"
-                           FontWeight="SemiBold" Foreground="#1A237E" Margin="8,6,0,2"/>
-                <TextBlock Grid.Row="5" Grid.Column="1" Text="Muebles y Enseres" Margin="24,2,0,2" Foreground="#546E7A"/>
-                <TextBlock Grid.Row="5" Grid.Column="2" Text="{Binding Inversion.MueblesDisplay, FallbackValue='—'}"
-                           HorizontalAlignment="Right" Margin="0,2,8,2" Foreground="#546E7A"/>
-                <TextBlock Grid.Row="6" Grid.Column="1" Text="Laboratorios y Equipos" Margin="24,2,0,2" Foreground="#546E7A"/>
-                <TextBlock Grid.Row="6" Grid.Column="2" Text="{Binding Inversion.LaboratoriosDisplay, FallbackValue='—'}"
-                           HorizontalAlignment="Right" Margin="0,2,8,2" Foreground="#546E7A"/>
-                <TextBlock Grid.Row="7" Grid.Column="1" Text="Equipo de Cómputo" Margin="24,2,0,2" Foreground="#546E7A"/>
-                <TextBlock Grid.Row="7" Grid.Column="2" Text="{Binding Inversion.EquipoComputoDisplay, FallbackValue='—'}"
-                           HorizontalAlignment="Right" Margin="0,2,8,2" Foreground="#546E7A"/>
-                <TextBlock Grid.Row="8" Grid.Column="1" Text="Equipo de Oficina" Margin="24,2,0,2" Foreground="#546E7A"/>
-                <TextBlock Grid.Row="8" Grid.Column="2" Text="{Binding Inversion.EquipoOficinaDisplay, FallbackValue='—'}"
-                           HorizontalAlignment="Right" Margin="0,2,8,4" Foreground="#546E7A"/>
-                <TextBlock Grid.Row="8" Grid.Column="3" Text="{Binding Inversion.SubtotalActivosFijosDisplay, FallbackValue='—'}"
-                           HorizontalAlignment="Right" Margin="0,2,8,4" FontWeight="SemiBold"/>
+                <Border BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                    <Grid MinHeight="28">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="24"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="160"/>
+                            <ColumnDefinition Width="160"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="1" Text="Permisos municipales y bomberos" Margin="24,5,8,5" Foreground="#455A64"/>
+                        <TextBlock Grid.Column="2" Text="{Binding Inversion.ActivosDiferidosDisplay}" HorizontalAlignment="Right" Margin="0,5,8,5" Foreground="#455A64"/>
+                    </Grid>
+                </Border>
 
-                <!-- Capital de Trabajo -->
-                <Border Grid.Row="9" Grid.ColumnSpan="4" Background="#F8F9FF" Height="1" Margin="8,0"/>
-                <TextBlock Grid.Row="10" Grid.Column="1" Text="C. Capital de Trabajo (2 meses)"
-                           FontWeight="SemiBold" Foreground="#1A237E" Margin="8,6,0,2"/>
-                <TextBlock Grid.Row="10" Grid.Column="3" Text="{Binding Inversion.CapitalTrabajoDisplay, FallbackValue='—'}"
-                           HorizontalAlignment="Right" Margin="0,6,8,2" FontWeight="SemiBold"/>
+                <Border BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Background="#F8F9FF">
+                    <Grid MinHeight="32">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="24"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="160"/>
+                            <ColumnDefinition Width="160"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="1" Text="B. Activos Fijos" FontWeight="SemiBold" Foreground="#1A237E" Margin="8,7,8,7"/>
+                        <TextBlock Grid.Column="3" Text="{Binding Inversion.SubtotalActivosFijosDisplay}" HorizontalAlignment="Right" FontWeight="SemiBold" Margin="0,7,8,7"/>
+                    </Grid>
+                </Border>
 
-                <!-- Imprevistos -->
-                <Border Grid.Row="11" Grid.ColumnSpan="4" Background="#F8F9FF" Height="1" Margin="8,0"/>
-                <TextBlock Grid.Row="12" Grid.Column="1" Text="D. Imprevistos (5%)"
-                           FontWeight="SemiBold" Foreground="#1A237E" Margin="8,6,0,6"/>
-                <TextBlock Grid.Row="12" Grid.Column="3" Text="{Binding Inversion.ImprevistosDisplay, FallbackValue='—'}"
-                           HorizontalAlignment="Right" Margin="0,6,8,6" FontWeight="SemiBold"/>
+                <ItemsControl ItemsSource="{Binding Inversion.CategoriasActivosFijos}"
+                              ItemTemplate="{StaticResource CategoriaActivoTemplate}"/>
 
-                <!-- Total -->
-                <Border Grid.Row="13" Grid.ColumnSpan="4" Background="#1A237E" Padding="8,10">
+                <Border BorderBrush="#B0BEC5" BorderThickness="0,1,0,1" Background="#FAFAFA">
+                    <Grid MinHeight="34">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="24"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="160"/>
+                            <ColumnDefinition Width="160"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="1" Text="TOTAL ACTIVOS" FontWeight="Bold" Foreground="#0D47A1" Margin="8,8,8,8"/>
+                        <TextBlock Grid.Column="3" Text="{Binding Inversion.TotalActivosDisplay}" HorizontalAlignment="Right" FontWeight="Bold" Margin="0,8,8,8"/>
+                    </Grid>
+                </Border>
+
+                <Border BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                    <Grid MinHeight="32">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="24"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="160"/>
+                            <ColumnDefinition Width="160"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding Inversion.MesesCapitalTrabajo, StringFormat=C. Capital de Trabajo ({0} meses)}"
+                                   FontWeight="SemiBold"
+                                   Foreground="#1A237E"
+                                   Margin="8,7,8,7"/>
+                        <TextBlock Grid.Column="2" Text="{Binding Inversion.CapitalTrabajoDisplay}" HorizontalAlignment="Right" Margin="0,7,8,7"/>
+                    </Grid>
+                </Border>
+
+                <Border BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                    <Grid MinHeight="32">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="24"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="160"/>
+                            <ColumnDefinition Width="160"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding Inversion.PorcentajeImprevistosInversionDisplay, StringFormat=D. Imprevistos ({0})}"
+                                   FontWeight="SemiBold"
+                                   Foreground="#1A237E"
+                                   Margin="8,7,8,7"/>
+                        <TextBlock Grid.Column="2" Text="{Binding Inversion.ImprevistosDisplay}" HorizontalAlignment="Right" Margin="0,7,8,7"/>
+                    </Grid>
+                </Border>
+
+                <Border Background="#1A237E" Padding="8,10">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="24"/>
@@ -112,13 +167,16 @@
                             <ColumnDefinition Width="160"/>
                             <ColumnDefinition Width="160"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="1" Text="TOTAL INVERSIÓN INICIAL" Foreground="White" FontWeight="Bold" FontSize="14"/>
-                        <TextBlock Grid.Column="3" Text="{Binding Inversion.TotalInversionDisplay, FallbackValue='—'}"
-                                   Foreground="#FFD54F" FontWeight="Bold" FontSize="16" HorizontalAlignment="Right"/>
+                        <TextBlock Grid.Column="1" Text="TOTAL INVERSION INICIAL" Foreground="White" FontWeight="Bold" FontSize="14"/>
+                        <TextBlock Grid.Column="3"
+                                   Text="{Binding Inversion.TotalInversionDisplay}"
+                                   Foreground="#FFD54F"
+                                   FontWeight="Bold"
+                                   FontSize="16"
+                                   HorizontalAlignment="Right"/>
                     </Grid>
                 </Border>
-
-            </Grid>
+            </StackPanel>
         </Border>
     </Grid>
 </UserControl>

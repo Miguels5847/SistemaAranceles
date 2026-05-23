@@ -26,12 +26,17 @@ public sealed class ObtenerTotalesActivosQuery(
         var contexto = await ResolverContextoCalculoAsync(carreraId, escenarioProyeccionId, cancellationToken);
 
         var porCategoria = activos
-            .GroupBy(x => x.Categoria)
-            .OrderBy(g => g.Key)
+            .GroupBy(x => new
+            {
+                x.Categoria,
+                Nombre = MapeoActivoFijo.NombreCategoria(x.Categoria, x.CategoriaPersonalizada)
+            })
+            .OrderBy(g => g.Key.Categoria)
+            .ThenBy(g => g.Key.Nombre)
             .Select(g => new TotalCategoriaActivosDto
             {
-                Categoria = g.Key,
-                CategoriaNombre = MapeoActivoFijo.NombreCategoria(g.Key),
+                Categoria = g.Key.Categoria,
+                CategoriaNombre = g.Key.Nombre,
                 CantidadItems = g.Count(),
                 SubtotalValorTotal = g.Sum(x => MapeoActivoFijo.ResolverValorTotalMostrado(
                     x,

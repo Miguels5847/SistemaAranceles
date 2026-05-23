@@ -1,3 +1,5 @@
+using SistemaAranceles.Domain.Entities;
+
 namespace SistemaAranceles.Application.DTOs.CapitalTrabajo;
 
 public sealed class ResumenCapitalTrabajoDto
@@ -6,7 +8,7 @@ public sealed class ResumenCapitalTrabajoDto
     public decimal SubtotalMateriales { get; init; }
     public decimal SubtotalAseo { get; init; }
     public decimal SubtotalAccesorios { get; init; }
-    public int MesesCapitalTrabajo { get; init; } = 2;
+    public int MesesCapitalTrabajo { get; init; } = DatosInstitucionales.MesesCapitalTrabajoPorDefecto;
     public decimal TotalMensual => SubtotalCargos + SubtotalMateriales + SubtotalAseo + SubtotalAccesorios;
     public decimal TotalCapitalTrabajo => decimal.Round(TotalMensual * MesesCapitalTrabajo, 2);
     public decimal TotalDosMeses => TotalCapitalTrabajo;
@@ -65,7 +67,7 @@ public sealed class CapitalTrabajoPorCarreraDto
     public string EscenarioNombre { get; init; } = string.Empty;
     public int? PeriodoBaseId { get; init; }
     public string PeriodoBaseDisplay { get; init; } = "Sin periodo base";
-    public int MesesCapitalTrabajo { get; init; } = 2;
+    public int MesesCapitalTrabajo { get; init; } = DatosInstitucionales.MesesCapitalTrabajoPorDefecto;
 
     public IReadOnlyList<FilaGastoServicioAdministracionDto> GastosServicioAdministracion { get; init; } = [];
     public IReadOnlyList<ItemCapitalTrabajoDto> MaterialesSuministros { get; init; } = [];

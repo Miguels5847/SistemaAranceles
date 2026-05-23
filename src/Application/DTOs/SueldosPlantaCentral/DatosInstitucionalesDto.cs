@@ -1,3 +1,5 @@
+using SistemaAranceles.Domain.Entities;
+
 namespace SistemaAranceles.Application.DTOs.SueldosPlantaCentral;
 
 public sealed class DatosInstitucionalesDto
@@ -16,6 +18,8 @@ public sealed class DatosInstitucionalesDto
     public decimal BeneficioXiii { get; init; }
     public decimal AportePatronal { get; init; }
     public decimal Varios { get; init; }
+    public int MesesCapitalTrabajo { get; init; } = DatosInstitucionales.MesesCapitalTrabajoPorDefecto;
+    public decimal PorcentajeImprevistosInversion { get; init; } = DatosInstitucionales.PorcentajeImprevistosInversionPorDefecto;
 
     public decimal MasaSalarialMensual { get; init; }
     public decimal TotalMensualPlantaCentral { get; init; }
@@ -32,6 +36,7 @@ public sealed class DatosInstitucionalesDto
     public string TotalAnualDisplay => TotalAnualPlantaCentral.ToString("C2");
     public string RatioAdminPorDocenteDisplay => RatioAdminPorDocente.ToString("F2");
     public string CostoPorEstudianteAnualDisplay => CostoPlantaCentralPorEstudianteAnual.ToString("C2");
+    public string PorcentajeImprevistosInversionDisplay => PorcentajeImprevistosInversion.ToString("0.####") + "%";
 }
 
 public sealed class GuardarDatosInstitucionalesDto
@@ -49,6 +54,8 @@ public sealed class GuardarDatosInstitucionalesDto
     public decimal BeneficioXiii { get; init; }
     public decimal AportePatronal { get; init; }
     public decimal Varios { get; init; }
+    public int MesesCapitalTrabajo { get; init; } = DatosInstitucionales.MesesCapitalTrabajoPorDefecto;
+    public decimal PorcentajeImprevistosInversion { get; init; } = DatosInstitucionales.PorcentajeImprevistosInversionPorDefecto;
 
     public string? FuenteNotas { get; init; }
 }

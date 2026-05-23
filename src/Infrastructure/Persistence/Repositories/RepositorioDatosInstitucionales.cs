@@ -73,7 +73,9 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
             e.AportePatronal,
             e.Varios,
             e.ActualizadoPorUsuarioId,
-            e.FuenteNotas);
+            e.FuenteNotas,
+            e.MesesCapitalTrabajo,
+            e.PorcentajeImprevistosInversion);
 
         dominio.RehidratarId(e.Id);
         dominio.RehidratarFechaActualizacion(e.FechaActualizacion);
@@ -94,6 +96,8 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
         BeneficioXiii = d.BeneficioXiii,
         AportePatronal = d.AportePatronal,
         Varios = d.Varios,
+        MesesCapitalTrabajo = d.MesesCapitalTrabajo,
+        PorcentajeImprevistosInversion = d.PorcentajeImprevistosInversion,
         FechaActualizacion = d.FechaActualizacion,
         ActualizadoPorUsuarioId = d.ActualizadoPorUsuarioId,
         FuenteNotas = d.FuenteNotas,
