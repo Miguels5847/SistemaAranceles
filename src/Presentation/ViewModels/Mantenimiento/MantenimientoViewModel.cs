@@ -207,9 +207,12 @@ public sealed partial class MantenimientoViewModel : ObservableObject
 
     private async Task RefrescarListasAsync()
     {
+        if (CarreraSeleccionada is null)
+            return;
+
         using var scope = _sp.CreateScope();
         var query = scope.ServiceProvider.GetRequiredService<ListarServiciosMantenimientoQuery>();
-        var todos = await query.EjecutarAsync(CarreraSeleccionada!.Id, escenarioProyeccionId: EscenarioSeleccionado?.Id);
+        var todos = await query.EjecutarAsync(CarreraSeleccionada.Id, escenarioProyeccionId: EscenarioSeleccionado?.Id);
 
         ServiciosBasicos = new ObservableCollection<ServicioMantenimientoDto>(
             todos.Where(x => x.TipoRubro == TipoRubroMantenimiento.ServicioBasico));
@@ -368,8 +371,14 @@ public sealed partial class MantenimientoViewModel : ObservableObject
 
     private async Task GuardarRubroMantenimientoAsync(string nombre, decimal costoAnual)
     {
+        var carreraId = CarreraSeleccionada?.Id;
+        if (carreraId is null or <= 0)
+            throw new InvalidOperationException("Seleccione una carrera para guardar el rubro de mantenimiento.");
+
         var rubro = BuscarMantenimiento(nombre) ?? (nombre == "Garantía" ? BuscarMantenimiento("Garantia") : null);
-        var escenarioId = (rubro?.EscenarioProyeccionId).HasValue == true ? rubro.EscenarioProyeccionId : null;
+        int? escenarioId = rubro is not null && rubro.EscenarioProyeccionId.HasValue
+            ? rubro.EscenarioProyeccionId
+            : null;
 
         using var scope = _sp.CreateScope();
         if (rubro is null)
@@ -377,7 +386,7 @@ public sealed partial class MantenimientoViewModel : ObservableObject
             var crear = scope.ServiceProvider.GetRequiredService<CrearServicioMantenimientoCommand>();
             await crear.EjecutarAsync(new CrearServicioMantenimientoDto
             {
-                CarreraId = CarreraSeleccionada!.Id,
+                CarreraId = carreraId.Value,
                 EscenarioProyeccionId = null,
                 Sede = "General",
                 TipoRubro = TipoRubroMantenimiento.Mantenimiento,
