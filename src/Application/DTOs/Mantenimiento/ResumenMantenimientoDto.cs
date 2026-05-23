@@ -20,12 +20,12 @@ public sealed class ResumenMantenimientoDto
         : decimal.Round((TotalMantenimiento / 2m) / AlumnosReferenciaServicios, 2);
 
     public string AlumnosReferenciaDisplay => AlumnosReferenciaServicios.ToString("N0");
-    public string TotalServiciosDisplay => TotalServiciosBasicos.ToString("N2");
-    public string TotalMantenimientoDisplay => TotalMantenimiento.ToString("N2");
-    public string TotalGeneralDisplay => TotalGeneral.ToString("N2");
-    public string ValorMensualServiciosBasicosPorAlumnoDisplay => ValorMensualServiciosBasicosPorAlumno.ToString("N2");
-    public string ValorSemestralServiciosBasicosPorAlumnoDisplay => ValorSemestralServiciosBasicosPorAlumno.ToString("N2");
-    public string ValorSemestralMantenimientoPorAlumnoDisplay => ValorSemestralMantenimientoPorAlumno.ToString("N2");
+    public string TotalServiciosDisplay => FormatoMonetarioMantenimiento.Formatear(TotalServiciosBasicos, mostrarSimbolo: false);
+    public string TotalMantenimientoDisplay => FormatoMonetarioMantenimiento.Formatear(TotalMantenimiento, mostrarSimbolo: false);
+    public string TotalGeneralDisplay => FormatoMonetarioMantenimiento.Formatear(TotalGeneral, mostrarSimbolo: false);
+    public string ValorMensualServiciosBasicosPorAlumnoDisplay => FormatoMonetarioMantenimiento.Formatear(ValorMensualServiciosBasicosPorAlumno, mostrarSimbolo: false);
+    public string ValorSemestralServiciosBasicosPorAlumnoDisplay => FormatoMonetarioMantenimiento.Formatear(ValorSemestralServiciosBasicosPorAlumno, mostrarSimbolo: false);
+    public string ValorSemestralMantenimientoPorAlumnoDisplay => FormatoMonetarioMantenimiento.Formatear(ValorSemestralMantenimientoPorAlumno, mostrarSimbolo: false);
 
     public IReadOnlyList<PeriodoMantenimientoDto> Proyeccion { get; init; } = [];
 }
@@ -44,7 +44,7 @@ public sealed class PeriodoMantenimientoDto
     public string AnioDisplay => Anio.ToString();
     public string DemandaDisplay => DemandaPeriodo.ToString("N0");
     public string FactorInflacionDisplay => FactorInflacion.ToString("0.######");
-    public string CostoServiciosBasicosDisplay => CostoServiciosBasicos == 0m ? "$ -" : CostoServiciosBasicos.ToString("N2");
-    public string CostoMantenimientoDisplay => CostoMantenimiento == 0m ? "$ -" : CostoMantenimiento.ToString("N2");
-    public string CostoTotalDisplay => CostoTotal == 0m ? "$ -" : CostoTotal.ToString("N2");
+    public string CostoServiciosBasicosDisplay => FormatoMonetarioMantenimiento.Formatear(CostoServiciosBasicos, mostrarSimbolo: false);
+    public string CostoMantenimientoDisplay => FormatoMonetarioMantenimiento.Formatear(CostoMantenimiento, mostrarSimbolo: false);
+    public string CostoTotalDisplay => FormatoMonetarioMantenimiento.Formatear(CostoTotal, mostrarSimbolo: false);
 }
