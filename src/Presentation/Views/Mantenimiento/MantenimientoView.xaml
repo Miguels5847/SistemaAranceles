@@ -281,27 +281,45 @@
                                FontSize="15" FontWeight="SemiBold" Margin="0,0,0,8"/>
 
                     <Border Grid.Row="1" Background="#1A237E" CornerRadius="4" Padding="12,8" Margin="0,0,0,8">
-                        <StackPanel Orientation="Horizontal">
-                            <StackPanel Margin="0,0,32,0">
-                                <TextBlock Text="Total Servicios Básicos" Foreground="White" FontSize="11"/>
-                                <TextBlock Text="{Binding Resumen.TotalServiciosDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="14"/>
-                            </StackPanel>
-                            <StackPanel Margin="0,0,32,0">
-                                <TextBlock Text="Total Mantenimiento" Foreground="White" FontSize="11"/>
-                                <TextBlock Text="{Binding Resumen.TotalMantenimientoDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="14"/>
-                            </StackPanel>
-                            <StackPanel Margin="0,0,32,0">
-                                <TextBlock Text="Alumnos referencia" Foreground="White" FontSize="11"/>
-                                <TextBlock Text="{Binding Resumen.AlumnosReferenciaDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="14"/>
-                            </StackPanel>
-                            <StackPanel Margin="0,0,32,0">
-                                <TextBlock Text="Valor mensual S. Básicos / alumno" Foreground="White" FontSize="11"/>
-                                <TextBlock Text="{Binding Resumen.ValorMensualServiciosBasicosPorAlumnoDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="14"/>
-                            </StackPanel>
-                            <StackPanel>
-                                <TextBlock Text="TOTAL GENERAL" Foreground="#BBDEFB" FontSize="11"/>
-                                <TextBlock Text="{Binding Resumen.TotalGeneralDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="16"/>
-                            </StackPanel>
+                        <StackPanel>
+                            <WrapPanel Margin="0,0,0,8">
+                                <StackPanel Margin="0,0,32,0">
+                                    <TextBlock Text="Total Servicios Básicos" Foreground="White" FontSize="11"/>
+                                    <TextBlock Text="{Binding Resumen.TotalServiciosDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="14"/>
+                                </StackPanel>
+                                <StackPanel Margin="0,0,32,0">
+                                    <TextBlock Text="Total Mantenimiento" Foreground="White" FontSize="11"/>
+                                    <TextBlock Text="{Binding Resumen.TotalMantenimientoDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="14"/>
+                                </StackPanel>
+                                <StackPanel Margin="0,0,32,0">
+                                    <TextBlock Text="Alumnos referencia" Foreground="White" FontSize="11"/>
+                                    <TextBlock Text="{Binding Resumen.AlumnosReferenciaDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="14"/>
+                                </StackPanel>
+                                <StackPanel Margin="0,0,32,0">
+                                    <TextBlock Text="Valor mensual S. Básicos / alumno" Foreground="White" FontSize="11"/>
+                                    <TextBlock Text="{Binding Resumen.ValorMensualServiciosBasicosPorAlumnoDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="14"/>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="TOTAL GENERAL" Foreground="#BBDEFB" FontSize="11"/>
+                                    <TextBlock Text="{Binding Resumen.TotalGeneralDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="16"/>
+                                </StackPanel>
+                            </WrapPanel>
+
+                            <Border Background="#283593" CornerRadius="4" Padding="8">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Valores editables para la matriz:" Foreground="White" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                    <StackPanel Margin="0,0,12,0">
+                                        <TextBlock Text="Refacciones mensual" Foreground="#C5CAE9" FontSize="11"/>
+                                        <TextBox Width="110" Text="{Binding RefaccionesMensual, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,12,0">
+                                        <TextBlock Text="Garantía anual" Foreground="#C5CAE9" FontSize="11"/>
+                                        <TextBox Width="110" Text="{Binding GarantiaAnual, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
+                                    </StackPanel>
+                                    <Button Content="Guardar valores" Command="{Binding GuardarValoresRapidosCommand}" Padding="10,4" VerticalAlignment="Bottom"/>
+                                    <TextBlock Text="   Se guardan como rubros de B. Mantenimiento." Foreground="#C5CAE9" VerticalAlignment="Bottom" Margin="8,0,0,4"/>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
                     </Border>
 
