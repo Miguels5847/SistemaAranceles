@@ -1,218 +1,385 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using SistemaAranceles.Application.DTOs.CapitalTrabajo;
+using SistemaAranceles.Application.UseCases.CapitalTrabajo;
+using SistemaAranceles.Application.UseCases.CargosFacultad;
 using SistemaAranceles.Domain.Entities;
-using SistemaAranceles.Infrastructure.Persistence;
-using SistemaAranceles.Infrastructure.Persistence.Entidades;
-using SistemaAranceles.Presentation.ViewModels.Catalogos;
-using SistemaAranceles.Presentation.Services;
 
 namespace SistemaAranceles.Presentation.ViewModels.CapitalTrabajo;
 
 public sealed partial class CapitalTrabajoViewModel : ObservableObject
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly CatalogoCargosViewModel _catalogoCargos;
-    private readonly CatalogoMaterialesViewModel _catalogoMateriales;
+    private bool _suprimirRecargaAutomatica;
 
-    public CapitalTrabajoViewModel(IServiceProvider serviceProvider,
-        CatalogoCargosViewModel catalogoCargos,
-        CatalogoMaterialesViewModel catalogoMateriales)
+    public CapitalTrabajoViewModel(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
-        _catalogoCargos = catalogoCargos;
-        _catalogoMateriales = catalogoMateriales;
     }
 
-    public CatalogoCargosViewModel CatalogoCargos => _catalogoCargos;
+    [ObservableProperty] private ObservableCollection<Carrera> _carreras = [];
+    [ObservableProperty] private Carrera? _carreraSeleccionada;
+    [ObservableProperty] private ObservableCollection<EscenarioProyeccion> _escenarios = [];
+    [ObservableProperty] private EscenarioProyeccion? _escenarioSeleccionado;
+    [ObservableProperty] private string _periodoBaseDisplay = "Sin periodo base";
 
-    [ObservableProperty] private ObservableCollection<object> _materiales = [];
-    [ObservableProperty] private ObservableCollection<object> _materialesSuministros = [];
-    [ObservableProperty] private ObservableCollection<object> _aseoLimpieza = [];
-    [ObservableProperty] private ObservableCollection<object> _accesoriosMateriales = [];
+    [ObservableProperty] private ObservableCollection<FilaGastoServicioAdministracionDto> _gastosServicioAdministracion = [];
+    [ObservableProperty] private ObservableCollection<ItemCapitalTrabajoDto> _materialesSuministros = [];
+    [ObservableProperty] private ObservableCollection<ItemCapitalTrabajoDto> _aseoLimpieza = [];
+    [ObservableProperty] private ObservableCollection<ItemCapitalTrabajoDto> _accesoriosMateriales = [];
 
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
+    [ObservableProperty] private bool _estaCargando;
+    [ObservableProperty] private bool _estaGuardando;
+    [ObservableProperty] private ResumenCapitalTrabajoDto? _resumen;
 
-    // --- Formulario CRUD Materiales ---
     [ObservableProperty] private bool _formMatVisible;
     [ObservableProperty] private bool _formMatEsEdicion;
     [ObservableProperty] private int _formMatId;
     [ObservableProperty] private string _formMatNombre = string.Empty;
-    [ObservableProperty] private decimal _formMatCantidad;
-    [ObservableProperty] private decimal _formMatPrecio;
+    [ObservableProperty] private string _formMatCantidad = "0";
+    [ObservableProperty] private string _formMatPrecio = "0";
     [ObservableProperty] private string _formMatCategoria = string.Empty;
+
+    public string TituloFormularioMaterial => FormMatEsEdicion ? "Editar item" : "Nuevo item";
+    public bool FormMaterialesVisible => FormMatVisible && FormMatCategoria == ObtenerCapitalTrabajoPorCarreraQuery.CategoriaMateriales;
+    public bool FormAseoVisible => FormMatVisible && FormMatCategoria == ObtenerCapitalTrabajoPorCarreraQuery.CategoriaAseo;
+    public bool FormAccesoriosVisible => FormMatVisible && FormMatCategoria == ObtenerCapitalTrabajoPorCarreraQuery.CategoriaAccesorios;
+
+    partial void OnFormMatEsEdicionChanged(bool value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(TituloFormularioMaterial));
+    }
+
+    partial void OnFormMatVisibleChanged(bool value)
+    {
+        _ = value;
+        NotificarVisibilidadFormulario();
+    }
+
+    partial void OnFormMatCategoriaChanged(string value)
+    {
+        _ = value;
+        NotificarVisibilidadFormulario();
+    }
+
+    partial void OnCarreraSeleccionadaChanged(Carrera? value)
+    {
+        _ = value;
+        if (_suprimirRecargaAutomatica || EstaCargando)
+            return;
+
+        _ = CargarEscenariosAsync();
+    }
+
+    partial void OnEscenarioSeleccionadoChanged(EscenarioProyeccion? value)
+    {
+        _ = value;
+        if (_suprimirRecargaAutomatica || EstaCargando)
+            return;
+
+        _ = RefrescarCapitalTrabajoAsync();
+    }
 
     [RelayCommand]
     private async Task CargarAsync(int? carreraId = null)
     {
-        Trace.TraceInformation($"[{DateTime.UtcNow:O}] CapitalTrabajoVM: CargarAsync iniciado. carreraId={carreraId}");
+        if (EstaCargando)
+            return;
+
+        EstaCargando = true;
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
+
         try
         {
-            // --- Semilla: scope propio, se cierra antes de cualquier otro query ---
-            Trace.TraceInformation($"[{DateTime.UtcNow:O}] CapitalTrabajoVM: iniciando SemillaCapitalTrabajoService...");
-            bool cargada;
-            // SemillaCapitalTrabajoService ya maneja su propio scope internamente;
-            // lo resolvemos desde un scope breve solo para instanciarlo.
-            using (var scopeSemilla = _serviceProvider.CreateScope())
+            var carreraActualId = carreraId ?? CarreraSeleccionada?.Id;
+            using var scope = _serviceProvider.CreateScope();
+            var queryCarreras = scope.ServiceProvider.GetRequiredService<ListarCarrerasConProyeccionQuery>();
+            var carreras = await queryCarreras.EjecutarAsync();
+
+            _suprimirRecargaAutomatica = true;
+            try
             {
-                var semilla = scopeSemilla.ServiceProvider.GetRequiredService<SemillaCapitalTrabajoService>();
-                cargada = await semilla.CargarSemillaCapitalTrabajoAsync();
+                Carreras = new ObservableCollection<Carrera>(carreras);
+                CarreraSeleccionada = Carreras.FirstOrDefault(c => c.Id == carreraActualId)
+                    ?? Carreras.FirstOrDefault();
             }
-            Trace.TraceInformation($"[{DateTime.UtcNow:O}] CapitalTrabajoVM: semilla completada. cargada={cargada}");
-            if (cargada)
-                MensajeExito = "\u2713 Datos maestros de Capital de Trabajo cargados exitosamente.";
+            finally
+            {
+                _suprimirRecargaAutomatica = false;
+            }
 
-            // --- Cargos: scope propio, secuencial ---
-            Trace.TraceInformation($"[{DateTime.UtcNow:O}] CapitalTrabajoVM: cargando cargos...");
-            await _catalogoCargos.CargarCommand.ExecuteAsync(carreraId ?? 1);
-            Trace.TraceInformation($"[{DateTime.UtcNow:O}] CapitalTrabajoVM: cargos OK ({_catalogoCargos.Cargos.Count} items). MensajeError cargos='{_catalogoCargos.MensajeError}'");
+            if (CarreraSeleccionada is null)
+            {
+                LimpiarVista();
+                MensajeError = "No hay carreras con proyeccion de estudiantes para calcular Capital de Trabajo.";
+                return;
+            }
 
-            // --- Materiales: scope propio, secuencial ---
-            Trace.TraceInformation($"[{DateTime.UtcNow:O}] CapitalTrabajoVM: refrescando materiales...");
-            await RefrescarMaterialesAsync();
-            Trace.TraceInformation($"[{DateTime.UtcNow:O}] CapitalTrabajoVM: materiales OK. MensajeError materiales='{_catalogoMateriales.MensajeError}' Total={Materiales.Count}");
+            await CargarEscenariosAsync();
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
-            Trace.TraceError($"[{DateTime.UtcNow:O}] CapitalTrabajoVM: EXCEPCION en CargarAsync: {ex.GetType().Name}: {ex.Message}");
-            if (ex.InnerException is not null)
-                Trace.TraceError($"[{DateTime.UtcNow:O}] CapitalTrabajoVM: InnerException: {ex.InnerException.Message}");
-            MensajeError = ex.Message;
+            MensajeError = Detalle(ex);
+            LimpiarVista();
         }
-        Trace.TraceInformation($"[{DateTime.UtcNow:O}] CapitalTrabajoVM: CargarAsync finalizado.");
+        finally
+        {
+            EstaCargando = false;
+        }
     }
 
-    private async Task RefrescarMaterialesAsync()
+    private async Task CargarEscenariosAsync()
     {
-        await _catalogoMateriales.CargarCommand.ExecuteAsync(null);
-        var items = _catalogoMateriales.Items
-            ?? new ObservableCollection<ItemMaterialInsumo>();
-
-        var agrupados = items.Select(i => new MaterialItemVm
+        if (CarreraSeleccionada is null)
         {
-            Id = i.Id,
-            NombreItem = i.NombreItem,
-            Categoria = i.CategoriaNombre,
-            Cantidad = i.CantidadBase,
-            PrecioUnitario = i.PrecioUnitario
-        }).ToList();
+            LimpiarVista();
+            return;
+        }
 
-        Materiales             = new ObservableCollection<object>(agrupados);
-        MaterialesSuministros  = new ObservableCollection<object>(agrupados.Where(i => i.Categoria == "MATERIALES_SUMINISTROS"));
-        AseoLimpieza           = new ObservableCollection<object>(agrupados.Where(i => i.Categoria == "ASEO_LIMPIEZA"));
-        AccesoriosMateriales   = new ObservableCollection<object>(agrupados.Where(i => i.Categoria == "ACCESORIOS_MATERIALES"));
+        var escenarioActualId = EscenarioSeleccionado?.Id;
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var query = scope.ServiceProvider.GetRequiredService<ListarEscenariosConProyeccionPorCarreraQuery>();
+            var escenarios = await query.EjecutarAsync(CarreraSeleccionada.Id);
+
+            _suprimirRecargaAutomatica = true;
+            try
+            {
+                Escenarios = new ObservableCollection<EscenarioProyeccion>(escenarios);
+                EscenarioSeleccionado = Escenarios.FirstOrDefault(e => e.Id == escenarioActualId)
+                    ?? Escenarios.FirstOrDefault();
+            }
+            finally
+            {
+                _suprimirRecargaAutomatica = false;
+            }
+
+            await RefrescarCapitalTrabajoAsync();
+        }
+        catch (Exception ex)
+        {
+            MensajeError = $"Error al cargar escenarios: {Detalle(ex)}";
+            Escenarios = [];
+            EscenarioSeleccionado = null;
+            await RefrescarCapitalTrabajoAsync();
+        }
     }
 
-    // \u2500\u2500 CRUD Materiales \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+    private async Task RefrescarCapitalTrabajoAsync()
+    {
+        if (CarreraSeleccionada is null)
+        {
+            LimpiarVista();
+            return;
+        }
+
+        MensajeError = string.Empty;
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var query = scope.ServiceProvider.GetRequiredService<ObtenerCapitalTrabajoPorCarreraQuery>();
+            var capital = await query.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado?.Id);
+
+            PeriodoBaseDisplay = capital.PeriodoBaseDisplay;
+            GastosServicioAdministracion = new ObservableCollection<FilaGastoServicioAdministracionDto>(capital.GastosServicioAdministracion);
+            MaterialesSuministros = new ObservableCollection<ItemCapitalTrabajoDto>(capital.MaterialesSuministros);
+            AseoLimpieza = new ObservableCollection<ItemCapitalTrabajoDto>(capital.AseoLimpieza);
+            AccesoriosMateriales = new ObservableCollection<ItemCapitalTrabajoDto>(capital.AccesoriosMateriales);
+            Resumen = capital.Resumen;
+        }
+        catch (Exception ex)
+        {
+            MensajeError = Detalle(ex);
+            LimpiarBloques();
+        }
+    }
 
     [RelayCommand]
     private void AbrirNuevoMaterial(string categoria)
     {
-        FormMatId       = 0;
-        FormMatNombre   = string.Empty;
-        FormMatCantidad = 0m;
-        FormMatPrecio   = 0m;
+        if (CarreraSeleccionada is null)
+        {
+            MensajeError = "Seleccione una carrera antes de crear items.";
+            return;
+        }
+
+        FormMatId = 0;
+        FormMatNombre = string.Empty;
+        FormMatCantidad = "0";
+        FormMatPrecio = "0";
         FormMatCategoria = categoria;
         FormMatEsEdicion = false;
-        FormMatVisible  = true;
+        FormMatVisible = true;
+        MensajeError = string.Empty;
+        OnPropertyChanged(nameof(TituloFormularioMaterial));
     }
 
     [RelayCommand]
-    private void AbrirEditarMaterial(object item)
+    private void AbrirEditarMaterial(ItemCapitalTrabajoDto item)
     {
-        if (item is not MaterialItemVm vm) return;
-        FormMatId        = vm.Id;
-        FormMatNombre    = vm.NombreItem;
-        FormMatCantidad  = vm.Cantidad;
-        FormMatPrecio    = vm.PrecioUnitario;
-        FormMatCategoria = vm.Categoria;
+        FormMatId = item.Id;
+        FormMatNombre = item.Concepto;
+        FormMatCantidad = item.Cantidad.ToString("0.####", CultureInfo.InvariantCulture);
+        FormMatPrecio = item.ValorUnitario.ToString("0.##", CultureInfo.InvariantCulture);
+        FormMatCategoria = item.CategoriaNombre;
         FormMatEsEdicion = true;
-        FormMatVisible   = true;
+        FormMatVisible = true;
+        MensajeError = string.Empty;
+        OnPropertyChanged(nameof(TituloFormularioMaterial));
     }
 
     [RelayCommand]
     private void CancelarFormMat()
     {
         FormMatVisible = false;
-        MensajeError   = string.Empty;
+        MensajeError = string.Empty;
     }
 
     [RelayCommand]
     private async Task GuardarMaterialAsync()
     {
+        if (CarreraSeleccionada is null)
+        {
+            MensajeError = "Seleccione una carrera.";
+            return;
+        }
+
+        if (!TryDecimalFlexible(FormMatCantidad, out var cantidad) || cantidad < 0m)
+        {
+            MensajeError = "Cantidad invalida. Puede escribir valores como 10, 10.5 o 10,5.";
+            return;
+        }
+
+        if (!TryDecimalFlexible(FormMatPrecio, out var precio) || precio < 0m)
+        {
+            MensajeError = "Valor unitario invalido. Puede escribir valores como 1000, 1.000, 1000.50 o 1.000,50.";
+            return;
+        }
+
+        EstaGuardando = true;
         MensajeError = string.Empty;
+        MensajeExito = string.Empty;
+
         try
         {
             using var scope = _serviceProvider.CreateScope();
-            var ctx = scope.ServiceProvider.GetRequiredService<ContextoAplicacion>();
-
-            if (!FormMatEsEdicion)
+            var command = scope.ServiceProvider.GetRequiredService<GuardarItemCapitalTrabajoCommand>();
+            await command.EjecutarAsync(new GuardarItemCapitalTrabajoDto
             {
-                var nuevo = new ItemMaterialInsumo
-                {
-                    CarreraId       = 1,
-                    NombreItem      = FormMatNombre,
-                    CategoriaNombre = FormMatCategoria,
-                    UnidadNombre    = "Unidad",
-                    CantidadBase    = FormMatCantidad,
-                    PrecioUnitario  = FormMatPrecio,
-                    EsCantidadFija  = false,
-                };
-                ctx.ItemsMaterialInsumo.Add(nuevo);
-            }
-            else
-            {
-                var existente = await ctx.ItemsMaterialInsumo.FindAsync(FormMatId);
-                if (existente is not null)
-                {
-                    existente.NombreItem     = FormMatNombre;
-                    existente.CantidadBase   = FormMatCantidad;
-                    existente.PrecioUnitario = FormMatPrecio;
-                }
-            }
+                Id = FormMatEsEdicion ? FormMatId : null,
+                CarreraId = CarreraSeleccionada.Id,
+                CategoriaNombre = FormMatCategoria,
+                Concepto = FormMatNombre,
+                Cantidad = cantidad,
+                ValorUnitario = precio
+            });
 
-            await ctx.SaveChangesAsync();
             FormMatVisible = false;
-            await RefrescarMaterialesAsync();
+            MensajeExito = FormMatEsEdicion ? "Item actualizado." : "Item creado.";
+            await RefrescarCapitalTrabajoAsync();
         }
-        catch (System.Exception ex) { MensajeError = ex.Message; }
+        catch (Exception ex)
+        {
+            MensajeError = Detalle(ex);
+        }
+        finally
+        {
+            EstaGuardando = false;
+        }
     }
 
     [RelayCommand]
-    private async Task EliminarMaterialAsync(object item)
+    private async Task EliminarMaterialAsync(ItemCapitalTrabajoDto item)
     {
-        if (item is not MaterialItemVm vm) return;
+        EstaGuardando = true;
         MensajeError = string.Empty;
+        MensajeExito = string.Empty;
+
         try
         {
             using var scope = _serviceProvider.CreateScope();
-            var ctx = scope.ServiceProvider.GetRequiredService<ContextoAplicacion>();
-            var existente = await ctx.ItemsMaterialInsumo.FindAsync(vm.Id);
-            if (existente is not null)
-            {
-                ctx.ItemsMaterialInsumo.Remove(existente);
-                await ctx.SaveChangesAsync();
-            }
-            await RefrescarMaterialesAsync();
+            var command = scope.ServiceProvider.GetRequiredService<EliminarItemCapitalTrabajoCommand>();
+            await command.EjecutarAsync(item.Id);
+            MensajeExito = "Item eliminado.";
+            await RefrescarCapitalTrabajoAsync();
         }
-        catch (System.Exception ex) { MensajeError = ex.Message; }
+        catch (Exception ex)
+        {
+            MensajeError = Detalle(ex);
+        }
+        finally
+        {
+            EstaGuardando = false;
+        }
     }
 
-    // DTO local para los DataGrids de materiales
-    public sealed class MaterialItemVm
+    private void LimpiarVista()
     {
-        public int Id { get; init; }
-        public string NombreItem { get; init; } = string.Empty;
-        public string Categoria { get; init; } = string.Empty;
-        public decimal Cantidad { get; init; }
-        public decimal PrecioUnitario { get; init; }
+        Escenarios = [];
+        EscenarioSeleccionado = null;
+        PeriodoBaseDisplay = "Sin periodo base";
+        LimpiarBloques();
+    }
+
+    private void LimpiarBloques()
+    {
+        GastosServicioAdministracion = [];
+        MaterialesSuministros = [];
+        AseoLimpieza = [];
+        AccesoriosMateriales = [];
+        Resumen = null;
+    }
+
+    private static bool TryDecimalFlexible(string? value, out decimal result)
+    {
+        result = 0m;
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        var limpio = value.Trim()
+            .Replace("$", string.Empty)
+            .Replace(" ", string.Empty);
+
+        if (string.IsNullOrWhiteSpace(limpio))
+            return false;
+
+        var ultimoPunto = limpio.LastIndexOf('.');
+        var ultimaComa = limpio.LastIndexOf(',');
+
+        if (ultimoPunto >= 0 && ultimaComa >= 0)
+        {
+            limpio = ultimaComa > ultimoPunto
+                ? limpio.Replace(".", string.Empty).Replace(',', '.')
+                : limpio.Replace(",", string.Empty);
+        }
+        else if (ultimaComa >= 0)
+        {
+            limpio = limpio.Replace(',', '.');
+        }
+        else if (ultimoPunto >= 0)
+        {
+            var decimales = limpio.Length - ultimoPunto - 1;
+            if (decimales == 3)
+                limpio = limpio.Replace(".", string.Empty);
+        }
+
+        return decimal.TryParse(limpio, NumberStyles.Number, CultureInfo.InvariantCulture, out result);
+    }
+
+    private static string Detalle(Exception ex) => ex.InnerException?.Message ?? ex.Message;
+
+    private void NotificarVisibilidadFormulario()
+    {
+        OnPropertyChanged(nameof(FormMaterialesVisible));
+        OnPropertyChanged(nameof(FormAseoVisible));
+        OnPropertyChanged(nameof(FormAccesoriosVisible));
     }
 }

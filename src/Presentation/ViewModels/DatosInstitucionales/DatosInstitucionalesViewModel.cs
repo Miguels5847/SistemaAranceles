@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.DTOs.SueldosPlantaCentral;
 using SistemaAranceles.Application.UseCases.SueldosPlantaCentral;
 using SistemaAranceles.Presentation.State;
+using DatosInstitucionalesDominio = SistemaAranceles.Domain.Entities.DatosInstitucionales;
 
 namespace SistemaAranceles.Presentation.ViewModels.DatosInstitucionales;
 
@@ -29,6 +30,8 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
     [ObservableProperty] private decimal _beneficioXiii;
     [ObservableProperty] private decimal _aportePatronal;
     [ObservableProperty] private decimal _varios;
+    [ObservableProperty] private int _mesesCapitalTrabajo = DatosInstitucionalesDominio.MesesCapitalTrabajoPorDefecto;
+    [ObservableProperty] private decimal _porcentajeImprevistosInversion = DatosInstitucionalesDominio.PorcentajeImprevistosInversionPorDefecto;
     [ObservableProperty] private string? _fuenteNotas;
 
     [ObservableProperty] private decimal _masaSalarialMensual;
@@ -90,6 +93,8 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
             if (dto is null)
             {
                 Periodo = DateTime.Now.Year.ToString();
+                MesesCapitalTrabajo = DatosInstitucionalesDominio.MesesCapitalTrabajoPorDefecto;
+                PorcentajeImprevistosInversion = DatosInstitucionalesDominio.PorcentajeImprevistosInversionPorDefecto;
                 UltimaActualizacionTexto = "Sin registros previos. Ingrese los datos iniciales.";
                 RecalcularMetricas();
                 return;
@@ -137,6 +142,8 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
                     BeneficioXiii = BeneficioXiii,
                     AportePatronal = AportePatronal,
                     Varios = Varios,
+                    MesesCapitalTrabajo = MesesCapitalTrabajo,
+                    PorcentajeImprevistosInversion = PorcentajeImprevistosInversion,
                     FuenteNotas = FuenteNotas,
                 },
                 _sesionActual.UsuarioId);
@@ -188,6 +195,8 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
         BeneficioXiii = dto.BeneficioXiii;
         AportePatronal = dto.AportePatronal;
         Varios = dto.Varios;
+        MesesCapitalTrabajo = dto.MesesCapitalTrabajo;
+        PorcentajeImprevistosInversion = dto.PorcentajeImprevistosInversion;
         FuenteNotas = dto.FuenteNotas;
         MasaSalarialMensual = dto.MasaSalarialMensual;
         TotalAnualPlantaCentral = dto.TotalAnualPlantaCentral;

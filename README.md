@@ -1,163 +1,386 @@
 # SistemaAranceles
 
-Aplicación de escritorio WPF para simulación y análisis de aranceles en apertura de nuevas carreras universitarias. Proyecto de tesis con arquitectura limpia, persistencia en PostgreSQL (Supabase) y RBAC granular.
+Aplicacion de escritorio WPF para simulacion, proyeccion y analisis de aranceles en apertura de nuevas carreras universitarias. El proyecto usa arquitectura limpia, persistencia PostgreSQL/Supabase y control de acceso por roles/permisos.
 
 ## Stack
 
-- **.NET 8** + **WPF** (MVVM)
-- **EF Core** + **PostgreSQL (Supabase pooler 6543)**
-- **CommunityToolkit.Mvvm** · **FluentValidation** · **BCrypt.Net-Next**
-- **MahApps.Metro 2.4.11** · **MahApps.Metro.IconPacks 6.2.1**
-- **ClosedXML** (XLSX) · **QuestPDF** (PDF)
+- .NET 8 + WPF + MVVM.
+- EF Core + PostgreSQL/Supabase.
+- CommunityToolkit.Mvvm.
+- FluentValidation.
+- BCrypt.Net-Next.
+- ClosedXML para XLSX.
+- QuestPDF para PDF.
 
 ## Arquitectura
 
-Clean Architecture 4 capas:
-
-```
-Domain          ← Entidades, VOs, enums, contratos puros
-Application     ← Use cases (1 archivo = 1 caso), DTOs, interfaces servicios
-Infrastructure  ← EF Core, repositorios, servicios externos (BCE, hash, auditoría)
-Presentation    ← WPF Views/ViewModels/State (SesionActual)
-```
-
-## Estado por épica
-
-| #   | Épica                                              | KANs    | SP  | Estado          |
-| --- | -------------------------------------------------- | ------- | --- | --------------- |
-| 1   | Setup & Arquitectura                               | 01–05   | —   | ✅              |
-| 2   | Usuarios (CRUD + Login + Menú dinámico + AuditLog) | 06–09   | —   | ✅              |
-| 3   | Inflación (CRUD + Proyección + Solo lectura)       | 10–12   | —   | ✅              |
-| —   | Infra / RBAC / QA                                  | 13–14   | —   | ✅              |
-| 4   | Tasa Retención                                     | 15–16\* | —   | ✅              |
-| 5   | Estudiantes                                        | 17–19   | 13  | ✅              |
-| 6   | Sueldos Planta Central                             | 20–xx   | —   | ⏳              |
-| 7   | Recursos Físicos / Depreciación                    | 24–27   | —   | ⏳ (KAN-24: ✅) |
-| 8   | Costos y Gastos                                    | xx      | —   | ⏳              |
-| 9   | Demanda / Ingresos                                 | xx      | —   | ⏳              |
-| 10  | Mantenimiento / Capital Trabajo / Inversión        | xx      | —   | ⏳              |
-| 11  | Financiamiento / Balance / Reportes                | xx      | —   | ⏳              |
-| 12  | Análisis Financiero                                | xx      | —   | ⏳              |
-| 13  | Cierre & Validación                                | 50–53   | —   | ⏳              |
-
-\* KANs 13/14 originales (Épica 4) renombrados internamente; los KAN-13/14 ejecutados son tareas de infraestructura.
-
-## Funcionalidades implementadas
-
-- Login con BCrypt + retry/timeout + toggle visibilidad contraseña
-- Sesión por inactividad (30 min con countdown)
-- CRUD usuarios (soft/hard delete, validación correo único, hash)
-- RBAC con `rol`, `permiso`, `rol_permiso` y `usuario_permiso_override` por usuario
-- Permisos efectivos en memoria (`SesionActual.TienePermiso("MOD.ACCION")`)
-- Auditoría fire-and-forget desacoplada (no bloquea ni revierte)
-- Inflación: 9 use cases (CRUD anual + proyectar + importar BCE + limpiar)
-- Métodos proyección: regresión lineal (default) y promedio suave
-- RLS progresivo (Admin bypass; Analista/Visualizador restringidos)
-- **Tasa Retención** (Épica 4): configuración por carrera/escenario (Histórico, Optimista, Pesimista), simulación ciclo a ciclo por cohorte, cálculo de tasas y metas de retención/graduación, listado/selección/eliminación de simulaciones
-- **Estudiantes** (Épica 5):
-  - KAN-17 · Proyección de estudiantes por período: generación por carrera, escenario y simulación de retención base; tabla consolidada de matrícula por período y paralelos
-  - KAN-18 · Horas de docencia por paralelos: cálculo de horas de docencia asistida y aplicación práctica; inputs editables Horas Docente / Horas Técnico con recálculo en tiempo real
-  - KAN-19 · Desglose de docentes por tipo: distinción Titular / Ocasional Tipo 1 / Ocasional Tipo 2 (Técnico); DataGrid con filas destacadas por tipo; fix de compatibilidad MahApps.Metro (CellStyle + RowStyle completo en todos los DataGrids del módulo)
-
-  - **Recursos Físicos (KAN-24) — Avance completado:**
-  - CRUD `ActivoFijo` implementado en `Domain` (`ActivoFijo`), repositorio e implementación `IRepositorioActivoFijo` / `RepositorioActivoFijo`.
-  - Configuración EF (`ConfiguracionActivoFijo`) y `DbSet<ActivoFijo>` en `ContextoAplicacion`.
-  - Scripts SQL versionados: `sql/KAN24_activo_fijo.sql`, `sql/KAN24_permisos.sql`, `sql/KAN24_catalogo_y_tipo_calculo.sql` (idempotentes, incluyen marca en `__EFMigrationsHistory`).
-  - Use cases: `Crear`, `Actualizar`, `Eliminar` (soft), `ListarActivosFijosQuery`, `ObtenerTotalesActivosQuery`, `SembrarActivosFijosDesdeCatalogoCommand`.
-  - Presentación: `ActivosFijosView` + `ActivosFijosViewModel` registrados en DI y accesibles desde el menú (permiso `RD.VER`).
-  - Tests unitarios cubriendo dominio y casos de sembrado (`tests/Application.Tests/RecursosFisicosDepreciacion`).
-  - UI: se ha eliminado la opción `PorHito` del desplegable de `TipoCalculoCantidad` en la vista de activos (cambio no disruptivo, compilación OK).
-
-## Progreso reciente
-
-- Tab 4 (Consumo por período): UI + ViewModel editables implementados — botón "Editar horas malla", panel de edición, persistencia de overrides y recálculo en cascada.
-- Persistencia: tabla `override_horas_periodo`, entidad, repositorio y use cases (`Editar`, `Restaurar`, `Listar`) implementados.
-- Auditoría: `IAuditoriaServicio.RegistrarAsync` integrado y esperando correctamente para evitar uso en background tras disposal del scope.
-- Concurrencia: solucionado el error "This method may not be called when another read operation is pending" mediante scopes separados para write/read y await en auditoría.
-- Formato horas: columnas, totales y editor usan formato `0.##` para evitar mostrar `.00` innecesarios.
-- Tests: `Application.Tests` (14/14) y `Presentation.Tests` (2/2) pasan localmente.
-- Menú: reordenado según flujo lógico y renombrado "Sueldos" → "Sueldos Carrera".
-
-- KAN-24 (Recursos Físicos) — estado actual:
-  - `ActivoFijo` CRUD implementado (Domain + Repositorio + EF config + DbSet).
-  - Scripts SQL versionados y presentes en `sql/` (create + permisos + catalogo).
-  - Use cases, DTOs y mapeos implementados; tests unitarios añadidos.
-  - UI: `ActivosFijosView` + `ActivosFijosViewModel` integrados; opción `PorHito` removida del selector de `TipoCalculoCantidad`.
-  - Compilación del proyecto Presentation y ejecución de tests exitosa tras cambios.
-
-Estado: cambios aplicados, compilación y tests OK. Próximo: indicar nuevas tareas para avanzar.
-
-## Estructura del repo
-
-```
+```text
 src/
-  Domain/         Entities/  ValueObjects/  Enums/  Interfaces/  Common/
-  Application/    UseCases/  DTOs/  Interfaces/
-    UseCases/
-      Autenticacion/  Usuarios/  Permisos/  Auditoria/
-      Inflacion/  TasaRetencion/  Estudiantes/
-      SueldosPlantaCentral/  RecursosFisicosDepreciacion/
-      CostosGastos/  DemandaIngresos/
-      MantenimientoCapitalTrabajoInversionInicial/
-      FinanciamientoBalanceReportes/  AnalisisFinanciero/
-  Infrastructure/ Persistence/  Servicios/  Export/  DI/
-  Presentation/   Views/  ViewModels/  Converters/  State/  Mensajes/  Services/
-sql/              # Scripts versionados KAN03..KAN19 (precheck/apply/postcheck/rollback)
-docs/             # Informes épicas + DB
+  Domain/          Entidades, enums y reglas de dominio
+  Application/     DTOs, interfaces, commands, queries y use cases
+  Infrastructure/  EF Core, repositorios, servicios externos, DI
+  Presentation/    WPF Views, ViewModels, converters, state y servicios UI
+sql/               Scripts SQL versionados e idempotentes
+docs/              Informes y documentacion auxiliar
+tests/             Pruebas automatizadas
 ```
 
-## Quick start
+Reglas principales:
 
-```bash
+- Mantener Clean Architecture.
+- Un caso de uso por clase cuando sea posible.
+- Repositorios bajo interfaces `IRepositorio*`.
+- ViewModels no deben inyectar `ContextoAplicacion` directamente; deben crear scopes con `IServiceProvider`.
+- Permisos en runtime con `SesionActual.TienePermiso("MOD.ACCION")`.
+
+## Quick Start
+
+```powershell
 # Compilar
-dotnet build src/Presentation/SistemaAranceles.Presentation.csproj
+dotnet build .\src\Presentation\SistemaAranceles.Presentation.csproj
 
 # Ejecutar
-dotnet run --project src/Presentation/SistemaAranceles.Presentation.csproj
+dotnet run --project .\src\Presentation\SistemaAranceles.Presentation.csproj
 ```
 
-Configurar `src/Presentation/appsettings.Local.json` con cadena Supabase (`Maximum Pool Size=10`, `Minimum Pool Size=2`).
+Configurar `src/Presentation/appsettings.Local.json` con la cadena de conexion Supabase/PostgreSQL.
+
+Si el build falla por archivo bloqueado (`MSB3027`), cerrar la app WPF en ejecucion y volver a compilar.
+
+## Estado General
+
+| Area                                                   | Estado                                                                         |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| Seguridad, login, usuarios, RBAC y auditoria           | Implementado                                                                   |
+| Inflacion                                              | Implementado                                                                   |
+| Tasa de Retencion                                      | Implementado                                                                   |
+| Proyeccion de Estudiantes                              | Implementado                                                                   |
+| Sueldos Carrera                                        | Implementado                                                                   |
+| Recursos y Depreciacion                                | Implementado en su flujo principal                                             |
+| Mantenimiento e Inversion                              | Implementado en servicios/mantenimiento, activos diferidos e inversion inicial |
+| Capital de Trabajo                                     | Implementado como modulo por carrera                                           |
+| Demanda/Ingresos                                       | Parcial/documentado                                                            |
+| Costos/Gastos                                          | Parcial/documentado                                                            |
+| Sueldos Planta Central                                 | Parcial/documentado                                                            |
+| Financiamiento, Balance, Reportes, Analisis Financiero | Pendiente/parcial                                                              |
+
+## Modulos Principales
+
+### Seguridad, Usuarios y Auditoria
+
+- Login con BCrypt.
+- Sesion por inactividad.
+- CRUD de usuarios.
+- Soft delete/hard delete segun estado.
+- RBAC con roles, permisos y overrides por usuario.
+- Auditoria fire-and-forget desacoplada.
+
+Rutas relevantes:
+
+- `src/Application/UseCases/Usuarios`
+- `src/Application/UseCases/Autenticacion`
+- `src/Application/UseCases/Auditoria`
+- `src/Presentation/Views/Usuarios`
+- `src/Presentation/Views/Auditoria`
+
+### Inflacion
+
+- CRUD de inflacion anual.
+- Importacion y proyeccion.
+- Prioridad de datos importados sobre estimaciones cuando coinciden en año.
+
+Rutas:
+
+- `src/Application/UseCases/Inflacion`
+- `src/Presentation/Views/Inflacion`
+
+### Tasa de Retencion
+
+- Configuracion por carrera y escenario.
+- Simulaciones por cohorte.
+- Metas de retencion y graduacion.
+- Listado, seleccion y eliminacion de simulaciones.
+
+Rutas:
+
+- `src/Application/UseCases/TasaRetencion`
+- `src/Presentation/Views/TasaRetencion`
+
+### Proyeccion de Estudiantes
+
+- Proyeccion por carrera, escenario y simulacion base.
+- Matricula por periodo.
+- Horas de docencia asistida y aplicacion practica.
+- Docentes requeridos por periodo.
+- Overrides de horas por periodo.
+- Recalculo en cascada hacia Sueldos Carrera y Capital de Trabajo.
+
+Rutas:
+
+- `src/Application/UseCases/Estudiantes`
+- `src/Presentation/Views/Estudiantes`
+- `sql/KAN_OverrideHorasPeriodo.sql`
+
+### Sueldos Carrera
+
+- Vista autogenerada por carrera, escenario y periodo.
+- Usa cargos, estudiantes proyectados e inflacion.
+- Incluye resumen pivot de sueldos por periodos.
+- Query por periodo: `GenerarTablaSueldosPeriodoQuery`.
+- Resumen: `GenerarResumenSueldosQuery`.
+
+Rutas:
+
+- `src/Application/UseCases/CargosFacultad`
+- `src/Presentation/Views/CargosFacultad`
+- `src/Presentation/ViewModels/CargosFacultad`
+
+### Recursos y Depreciacion
+
+Modulo para activos fijos, inversion futura y depreciacion.
+
+Incluye:
+
+- CRUD de activos fijos.
+- Catalogo base de activos.
+- Categorias personalizadas.
+- Matriz de inversiones futuras.
+- Matriz de depreciacion.
+- Totales consumidos por Inversion Inicial.
+
+Rutas:
+
+- `src/Application/UseCases/RecursosFisicosDepreciacion`
+- `src/Presentation/Views/RecursosFisicos`
+- `src/Presentation/ViewModels/RecursosFisicos`
+
+Scripts:
+
+- `sql/KAN24_activo_fijo.sql`
+- `sql/KAN24_catalogo_y_tipo_calculo.sql`
+- `sql/KAN24_categoria_personalizada.sql`
+- `sql/KAN24_permisos.sql`
+- `sql/KAN25_inversion_futura.sql`
+
+### Mantenimiento e Inversion
+
+Modulo contenedor con pestañas:
+
+- Mantenimiento.
+- Activos Diferidos.
+- Inversion Inicial.
+
+Ruta:
+
+- `src/Presentation/Views/MantenimientoInversion/MantenimientoInversionView.xaml`
+
+#### Mantenimiento
+
+Implementa la hoja de servicios y mantenimiento.
+
+Pestañas:
+
+- A. Servicios Basicos: CRUD de rubros.
+- B. Mantenimiento: CRUD de rubros.
+- C. Proyeccion Semestral: matriz por periodos, totales y detalle anual.
+
+La proyeccion semestral muestra:
+
+- años y periodos;
+- numero de alumnos;
+- costo de servicios basicos;
+- costo de mantenimiento;
+- total semestral por periodo;
+- recuadros de total Servicios Basicos, Mantenimiento y Total General;
+- detalle anual de rubros de servicios basicos y mantenimiento.
+
+Rutas:
+
+- `src/Application/UseCases/Mantenimiento`
+- `src/Presentation/Views/Mantenimiento`
+- `src/Presentation/ViewModels/Mantenimiento`
+- `sql/KAN28_servicios_mantenimiento.sql`
+
+#### Activos Diferidos
+
+Implementa activos diferidos y tabla de amortizacion.
+
+Pestañas:
+
+- A. Activos Diferidos: CRUD de permisos/rubros.
+- B. Tabla de Amortizacion: detalle y totales.
+
+Notas recientes:
+
+- Corregido el problema visual donde el texto o fila desaparecia al seleccionar.
+- La tabla de amortizacion muestra totales por periodo.
+
+Rutas:
+
+- `src/Application/UseCases/ActivoDiferido`
+- `src/Presentation/Views/ActivoDiferido`
+- `src/Presentation/ViewModels/ActivoDiferido`
+- `sql/KAN31_activos_diferidos.sql`
+
+#### Inversion Inicial
+
+Consolida:
+
+- Activos Diferidos.
+- Activos Fijos.
+- Capital de Trabajo.
+- Imprevistos 5%.
+- Total de inversion inicial.
+
+La tabla usa los encabezados:
+
+- Tipo de Inversion.
+- Valor.
+- Monto total.
+
+Rutas:
+
+- `src/Application/UseCases/InversionInicial`
+- `src/Presentation/Views/InversionInicial`
+- `src/Presentation/ViewModels/InversionInicial`
+
+### Capital de Trabajo
+
+Implementacion KAN-29 basada en la hoja "6 Capital de trabajo".
+
+Caracteristicas:
+
+- Modulo por carrera.
+- Filtros superiores: Carrera, Escenario y Periodo base.
+- Menu ubicado debajo de Mantenimiento e Inversion.
+- Pestaña A: Gastos de Servicio y Administracion, solo lectura.
+- Pestañas B/C/D: CRUD de insumos operativos por carrera.
+- Pestaña E: resumen detallado con cantidad, concepto, valor unitario, valor mensual y totales.
+
+Reglas:
+
+- El bloque A se alimenta desde Sueldos Carrera con el primer periodo de la proyeccion.
+- `Valor mensual = TotalSemestre / 6`.
+- B/C/D calculan `Valor mensual = Cantidad * ValorUnitario`.
+- `CapitalTrabajo = TotalMensual * MesesCapitalTrabajo`.
+- `MesesCapitalTrabajo` usa 2 por defecto.
+
+Rutas:
+
+- `src/Application/UseCases/CapitalTrabajo`
+- `src/Application/DTOs/CapitalTrabajo`
+- `src/Presentation/Views/CapitalTrabajo`
+- `src/Presentation/ViewModels/CapitalTrabajo`
+- `sql/KAN29_capital_trabajo.sql`
+
+## Mapeo Excel a Sistema
+
+| Hoja / Bloque Excel  | Modulo del sistema                            |
+| -------------------- | --------------------------------------------- |
+| 1 Estudiantes        | Proyeccion de Estudiantes                     |
+| 2 Tasa de Retencion  | Tasa de Retencion                             |
+| 6 Capital de trabajo | Capital de Trabajo                            |
+| 7 Sueldos            | Sueldos Carrera                               |
+| 8 Mantenimiento      | Mantenimiento e Inversion / Mantenimiento     |
+| Activos fijos        | Recursos y Depreciacion                       |
+| Activos diferidos    | Mantenimiento e Inversion / Activos Diferidos |
+| Inversion inicial    | Mantenimiento e Inversion / Inversion Inicial |
+
+## Scripts SQL Relevantes
+
+Scripts recientes y/o usados por modulos actuales:
+
+- `KAN_OverrideHorasPeriodo.sql`
+- `KAN20b_CargoFacultad_TipoContrato_TarifaHora.sql`
+- `KAN22_DatosInstitucionales.sql`
+- `KAN22_permisos.sql`
+- `KAN23_permisos_tre_es.sql`
+- `KAN24_activo_fijo.sql`
+- `KAN24_catalogo_y_tipo_calculo.sql`
+- `KAN24_categoria_personalizada.sql`
+- `KAN24_permisos.sql`
+- `KAN25_inversion_futura.sql`
+- `KAN28_servicios_mantenimiento.sql`
+- `KAN29_capital_trabajo.sql`
+- `KAN31_activos_diferidos.sql`
+
+## Menu Actual
+
+El menu se construye en `MainViewModel`.
+
+Orden funcional observado:
+
+1. Usuarios.
+2. Carreras.
+3. Inflacion.
+4. Tasa de Retencion y Graduacion.
+5. Proyeccion de Estudiantes.
+6. Sueldos Carrera.
+7. Datos Institucionales.
+8. Aporte Planta Central.
+9. Recursos y Depreciacion.
+10. Mantenimiento e Inversion.
+11. Capital de Trabajo.
+12. Configuracion.
+13. Reportes.
+14. Auditoria.
+15. Cerrar Sesion.
+
+La visibilidad depende de permisos y rol administrador.
+
+## Pruebas y Verificacion
+
+Comando base:
+
+```powershell
+dotnet build .\src\Presentation\SistemaAranceles.Presentation.csproj
+```
+
+Durante los ultimos ajustes de UI y logica, el build del proyecto Presentation paso con:
+
+- 0 errores.
+- 0 advertencias.
 
 ## GitFlow
 
-- `main` — estable
-- `develop` — integración
-- `feature/KAN-xx` — desarrollo por historia técnica → merge a `develop`
+- `main`: estable.
+- `develop`: integracion.
+- `feature/KAN-xx-*`: trabajo por historia o modulo.
 
-## Documentación
+Rama observada al actualizar esta documentacion:
 
-- **`contexto.md`** — snapshot maestro (leer primero en cualquier chat nuevo)
-- **`Diagramas.md`** — diagnóstico BD vs diagramas (hallazgos H1–H7)
-- **`docs/EPICA-3-Informe-KAN10-KAN12.md`** — cierre Épica 3 (Inflación)
-- **`ANALISIS_COMPLETO_RENDIMIENTO.md`** — fixes críticos rendimiento
-- **`docs/EPICA-2-Informe-KAN06-KAN09.md`** — cierre Épica 2
-- **`docs/conexion-supabase-postgresql.md`** — guía conexión
+```text
+feature/KAN-31-Activos-Diferidos
+```
 
-### Diagramas (`src/Application/UseCases/`)
+Rama base sincronizada previamente con:
 
-- `BD ER/BD-01..BD-03B.puml` — ER tablas core/académico/financiero
-- `Diagramas de Clase Dominio/DC-01..DC-04.puml` (DC-01 dividido en 4, DC-02.1 corregido)
-- `Diagramas de Secuencia/DS-01..DS-11.puml` (DS-02 dividido en 3, DS-03 dividido en 4)
+```text
+feature/KAN-30-Inversion-Inicial
+```
 
-## Optimizaciones aplicadas
+## Documentacion Adicional
 
-- DbContext **Scoped** + scope manual en VMs async → evita pool exhausted
-- INSERT booleanos con `TRUE` literal (no `1`) → fix SqlState 42804
-- Batch loading `ANY(@ids)` → elimina N+1 en listado usuarios+roles
-- `RevocarAsync` reutiliza conexión del scope → respeta pool
-- Timeouts realistas con pooler: roles 15s · session 8s · login 25s
-- Precarga automática lista usuarios si Admin
+- `.claude.md`: notas operativas para agentes.
+- `contexto.md`: snapshot amplio del proyecto, si esta disponible.
+- `docs/`: informes y guias.
+- `src/Application/UseCases/BD ER`: diagramas ER.
+- `src/Application/UseCases/Diagramas de Clase Dominio`: diagramas de clases.
+- `src/Application/UseCases/Diagramas de Secuencia`: diagramas de secuencia.
 
-## Restricciones de trabajo
+## Restricciones de Trabajo
 
-- ❌ Sin commit automático
-- ❌ No romper login ni degradar tiempos
-- ❌ No introducir N+1
-- ❌ No skip hooks (`--no-verify`) sin pedir
-- ✅ Mantener Clean Architecture + 1 caso por archivo
-- ✅ Confirmar antes de destructivos (drop, force-push, delete branch)
+- No hacer commits automaticos.
+- No usar comandos destructivos sin aprobacion explicita.
+- No degradar login, RBAC ni auditoria.
+- No introducir consultas N+1.
+- No mover datos operativos por carrera a Datos Institucionales salvo regla institucional clara.
+- Para valores monetarios en UI, preferir propiedades `Display` ya formateadas.
 
-## Restore Supabase (referencia)
+## Restore Supabase
 
-**Backup:** Custom · Solo schema `public` · No owner · No privileges · Sin realtime/storage/auth/extensions internas  
-**Restore:** Pre-data + Data + Post-data · No owner · No privileges · `Clean before restore` solo en pruebas
+Referencia rapida:
+
+- Backup: formato custom, schema `public`, no owner, no privileges.
+- Restore: pre-data, data y post-data; no owner, no privileges.
+- `Clean before restore` solo en entornos de prueba.

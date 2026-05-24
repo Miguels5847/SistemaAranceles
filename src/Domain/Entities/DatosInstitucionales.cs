@@ -8,7 +8,14 @@ namespace SistemaAranceles.Domain.Entities;
 /// </summary>
 public sealed class DatosInstitucionales : EntidadDominioBase
 {
-    private DatosInstitucionales() { }
+    public const int MesesCapitalTrabajoPorDefecto = 2;
+    public const decimal PorcentajeImprevistosInversionPorDefecto = 5m;
+
+    private DatosInstitucionales()
+    {
+        MesesCapitalTrabajo = MesesCapitalTrabajoPorDefecto;
+        PorcentajeImprevistosInversion = PorcentajeImprevistosInversionPorDefecto;
+    }
 
     public DatosInstitucionales(
         string periodo,
@@ -23,11 +30,14 @@ public sealed class DatosInstitucionales : EntidadDominioBase
         decimal aportePatronal,
         decimal varios,
         int actualizadoPorUsuarioId,
-        string? fuenteNotas)
+        string? fuenteNotas,
+        int mesesCapitalTrabajo = MesesCapitalTrabajoPorDefecto,
+        decimal porcentajeImprevistosInversion = PorcentajeImprevistosInversionPorDefecto)
     {
         CambiarPeriodo(periodo);
         CambiarPoblacion(numeroEstudiantesUniversidad, numeroDocentesUniversidad, numeroPersonasPlantaCentral);
         CambiarRubros(sueldoBasico, funcional, fondoReserva, beneficioXiv, beneficioXiii, aportePatronal, varios);
+        CambiarParametrosInversion(mesesCapitalTrabajo, porcentajeImprevistosInversion);
         RegistrarActualizacion(actualizadoPorUsuarioId, fuenteNotas);
     }
 
@@ -44,6 +54,8 @@ public sealed class DatosInstitucionales : EntidadDominioBase
     public decimal BeneficioXiii { get; private set; }
     public decimal AportePatronal { get; private set; }
     public decimal Varios { get; private set; }
+    public int MesesCapitalTrabajo { get; private set; } = MesesCapitalTrabajoPorDefecto;
+    public decimal PorcentajeImprevistosInversion { get; private set; } = PorcentajeImprevistosInversionPorDefecto;
 
     public DateTimeOffset FechaActualizacion { get; private set; }
     public int ActualizadoPorUsuarioId { get; private set; }
@@ -87,6 +99,14 @@ public sealed class DatosInstitucionales : EntidadDominioBase
         BeneficioXiii = GuardiaDominio.DecimalNoNegativo(beneficioXiii, "Beneficio XIII", 2);
         AportePatronal = GuardiaDominio.DecimalNoNegativo(aportePatronal, "Aporte patronal", 2);
         Varios = GuardiaDominio.DecimalNoNegativo(varios, "Varios", 2);
+    }
+
+    public void CambiarParametrosInversion(int mesesCapitalTrabajo, decimal porcentajeImprevistosInversion)
+    {
+        MesesCapitalTrabajo = GuardiaDominio.EnteroPositivo(mesesCapitalTrabajo, "Meses capital trabajo");
+        PorcentajeImprevistosInversion = GuardiaDominio.Porcentaje(
+            porcentajeImprevistosInversion,
+            "Porcentaje imprevistos inversion");
     }
 
     public void RehidratarFechaActualizacion(DateTimeOffset fecha)
