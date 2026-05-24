@@ -37,7 +37,9 @@ public sealed class ConfigurarDatosInstitucionalesCommand(
                 dto.AportePatronal,
                 dto.Varios,
                 usuarioId,
-                dto.FuenteNotas);
+                dto.FuenteNotas,
+                dto.MesesCapitalTrabajo,
+                dto.PorcentajeImprevistosInversion);
             repositorio.Agregar(datos);
         }
         else
@@ -54,6 +56,9 @@ public sealed class ConfigurarDatosInstitucionalesCommand(
                 dto.BeneficioXiii,
                 dto.AportePatronal,
                 dto.Varios);
+            existente.CambiarParametrosInversion(
+                dto.MesesCapitalTrabajo,
+                dto.PorcentajeImprevistosInversion);
             existente.RegistrarActualizacion(usuarioId, dto.FuenteNotas);
             repositorio.Actualizar(existente);
             datos = existente;

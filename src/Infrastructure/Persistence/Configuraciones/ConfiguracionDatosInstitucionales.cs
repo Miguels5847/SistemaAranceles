@@ -24,6 +24,8 @@ internal sealed class ConfiguracionDatosInstitucionales : IEntityTypeConfigurati
         builder.Property(x => x.BeneficioXiii).HasColumnName("beneficio_xiii").HasColumnType("numeric(18,2)").IsRequired();
         builder.Property(x => x.AportePatronal).HasColumnName("aporte_patronal").HasColumnType("numeric(18,2)").IsRequired();
         builder.Property(x => x.Varios).HasColumnName("varios").HasColumnType("numeric(18,2)").IsRequired();
+        builder.Property(x => x.MesesCapitalTrabajo).HasColumnName("meses_capital_trabajo").HasDefaultValue(2).IsRequired();
+        builder.Property(x => x.PorcentajeImprevistosInversion).HasColumnName("porcentaje_imprevistos_inversion").HasColumnType("numeric(7,4)").HasDefaultValue(5m).IsRequired();
 
         builder.Property(x => x.FechaActualizacion).HasColumnName("fecha_actualizacion").IsRequired();
         builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id").IsRequired();

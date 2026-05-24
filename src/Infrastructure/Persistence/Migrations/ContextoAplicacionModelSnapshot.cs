@@ -17,17 +17,189 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
                 .HasAnnotation("ProductVersion", "8.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
+
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("SistemaAranceles.Infrastructure.Persistence.Entidades.ActivoDiferido", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("ActualizadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("actualizado_en");
+
+                    b.Property<int?>("ActualizadoPorUsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("actualizado_por_usuario_id");
+
+                    b.Property<int>("CarreraId")
+                        .HasColumnType("integer")
+                        .HasColumnName("carrera_id");
+
+                    b.Property<DateTime>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<int?>("CreadoPorUsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("creado_por_usuario_id");
+
+                    b.Property<DateTime?>("EliminadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("eliminado_en");
+
+                    b.Property<int?>("EliminadoPorUsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("eliminado_por_usuario_id");
+
+                    b.Property<bool>("EstaActivo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("esta_activo");
+
+                    b.Property<string>("NombreRubro")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("nombre_rubro");
+
+                    b.Property<decimal>("TasaAmortizacionAnual")
+                        .HasColumnType("numeric(6,4)")
+                        .HasColumnName("tasa_amortizacion_anual");
+
+                    b.Property<decimal>("Valor")
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("valor");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CarreraId");
+
+                    b.ToTable("activo_diferido", (string)null);
+                });
+
+            modelBuilder.Entity("SistemaAranceles.Infrastructure.Persistence.Entidades.ActivoFijo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("ActualizadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("actualizado_en");
+
+                    b.Property<int?>("ActualizadoPorUsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("actualizado_por_usuario_id");
+
+                    b.Property<decimal>("Cantidad")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("cantidad");
+
+                    b.Property<int>("CarreraId")
+                        .HasColumnType("integer")
+                        .HasColumnName("carrera_id");
+
+                    b.Property<string>("Categoria")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("categoria");
+
+                    b.Property<string>("CategoriaPersonalizada")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasDefaultValue("")
+                        .HasColumnName("categoria_personalizada");
+
+                    b.Property<DateTime>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<int?>("CreadoPorUsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("creado_por_usuario_id");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("descripcion");
+
+                    b.Property<DateTime?>("EliminadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("eliminado_en");
+
+                    b.Property<int?>("EliminadoPorUsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("eliminado_por_usuario_id");
+
+                    b.Property<bool>("EstaActivo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("esta_activo");
+
+                    b.Property<decimal>("FactorMultiplicador")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("factor_multiplicador");
+
+                    b.Property<DateTimeOffset>("FechaAdquisicion")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fecha_adquisicion");
+
+                    b.Property<decimal>("OffsetCantidad")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("offset_cantidad");
+
+                    b.Property<decimal>("PorcentajeResidual")
+                        .HasColumnType("numeric(6,4)")
+                        .HasColumnName("porcentaje_residual");
+
+                    b.Property<string>("TipoCalculoCantidad")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("tipo_calculo_cantidad");
+
+                    b.Property<string>("UnidadMedida")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("unidad_medida");
+
+                    b.Property<decimal>("ValorUnitario")
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("valor_unitario");
+
+                    b.Property<int>("VidaUtilAnios")
+                        .HasColumnType("integer")
+                        .HasColumnName("vida_util_anios");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CarreraId", "Categoria");
+
+                    b.ToTable("recurso_activo_fijo", (string)null);
+                });
 
             modelBuilder.Entity("SistemaAranceles.Infrastructure.Persistence.Entidades.AuditoriaLog", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("AccionNombre")
                         .IsRequired()
@@ -89,8 +261,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -171,8 +344,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -225,8 +399,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -286,13 +461,107 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.ToTable("carrera", (string)null);
                 });
 
+            modelBuilder.Entity("SistemaAranceles.Infrastructure.Persistence.Entidades.CatalogoActivoBase", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("ActualizadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("actualizado_en");
+
+                    b.Property<int?>("ActualizadoPorUsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("actualizado_por_usuario_id");
+
+                    b.Property<decimal>("CantidadDefault")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("cantidad_default");
+
+                    b.Property<string>("Categoria")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("categoria");
+
+                    b.Property<DateTime>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<int?>("CreadoPorUsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("creado_por_usuario_id");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("descripcion");
+
+                    b.Property<DateTime?>("EliminadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("eliminado_en");
+
+                    b.Property<int?>("EliminadoPorUsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("eliminado_por_usuario_id");
+
+                    b.Property<bool>("EstaActivo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("esta_activo");
+
+                    b.Property<decimal>("FactorMultiplicador")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("factor_multiplicador");
+
+                    b.Property<decimal>("OffsetCantidad")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("offset_cantidad");
+
+                    b.Property<decimal>("PorcentajeResidual")
+                        .HasColumnType("numeric(6,4)")
+                        .HasColumnName("porcentaje_residual");
+
+                    b.Property<string>("TipoCalculoCantidad")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("tipo_calculo_cantidad");
+
+                    b.Property<string>("UnidadMedida")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("unidad_medida");
+
+                    b.Property<decimal>("ValorUnitario")
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("valor_unitario");
+
+                    b.Property<int>("VidaUtilAnios")
+                        .HasColumnType("integer")
+                        .HasColumnName("vida_util_anios");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Descripcion")
+                        .IsUnique();
+
+                    b.ToTable("catalogo_activo_base", (string)null);
+                });
+
             modelBuilder.Entity("SistemaAranceles.Infrastructure.Persistence.Entidades.ConfiguracionArancel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -359,8 +628,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -422,8 +692,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -504,8 +775,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -560,8 +832,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("ActualizadoPorUsuarioId")
                         .HasColumnType("integer")
@@ -587,14 +860,20 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("fondo_reserva");
 
-                    b.Property<decimal>("Funcional")
-                        .HasColumnType("numeric(18,2)")
-                        .HasColumnName("funcional");
-
                     b.Property<string>("FuenteNotas")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("fuente_notas");
+
+                    b.Property<decimal>("Funcional")
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("funcional");
+
+                    b.Property<int>("MesesCapitalTrabajo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(2)
+                        .HasColumnName("meses_capital_trabajo");
 
                     b.Property<int>("NumeroDocentesUniversidad")
                         .HasColumnType("integer")
@@ -613,6 +892,12 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("periodo");
+
+                    b.Property<decimal>("PorcentajeImprevistosInversion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(7,4)")
+                        .HasDefaultValue(5m)
+                        .HasColumnName("porcentaje_imprevistos_inversion");
 
                     b.Property<decimal>("SueldoBasico")
                         .HasColumnType("numeric(18,2)")
@@ -637,8 +922,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -703,8 +989,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -801,8 +1088,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -864,8 +1152,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -928,8 +1217,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -989,13 +1279,75 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.ToTable("inflacion_proyectada", (string)null);
                 });
 
+            modelBuilder.Entity("SistemaAranceles.Infrastructure.Persistence.Entidades.InversionFutura", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ActivoFijoId")
+                        .HasColumnType("integer")
+                        .HasColumnName("activo_fijo_id");
+
+                    b.Property<DateTime?>("ActualizadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("actualizado_en");
+
+                    b.Property<int?>("ActualizadoPorUsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("actualizado_por_usuario_id");
+
+                    b.Property<int>("Anio")
+                        .HasColumnType("integer")
+                        .HasColumnName("anio");
+
+                    b.Property<decimal>("CantidadProyectada")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("cantidad_proyectada");
+
+                    b.Property<DateTime>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<int?>("CreadoPorUsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("creado_por_usuario_id");
+
+                    b.Property<DateTime?>("EliminadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("eliminado_en");
+
+                    b.Property<int?>("EliminadoPorUsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("eliminado_por_usuario_id");
+
+                    b.Property<bool>("EstaActivo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("esta_activo");
+
+                    b.Property<int>("Semestre")
+                        .HasColumnType("integer")
+                        .HasColumnName("semestre");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActivoFijoId", "Anio", "Semestre")
+                        .IsUnique();
+
+                    b.ToTable("inversion_futura", (string)null);
+                });
+
             modelBuilder.Entity("SistemaAranceles.Infrastructure.Persistence.Entidades.ItemMaterialInsumo", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -1072,8 +1424,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -1132,8 +1485,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -1198,8 +1552,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("AccionNombre")
                         .IsRequired()
@@ -1266,8 +1621,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -1324,8 +1680,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -1394,8 +1751,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -1462,8 +1820,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -1524,8 +1883,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -1590,8 +1950,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -1664,8 +2025,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -1752,8 +2114,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -1820,13 +2183,92 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.ToTable("rol_permiso", (string)null);
                 });
 
+            modelBuilder.Entity("SistemaAranceles.Infrastructure.Persistence.Entidades.ServicioMantenimiento", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("ActualizadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("actualizado_en");
+
+                    b.Property<int?>("ActualizadoPorUsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("actualizado_por_usuario_id");
+
+                    b.Property<int>("CarreraId")
+                        .HasColumnType("integer")
+                        .HasColumnName("carrera_id");
+
+                    b.Property<decimal>("CostoAnualUniversidad")
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("costo_anual_universidad");
+
+                    b.Property<DateTime>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<int?>("CreadoPorUsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("creado_por_usuario_id");
+
+                    b.Property<DateTime?>("EliminadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("eliminado_en");
+
+                    b.Property<int?>("EliminadoPorUsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("eliminado_por_usuario_id");
+
+                    b.Property<int?>("EscenarioProyeccionId")
+                        .HasColumnType("integer")
+                        .HasColumnName("escenario_proyeccion_id");
+
+                    b.Property<bool>("EstaActivo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("esta_activo");
+
+                    b.Property<string>("NombreRubro")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("nombre_rubro");
+
+                    b.Property<string>("Sede")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasDefaultValue("General")
+                        .HasColumnName("sede");
+
+                    b.Property<string>("TipoRubro")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("tipo_rubro");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EscenarioProyeccionId");
+
+                    b.HasIndex("CarreraId", "TipoRubro");
+
+                    b.ToTable("mantenimiento_servicio", (string)null);
+                });
+
             modelBuilder.Entity("SistemaAranceles.Infrastructure.Persistence.Entidades.SesionUsuario", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("EmitidoEn")
                         .HasColumnType("timestamp with time zone")
@@ -1865,8 +2307,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -1950,8 +2393,9 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualizadoEn")
                         .HasColumnType("timestamp with time zone")
@@ -2061,6 +2505,28 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.HasIndex("RolId");
 
                     b.ToTable("usuario_rol", (string)null);
+                });
+
+            modelBuilder.Entity("SistemaAranceles.Infrastructure.Persistence.Entidades.ActivoDiferido", b =>
+                {
+                    b.HasOne("SistemaAranceles.Infrastructure.Persistence.Entidades.Carrera", "Carrera")
+                        .WithMany()
+                        .HasForeignKey("CarreraId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Carrera");
+                });
+
+            modelBuilder.Entity("SistemaAranceles.Infrastructure.Persistence.Entidades.ActivoFijo", b =>
+                {
+                    b.HasOne("SistemaAranceles.Infrastructure.Persistence.Entidades.Carrera", "Carrera")
+                        .WithMany()
+                        .HasForeignKey("CarreraId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Carrera");
                 });
 
             modelBuilder.Entity("SistemaAranceles.Infrastructure.Persistence.Entidades.AuditoriaLog", b =>
@@ -2205,6 +2671,17 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("EscenarioProyeccion");
+                });
+
+            modelBuilder.Entity("SistemaAranceles.Infrastructure.Persistence.Entidades.InversionFutura", b =>
+                {
+                    b.HasOne("SistemaAranceles.Infrastructure.Persistence.Entidades.ActivoFijo", "ActivoFijo")
+                        .WithMany("InversionesFuturas")
+                        .HasForeignKey("ActivoFijoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ActivoFijo");
                 });
 
             modelBuilder.Entity("SistemaAranceles.Infrastructure.Persistence.Entidades.ItemMaterialInsumo", b =>
@@ -2367,6 +2844,24 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Navigation("Rol");
                 });
 
+            modelBuilder.Entity("SistemaAranceles.Infrastructure.Persistence.Entidades.ServicioMantenimiento", b =>
+                {
+                    b.HasOne("SistemaAranceles.Infrastructure.Persistence.Entidades.Carrera", "Carrera")
+                        .WithMany()
+                        .HasForeignKey("CarreraId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SistemaAranceles.Infrastructure.Persistence.Entidades.EscenarioProyeccion", "EscenarioProyeccion")
+                        .WithMany()
+                        .HasForeignKey("EscenarioProyeccionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Carrera");
+
+                    b.Navigation("EscenarioProyeccion");
+                });
+
             modelBuilder.Entity("SistemaAranceles.Infrastructure.Persistence.Entidades.SesionUsuario", b =>
                 {
                     b.HasOne("SistemaAranceles.Infrastructure.Persistence.Entidades.Usuario", "Usuario")
@@ -2425,6 +2920,11 @@ namespace SistemaAranceles.Infrastructure.Persistence.Migrations
                     b.Navigation("Rol");
 
                     b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("SistemaAranceles.Infrastructure.Persistence.Entidades.ActivoFijo", b =>
+                {
+                    b.Navigation("InversionesFuturas");
                 });
 
             modelBuilder.Entity("SistemaAranceles.Infrastructure.Persistence.Entidades.CargoFacultad", b =>

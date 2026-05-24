@@ -1,0 +1,488 @@
+<UserControl x:Class="SistemaAranceles.Presentation.Views.Mantenimiento.MantenimientoView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Height="Auto" Width="Auto">
+
+    <UserControl.Resources>
+        <Style x:Key="BtnAccion" TargetType="Button">
+            <Setter Property="Padding" Value="6,2"/>
+            <Setter Property="Margin" Value="0,0,4,0"/>
+        </Style>
+        <Style x:Key="BtnEliminar" TargetType="Button" BasedOn="{StaticResource BtnAccion}">
+            <Setter Property="Background" Value="#C62828"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style TargetType="DataGridRow">
+            <Setter Property="Foreground" Value="#263238"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#EEF2FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#E0E7FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="DataGridCell">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#263238"/>
+            <Setter Property="BorderBrush" Value="#D6DAEA"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#E0E7FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HojaDataGridRow" TargetType="DataGridRow">
+            <Setter Property="Foreground" Value="#111827"/>
+            <Setter Property="MinHeight" Value="30"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F8FAFC"/>
+                    <Setter Property="Foreground" Value="#111827"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#F8FAFC"/>
+                    <Setter Property="Foreground" Value="#111827"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HojaDataGridCell" TargetType="DataGridCell">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#111827"/>
+            <Setter Property="BorderBrush" Value="#D6DAEA"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Foreground" Value="#111827"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HojaColumnHeader" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#E8EAF6"/>
+            <Setter Property="Foreground" Value="#000000"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="8,7"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Servicios y Mantenimiento"
+                   FontSize="18" FontWeight="Bold" Foreground="#1A237E" Margin="0,0,0,8"/>
+
+        <Border Grid.Row="1" Background="#EEF1FB" CornerRadius="6" Padding="10" Margin="0,0,0,8">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Carrera" FontSize="11" Foreground="#546E7A" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <ComboBox Width="320"
+                          ItemsSource="{Binding Carreras}"
+                          SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}"
+                          DisplayMemberPath="Etiqueta"/>
+
+                <TextBlock Text="Escenario" FontSize="11" Foreground="#546E7A" VerticalAlignment="Center" Margin="16,0,8,0"/>
+                <ComboBox Width="220"
+                          ItemsSource="{Binding Escenarios}"
+                          SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}"
+                          DisplayMemberPath="Nombre"/>
+
+                <Button Content="Refrescar"
+                        Command="{Binding CargarCommand}"
+                        Margin="12,0,0,0"
+                        Padding="8,4"/>
+            </StackPanel>
+        </Border>
+
+        <StackPanel Grid.Row="2" Margin="0,0,0,8">
+            <TextBlock Text="{Binding MensajeExito}" Foreground="#2E7D32" FontWeight="SemiBold"
+                       Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding MensajeError}" Foreground="#C62828" FontWeight="SemiBold"
+                       Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
+        </StackPanel>
+
+        <TabControl Grid.Row="3">
+
+            <TabItem Header="A. Servicios Básicos">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
+                        <TextBlock Text="Servicios Básicos" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Button Content="+ Nuevo" Margin="12,0,4,0" Padding="8,3"
+                                Command="{Binding AbrirNuevoCommand}"
+                                CommandParameter="ServicioBasico"/>
+                    </StackPanel>
+
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding ServiciosBasicos}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              SelectionMode="Single" SelectionUnit="FullRow"
+                              CanUserResizeColumns="False" CanUserSortColumns="False" CanUserReorderColumns="False"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Concepto" Binding="{Binding NombreRubro}" Width="*" MinWidth="180"/>
+                            <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" Width="120"/>
+                            <DataGridTextColumn Header="Costo Anual" Binding="{Binding CostoAnualDisplay}" Width="160"/>
+                            <DataGridTemplateColumn Header="Acciones" Width="150">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Editar" Style="{StaticResource BtnAccion}"
+                                                    Command="{Binding DataContext.AbrirEditarCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"/>
+                                            <Button Content="Eliminar" Style="{StaticResource BtnEliminar}"
+                                                    Command="{Binding DataContext.EliminarCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Border Grid.Row="2" Background="#E8EAF6" CornerRadius="4" Padding="10,6" Margin="0,4,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Total Servicios Básicos:" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                            <TextBlock Text="{Binding Resumen.TotalServiciosDisplay, FallbackValue='—'}" FontWeight="Bold" Foreground="#1A237E"/>
+                            <TextBlock Text="   Alumnos referencia:" FontWeight="SemiBold" Margin="20,0,8,0"/>
+                            <TextBlock Text="{Binding Resumen.AlumnosReferenciaDisplay, FallbackValue='—'}" FontWeight="Bold" Foreground="#1A237E"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="3" BorderBrush="#1A237E" BorderThickness="1" CornerRadius="4"
+                            Margin="0,8,0,0" Padding="10,8"
+                            Visibility="{Binding FormVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="160"/>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                                <TextBlock Text="Concepto" FontSize="11"/>
+                                <TextBox Text="{Binding FormNombre, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="0,0,6,0">
+                                <TextBlock Text="Costo anual" FontSize="11"/>
+                                <TextBox Text="{Binding FormCosto, UpdateSourceTrigger=PropertyChanged}" Padding="4,2" ToolTip="Ejemplos válidos: 1000, 1.000, 1.000,50"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Margin="0,0,6,0">
+                                <TextBlock Text="Sede" FontSize="11"/>
+                                <TextBox Text="{Binding FormSede, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
+                            </StackPanel>
+                            <CheckBox Grid.Column="3"
+                                      Content="Específico del escenario"
+                                      IsChecked="{Binding FormUsaEscenarioEspecifico, Mode=TwoWay}"
+                                      VerticalAlignment="Bottom"
+                                      Margin="0,0,6,4"/>
+                            <StackPanel Grid.Column="4" VerticalAlignment="Bottom">
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="Guardar" Padding="8,3" Margin="0,0,6,0"
+                                            Background="#1A237E" Foreground="White"
+                                            Command="{Binding GuardarCommand}"/>
+                                    <Button Content="Cancelar" Padding="8,3"
+                                            Command="{Binding CancelarFormCommand}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="B. Mantenimiento">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
+                        <TextBlock Text="Mantenimiento" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Button Content="+ Nuevo" Margin="12,0,4,0" Padding="8,3"
+                                Command="{Binding AbrirNuevoCommand}"
+                                CommandParameter="Mantenimiento"/>
+                    </StackPanel>
+
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding ItemsMantenimiento}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              SelectionMode="Single" SelectionUnit="FullRow"
+                              CanUserResizeColumns="False" CanUserSortColumns="False" CanUserReorderColumns="False"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Concepto" Binding="{Binding NombreRubro}" Width="*" MinWidth="180"/>
+                            <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" Width="120"/>
+                            <DataGridTextColumn Header="Costo Anual" Binding="{Binding CostoAnualDisplay}" Width="160"/>
+                            <DataGridTemplateColumn Header="Acciones" Width="150">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Editar" Style="{StaticResource BtnAccion}"
+                                                    Command="{Binding DataContext.AbrirEditarCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"/>
+                                            <Button Content="Eliminar" Style="{StaticResource BtnEliminar}"
+                                                    Command="{Binding DataContext.EliminarCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Border Grid.Row="2" Background="#E8EAF6" CornerRadius="4" Padding="10,6" Margin="0,4,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Total Mantenimiento:" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                            <TextBlock Text="{Binding Resumen.TotalMantenimientoDisplay, FallbackValue='—'}" FontWeight="Bold" Foreground="#1A237E"/>
+                            <TextBlock Text="   Alumnos referencia:" FontWeight="SemiBold" Margin="20,0,8,0"/>
+                            <TextBlock Text="{Binding Resumen.AlumnosReferenciaDisplay, FallbackValue='—'}" FontWeight="Bold" Foreground="#1A237E"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="3" BorderBrush="#1A237E" BorderThickness="1" CornerRadius="4"
+                            Margin="0,8,0,0" Padding="10,8"
+                            Visibility="{Binding FormVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="160"/>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                                <TextBlock Text="Concepto" FontSize="11"/>
+                                <TextBox Text="{Binding FormNombre, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="0,0,6,0">
+                                <TextBlock Text="Costo anual" FontSize="11"/>
+                                <TextBox Text="{Binding FormCosto, UpdateSourceTrigger=PropertyChanged}" Padding="4,2" ToolTip="Ejemplos válidos: 1000, 1.000, 1.000,50"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Margin="0,0,6,0">
+                                <TextBlock Text="Sede" FontSize="11"/>
+                                <TextBox Text="{Binding FormSede, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
+                            </StackPanel>
+                            <CheckBox Grid.Column="3"
+                                      Content="Específico del escenario"
+                                      IsChecked="{Binding FormUsaEscenarioEspecifico, Mode=TwoWay}"
+                                      VerticalAlignment="Bottom"
+                                      Margin="0,0,6,4"/>
+                            <StackPanel Grid.Column="4" VerticalAlignment="Bottom">
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="Guardar" Padding="8,3" Margin="0,0,6,0"
+                                            Background="#1A237E" Foreground="White"
+                                            Command="{Binding GuardarCommand}"/>
+                                    <Button Content="Cancelar" Padding="8,3"
+                                            Command="{Binding CancelarFormCommand}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="C. Proyección Semestral">
+                <ScrollViewer x:Name="ProyeccionScrollViewer"
+                              Margin="8"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <TextBlock Text="Proyección semestral de costos"
+                                   FontSize="15" FontWeight="SemiBold" Margin="0,0,0,8"/>
+
+                        <UniformGrid Columns="3" Margin="0,0,0,8">
+                            <Border Background="#1A237E" CornerRadius="4" Padding="12,10" Margin="0,0,8,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="SERVICIOS BÁSICOS" Foreground="#BBDEFB" FontSize="11" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Row="1" Text="{Binding Resumen.TotalServiciosDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="20"/>
+                                    <TextBlock Grid.Row="2" Text="{Binding Resumen.ValorMensualServiciosBasicosPorAlumnoDisplay, StringFormat=Mensual por alumno: {0}, FallbackValue='Mensual por alumno: —'}"
+                                               Foreground="White" FontSize="11" Margin="0,4,0,0"/>
+                                </Grid>
+                            </Border>
+
+                            <Border Background="#283593" CornerRadius="4" Padding="12,10" Margin="0,0,8,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="MANTENIMIENTO" Foreground="#BBDEFB" FontSize="11" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Row="1" Text="{Binding Resumen.TotalMantenimientoDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="20"/>
+                                    <TextBlock Grid.Row="2" Text="{Binding Resumen.ValorSemestralMantenimientoPorAlumnoDisplay, StringFormat=Semestral por alumno: {0}, FallbackValue='Semestral por alumno: —'}"
+                                               Foreground="White" FontSize="11" Margin="0,4,0,0"/>
+                                </Grid>
+                            </Border>
+
+                            <Border Background="#0F766E" CornerRadius="4" Padding="12,10">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="TOTAL GENERAL" Foreground="#CCFBF1" FontSize="11" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Row="1" Text="{Binding Resumen.TotalGeneralDisplay, FallbackValue='—'}" Foreground="White" FontWeight="Bold" FontSize="20"/>
+                                    <TextBlock Grid.Row="2" Text="{Binding Resumen.AlumnosReferenciaDisplay, StringFormat=Alumnos referencia: {0}, FallbackValue='Alumnos referencia: —'}"
+                                               Foreground="White" FontSize="11" Margin="0,4,0,0"/>
+                                </Grid>
+                            </Border>
+                        </UniformGrid>
+
+                        <DataGrid x:Name="dgProyeccionSemestral"
+                                  ItemsSource="{Binding ProyeccionSemestralVista}"
+                                  AutoGenerateColumns="True" IsReadOnly="True"
+                                  AutoGeneratingColumn="ProyeccionSemestral_AutoGeneratingColumn"
+                                  PreviewMouseWheel="DataGrid_PreviewMouseWheel"
+                                  SelectionMode="Single" SelectionUnit="FullRow"
+                                  CanUserResizeColumns="False" CanUserSortColumns="False" CanUserReorderColumns="False"
+                                  HeadersVisibility="Column" GridLinesVisibility="All"
+                                  HorizontalAlignment="Stretch"
+                                  ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                  AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9"
+                                  FontSize="13" MinHeight="190" Margin="0,0,0,16"
+                                  RowStyle="{StaticResource HojaDataGridRow}"
+                                  CellStyle="{StaticResource HojaDataGridCell}"
+                                  ColumnHeaderStyle="{StaticResource HojaColumnHeader}">
+                            <DataGrid.Resources>
+                            </DataGrid.Resources>
+                        </DataGrid>
+
+                        <Grid Margin="0,4,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.05*"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="1.25*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0" BorderBrush="#CBD5E1" BorderThickness="1" Background="White" CornerRadius="4">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Border Grid.Row="0" Background="#F5F7FB" BorderBrush="#CBD5E1" BorderThickness="0,0,0,1" Padding="10,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="160"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="SERVICIOS BÁSICOS" FontWeight="Bold" FontSize="14"/>
+                                            <TextBlock Grid.Column="1" Text="ANUAL" FontWeight="Bold" HorizontalAlignment="Right"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <DataGrid Grid.Row="1" ItemsSource="{Binding ServiciosBasicos}"
+                                              AutoGenerateColumns="False" IsReadOnly="True"
+                                              PreviewMouseWheel="DataGrid_PreviewMouseWheel"
+                                              HeadersVisibility="None" GridLinesVisibility="Horizontal"
+                                              CanUserResizeColumns="False" CanUserSortColumns="False" CanUserReorderColumns="False"
+                                              ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                              BorderThickness="0" RowHeight="30" AlternatingRowBackground="#FAFAFF"
+                                              RowStyle="{StaticResource HojaDataGridRow}"
+                                              CellStyle="{StaticResource HojaDataGridCell}">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Binding="{Binding NombreRubro}" Width="*" MinWidth="220"/>
+                                            <DataGridTextColumn Binding="{Binding CostoAnualDisplay}" Width="160"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+
+                                    <Border Grid.Row="2" BorderBrush="#CBD5E1" BorderThickness="0,1,0,0" Padding="10,9">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="160"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="TOTAL" FontWeight="Bold" FontSize="14"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Resumen.TotalServiciosDisplay, FallbackValue='—'}"
+                                                       FontWeight="Bold" FontSize="14" HorizontalAlignment="Right"/>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <Border Grid.Column="2" BorderBrush="#CBD5E1" BorderThickness="1" Background="White" CornerRadius="4">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Border Grid.Row="0" Background="#F5F7FB" BorderBrush="#CBD5E1" BorderThickness="0,0,0,1" Padding="10,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="160"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="MANTENIMIENTO" FontWeight="Bold" FontSize="14"/>
+                                            <TextBlock Grid.Column="1" Text="ANUAL" FontWeight="Bold" HorizontalAlignment="Right"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <DataGrid Grid.Row="1" ItemsSource="{Binding ItemsMantenimiento}"
+                                              AutoGenerateColumns="False" IsReadOnly="True"
+                                              PreviewMouseWheel="DataGrid_PreviewMouseWheel"
+                                              HeadersVisibility="None" GridLinesVisibility="Horizontal"
+                                              CanUserResizeColumns="False" CanUserSortColumns="False" CanUserReorderColumns="False"
+                                              ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                              BorderThickness="0" RowHeight="30" AlternatingRowBackground="#FAFAFF"
+                                              RowStyle="{StaticResource HojaDataGridRow}"
+                                              CellStyle="{StaticResource HojaDataGridCell}">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Binding="{Binding NombreRubro}" Width="*" MinWidth="260"/>
+                                            <DataGridTextColumn Binding="{Binding CostoAnualDisplay}" Width="160"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+
+                                    <Border Grid.Row="2" BorderBrush="#CBD5E1" BorderThickness="0,1,0,0" Padding="10,9">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="160"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="TOTAL" FontWeight="Bold" FontSize="14"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Resumen.TotalMantenimientoDisplay, FallbackValue='—'}"
+                                                       FontWeight="Bold" FontSize="14" HorizontalAlignment="Right"/>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+        </TabControl>
+    </Grid>
+</UserControl>

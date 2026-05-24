@@ -19,6 +19,8 @@ internal static class MapeoDatosInstitucionales
         BeneficioXiii = d.BeneficioXiii,
         AportePatronal = d.AportePatronal,
         Varios = d.Varios,
+        MesesCapitalTrabajo = d.MesesCapitalTrabajo,
+        PorcentajeImprevistosInversion = d.PorcentajeImprevistosInversion,
         MasaSalarialMensual = d.MasaSalarialMensual,
         TotalMensualPlantaCentral = d.TotalMensualPlantaCentral,
         TotalAnualPlantaCentral = d.TotalAnualPlantaCentral,

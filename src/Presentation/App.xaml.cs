@@ -89,10 +89,8 @@ public partial class App
 
     private static void ConfigurarServicios(IServiceCollection servicios, string cadenaConexion, IConfiguration config)
     {
-        // Infrastructure (DbContext + repos + servicios)
         servicios.AddInfrastructure(cadenaConexion);
 
-        // Configuración de sesión
         var timeoutMinutes = int.TryParse(config["Session:TimeoutMinutes"], out var t) ? t : 30;
         servicios.Configure<SesionOpciones>(opts => opts.TimeoutMinutes = timeoutMinutes);
         servicios.Configure<InflacionOpciones>(opts =>
@@ -118,13 +116,9 @@ public partial class App
                 opts.TechoMaximoProyeccion = techoMaximo;
         });
 
-        // Estado de sesión (singleton)
         servicios.AddSingleton<SesionActual>();
-
-        // Servicio de inactividad (singleton — contiene el timer)
         servicios.AddSingleton<ServicioInactividad>();
 
-        // Use Cases
         servicios.AddTransient<LoginUseCase>();
         servicios.AddTransient<CerrarSesionUseCase>();
         servicios.AddTransient<ListarUsuariosUseCase>();
@@ -145,11 +139,9 @@ public partial class App
         servicios.AddTransient<ListarCargoPlantaCentralQuery>();
         servicios.AddTransient<GuardarCargoPlantaCentralCommand>();
         servicios.AddTransient<EliminarCargoPlantaCentralCommand>();
-        // KAN-22: Datos Institucionales + Aporte Planta Central
         servicios.AddTransient<ConfigurarDatosInstitucionalesCommand>();
         servicios.AddTransient<ObtenerDatosInstitucionalesVigentesQuery>();
         servicios.AddTransient<ListarHistoricoDatosInstitucionalesQuery>();
-        // KAN-24: Activos Fijos
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.CrearActivoFijoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.ActualizarActivoFijoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.EliminarActivoFijoCommand>();
@@ -157,12 +149,25 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.ObtenerTotalesActivosQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.SembrarActivosFijosDesdeCatalogoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.ListarCatalogoActivoBaseQuery>();
-        // KAN-25: Inversiones Futuras
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.ObtenerMatrizInversionesQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.GuardarInversionFuturaCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.QuitarInversionFuturaCommand>();
-        // KAN-26: Depreciación lineal
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.ObtenerMatrizDepreciacionQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.CrearServicioMantenimientoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.ActualizarServicioMantenimientoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.EliminarServicioMantenimientoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.ListarServiciosMantenimientoQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.ObtenerResumenMantenimientoQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.CapitalTrabajo.ObtenerCapitalTrabajoPorCarreraQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.CapitalTrabajo.ObtenerResumenCapitalTrabajoQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.CapitalTrabajo.GuardarItemCapitalTrabajoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.CapitalTrabajo.EliminarItemCapitalTrabajoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.CrearActivoDiferidoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.ActualizarActivoDiferidoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.EliminarActivoDiferidoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.ListarActivosDiferidosQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.ObtenerTablaAmortizacionQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.InversionInicial.ObtenerInversionInicialTotalQuery>();
         servicios.AddTransient<CalcularAportePlantaCentralCarreraQuery>();
         servicios.AddTransient<CalcularProyeccionesCargoPlantaCentralCommand>();
         servicios.AddTransient<ListarProyeccionesCargoPlantaCentralQuery>();
@@ -186,7 +191,6 @@ public partial class App
         servicios.AddTransient<ObtenerInflacionProyectadaParaDependientesUseCase>();
         servicios.AddTransient<SemillaCapitalTrabajoService>();
 
-        // KAN-13: Tasa de Retención — Configuración
         servicios.AddTransient<IValidator<CrearConfiguracionRetencionDto>, CrearConfiguracionRetencionDtoValidador>();
         servicios.AddTransient<IValidator<ActualizarConfiguracionRetencionDto>, ActualizarConfiguracionRetencionDtoValidador>();
         servicios.AddTransient<IValidator<GuardarCriterioReferenciaRetencionDto>, GuardarCriterioReferenciaRetencionDtoValidador>();
@@ -206,13 +210,6 @@ public partial class App
         servicios.AddTransient<EliminarSimulacionRetencionUseCase>();
         servicios.AddTransient<LimpiarSimulacionesRetencionUseCase>();
         servicios.AddScoped<ObtenerValoresSugeridosParaEscenarioUseCase>();
-
-        // Catálogos: vistas y viewmodels
-        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.Catalogos.CatalogoCargosViewModel>();
-        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.Catalogos.CatalogoMaterialesViewModel>();
-        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.CapitalTrabajo.CapitalTrabajoViewModel>();
-
-        // Épica 5 — Estudiantes (KAN-17)
         servicios.AddTransient<IValidator<GenerarProyeccionEstudiantesDto>, GenerarProyeccionEstudiantesDtoValidador>();
         servicios.AddTransient<GenerarProyeccionEstudiantesUseCase>();
         servicios.AddTransient<ObtenerProyeccionEstudiantesUseCase>();
@@ -222,10 +219,7 @@ public partial class App
         servicios.AddTransient<RestaurarConsumoPeriodoUseCase>();
         servicios.AddTransient<ListarOverridesHorasPeriodoUseCase>();
         servicios.AddSingleton<ConsolidadoEstudiantesActualState>();
-        servicios.AddTransient<CargosFacultadViewModel>();
-        servicios.AddTransient<EstudiantesViewModel>();
 
-        // ViewModels
         servicios.AddTransient<LoginViewModel>();
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.Catalogos.CatalogoCargosViewModel>();
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.Catalogos.CatalogoMaterialesViewModel>();
@@ -237,17 +231,18 @@ public partial class App
         servicios.AddSingleton<ConfiguracionRetencionViewModel>();
         servicios.AddSingleton<SimulacionRetencionViewModel>();
         servicios.AddTransient<EditarUsuarioViewModel>();
-        servicios.AddTransient<Func<EditarUsuarioViewModel>>(sp =>
-            () => sp.GetRequiredService<EditarUsuarioViewModel>());
-        // KAN-22: ViewModels
+        servicios.AddTransient<Func<EditarUsuarioViewModel>>(sp => () => sp.GetRequiredService<EditarUsuarioViewModel>());
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.DatosInstitucionales.DatosInstitucionalesViewModel>();
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.PlantaCentral.AportePlantaCentralViewModel>();
-        // KAN-24/KAN-25/KAN-26: ViewModel
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.RecursosFisicos.ActivosFijosViewModel>();
-
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.Mantenimiento.MantenimientoViewModel>();
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.ActivoDiferido.ActivoDiferidoViewModel>();
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.InversionInicial.InversionInicialViewModel>();
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.MantenimientoInversion.MantenimientoInversionViewModel>();
+        servicios.AddTransient<CargosFacultadViewModel>();
+        servicios.AddTransient<EstudiantesViewModel>();
         servicios.AddTransient<MainViewModel>();
 
-        // Views
         servicios.AddTransient<LoginView>();
         servicios.AddTransient<SistemaAranceles.Presentation.Views.Catalogos.CatalogoCargosView>();
         servicios.AddTransient<SistemaAranceles.Presentation.Views.Catalogos.CatalogoMaterialesView>();
@@ -255,6 +250,10 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Presentation.Views.DatosInstitucionales.DatosInstitucionalesView>();
         servicios.AddTransient<SistemaAranceles.Presentation.Views.PlantaCentral.AportePlantaCentralView>();
         servicios.AddTransient<SistemaAranceles.Presentation.Views.RecursosFisicos.ActivosFijosView>();
+        servicios.AddTransient<SistemaAranceles.Presentation.Views.Mantenimiento.MantenimientoView>();
+        servicios.AddTransient<SistemaAranceles.Presentation.Views.ActivoDiferido.ActivoDiferidoView>();
+        servicios.AddTransient<SistemaAranceles.Presentation.Views.InversionInicial.InversionInicialView>();
+        servicios.AddTransient<SistemaAranceles.Presentation.Views.MantenimientoInversion.MantenimientoInversionView>();
         servicios.AddTransient<MainWindow>();
     }
 
@@ -266,57 +265,20 @@ public partial class App
         WeakReferenceMessenger.Default.Register<LoginExitosoMensaje>(this, (_, _) =>
         {
             var loginView = Current.Windows.OfType<LoginView>().FirstOrDefault();
-
             var mainWindow = _proveedor!.GetRequiredService<MainWindow>();
-
-            // Rastrear pérdida de foco para evitar resetear el timer durante la transición
-            mainWindow.Deactivated += (_, _) =>
-            {
-                _lastWindowDeactivated = DateTime.UtcNow;
-                Trace.TraceInformation($"[{DateTime.UtcNow:O}] App: MainWindow perdió foco.");
-            };
-
-            mainWindow.Activated += (_, _) =>
-            {
-                // El primer click/tecla tras recuperar foco suele ser sólo para activar ventana.
-                _ignorarPrimerInputTrasActivacion = true;
-                Trace.TraceInformation($"[{DateTime.UtcNow:O}] App: MainWindow recuperó foco. Se ignorará el primer input para no resetear timer.");
-            };
-
+            mainWindow.Deactivated += (_, _) => { _lastWindowDeactivated = DateTime.UtcNow; Trace.TraceInformation($"[{DateTime.UtcNow:O}] App: MainWindow perdió foco."); };
+            mainWindow.Activated += (_, _) => { _ignorarPrimerInputTrasActivacion = true; Trace.TraceInformation($"[{DateTime.UtcNow:O}] App: MainWindow recuperó foco. Se ignorará el primer input para no resetear timer."); };
             void RegistrarActividadSiCorresponde()
             {
-                if (!mainWindow.IsActive)
-                    return;
-
-                if (_ignorarPrimerInputTrasActivacion)
-                {
-                    _ignorarPrimerInputTrasActivacion = false;
-                    return;
-                }
-
+                if (!mainWindow.IsActive) return;
+                if (_ignorarPrimerInputTrasActivacion) { _ignorarPrimerInputTrasActivacion = false; return; }
                 _servicioInactividad?.ResetarActividad();
             }
-
-            // Resetear actividad solo en interacciones intencionales después de que la ventana esté enfocada
-            // Si la ventana perdió el foco hace menos de 300ms, no resetear (es solo la transición de foco)
-            mainWindow.PreviewMouseDown += (_, _) =>
-            {
-                RegistrarActividadSiCorresponde();
-            };
-
-            mainWindow.PreviewMouseWheel += (_, _) =>
-            {
-                RegistrarActividadSiCorresponde();
-            };
-
-            mainWindow.PreviewKeyDown += (_, _) =>
-            {
-                RegistrarActividadSiCorresponde();
-            };
-
+            mainWindow.PreviewMouseDown += (_, _) => RegistrarActividadSiCorresponde();
+            mainWindow.PreviewMouseWheel += (_, _) => RegistrarActividadSiCorresponde();
+            mainWindow.PreviewKeyDown += (_, _) => RegistrarActividadSiCorresponde();
             mainWindow.Show();
             loginView?.Close();
-
             _servicioInactividad?.Iniciar();
             Trace.WriteLine($"[{DateTime.UtcNow:O}] App: timer de inactividad iniciado tras login exitoso.");
         });
@@ -324,17 +286,13 @@ public partial class App
         WeakReferenceMessenger.Default.Register<CerrarSesionMensaje>(this, (_, msg) =>
         {
             _servicioInactividad?.Detener();
-
             var mainWindow = Current.Windows.OfType<MainWindow>().FirstOrDefault();
-
             var loginView = _proveedor!.GetRequiredService<LoginView>();
-
             if (msg.PorInactividad && loginView.DataContext is LoginViewModel vm)
             {
                 vm.MensajeError = "Sesión cerrada por inactividad.";
                 Trace.WriteLine($"[{DateTime.UtcNow:O}] App: mensaje de inactividad establecido en LoginView.");
             }
-
             loginView.Show();
             mainWindow?.Close();
         });
@@ -363,14 +321,10 @@ public partial class App
     private static string ObtenerCadenaConexion(IConfiguration config)
     {
         var cadenaPorVariable = Environment.GetEnvironmentVariable("SUPABASE_DB_CONNECTION");
-        if (!string.IsNullOrWhiteSpace(cadenaPorVariable))
-            return cadenaPorVariable;
-
+        if (!string.IsNullOrWhiteSpace(cadenaPorVariable)) return cadenaPorVariable;
         var conexion = config.GetConnectionString("DefaultConnection");
         if (string.IsNullOrWhiteSpace(conexion))
-            throw new InvalidOperationException(
-                "No se encontró cadena de conexión. Configure SUPABASE_DB_CONNECTION o appsettings.Local.json.");
-
+            throw new InvalidOperationException("No se encontró cadena de conexión. Configure SUPABASE_DB_CONNECTION o appsettings.Local.json.");
         return SupabaseConnectionStringHelper.Normalizar(conexion);
     }
 
@@ -380,7 +334,6 @@ public partial class App
         _servicioInactividad?.Detener();
         _traceListener?.Flush();
         _traceListener?.Close();
-
         _proveedor?.Dispose();
         base.OnExit(e);
     }

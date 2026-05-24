@@ -16,6 +16,8 @@ public sealed class DatosInstitucionales
     public decimal BeneficioXiii { get; set; }
     public decimal AportePatronal { get; set; }
     public decimal Varios { get; set; }
+    public int MesesCapitalTrabajo { get; set; } = 2;
+    public decimal PorcentajeImprevistosInversion { get; set; } = 5m;
 
     public DateTimeOffset FechaActualizacion { get; set; } = DateTimeOffset.UtcNow;
     public int ActualizadoPorUsuarioId { get; set; }
