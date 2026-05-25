@@ -168,6 +168,11 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.ListarActivosDiferidosQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.ObtenerTablaAmortizacionQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.InversionInicial.ObtenerInversionInicialTotalQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.GuardarConfiguracionArancelCarreraCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.EliminarConfiguracionArancelCarreraCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ListarConfiguracionesArancelCarreraQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ObtenerConfiguracionArancelCarreraQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ObtenerArancelEfectivoQuery>();
         servicios.AddTransient<CalcularAportePlantaCentralCarreraQuery>();
         servicios.AddTransient<CalcularProyeccionesCargoPlantaCentralCommand>();
         servicios.AddTransient<ListarProyeccionesCargoPlantaCentralQuery>();
@@ -239,6 +244,7 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.ActivoDiferido.ActivoDiferidoViewModel>();
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.InversionInicial.InversionInicialViewModel>();
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.MantenimientoInversion.MantenimientoInversionViewModel>();
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.DemandaIngresos.DemandaIngresosViewModel>();
         servicios.AddTransient<CargosFacultadViewModel>();
         servicios.AddTransient<EstudiantesViewModel>();
         servicios.AddTransient<MainViewModel>();
@@ -254,6 +260,7 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Presentation.Views.ActivoDiferido.ActivoDiferidoView>();
         servicios.AddTransient<SistemaAranceles.Presentation.Views.InversionInicial.InversionInicialView>();
         servicios.AddTransient<SistemaAranceles.Presentation.Views.MantenimientoInversion.MantenimientoInversionView>();
+        servicios.AddTransient<SistemaAranceles.Presentation.Views.DemandaIngresos.DemandaIngresosView>();
         servicios.AddTransient<MainWindow>();
     }
 

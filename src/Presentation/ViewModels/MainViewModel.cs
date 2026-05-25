@@ -7,6 +7,7 @@ using SistemaAranceles.Application.DTOs.Usuarios;
 using SistemaAranceles.Application.UseCases.Autenticacion;
 using SistemaAranceles.Presentation.ViewModels.CargosFacultad;
 using SistemaAranceles.Presentation.ViewModels.DatosInstitucionales;
+using SistemaAranceles.Presentation.ViewModels.DemandaIngresos;
 using SistemaAranceles.Presentation.ViewModels.PlantaCentral;
 using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.Services;
@@ -46,6 +47,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly DatosInstitucionalesViewModel _datosInstitucionalesViewModel;
     private readonly AportePlantaCentralViewModel _aportePlantaCentralViewModel;
     private readonly SistemaAranceles.Presentation.ViewModels.RecursosFisicos.ActivosFijosViewModel _activosFijosViewModel;
+    private readonly DemandaIngresosViewModel _demandaIngresosViewModel;
     private readonly Func<EditarUsuarioViewModel> _editarUsuarioViewModelFactory;
     private int _cerrandoSesion;
     private int _cargandoUsuarios;
@@ -65,6 +67,7 @@ public sealed partial class MainViewModel : ObservableObject
         DatosInstitucionalesViewModel datosInstitucionalesViewModel,
         AportePlantaCentralViewModel aportePlantaCentralViewModel,
         SistemaAranceles.Presentation.ViewModels.RecursosFisicos.ActivosFijosViewModel activosFijosViewModel,
+        DemandaIngresosViewModel demandaIngresosViewModel,
         Func<EditarUsuarioViewModel> editarUsuarioViewModelFactory)
     {
         _serviceProvider = serviceProvider;
@@ -81,6 +84,7 @@ public sealed partial class MainViewModel : ObservableObject
         _datosInstitucionalesViewModel = datosInstitucionalesViewModel;
         _aportePlantaCentralViewModel = aportePlantaCentralViewModel;
         _activosFijosViewModel = activosFijosViewModel;
+        _demandaIngresosViewModel = demandaIngresosViewModel;
         _editarUsuarioViewModelFactory = editarUsuarioViewModelFactory;
 
         _servicioInactividad.TiempoRestanteActualizado += (_, tiempoRestante) =>
@@ -198,6 +202,11 @@ public sealed partial class MainViewModel : ObservableObject
         if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
         {
             MenuItems.Add(new ItemMenu { Titulo = "Capital de Trabajo", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarCapitalTrabajoAsync()) });
+        }
+
+        if (_sesionActual.TienePermiso("DI_NG.VER") || _sesionActual.EsAdministrador)
+        {
+            MenuItems.Add(new ItemMenu { Titulo = "Demanda e Ingresos", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarDemandaIngresosAsync()) });
         }
 
         if (_sesionActual.TienePermiso("CFG.VER"))
@@ -330,6 +339,14 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     private Task MostrarCatalogoMaterialesAsync() => MostrarCapitalTrabajoAsync();
+
+    private async Task MostrarDemandaIngresosAsync()
+    {
+        if (!(_sesionActual.TienePermiso("DI_NG.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo Demanda e Ingresos."; return; }
+        MensajePagina = string.Empty;
+        PaginaActual = _demandaIngresosViewModel;
+        await _demandaIngresosViewModel.CargarCommand.ExecuteAsync(null);
+    }
 
     private async Task MostrarMantenimientoInversionAsync()
     {

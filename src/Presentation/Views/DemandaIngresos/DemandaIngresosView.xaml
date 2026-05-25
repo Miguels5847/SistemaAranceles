@@ -1,0 +1,266 @@
+<UserControl x:Class="SistemaAranceles.Presentation.Views.DemandaIngresos.DemandaIngresosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Height="Auto" Width="Auto">
+
+    <UserControl.Resources>
+        <Style x:Key="BtnAccion" TargetType="Button">
+            <Setter Property="Padding" Value="6,2"/>
+            <Setter Property="Margin" Value="0,0,4,0"/>
+        </Style>
+        <Style x:Key="BtnPrimario" TargetType="Button" BasedOn="{StaticResource BtnAccion}">
+            <Setter Property="Background" Value="#1A237E"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style x:Key="BtnEliminar" TargetType="Button" BasedOn="{StaticResource BtnAccion}">
+            <Setter Property="Background" Value="#C62828"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style x:Key="PanelFormulario" TargetType="Border">
+            <Setter Property="BorderBrush" Value="#1A237E"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Margin" Value="0,8,0,0"/>
+            <Setter Property="Padding" Value="10,8"/>
+        </Style>
+        <Style x:Key="PlaceholderText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#546E7A"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="20"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Demanda e Ingresos"
+                   FontSize="18" FontWeight="Bold" Foreground="#1A237E"
+                   Margin="0,0,0,8"/>
+
+        <Border Grid.Row="1" BorderBrush="#D8DCE8" BorderThickness="0,0,0,1" Padding="0,0,0,8" Margin="0,0,0,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                    <TextBlock Text="Carrera" FontSize="11" Foreground="#546E7A"/>
+                    <ComboBox ItemsSource="{Binding Carreras}"
+                              SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}"
+                              DisplayMemberPath="Nombre"
+                              MinWidth="220" Padding="4,2"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                    <TextBlock Text="Escenario" FontSize="11" Foreground="#546E7A"/>
+                    <ComboBox ItemsSource="{Binding Escenarios}"
+                              SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}"
+                              DisplayMemberPath="Nombre"
+                              MinWidth="220" Padding="4,2"/>
+                </StackPanel>
+
+                <Button Grid.Column="2" Content="Refrescar" Padding="10,4" VerticalAlignment="Bottom"
+                        Command="{Binding CargarCommand}"/>
+            </Grid>
+        </Border>
+
+        <StackPanel Grid.Row="2" Margin="0,0,0,8">
+            <TextBlock Text="{Binding MensajeExito}" Foreground="#2E7D32" FontWeight="SemiBold"
+                       Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding MensajeError}" Foreground="#C62828" FontWeight="SemiBold"
+                       Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
+        </StackPanel>
+
+        <TabControl Grid.Row="3">
+
+            <!-- ============= TAB 1: KAN-32 — Configuración de Arancel ============= -->
+            <TabItem Header="1. Configuración de Arancel">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Resumen arancel efectivo -->
+                    <Border Grid.Row="0" Background="#EEF2FF" BorderBrush="#1A237E" BorderThickness="1"
+                            CornerRadius="4" Padding="10,8" Margin="0,0,0,8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="2*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Modo" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding ArancelEfectivo.ModoCalculoArancel, FallbackValue='-'}" FontWeight="Bold"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Arancel efectivo" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding ArancelEfectivo.ArancelDisplay, FallbackValue='-'}" FontWeight="Bold" FontSize="14" Foreground="#1A237E"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Matrícula efectiva" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding ArancelEfectivo.MatriculaDisplay, FallbackValue='-'}" FontWeight="Bold"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="3">
+                                <TextBlock Text="Estado" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding ArancelEfectivo.MensajeAdvertencia, FallbackValue='OK'}"
+                                           Foreground="#C62828" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Botón nueva -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,6">
+                        <TextBlock Text="Configuraciones por carrera/escenario" FontSize="14" FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
+                        <Button Content="+ Nueva configuración" Margin="12,0,4,0" Padding="8,3"
+                                Command="{Binding AbrirNuevaConfiguracionCommand}"/>
+                    </StackPanel>
+
+                    <DataGrid Grid.Row="2" ItemsSource="{Binding Configuraciones}"
+                              SelectedItem="{Binding ConfiguracionSeleccionada, Mode=TwoWay}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              SelectionMode="Single" SelectionUnit="FullRow"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Carrera" Binding="{Binding CarreraNombre}" Width="*" MinWidth="180"/>
+                            <DataGridTextColumn Header="Escenario" Binding="{Binding EscenarioNombre}" Width="160"/>
+                            <DataGridTextColumn Header="Modo" Binding="{Binding ModoCalculoArancel}" Width="160"/>
+                            <DataGridTextColumn Header="Arancel manual" Binding="{Binding ArancelManualDisplay}" Width="130"/>
+                            <DataGridTextColumn Header="% Matrícula" Binding="{Binding PorcentajeMatriculaDisplay}" Width="120"/>
+                            <DataGridTemplateColumn Header="Acciones" Width="160">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Editar" Style="{StaticResource BtnAccion}"
+                                                    Command="{Binding DataContext.AbrirEditarConfiguracionCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"/>
+                                            <Button Content="Eliminar" Style="{StaticResource BtnEliminar}"
+                                                    Command="{Binding DataContext.EliminarConfiguracionCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Formulario -->
+                    <Border Grid.Row="3" Style="{StaticResource PanelFormulario}"
+                            Visibility="{Binding FormVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding TituloFormulario}" FontWeight="Bold" FontSize="14" Margin="0,0,0,6"/>
+
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                    <TextBlock Text="Modo de cálculo" FontSize="11"/>
+                                    <ComboBox ItemsSource="{Binding ModosCalculo}"
+                                              SelectedItem="{Binding FormModoCalculo, Mode=TwoWay}"
+                                              Padding="4,2"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Aplicar a" FontSize="11"/>
+                                    <CheckBox Content="Global (sin escenario)"
+                                              IsChecked="{Binding FormEscenarioGlobal, Mode=TwoWay}"
+                                              Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                    <TextBlock Text="Arancel manual ($)" FontSize="11"/>
+                                    <TextBox Text="{Binding FormArancelManual, UpdateSourceTrigger=PropertyChanged}"
+                                             Padding="4,2"
+                                             IsEnabled="{Binding FormModoCalculo, Converter={StaticResource StringToVisibilityConverter}}"/>
+                                    <TextBlock Text="Solo requerido en modo Manual." FontSize="10" Foreground="#90A4AE"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="% Matrícula" FontSize="11"/>
+                                    <CheckBox Content="Usar % institucional (de Datos Institucionales)"
+                                              IsChecked="{Binding FormUsaPorcentajeInstitucional, Mode=TwoWay}"
+                                              Margin="0,2,0,4"/>
+                                    <TextBox Text="{Binding FormPorcentajeMatricula, UpdateSourceTrigger=PropertyChanged}"
+                                             Padding="4,2"
+                                             IsEnabled="{Binding FormUsaPorcentajeInstitucional, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="Guardar" Style="{StaticResource BtnPrimario}"
+                                        Command="{Binding GuardarConfiguracionCommand}"
+                                        IsEnabled="{Binding EstaGuardando, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                                <Button Content="Cancelar" Padding="8,3" Margin="6,0,0,0"
+                                        Command="{Binding CancelarFormularioCommand}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- ============= TAB 2: KAN-XX — Demanda Proyectada (lectura) ============= -->
+            <TabItem Header="2. Demanda Proyectada">
+                <TextBlock Style="{StaticResource PlaceholderText}"
+                           Text="Pendiente. Esta pestaña mostrará la matriz de estudiantes proyectados por ciclo y periodo (lectura desde Proyección de Estudiantes — KAN-17)."/>
+            </TabItem>
+
+            <!-- ============= TAB 3: KAN-35 — Presupuestos y Seguro ============= -->
+            <TabItem Header="3. Presupuestos y Seguro">
+                <TextBlock Style="{StaticResource PlaceholderText}"
+                           Text="Pendiente KAN-35. Aquí se mostrarán los presupuestos institucionales (capacitación, internacionalización, marketing, seguro estudiantil) prorrateados por periodo."/>
+            </TabItem>
+
+            <!-- ============= TAB 4: KAN-33 — Ingresos Proyectados ============= -->
+            <TabItem Header="4. Ingresos Proyectados">
+                <TextBlock Style="{StaticResource PlaceholderText}"
+                           Text="Pendiente KAN-33. Matriz ciclo × periodo con ingreso bruto, becas e ingreso neto calculado desde la configuración de arancel y proyección de estudiantes."/>
+            </TabItem>
+
+            <!-- ============= TAB 5: KAN-34 — Materiales en Cantidades ============= -->
+            <TabItem Header="5. Materiales en Cantidades">
+                <TextBlock Style="{StaticResource PlaceholderText}"
+                           Text="Pendiente KAN-34. Cantidad de materiales por periodo = estudiantes × ratio de consumo (definido por carrera)."/>
+            </TabItem>
+
+            <!-- ============= TAB 6: KAN-34 — Materiales Monetarios ============= -->
+            <TabItem Header="6. Materiales Monetarios">
+                <TextBlock Style="{StaticResource PlaceholderText}"
+                           Text="Pendiente KAN-34. Costos de materiales por periodo con inflación aplicada y precios unitarios desde Capital de Trabajo."/>
+            </TabItem>
+
+            <!-- ============= TAB 7: Resumen ============= -->
+            <TabItem Header="7. Resumen">
+                <TextBlock Style="{StaticResource PlaceholderText}"
+                           Text="Pendiente. Resumen consolidado de ingresos, presupuestos y materiales por carrera/escenario."/>
+            </TabItem>
+
+        </TabControl>
+    </Grid>
+</UserControl>
