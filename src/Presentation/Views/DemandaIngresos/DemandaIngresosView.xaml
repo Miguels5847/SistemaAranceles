@@ -198,7 +198,7 @@
                                     <TextBlock Text="Arancel manual ($)" FontSize="11"/>
                                     <TextBox Text="{Binding FormArancelManual, UpdateSourceTrigger=PropertyChanged}"
                                              Padding="4,2"
-                                             IsEnabled="{Binding FormModoCalculo, Converter={StaticResource StringToVisibilityConverter}}"/>
+                                             IsEnabled="{Binding FormEsModoManual}"/>
                                     <TextBlock Text="Solo requerido en modo Manual." FontSize="10" Foreground="#90A4AE"/>
                                 </StackPanel>
 
@@ -209,14 +209,14 @@
                                               Margin="0,2,0,4"/>
                                     <TextBox Text="{Binding FormPorcentajeMatricula, UpdateSourceTrigger=PropertyChanged}"
                                              Padding="4,2"
-                                             IsEnabled="{Binding FormUsaPorcentajeInstitucional, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                                             IsEnabled="{Binding FormPorcentajeMatriculaEditable}"/>
                                 </StackPanel>
                             </Grid>
 
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                 <Button Content="Guardar" Style="{StaticResource BtnPrimario}"
                                         Command="{Binding GuardarConfiguracionCommand}"
-                                        IsEnabled="{Binding EstaGuardando, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                                        IsEnabled="{Binding NoEstaGuardando}"/>
                                 <Button Content="Cancelar" Padding="8,3" Margin="6,0,0,0"
                                         Command="{Binding CancelarFormularioCommand}"/>
                             </StackPanel>
@@ -233,8 +233,64 @@
 
             <!-- ============= TAB 3: KAN-35 — Presupuestos y Seguro ============= -->
             <TabItem Header="3. Presupuestos y Seguro">
-                <TextBlock Style="{StaticResource PlaceholderText}"
-                           Text="Pendiente KAN-35. Aquí se mostrarán los presupuestos institucionales (capacitación, internacionalización, marketing, seguro estudiantil) prorrateados por periodo."/>
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,4"
+                               Text="Presupuestos institucionales prorrateados por carrera"/>
+
+                    <Border Grid.Row="1" Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1"
+                            CornerRadius="4" Padding="8,5" Margin="0,0,0,8"
+                            Visibility="{Binding Presupuestos.MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}">
+                        <TextBlock Text="{Binding Presupuestos.MensajeAdvertencia}" Foreground="#E65100" TextWrapping="Wrap"/>
+                    </Border>
+
+                    <DataGrid Grid.Row="2" ItemsSource="{Binding Presupuestos.Presupuestos}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Tipo presupuesto" Binding="{Binding TipoPresupuesto}" Width="*" MinWidth="200"/>
+                            <DataGridTextColumn Header="Anual institucional" Binding="{Binding MontoAnualDisplay}" Width="160"/>
+                            <DataGridTextColumn Header="Proporción carrera" Binding="{Binding ProporcionDisplay}" Width="140"/>
+                            <DataGridTextColumn Header="Anual prorrateado" Binding="{Binding ProrrateadoDisplay}" Width="160"/>
+                            <DataGridTextColumn Header="Por semestre" Binding="{Binding SemestreDisplay}" Width="140"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Border Grid.Row="3" Background="#EEF2FF" BorderBrush="#1A237E" BorderThickness="1"
+                            CornerRadius="4" Padding="10,8" Margin="0,8,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Estudiantes universidad" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding Presupuestos.EstudiantesUniversidad, FallbackValue=0}" FontWeight="Bold"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Estudiantes carrera (promedio)" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding Presupuestos.EstudiantesCarreraPromedio, FallbackValue=0}" FontWeight="Bold"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Total anual prorrateado" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding Presupuestos.TotalAnualDisplay, FallbackValue='$ 0,00'}" FontWeight="Bold" Foreground="#1A237E"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="3">
+                                <TextBlock Text="Total por semestre" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding Presupuestos.TotalSemestreDisplay, FallbackValue='$ 0,00'}" FontWeight="Bold" Foreground="#1A237E"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
             </TabItem>
 
             <!-- ============= TAB 4: KAN-33 — Ingresos Proyectados ============= -->

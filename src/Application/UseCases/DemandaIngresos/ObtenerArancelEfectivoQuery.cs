@@ -89,10 +89,5 @@ public sealed class ObtenerArancelEfectivoQuery(
     }
 
     private static decimal ObtenerPorcentajeMatriculaInstitucional(SistemaAranceles.Domain.Entities.DatosInstitucionales? datos)
-    {
-        // KAN-35 agregará la columna porcentaje_matricula_default en DatosInstitucionales.
-        // Hasta entonces se devuelve un valor por defecto razonable (10%).
-        // Cuando KAN-35 se merge, esto pasará a leer datos.PorcentajeMatriculaDefault.
-        return 10m;
-    }
+        => datos?.PorcentajeMatriculaDefault ?? SistemaAranceles.Domain.Entities.DatosInstitucionales.PorcentajeMatriculaDefaultPorDefecto;
 }

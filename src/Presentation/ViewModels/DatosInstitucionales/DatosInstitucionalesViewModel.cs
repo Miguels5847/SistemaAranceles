@@ -32,6 +32,19 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
     [ObservableProperty] private decimal _varios;
     [ObservableProperty] private int _mesesCapitalTrabajo = DatosInstitucionalesDominio.MesesCapitalTrabajoPorDefecto;
     [ObservableProperty] private decimal _porcentajeImprevistosInversion = DatosInstitucionalesDominio.PorcentajeImprevistosInversionPorDefecto;
+
+    // KAN-35
+    [ObservableProperty] private decimal _porcentajeMatriculaDefault = DatosInstitucionalesDominio.PorcentajeMatriculaDefaultPorDefecto;
+    [ObservableProperty] private decimal _porcentajeBecasInstitucionales = DatosInstitucionalesDominio.PorcentajeBecasInstitucionalesPorDefecto;
+    [ObservableProperty] private int _semestresPorAnio = DatosInstitucionalesDominio.SemestresPorAnioPorDefecto;
+    [ObservableProperty] private int _mesesOperativosCiclo = DatosInstitucionalesDominio.MesesOperativosCicloPorDefecto;
+    [ObservableProperty] private decimal _presupuestoAnualCapacitacion;
+    [ObservableProperty] private decimal _presupuestoAnualInternacionalizacion;
+    [ObservableProperty] private decimal _presupuestoAnualMarketing;
+    [ObservableProperty] private decimal _polizaSeguroEstudiantilAnual;
+    [ObservableProperty] private string? _fuenteInflacion;
+    [ObservableProperty] private int? _anioBaseProyeccion;
+
     [ObservableProperty] private string? _fuenteNotas;
 
     [ObservableProperty] private decimal _masaSalarialMensual;
@@ -144,6 +157,16 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
                     Varios = Varios,
                     MesesCapitalTrabajo = MesesCapitalTrabajo,
                     PorcentajeImprevistosInversion = PorcentajeImprevistosInversion,
+                    PorcentajeMatriculaDefault = PorcentajeMatriculaDefault,
+                    PorcentajeBecasInstitucionales = PorcentajeBecasInstitucionales,
+                    SemestresPorAnio = SemestresPorAnio,
+                    MesesOperativosCiclo = MesesOperativosCiclo,
+                    PresupuestoAnualCapacitacion = PresupuestoAnualCapacitacion,
+                    PresupuestoAnualInternacionalizacion = PresupuestoAnualInternacionalizacion,
+                    PresupuestoAnualMarketing = PresupuestoAnualMarketing,
+                    PolizaSeguroEstudiantilAnual = PolizaSeguroEstudiantilAnual,
+                    FuenteInflacion = FuenteInflacion,
+                    AnioBaseProyeccion = AnioBaseProyeccion,
                     FuenteNotas = FuenteNotas,
                 },
                 _sesionActual.UsuarioId);
@@ -197,6 +220,16 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
         Varios = dto.Varios;
         MesesCapitalTrabajo = dto.MesesCapitalTrabajo;
         PorcentajeImprevistosInversion = dto.PorcentajeImprevistosInversion;
+        PorcentajeMatriculaDefault = dto.PorcentajeMatriculaDefault;
+        PorcentajeBecasInstitucionales = dto.PorcentajeBecasInstitucionales;
+        SemestresPorAnio = dto.SemestresPorAnio;
+        MesesOperativosCiclo = dto.MesesOperativosCiclo;
+        PresupuestoAnualCapacitacion = dto.PresupuestoAnualCapacitacion;
+        PresupuestoAnualInternacionalizacion = dto.PresupuestoAnualInternacionalizacion;
+        PresupuestoAnualMarketing = dto.PresupuestoAnualMarketing;
+        PolizaSeguroEstudiantilAnual = dto.PolizaSeguroEstudiantilAnual;
+        FuenteInflacion = dto.FuenteInflacion;
+        AnioBaseProyeccion = dto.AnioBaseProyeccion;
         FuenteNotas = dto.FuenteNotas;
         MasaSalarialMensual = dto.MasaSalarialMensual;
         TotalAnualPlantaCentral = dto.TotalAnualPlantaCentral;

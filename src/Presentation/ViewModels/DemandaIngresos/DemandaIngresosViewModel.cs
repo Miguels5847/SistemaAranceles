@@ -18,6 +18,9 @@ namespace SistemaAranceles.Presentation.ViewModels.DemandaIngresos;
 /// </summary>
 public sealed partial class DemandaIngresosViewModel : ObservableObject
 {
+    private const string ModoManual = "Manual";
+    private const string ModoAutomatico = "AutomaticoCostoCarrera";
+
     private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
     private bool _suprimirCambios;
@@ -36,11 +39,12 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<ConfiguracionArancelCarreraDto> _configuraciones = [];
     [ObservableProperty] private ConfiguracionArancelCarreraDto? _configuracionSeleccionada;
     [ObservableProperty] private ArancelEfectivoDto? _arancelEfectivo;
+    [ObservableProperty] private PresupuestosCarreraDto? _presupuestos;
 
     [ObservableProperty] private bool _formVisible;
     [ObservableProperty] private bool _formEsEdicion;
     [ObservableProperty] private int _formId;
-    [ObservableProperty] private string _formModoCalculo = "Manual";
+    [ObservableProperty] private string _formModoCalculo = ModoManual;
     [ObservableProperty] private string _formArancelManual = "0";
     [ObservableProperty] private bool _formUsaPorcentajeInstitucional = true;
     [ObservableProperty] private string _formPorcentajeMatricula = "10";
@@ -51,8 +55,11 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     [ObservableProperty] private bool _estaCargando;
     [ObservableProperty] private bool _estaGuardando;
 
-    public IReadOnlyList<string> ModosCalculo { get; } = ["Manual", "AutomaticoCostoCarrera"];
+    public IReadOnlyList<string> ModosCalculo { get; } = [ModoManual, ModoAutomatico];
     public string TituloFormulario => FormEsEdicion ? "Editar configuración" : "Nueva configuración";
+    public bool FormEsModoManual => string.Equals(FormModoCalculo, ModoManual, StringComparison.OrdinalIgnoreCase);
+    public bool FormPorcentajeMatriculaEditable => !FormUsaPorcentajeInstitucional;
+    public bool NoEstaGuardando => !EstaGuardando;
 
     public bool PuedeEditar => _sesionActual.EsAdministrador
                             || _sesionActual.TienePermiso("DI_NG.EDITAR");
@@ -75,6 +82,24 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     {
         _ = value;
         OnPropertyChanged(nameof(TituloFormulario));
+    }
+
+    partial void OnFormModoCalculoChanged(string value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(FormEsModoManual));
+    }
+
+    partial void OnFormUsaPorcentajeInstitucionalChanged(bool value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(FormPorcentajeMatriculaEditable));
+    }
+
+    partial void OnEstaGuardandoChanged(bool value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(NoEstaGuardando));
     }
 
     [RelayCommand]
@@ -165,18 +190,23 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         if (CarreraSeleccionada is null)
         {
             ArancelEfectivo = null;
+            Presupuestos = null;
             return;
         }
         try
         {
             using var scope = _serviceProvider.CreateScope();
-            var query = scope.ServiceProvider.GetRequiredService<ObtenerArancelEfectivoQuery>();
-            ArancelEfectivo = await query.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado?.Id);
+            var queryArancel = scope.ServiceProvider.GetRequiredService<ObtenerArancelEfectivoQuery>();
+            ArancelEfectivo = await queryArancel.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado?.Id);
+
+            var queryPresup = scope.ServiceProvider.GetRequiredService<ObtenerPresupuestosCarreraQuery>();
+            Presupuestos = await queryPresup.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado?.Id);
         }
         catch (Exception ex)
         {
-            MensajeError = $"Error al calcular arancel efectivo: {Detalle(ex)}";
+            MensajeError = $"Error al calcular arancel efectivo / presupuestos: {Detalle(ex)}";
             ArancelEfectivo = null;
+            Presupuestos = null;
         }
     }
 
@@ -195,7 +225,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         }
 
         FormId = 0;
-        FormModoCalculo = "Manual";
+        FormModoCalculo = ModoManual;
         FormArancelManual = "0";
         FormUsaPorcentajeInstitucional = true;
         FormPorcentajeMatricula = "10";
@@ -243,14 +273,13 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             MensajeError = "Selecciona una carrera.";
             return;
         }
-        if (string.Equals(FormModoCalculo, "Manual", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(FormModoCalculo, ModoManual, StringComparison.OrdinalIgnoreCase)
+            && (!TryDecimal(FormArancelManual, out var arancel) || arancel <= 0m))
         {
-            if (!TryDecimal(FormArancelManual, out var arancel) || arancel <= 0m)
-            {
-                MensajeError = "Arancel manual inválido (debe ser > 0).";
-                return;
-            }
+            MensajeError = "Arancel manual inválido (debe ser > 0).";
+            return;
         }
+
         decimal? porcMatricula = null;
         if (!FormUsaPorcentajeInstitucional)
         {
@@ -325,12 +354,38 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         }
     }
 
-    private static bool TryDecimal(string? valor, out decimal resultado)
+    private static bool TryDecimal(string? value, out decimal result)
     {
-        resultado = 0m;
-        if (string.IsNullOrWhiteSpace(valor)) return false;
-        var limpio = valor.Trim().Replace(",", ".");
-        return decimal.TryParse(limpio, NumberStyles.Float, CultureInfo.InvariantCulture, out resultado);
+        result = 0m;
+        if (string.IsNullOrWhiteSpace(value)) return false;
+
+        var limpio = value.Trim()
+            .Replace("$", string.Empty)
+            .Replace(" ", string.Empty);
+
+        if (string.IsNullOrWhiteSpace(limpio)) return false;
+
+        var ultimoPunto = limpio.LastIndexOf('.');
+        var ultimaComa = limpio.LastIndexOf(',');
+
+        if (ultimoPunto >= 0 && ultimaComa >= 0)
+        {
+            limpio = ultimaComa > ultimoPunto
+                ? limpio.Replace(".", string.Empty).Replace(',', '.')
+                : limpio.Replace(",", string.Empty);
+        }
+        else if (ultimaComa >= 0)
+        {
+            limpio = limpio.Replace(',', '.');
+        }
+        else if (ultimoPunto >= 0)
+        {
+            var decimales = limpio.Length - ultimoPunto - 1;
+            if (decimales == 3)
+                limpio = limpio.Replace(".", string.Empty);
+        }
+
+        return decimal.TryParse(limpio, NumberStyles.Number, CultureInfo.InvariantCulture, out result);
     }
 
     private static string Detalle(Exception ex) => ex.InnerException?.Message ?? ex.Message;

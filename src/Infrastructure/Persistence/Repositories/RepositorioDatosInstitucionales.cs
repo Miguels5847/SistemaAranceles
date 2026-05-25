@@ -108,6 +108,18 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
             e.MesesCapitalTrabajo,
             e.PorcentajeImprevistosInversion);
 
+        dominio.CambiarParametrosDemandaIngresos(
+            e.PorcentajeMatriculaDefault,
+            e.PorcentajeBecasInstitucionales,
+            e.SemestresPorAnio,
+            e.MesesOperativosCiclo,
+            e.PresupuestoAnualCapacitacion,
+            e.PresupuestoAnualInternacionalizacion,
+            e.PresupuestoAnualMarketing,
+            e.PolizaSeguroEstudiantilAnual,
+            e.FuenteInflacion,
+            e.AnioBaseProyeccion);
+
         dominio.RehidratarId(e.Id);
         dominio.RehidratarFechaActualizacion(e.FechaActualizacion);
         return dominio;
@@ -129,6 +141,16 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
         Varios = d.Varios,
         MesesCapitalTrabajo = d.MesesCapitalTrabajo,
         PorcentajeImprevistosInversion = d.PorcentajeImprevistosInversion,
+        PorcentajeMatriculaDefault = d.PorcentajeMatriculaDefault,
+        PorcentajeBecasInstitucionales = d.PorcentajeBecasInstitucionales,
+        SemestresPorAnio = d.SemestresPorAnio,
+        MesesOperativosCiclo = d.MesesOperativosCiclo,
+        PresupuestoAnualCapacitacion = d.PresupuestoAnualCapacitacion,
+        PresupuestoAnualInternacionalizacion = d.PresupuestoAnualInternacionalizacion,
+        PresupuestoAnualMarketing = d.PresupuestoAnualMarketing,
+        PolizaSeguroEstudiantilAnual = d.PolizaSeguroEstudiantilAnual,
+        FuenteInflacion = d.FuenteInflacion,
+        AnioBaseProyeccion = d.AnioBaseProyeccion,
         FechaActualizacion = d.FechaActualizacion,
         ActualizadoPorUsuarioId = d.ActualizadoPorUsuarioId,
         FuenteNotas = d.FuenteNotas,

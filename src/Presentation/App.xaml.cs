@@ -173,6 +173,7 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ListarConfiguracionesArancelCarreraQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ObtenerConfiguracionArancelCarreraQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ObtenerArancelEfectivoQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ObtenerPresupuestosCarreraQuery>();
         servicios.AddTransient<CalcularAportePlantaCentralCarreraQuery>();
         servicios.AddTransient<CalcularProyeccionesCargoPlantaCentralCommand>();
         servicios.AddTransient<ListarProyeccionesCargoPlantaCentralQuery>();
