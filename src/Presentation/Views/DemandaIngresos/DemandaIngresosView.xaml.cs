@@ -34,6 +34,9 @@ public partial class DemandaIngresosView : UserControl
         };
     }
 
+    private DataGrid? ObtenerDocentesGrid()
+        => FindName("DocentesNecesariosGrid") as DataGrid;
+
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(DemandaIngresosViewModel.DemandaProyectada))
@@ -83,11 +86,12 @@ public partial class DemandaIngresosView : UserControl
 
     private void ActualizarColumnasDocentes()
     {
-        if (DocentesNecesariosGrid is null)
+        var docentesGrid = ObtenerDocentesGrid();
+        if (docentesGrid is null)
             return;
 
-        DocentesNecesariosGrid.Columns.Clear();
-        DocentesNecesariosGrid.Columns.Add(new DataGridTextColumn
+        docentesGrid.Columns.Clear();
+        docentesGrid.Columns.Add(new DataGridTextColumn
         {
             Header = "Tipo",
             Binding = new Binding(nameof(DemandaDocenteFilaDto.Tipo)),
@@ -98,7 +102,7 @@ public partial class DemandaIngresosView : UserControl
         {
             for (var i = 0; i < vm.DemandaProyectada.EtiquetasPeriodos.Count; i++)
             {
-                DocentesNecesariosGrid.Columns.Add(new DataGridTextColumn
+                docentesGrid.Columns.Add(new DataGridTextColumn
                 {
                     Header = vm.DemandaProyectada.EtiquetasPeriodos[i],
                     Binding = new Binding($"Periodos[{i}]") { StringFormat = "N0" },
@@ -107,7 +111,7 @@ public partial class DemandaIngresosView : UserControl
             }
         }
 
-        DocentesNecesariosGrid.Columns.Add(new DataGridTextColumn
+        docentesGrid.Columns.Add(new DataGridTextColumn
         {
             Header = "Total",
             Binding = new Binding(nameof(DemandaDocenteFilaDto.TotalDisplay)),
