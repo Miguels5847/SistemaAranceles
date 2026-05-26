@@ -53,7 +53,7 @@ public sealed class ObtenerPresupuestosCarreraQuery(
         if (estudiantesUniv <= 0)
             advertencias.Add("Datos Institucionales: número de estudiantes universidad debe ser > 0.");
         if (estudiantesCarrera <= 0m)
-            advertencias.Add("No hay proyección de estudiantes para la carrera/escenario. Prorrateo en 0.");
+            advertencias.Add("No hay proyeccion de estudiantes para esta carrera/escenario. Genere la proyeccion para calcular el prorrateo.");
 
         return new PresupuestosCarreraDto
         {
@@ -84,7 +84,10 @@ public sealed class ObtenerPresupuestosCarreraQuery(
         if (proyeccion is null || proyeccion.Detalles.Count == 0)
             return 0m;
 
-        return proyeccion.Detalles.Average(d => d.TotalEstudiantes);
+        return proyeccion.Detalles
+            .GroupBy(d => d.PeriodoAcademicoId)
+            .Select(g => g.Sum(d => d.TotalEstudiantes))
+            .Average();
     }
 
     private static PresupuestoDemandaDto Construir(

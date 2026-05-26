@@ -335,18 +335,28 @@
                                         </StackPanel>
 
                                         <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,6,0">
-                                                <TextBlock Text="Fuente inflación" FontSize="11"/>
-                                                <TextBox Text="{Binding FuenteInflacion, UpdateSourceTrigger=PropertyChanged}"
-                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                                <TextBlock Text="Fuente inflación (informativo)" FontSize="11"/>
+                                                <TextBlock Text="Módulo Inflación / Inflación anual registrada"
+                                                           Padding="4,4"
+                                                           Background="#F1F3F8"
+                                                           Foreground="#1A237E"
+                                                           FontStyle="Italic"/>
+                                                <TextBlock Text="Se toma del módulo Inflación. No se edita manualmente aquí."
+                                                           FontSize="10" Foreground="#90A4AE" Margin="0,2,0,0"/>
                                         </StackPanel>
                                         <StackPanel Grid.Row="3" Grid.Column="2">
-                                                <TextBlock Text="Año base proyección" FontSize="11"/>
-                                                <TextBox Text="{Binding AnioBaseProyeccion, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
-                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                                <TextBlock Text="Año base proyección (automático)" FontSize="11"/>
+                                                <TextBlock Text="Se calcula del primer período de la proyección"
+                                                           Padding="4,4"
+                                                           Background="#F1F3F8"
+                                                           Foreground="#1A237E"
+                                                           FontStyle="Italic"/>
+                                                <TextBlock Text="No se edita manualmente."
+                                                           FontSize="10" Foreground="#90A4AE" Margin="0,2,0,0"/>
                                         </StackPanel>
 
                                         <TextBlock Grid.Row="4" Grid.ColumnSpan="4"
-                                                   Text="Nota: el arancel NO se configura aquí. Cada carrera define su arancel en el módulo Demanda e Ingresos → Configuración de Arancel."
+                                                   Text="Nota: el arancel NO se configura aquí. Cada carrera define su arancel en el módulo Demanda e Ingresos → Configuración de Arancel. La inflación viene del módulo Inflación y el año base se infiere automáticamente del primer período de la proyección de estudiantes seleccionada."
                                                    FontSize="11" Foreground="#546E7A" FontStyle="Italic"
                                                    TextWrapping="Wrap" Margin="0,4,0,0"/>
                                 </Grid>

@@ -68,7 +68,7 @@ public sealed class CalcularIngresosProyectadosQuery(
             carreraId, escenarioProyeccionId.Value, ct);
         if (proyeccionId is null or <= 0)
         {
-            advertencias.Add("No hay proyección de estudiantes para la carrera/escenario.");
+            advertencias.Add("No hay proyeccion de estudiantes para esta carrera/escenario. Genere la proyeccion primero en Proyeccion de Estudiantes.");
             return ConstruirVacio();
         }
 

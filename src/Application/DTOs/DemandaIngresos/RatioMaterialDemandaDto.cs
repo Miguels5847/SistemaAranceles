@@ -9,6 +9,7 @@ public sealed class RatioMaterialDemandaDto
     public string Concepto { get; init; } = string.Empty;
     public int? ItemMaterialInsumoId { get; init; }
     public string? ItemMaterialInsumoNombre { get; init; }
+    public string? ItemMaterialInsumoCategoria { get; init; }
     public decimal PrecioUnitarioReferencia { get; init; }
     public decimal RatioConsumo { get; init; }
     public string UnidadRatio { get; init; } = "por_estudiante";
@@ -21,8 +22,10 @@ public sealed class RatioMaterialDemandaDto
     public string PrecioReferenciaDisplay => $"$ {PrecioUnitarioReferencia:N2}";
     public string InflacionDisplay => AplicaInflacion ? "Sí" : "No";
     public string ItemVinculadoDisplay => string.IsNullOrWhiteSpace(ItemMaterialInsumoNombre)
-        ? "(manual)"
-        : ItemMaterialInsumoNombre;
+        ? "(sin item)"
+        : string.IsNullOrWhiteSpace(ItemMaterialInsumoCategoria)
+            ? ItemMaterialInsumoNombre
+            : $"{ItemMaterialInsumoNombre} ({ItemMaterialInsumoCategoria})";
 }
 
 public sealed class GuardarRatioMaterialDemandaDto

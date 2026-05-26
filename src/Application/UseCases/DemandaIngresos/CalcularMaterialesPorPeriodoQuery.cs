@@ -29,7 +29,7 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
             : null;
 
         var datos = await repositorioDatos.ObtenerVigenteAsync(ct);
-        var anioBase = datos?.AnioBaseProyeccion;
+        int? anioBase = null;
 
         var advertencias = new List<string>();
 
@@ -44,7 +44,7 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
             carreraId, escenarioProyeccionId.Value, ct);
         if (proyeccionId is null or <= 0)
         {
-            advertencias.Add("No hay proyección de estudiantes para la carrera/escenario.");
+            advertencias.Add("No hay proyeccion de estudiantes para esta carrera/escenario.");
             return Vacio(carreraId, carrera?.Nombre ?? string.Empty, escenarioProyeccionId,
                 escenario?.Nombre ?? "Global", anioBase, advertencias);
         }
@@ -57,10 +57,15 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
                 escenario?.Nombre ?? "Global", anioBase, advertencias);
         }
 
+        // KAN-34 (revisión): el año base se infiere del primer período de la proyección,
+        // NO se edita manualmente en Datos Institucionales.
+        anioBase = proyeccion.Detalles.Min(d => d.Anio);
+        _ = datos; // se mantiene la lectura por compatibilidad pero ya no se usa AnioBaseProyeccion
+
         var ratios = await repositorioRatios.ListarPorCarreraAsync(carreraId, incluirGlobales: true, ct);
         if (ratios.Count == 0)
         {
-            advertencias.Add("No hay ratios configurados para esta carrera (ni globales).");
+            advertencias.Add("No hay ratios configurados.");
             return Vacio(carreraId, carrera?.Nombre ?? string.Empty, escenarioProyeccionId,
                 escenario?.Nombre ?? "Global", anioBase, advertencias);
         }
@@ -78,7 +83,7 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
 
         // Factor inflación por año (acumulado desde anio_base hasta el año destino)
         var aniosDestino = estudiantesPorPeriodo.Values.Select(v => v.Anio).Distinct().ToList();
-        var factoresPorAnio = await CalcularFactoresInflacionAsync(anioBase, aniosDestino, ct);
+        var (factoresPorAnio, aniosSinInflacion) = await CalcularFactoresInflacionAsync(anioBase, aniosDestino, ct);
 
         var cantidades = new List<MaterialCantidadCeldaDto>();
         var monetarios = new List<MaterialMonetarioCeldaDto>();
@@ -127,8 +132,12 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
             }
         }
 
-        if (anioBase is null)
-            advertencias.Add("Año base de proyección no configurado en Datos Institucionales — factor de inflación usa 1.");
+        if (ratios.Any(r => r.ItemMaterialInsumoId is null))
+            advertencias.Add("Hay ratios sin item de Capital de Trabajo vinculado; Materiales Monetarios mostrara costo 0.");
+        if (ratios.Any(r => r.ItemMaterialInsumoId is not null && r.PrecioUnitarioReferencia <= 0m))
+            advertencias.Add("Hay ratios con item vinculado sin precio unitario; Materiales Monetarios mostrara costo 0.");
+        if (aniosSinInflacion.Count > 0)
+            advertencias.Add($"No hay inflación registrada para el año {string.Join(", ", aniosSinInflacion)}; se usó factor 1.");
 
         return new MaterialesProyectadosDto
         {
@@ -143,7 +152,7 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
         };
     }
 
-    private async Task<Dictionary<int, decimal>> CalcularFactoresInflacionAsync(
+    private async Task<(Dictionary<int, decimal> Factores, IReadOnlyList<int> AniosSinInflacion)> CalcularFactoresInflacionAsync(
         int? anioBase,
         IReadOnlyList<int> aniosDestino,
         CancellationToken ct)
@@ -152,7 +161,7 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
         if (anioBase is null || aniosDestino.Count == 0)
         {
             foreach (var a in aniosDestino) resultado[a] = 1m;
-            return resultado;
+            return (resultado, []);
         }
 
         var anioMaximo = aniosDestino.Max();
@@ -160,6 +169,7 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
         var lista = await repositorioInflacion.ListarPorRangoAsync(anioMinimo, anioMaximo, ct);
         var porAnio = lista.ToDictionary(x => x.Anio, x => x.PorcentajeInflacion);
 
+        var aniosSinInflacion = new SortedSet<int>();
         foreach (var anioDestino in aniosDestino.Distinct())
         {
             var factor = 1m;
@@ -169,11 +179,13 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
                 {
                     if (porAnio.TryGetValue(a, out var inf))
                         factor *= 1m + inf / 100m;
+                    else
+                        aniosSinInflacion.Add(a);
                 }
             }
             resultado[anioDestino] = decimal.Round(factor, 6);
         }
-        return resultado;
+        return (resultado, aniosSinInflacion.ToList());
     }
 
     private static MaterialesProyectadosDto Vacio(

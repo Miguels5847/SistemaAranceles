@@ -13,6 +13,8 @@ public sealed class ArancelEfectivoDto
     public string? MensajeAdvertencia { get; init; }
 
     public bool EstaResuelto => ArancelEfectivo is > 0m;
+    public bool TieneAdvertencia => !string.IsNullOrWhiteSpace(MensajeAdvertencia);
+    public string EstadoTexto => TieneAdvertencia ? MensajeAdvertencia! : "Configuracion correcta";
 
     public string ArancelDisplay => ArancelEfectivo is null
         ? "Pendiente"

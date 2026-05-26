@@ -3,6 +3,7 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
+using SistemaAranceles.Application.DTOs.CapitalTrabajo;
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.DemandaIngresos;
@@ -10,6 +11,24 @@ using SistemaAranceles.Domain.Entities;
 using SistemaAranceles.Presentation.State;
 
 namespace SistemaAranceles.Presentation.ViewModels.DemandaIngresos;
+
+public sealed class DemandaMatrizFilaView
+{
+    public string CicloDisplay { get; init; } = string.Empty;
+    public IReadOnlyList<decimal> Periodos { get; init; } = [];
+    public decimal Total { get; init; }
+    public bool EsTotal { get; init; }
+    public string TotalDisplay => Total.ToString("N0");
+}
+
+public sealed class IngresosMatrizFilaView
+{
+    public string CicloDisplay { get; init; } = string.Empty;
+    public IReadOnlyList<decimal> Periodos { get; init; } = [];
+    public decimal Total { get; init; }
+    public bool EsTotal { get; init; }
+    public string TotalDisplay => $"$ {Total:N2}";
+}
 
 /// <summary>
 /// ViewModel composite para la vista "Demanda e Ingresos" (Épica 9).
@@ -33,17 +52,23 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
 
     [ObservableProperty] private ObservableCollection<Carrera> _carreras = [];
     [ObservableProperty] private Carrera? _carreraSeleccionada;
-    [ObservableProperty] private ObservableCollection<EscenarioProyeccion> _escenarios = [];
-    [ObservableProperty] private EscenarioProyeccion? _escenarioSeleccionado;
+    [ObservableProperty] private ObservableCollection<EscenarioDemandaIngresosDto> _escenarios = [];
+    [ObservableProperty] private EscenarioDemandaIngresosDto? _escenarioSeleccionado;
 
     [ObservableProperty] private ObservableCollection<ConfiguracionArancelCarreraDto> _configuraciones = [];
     [ObservableProperty] private ConfiguracionArancelCarreraDto? _configuracionSeleccionada;
     [ObservableProperty] private ArancelEfectivoDto? _arancelEfectivo;
+    [ObservableProperty] private DemandaProyectadaDto? _demandaProyectada;
+    [ObservableProperty] private ObservableCollection<DemandaMatrizFilaView> _demandaMatrizFilas = [];
     [ObservableProperty] private PresupuestosCarreraDto? _presupuestos;
     [ObservableProperty] private IngresosProyectadosDto? _ingresos;
+    [ObservableProperty] private ObservableCollection<IngresosMatrizFilaView> _ingresosMatrizFilas = [];
     [ObservableProperty] private MaterialesProyectadosDto? _materiales;
+    [ObservableProperty] private ResumenDemandaIngresosDto _resumen = new();
     [ObservableProperty] private ObservableCollection<RatioMaterialDemandaDto> _ratios = [];
     [ObservableProperty] private RatioMaterialDemandaDto? _ratioSeleccionado;
+    [ObservableProperty] private ObservableCollection<ItemMaterialRatioOpcionDto> _itemsCapitalTrabajo = [];
+    [ObservableProperty] private ItemMaterialRatioOpcionDto? _ratioFormItemSeleccionado;
 
     [ObservableProperty] private bool _ratioFormVisible;
     [ObservableProperty] private bool _ratioFormEsEdicion;
@@ -74,11 +99,39 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     public IReadOnlyList<string> CategoriasRatio { get; } = ["MATERIALES_SUMINISTROS", "ASEO_LIMPIEZA", "ACCESORIOS_MATERIALES", "OTRO"];
     public IReadOnlyList<string> UnidadesRatio { get; } = ["por_estudiante", "por_estudiante_mes"];
     public string TituloRatioFormulario => RatioFormEsEdicion ? "Editar ratio" : "Nuevo ratio";
+    public string RatioFormItemAdvertencia
+    {
+        get
+        {
+            if (RatioFormItemSeleccionado is null || RatioFormItemSeleccionado.EsSinItem)
+                return "Sin item vinculado: Materiales Monetarios calculara costo 0.";
+
+            return RatioFormItemSeleccionado.PrecioUnitario <= 0m
+                ? "El item seleccionado tiene precio unitario 0; Materiales Monetarios calculara costo 0."
+                : string.Empty;
+        }
+    }
 
     partial void OnRatioFormEsEdicionChanged(bool value)
     {
         _ = value;
         OnPropertyChanged(nameof(TituloRatioFormulario));
+    }
+
+    partial void OnRatioFormItemSeleccionadoChanged(ItemMaterialRatioOpcionDto? value)
+    {
+        RatioFormItemMaterialId = value?.Id;
+        OnPropertyChanged(nameof(RatioFormItemAdvertencia));
+    }
+
+    partial void OnDemandaProyectadaChanged(DemandaProyectadaDto? value)
+    {
+        DemandaMatrizFilas = ConstruirFilasDemanda(value);
+    }
+
+    partial void OnIngresosChanged(IngresosProyectadosDto? value)
+    {
+        IngresosMatrizFilas = ConstruirFilasIngresos(value);
     }
     public string TituloFormulario => FormEsEdicion ? "Editar configuración" : "Nueva configuración";
     public bool FormEsModoManual => string.Equals(FormModoCalculo, ModoManual, StringComparison.OrdinalIgnoreCase);
@@ -95,7 +148,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         _ = RecargarPorCarreraAsync();
     }
 
-    partial void OnEscenarioSeleccionadoChanged(EscenarioProyeccion? value)
+    partial void OnEscenarioSeleccionadoChanged(EscenarioDemandaIngresosDto? value)
     {
         _ = value;
         if (_suprimirCambios || EstaCargando) return;
@@ -152,8 +205,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             if (CarreraSeleccionada is null)
             {
                 MensajeError = "No hay carreras registradas. Crea una carrera primero.";
-                Configuraciones = [];
-                ArancelEfectivo = null;
+                LimpiarTodo();
                 return;
             }
 
@@ -173,10 +225,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     {
         if (CarreraSeleccionada is null)
         {
-            Configuraciones = [];
-            Escenarios = [];
-            EscenarioSeleccionado = null;
-            ArancelEfectivo = null;
+            LimpiarTodo();
             return;
         }
 
@@ -184,18 +233,45 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         {
             using var scope = _serviceProvider.CreateScope();
             var repoEscenario = scope.ServiceProvider.GetRequiredService<IRepositorioEscenarioProyeccion>();
+            var repoProyeccion = scope.ServiceProvider.GetRequiredService<IRepositorioProyeccionEstudiantes>();
+            var repoItems = scope.ServiceProvider.GetRequiredService<IRepositorioItemMaterialInsumo>();
             var todosEscenarios = await repoEscenario.ListarAsync();
-            var escenarios = todosEscenarios.Where(e => e.CarreraId == CarreraSeleccionada.Id).ToList();
+            var proyecciones = await repoProyeccion.ListarResumenAsync(CarreraSeleccionada.Id);
+            var proyeccionPorEscenario = proyecciones
+                .GroupBy(p => p.EscenarioProyeccionId)
+                .ToDictionary(g => g.Key, g => g.First().Id);
+
+            var escenarios = todosEscenarios
+                .Where(e => e.CarreraId == CarreraSeleccionada.Id)
+                .Select(e => new EscenarioDemandaIngresosDto
+                {
+                    Id = e.Id,
+                    CarreraId = e.CarreraId,
+                    Nombre = e.Nombre,
+                    Descripcion = e.Descripcion,
+                    EsPredeterminado = e.EsPredeterminado,
+                    TieneProyeccion = proyeccionPorEscenario.ContainsKey(e.Id),
+                    ProyeccionEstudiantesId = proyeccionPorEscenario.TryGetValue(e.Id, out var proyId) ? proyId : null
+                })
+                .OrderByDescending(e => e.TieneProyeccion)
+                .ThenByDescending(e => e.EsPredeterminado)
+                .ThenBy(e => e.Nombre)
+                .ToList();
 
             var escenarioActualId = EscenarioSeleccionado?.Id;
             _suprimirCambios = true;
             try
             {
-                Escenarios = new ObservableCollection<EscenarioProyeccion>(escenarios);
+                Escenarios = new ObservableCollection<EscenarioDemandaIngresosDto>(escenarios);
                 EscenarioSeleccionado = Escenarios.FirstOrDefault(e => e.Id == escenarioActualId)
+                    ?? Escenarios.FirstOrDefault(e => e.TieneProyeccion)
                     ?? Escenarios.FirstOrDefault();
             }
             finally { _suprimirCambios = false; }
+
+            var items = await repoItems.ListarPorCarreraAsync(CarreraSeleccionada.Id);
+            ItemsCapitalTrabajo = ConstruirOpcionesItems(items);
+            SeleccionarItemRatio(RatioFormItemMaterialId);
 
             var listarQuery = scope.ServiceProvider.GetRequiredService<ListarConfiguracionesArancelCarreraQuery>();
             var configs = await listarQuery.EjecutarAsync(CarreraSeleccionada.Id);
@@ -213,38 +289,58 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     {
         if (CarreraSeleccionada is null)
         {
-            ArancelEfectivo = null;
-            Presupuestos = null;
-            Ingresos = null;
+            LimpiarTodo();
             return;
         }
+
+        if (EscenarioSeleccionado is null)
+        {
+            ArancelEfectivo = null;
+            DemandaProyectada = null;
+            Presupuestos = null;
+            Ingresos = null;
+            Materiales = null;
+            Ratios = [];
+            ActualizarResumen();
+            MensajeError = "Selecciona un escenario para calcular Demanda e Ingresos.";
+            return;
+        }
+
         try
         {
+            MensajeError = string.Empty;
             using var scope = _serviceProvider.CreateScope();
             var queryArancel = scope.ServiceProvider.GetRequiredService<ObtenerArancelEfectivoQuery>();
-            ArancelEfectivo = await queryArancel.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado?.Id);
+            ArancelEfectivo = await queryArancel.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
+
+            var queryDemanda = scope.ServiceProvider.GetRequiredService<ObtenerDemandaProyectadaQuery>();
+            DemandaProyectada = await queryDemanda.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
 
             var queryPresup = scope.ServiceProvider.GetRequiredService<ObtenerPresupuestosCarreraQuery>();
-            Presupuestos = await queryPresup.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado?.Id);
+            Presupuestos = await queryPresup.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
 
             var queryIngresos = scope.ServiceProvider.GetRequiredService<CalcularIngresosProyectadosQuery>();
-            Ingresos = await queryIngresos.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado?.Id);
+            Ingresos = await queryIngresos.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
 
             var queryMateriales = scope.ServiceProvider.GetRequiredService<CalcularMaterialesPorPeriodoQuery>();
-            Materiales = await queryMateriales.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado?.Id);
+            Materiales = await queryMateriales.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
 
             var listarRatios = scope.ServiceProvider.GetRequiredService<ListarRatiosMaterialDemandaQuery>();
             var ratios = await listarRatios.EjecutarAsync(CarreraSeleccionada.Id);
             Ratios = new ObservableCollection<RatioMaterialDemandaDto>(ratios);
+
+            ActualizarResumen();
         }
         catch (Exception ex)
         {
             MensajeError = $"Error al calcular arancel/presupuestos/ingresos/materiales: {Detalle(ex)}";
             ArancelEfectivo = null;
+            DemandaProyectada = null;
             Presupuestos = null;
             Ingresos = null;
             Materiales = null;
             Ratios = [];
+            ActualizarResumen();
         }
     }
 
@@ -261,6 +357,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         RatioFormMeses = "6";
         RatioFormAplicaInflacion = true;
         RatioFormItemMaterialId = null;
+        SeleccionarItemRatio(null);
         RatioFormEsEdicion = false;
         RatioFormVisible = true;
         MensajeError = string.Empty;
@@ -280,6 +377,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         RatioFormMeses = dto.MesesOperativos.ToString(CultureInfo.InvariantCulture);
         RatioFormAplicaInflacion = dto.AplicaInflacion;
         RatioFormItemMaterialId = dto.ItemMaterialInsumoId;
+        SeleccionarItemRatio(dto.ItemMaterialInsumoId);
         RatioFormEsEdicion = true;
         RatioFormVisible = true;
         MensajeError = string.Empty;
@@ -314,7 +412,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
                 CarreraId = CarreraSeleccionada.Id,
                 Categoria = RatioFormCategoria,
                 Concepto = RatioFormConcepto.Trim(),
-                ItemMaterialInsumoId = RatioFormItemMaterialId,
+                ItemMaterialInsumoId = RatioFormItemSeleccionado?.Id,
                 RatioConsumo = ratio,
                 UnidadRatio = RatioFormUnidad,
                 MesesOperativos = meses,
@@ -507,6 +605,145 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         {
             EstaGuardando = false;
         }
+    }
+
+    private void LimpiarTodo()
+    {
+        Configuraciones = [];
+        Escenarios = [];
+        EscenarioSeleccionado = null;
+        ArancelEfectivo = null;
+        DemandaProyectada = null;
+        Presupuestos = null;
+        Ingresos = null;
+        Materiales = null;
+        Ratios = [];
+        ItemsCapitalTrabajo = [];
+        RatioFormItemSeleccionado = null;
+        ActualizarResumen();
+    }
+
+    private static ObservableCollection<IngresosMatrizFilaView> ConstruirFilasIngresos(IngresosProyectadosDto? ingresos)
+    {
+        if (ingresos is null || ingresos.Filas.Count == 0 || ingresos.EtiquetasPeriodos.Count == 0)
+            return [];
+
+        var etiquetas = ingresos.EtiquetasPeriodos;
+        var filas = ingresos.Filas
+            .OrderBy(f => f.NumeroCiclo)
+            .Select(f =>
+            {
+                // Asegurar una celda por etiqueta de periodo, en el orden de EtiquetasPeriodos
+                var celdasPorEtiqueta = f.Periodos.ToDictionary(p => p.EtiquetaPeriodo, p => p.IngresoNeto);
+                var valores = etiquetas
+                    .Select(et => celdasPorEtiqueta.TryGetValue(et, out var v) ? v : 0m)
+                    .ToList();
+                return new IngresosMatrizFilaView
+                {
+                    CicloDisplay = f.CicloDisplay,
+                    Periodos = valores,
+                    Total = f.TotalNeto
+                };
+            })
+            .ToList();
+
+        var totales = new List<decimal>(etiquetas.Count);
+        for (var i = 0; i < etiquetas.Count; i++)
+            totales.Add(filas.Sum(f => f.Periodos[i]));
+
+        filas.Add(new IngresosMatrizFilaView
+        {
+            CicloDisplay = "TOTAL INGRESOS",
+            Periodos = totales,
+            Total = totales.Sum(),
+            EsTotal = true
+        });
+
+        return new ObservableCollection<IngresosMatrizFilaView>(filas);
+    }
+
+    private static ObservableCollection<DemandaMatrizFilaView> ConstruirFilasDemanda(DemandaProyectadaDto? demanda)
+    {
+        if (demanda is null || !demanda.TieneDatos)
+            return [];
+
+        var filas = demanda.Filas
+            .Select(f => new DemandaMatrizFilaView
+            {
+                CicloDisplay = f.CicloDisplay,
+                Periodos = f.Periodos,
+                Total = f.Total
+            })
+            .ToList();
+
+        filas.Add(new DemandaMatrizFilaView
+        {
+            CicloDisplay = "TOTAL",
+            Periodos = demanda.TotalesPorPeriodo,
+            Total = demanda.TotalGeneral,
+            EsTotal = true
+        });
+
+        return new ObservableCollection<DemandaMatrizFilaView>(filas);
+    }
+
+    private static ObservableCollection<ItemMaterialRatioOpcionDto> ConstruirOpcionesItems(
+        IReadOnlyList<ItemCapitalTrabajoDto> items)
+    {
+        var opciones = new List<ItemMaterialRatioOpcionDto>
+        {
+            new()
+            {
+                Id = null,
+                Nombre = "Sin item vinculado",
+                Categoria = string.Empty,
+                PrecioUnitario = 0m
+            }
+        };
+
+        opciones.AddRange(items.Select(i => new ItemMaterialRatioOpcionDto
+        {
+            Id = i.Id,
+            Nombre = i.Concepto,
+            Categoria = i.CategoriaNombre,
+            PrecioUnitario = i.ValorUnitario
+        }));
+
+        return new ObservableCollection<ItemMaterialRatioOpcionDto>(opciones);
+    }
+
+    private void SeleccionarItemRatio(int? itemId)
+    {
+        RatioFormItemSeleccionado = ItemsCapitalTrabajo.FirstOrDefault(i => i.Id == itemId)
+            ?? ItemsCapitalTrabajo.FirstOrDefault(i => i.EsSinItem);
+    }
+
+    private void ActualizarResumen()
+    {
+        var advertencias = new List<string>();
+        AgregarAdvertencia(advertencias, ArancelEfectivo?.MensajeAdvertencia);
+        AgregarAdvertencia(advertencias, DemandaProyectada?.MensajeAdvertencia);
+        AgregarAdvertencia(advertencias, Presupuestos?.MensajeAdvertencia);
+        AgregarAdvertencia(advertencias, Ingresos?.MensajeAdvertencia);
+        AgregarAdvertencia(advertencias, Materiales?.MensajeAdvertencia);
+
+        Resumen = new ResumenDemandaIngresosDto
+        {
+            TotalIngresoBruto = Ingresos?.TotalGeneralBruto ?? 0m,
+            TotalBecas = Ingresos?.TotalGeneralBecas ?? 0m,
+            TotalIngresoNeto = Ingresos?.TotalGeneralNeto ?? 0m,
+            TotalPresupuestosAnualProrrateado = Presupuestos?.TotalAnualProrrateado ?? 0m,
+            TotalPresupuestosPorSemestre = Presupuestos?.TotalPorSemestre ?? 0m,
+            TotalMaterialesMonetarios = Materiales?.TotalCosto ?? 0m,
+            TotalCantidadMateriales = Materiales?.TotalCantidad ?? 0m,
+            Advertencias = advertencias.Distinct(StringComparer.OrdinalIgnoreCase).ToList()
+        };
+    }
+
+    private static void AgregarAdvertencia(List<string> advertencias, string? mensaje)
+    {
+        if (!string.IsNullOrWhiteSpace(mensaje))
+            advertencias.Add(mensaje.Trim());
     }
 
     private static bool TryDecimal(string? value, out decimal result)

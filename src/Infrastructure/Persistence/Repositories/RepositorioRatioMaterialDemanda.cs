@@ -31,6 +31,7 @@ public sealed class RepositorioRatioMaterialDemanda(ContextoAplicacion contexto)
                            Concepto = r.Concepto,
                            ItemMaterialInsumoId = r.ItemMaterialInsumoId,
                            ItemMaterialInsumoNombre = it != null ? it.NombreItem : null,
+                           ItemMaterialInsumoCategoria = it != null ? it.CategoriaNombre : null,
                            PrecioUnitarioReferencia = it != null ? it.PrecioUnitario : 0m,
                            RatioConsumo = r.RatioConsumo,
                            UnidadRatio = r.UnidadRatio,
