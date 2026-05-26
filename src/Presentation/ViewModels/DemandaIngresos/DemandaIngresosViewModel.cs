@@ -40,6 +40,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     [ObservableProperty] private ConfiguracionArancelCarreraDto? _configuracionSeleccionada;
     [ObservableProperty] private ArancelEfectivoDto? _arancelEfectivo;
     [ObservableProperty] private PresupuestosCarreraDto? _presupuestos;
+    [ObservableProperty] private IngresosProyectadosDto? _ingresos;
 
     [ObservableProperty] private bool _formVisible;
     [ObservableProperty] private bool _formEsEdicion;
@@ -191,6 +192,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         {
             ArancelEfectivo = null;
             Presupuestos = null;
+            Ingresos = null;
             return;
         }
         try
@@ -201,12 +203,16 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
 
             var queryPresup = scope.ServiceProvider.GetRequiredService<ObtenerPresupuestosCarreraQuery>();
             Presupuestos = await queryPresup.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado?.Id);
+
+            var queryIngresos = scope.ServiceProvider.GetRequiredService<CalcularIngresosProyectadosQuery>();
+            Ingresos = await queryIngresos.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado?.Id);
         }
         catch (Exception ex)
         {
-            MensajeError = $"Error al calcular arancel efectivo / presupuestos: {Detalle(ex)}";
+            MensajeError = $"Error al calcular arancel/presupuestos/ingresos: {Detalle(ex)}";
             ArancelEfectivo = null;
             Presupuestos = null;
+            Ingresos = null;
         }
     }
 

@@ -295,8 +295,91 @@
 
             <!-- ============= TAB 4: KAN-33 — Ingresos Proyectados ============= -->
             <TabItem Header="4. Ingresos Proyectados">
-                <TextBlock Style="{StaticResource PlaceholderText}"
-                           Text="Pendiente KAN-33. Matriz ciclo × periodo con ingreso bruto, becas e ingreso neto calculado desde la configuración de arancel y proyección de estudiantes."/>
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,4"
+                               Text="Ingresos proyectados por carrera/escenario"/>
+
+                    <Border Grid.Row="1" Background="#EEF2FF" BorderBrush="#1A237E" BorderThickness="1"
+                            CornerRadius="4" Padding="10,8" Margin="0,0,0,6">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Arancel efectivo" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding Ingresos.ArancelDisplay, FallbackValue='-'}" FontWeight="Bold" Foreground="#1A237E"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Matrícula efectiva" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding Ingresos.MatriculaDisplay, FallbackValue='-'}" FontWeight="Bold"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="% Becas aplicado" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding Ingresos.PorcentajeBecasDisplay, FallbackValue='-'}" FontWeight="Bold"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="3">
+                                <TextBlock Text="Fórmula" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="Bruto = estudiantes × (arancel + matrícula)" FontSize="11" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="2" Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1"
+                            CornerRadius="4" Padding="8,5" Margin="0,0,0,6"
+                            Visibility="{Binding Ingresos.MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}">
+                        <TextBlock Text="{Binding Ingresos.MensajeAdvertencia}" Foreground="#E65100" TextWrapping="Wrap"/>
+                    </Border>
+
+                    <DataGrid Grid.Row="3" ItemsSource="{Binding Ingresos.CeldasPlanas}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Ciclo" Binding="{Binding CicloDisplay}" Width="90"/>
+                            <DataGridTextColumn Header="Período" Binding="{Binding EtiquetaPeriodo}" Width="120"/>
+                            <DataGridTextColumn Header="Estudiantes" Binding="{Binding EstudiantesDisplay}" Width="120"/>
+                            <DataGridTextColumn Header="Ingreso bruto" Binding="{Binding BrutoDisplay}" Width="140"/>
+                            <DataGridTextColumn Header="Becas" Binding="{Binding BecasDisplay}" Width="130"/>
+                            <DataGridTextColumn Header="Ingreso neto" Binding="{Binding NetoDisplay}" Width="*" MinWidth="140"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Border Grid.Row="4" Background="#1A237E" BorderBrush="#1A237E" BorderThickness="1"
+                            CornerRadius="4" Padding="10,8" Margin="0,8,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="TOTAL GENERAL" FontWeight="Bold" Foreground="White" FontSize="14" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Bruto" FontSize="10" Foreground="#9FA8DA"/>
+                                <TextBlock Text="{Binding Ingresos.TotalBrutoDisplay, FallbackValue='$ 0,00'}" Foreground="White" FontWeight="Bold"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Becas" FontSize="10" Foreground="#9FA8DA"/>
+                                <TextBlock Text="{Binding Ingresos.TotalBecasDisplay, FallbackValue='$ 0,00'}" Foreground="White" FontWeight="Bold"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="3">
+                                <TextBlock Text="Neto" FontSize="10" Foreground="#9FA8DA"/>
+                                <TextBlock Text="{Binding Ingresos.TotalNetoDisplay, FallbackValue='$ 0,00'}" Foreground="#FFEB3B" FontWeight="Bold" FontSize="15"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
             </TabItem>
 
             <!-- ============= TAB 5: KAN-34 — Materiales en Cantidades ============= -->
