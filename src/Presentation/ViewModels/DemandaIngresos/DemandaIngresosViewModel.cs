@@ -98,7 +98,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     public IReadOnlyList<string> ModosCalculo { get; } = [ModoManual, ModoAutomatico];
     public IReadOnlyList<string> CategoriasRatio { get; } = ["MATERIALES_SUMINISTROS", "ASEO_LIMPIEZA", "ACCESORIOS_MATERIALES", "OTRO"];
     public IReadOnlyList<string> UnidadesRatio { get; } = ["por_estudiante", "por_estudiante_mes"];
-    public string TituloRatioFormulario => RatioFormEsEdicion ? "Editar ratio" : "Nuevo ratio";
+    public string TituloRatioFormulario => RatioFormEsEdicion ? "Editar consumo" : "Nuevo consumo";
     public string RatioFormItemAdvertencia
     {
         get
