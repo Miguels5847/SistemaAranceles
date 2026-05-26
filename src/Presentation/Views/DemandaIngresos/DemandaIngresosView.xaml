@@ -23,15 +23,6 @@
             <Setter Property="Margin" Value="0,8,0,0"/>
             <Setter Property="Padding" Value="10,8"/>
         </Style>
-        <Style x:Key="PlaceholderText" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Foreground" Value="#546E7A"/>
-            <Setter Property="HorizontalAlignment" Value="Center"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="TextWrapping" Value="Wrap"/>
-            <Setter Property="TextAlignment" Value="Center"/>
-            <Setter Property="Margin" Value="20"/>
-        </Style>
         <Style TargetType="DataGridRow">
             <Setter Property="Foreground" Value="#263238"/>
             <Style.Triggers>
@@ -61,7 +52,7 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
-        <Style x:Key="DemandaMatrizRowStyle" TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+        <Style x:Key="MatrizRowStyle" TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding EsTotal}" Value="True">
                     <Setter Property="FontWeight" Value="Bold"/>
@@ -79,9 +70,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="Demanda e Ingresos"
-                   FontSize="18" FontWeight="Bold" Foreground="#1A237E"
-                   Margin="0,0,0,8"/>
+        <TextBlock Grid.Row="0" Text="Demanda e Ingresos" FontSize="18" FontWeight="Bold" Foreground="#1A237E" Margin="0,0,0,8"/>
 
         <Border Grid.Row="1" BorderBrush="#D8DCE8" BorderThickness="0,0,0,1" Padding="0,0,0,8" Margin="0,0,0,8">
             <Grid>
@@ -90,38 +79,24 @@
                     <ColumnDefinition Width="2*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-
                 <StackPanel Grid.Column="0" Margin="0,0,10,0">
                     <TextBlock Text="Carrera" FontSize="11" Foreground="#546E7A"/>
-                    <ComboBox ItemsSource="{Binding Carreras}"
-                              SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}"
-                              DisplayMemberPath="Nombre"
-                              MinWidth="220" Padding="4,2"/>
+                    <ComboBox ItemsSource="{Binding Carreras}" SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}" DisplayMemberPath="Nombre" MinWidth="220" Padding="4,2"/>
                 </StackPanel>
-
                 <StackPanel Grid.Column="1" Margin="0,0,10,0">
                     <TextBlock Text="Escenario" FontSize="11" Foreground="#546E7A"/>
-                    <ComboBox ItemsSource="{Binding Escenarios}"
-                              SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}"
-                              DisplayMemberPath="NombreDisplay"
-                              MinWidth="220" Padding="4,2"/>
+                    <ComboBox ItemsSource="{Binding Escenarios}" SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}" DisplayMemberPath="NombreDisplay" MinWidth="220" Padding="4,2"/>
                 </StackPanel>
-
-                <Button Grid.Column="2" Content="Refrescar" Padding="10,4" VerticalAlignment="Bottom"
-                        Command="{Binding CargarCommand}"/>
+                <Button Grid.Column="2" Content="Refrescar" Padding="10,4" VerticalAlignment="Bottom" Command="{Binding CargarCommand}"/>
             </Grid>
         </Border>
 
         <StackPanel Grid.Row="2" Margin="0,0,0,8">
-            <TextBlock Text="{Binding MensajeExito}" Foreground="#2E7D32" FontWeight="SemiBold"
-                       Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
-            <TextBlock Text="{Binding MensajeError}" Foreground="#C62828" FontWeight="SemiBold"
-                       Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding MensajeExito}" Foreground="#2E7D32" FontWeight="SemiBold" Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding MensajeError}" Foreground="#C62828" FontWeight="SemiBold" Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
         </StackPanel>
 
         <TabControl Grid.Row="3">
-
-            <!-- ============= TAB 1: KAN-32 — Configuración de Arancel ============= -->
             <TabItem Header="1. Configuración de Arancel">
                 <Grid Margin="8">
                     <Grid.RowDefinitions>
@@ -130,10 +105,7 @@
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-
-                    <!-- Resumen arancel efectivo -->
-                    <Border Grid.Row="0" Background="#EEF2FF" BorderBrush="#1A237E" BorderThickness="1"
-                            CornerRadius="4" Padding="10,8" Margin="0,0,0,8">
+                    <Border Grid.Row="0" Background="#EEF2FF" BorderBrush="#1A237E" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,0,0,8">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -147,7 +119,7 @@
                             </StackPanel>
                             <StackPanel Grid.Column="1">
                                 <TextBlock Text="Arancel efectivo" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding ArancelEfectivo.ArancelDisplay, FallbackValue='-'}" FontWeight="Bold" FontSize="14" Foreground="#1A237E"/>
+                                <TextBlock Text="{Binding ArancelEfectivo.ArancelDisplay, FallbackValue='-'}" FontWeight="Bold" Foreground="#1A237E"/>
                             </StackPanel>
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="Matrícula efectiva" FontSize="11" Foreground="#546E7A"/>
@@ -155,8 +127,7 @@
                             </StackPanel>
                             <StackPanel Grid.Column="3">
                                 <TextBlock Text="Estado" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding ArancelEfectivo.EstadoTexto, FallbackValue='OK'}"
-                                           TextWrapping="Wrap">
+                                <TextBlock Text="{Binding ArancelEfectivo.EstadoTexto, FallbackValue='OK'}" TextWrapping="Wrap">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Foreground" Value="#2E7D32"/>
@@ -171,21 +142,11 @@
                             </StackPanel>
                         </Grid>
                     </Border>
-
-                    <!-- Botón nueva -->
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,6">
-                        <TextBlock Text="Configuraciones por carrera/escenario" FontSize="14" FontWeight="SemiBold"
-                                   VerticalAlignment="Center"/>
-                        <Button Content="+ Nueva configuración" Margin="12,0,4,0" Padding="8,3"
-                                Command="{Binding AbrirNuevaConfiguracionCommand}"/>
+                        <TextBlock Text="Configuraciones por carrera/escenario" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Button Content="+ Nueva configuración" Margin="12,0,4,0" Padding="8,3" Command="{Binding AbrirNuevaConfiguracionCommand}"/>
                     </StackPanel>
-
-                    <DataGrid Grid.Row="2" ItemsSource="{Binding Configuraciones}"
-                              SelectedItem="{Binding ConfiguracionSeleccionada, Mode=TwoWay}"
-                              AutoGenerateColumns="False" IsReadOnly="True"
-                              SelectionMode="Single" SelectionUnit="FullRow"
-                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
-                              AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
+                    <DataGrid Grid.Row="2" ItemsSource="{Binding Configuraciones}" SelectedItem="{Binding ConfiguracionSeleccionada, Mode=TwoWay}" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" SelectionUnit="FullRow" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Carrera" Binding="{Binding CarreraNombre}" Width="*" MinWidth="180"/>
                             <DataGridTextColumn Header="Escenario" Binding="{Binding EscenarioNombre}" Width="160"/>
@@ -196,84 +157,55 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Content="Editar" Style="{StaticResource BtnAccion}"
-                                                    Command="{Binding DataContext.AbrirEditarConfiguracionCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                    CommandParameter="{Binding}"/>
-                                            <Button Content="Eliminar" Style="{StaticResource BtnEliminar}"
-                                                    Command="{Binding DataContext.EliminarConfiguracionCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                    CommandParameter="{Binding}"/>
+                                            <Button Content="Editar" Style="{StaticResource BtnAccion}" Command="{Binding DataContext.AbrirEditarConfiguracionCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}"/>
+                                            <Button Content="Eliminar" Style="{StaticResource BtnEliminar}" Command="{Binding DataContext.EliminarConfiguracionCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
-
-                    <!-- Formulario -->
-                    <Border Grid.Row="3" Style="{StaticResource PanelFormulario}"
-                            Visibility="{Binding FormVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Border Grid.Row="3" Style="{StaticResource PanelFormulario}" Visibility="{Binding FormVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                         <StackPanel>
                             <TextBlock Text="{Binding TituloFormulario}" FontWeight="Bold" FontSize="14" Margin="0,0,0,6"/>
-
                             <Grid Margin="0,0,0,6">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-
                                 <StackPanel Grid.Column="0" Margin="0,0,8,0">
                                     <TextBlock Text="Modo de cálculo" FontSize="11"/>
-                                    <ComboBox ItemsSource="{Binding ModosCalculo}"
-                                              SelectedItem="{Binding FormModoCalculo, Mode=TwoWay}"
-                                              Padding="4,2"/>
+                                    <ComboBox ItemsSource="{Binding ModosCalculo}" SelectedItem="{Binding FormModoCalculo, Mode=TwoWay}" Padding="4,2"/>
                                 </StackPanel>
-
                                 <StackPanel Grid.Column="1">
                                     <TextBlock Text="Aplicar a" FontSize="11"/>
-                                    <CheckBox Content="Global (sin escenario)"
-                                              IsChecked="{Binding FormEscenarioGlobal, Mode=TwoWay}"
-                                              Margin="0,4,0,0"/>
+                                    <CheckBox Content="Global (sin escenario)" IsChecked="{Binding FormEscenarioGlobal, Mode=TwoWay}" Margin="0,4,0,0"/>
                                 </StackPanel>
                             </Grid>
-
                             <Grid Margin="0,0,0,6">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-
                                 <StackPanel Grid.Column="0" Margin="0,0,8,0">
                                     <TextBlock Text="Arancel manual ($)" FontSize="11"/>
-                                    <TextBox Text="{Binding FormArancelManual, UpdateSourceTrigger=PropertyChanged}"
-                                             Padding="4,2"
-                                             IsEnabled="{Binding FormEsModoManual}"/>
-                                    <TextBlock Text="Solo requerido en modo Manual." FontSize="10" Foreground="#90A4AE"/>
+                                    <TextBox Text="{Binding FormArancelManual, UpdateSourceTrigger=PropertyChanged}" Padding="4,2" IsEnabled="{Binding FormEsModoManual}"/>
                                 </StackPanel>
-
                                 <StackPanel Grid.Column="1">
                                     <TextBlock Text="% Matrícula" FontSize="11"/>
-                                    <CheckBox Content="Usar % institucional (de Datos Institucionales)"
-                                              IsChecked="{Binding FormUsaPorcentajeInstitucional, Mode=TwoWay}"
-                                              Margin="0,2,0,4"/>
-                                    <TextBox Text="{Binding FormPorcentajeMatricula, UpdateSourceTrigger=PropertyChanged}"
-                                             Padding="4,2"
-                                             IsEnabled="{Binding FormPorcentajeMatriculaEditable}"/>
+                                    <CheckBox Content="Usar % institucional" IsChecked="{Binding FormUsaPorcentajeInstitucional, Mode=TwoWay}" Margin="0,2,0,4"/>
+                                    <TextBox Text="{Binding FormPorcentajeMatricula, UpdateSourceTrigger=PropertyChanged}" Padding="4,2" IsEnabled="{Binding FormPorcentajeMatriculaEditable}"/>
                                 </StackPanel>
                             </Grid>
-
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button Content="Guardar" Style="{StaticResource BtnPrimario}"
-                                        Command="{Binding GuardarConfiguracionCommand}"
-                                        IsEnabled="{Binding NoEstaGuardando}"/>
-                                <Button Content="Cancelar" Padding="8,3" Margin="6,0,0,0"
-                                        Command="{Binding CancelarFormularioCommand}"/>
+                                <Button Content="Guardar" Style="{StaticResource BtnPrimario}" Command="{Binding GuardarConfiguracionCommand}" IsEnabled="{Binding NoEstaGuardando}"/>
+                                <Button Content="Cancelar" Padding="8,3" Margin="6,0,0,0" Command="{Binding CancelarFormularioCommand}"/>
                             </StackPanel>
                         </StackPanel>
                     </Border>
                 </Grid>
             </TabItem>
 
-            <!-- ============= TAB 2: KAN-XX — Demanda Proyectada (lectura) ============= -->
             <TabItem Header="2. Demanda Proyectada">
                 <Grid Margin="8">
                     <Grid.RowDefinitions>
@@ -281,51 +213,23 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,4"
-                               Text="Proyeccion de estudiantes por ciclo y periodo"/>
-
-                    <Border Grid.Row="1" Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1"
-                            CornerRadius="4" Padding="8,5" Margin="0,0,0,8"
-                            Visibility="{Binding DemandaProyectada.MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}">
+                    <TextBlock Grid.Row="0" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,4" Text="Demanda proyectada (número de estudiantes)"/>
+                    <Border Grid.Row="1" Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1" CornerRadius="4" Padding="8,5" Margin="0,0,0,8" Visibility="{Binding DemandaProyectada.MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}">
                         <TextBlock Text="{Binding DemandaProyectada.MensajeAdvertencia}" Foreground="#E65100" TextWrapping="Wrap"/>
                     </Border>
-
-                    <DataGrid x:Name="DemandaProyectadaGrid"
-                              Grid.Row="2"
-                              ItemsSource="{Binding DemandaMatrizFilas}"
-                              AutoGenerateColumns="False" IsReadOnly="True"
-                              RowStyle="{StaticResource DemandaMatrizRowStyle}"
-                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
-                              AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9"/>
-
-                    <Border Grid.Row="3" Background="#EEF2FF" BorderBrush="#1A237E" BorderThickness="1"
-                            CornerRadius="4" Padding="10,8" Margin="0,8,0,0">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Carrera" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding DemandaProyectada.CarreraNombre, FallbackValue='-'}" FontWeight="Bold"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1">
-                                <TextBlock Text="Escenario" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding DemandaProyectada.EscenarioNombre, FallbackValue='-'}" FontWeight="Bold"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="Total estudiantes" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding DemandaProyectada.TotalGeneralDisplay, FallbackValue='0'}" FontWeight="Bold" Foreground="#1A237E"/>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
+                    <DataGrid x:Name="DemandaProyectadaGrid" Grid.Row="2" ItemsSource="{Binding DemandaMatrizFilas}" AutoGenerateColumns="False" IsReadOnly="True" RowStyle="{StaticResource MatrizRowStyle}" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9"/>
+                    <StackPanel Grid.Row="3" Margin="0,16,0,4">
+                        <TextBlock FontSize="14" FontWeight="SemiBold" Text="Docentes necesarios"/>
+                        <Border Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1" CornerRadius="4" Padding="8,5" Margin="0,4,0,8" Visibility="{Binding DemandaProyectada.MensajeAdvertenciaDocentes, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}">
+                            <TextBlock Text="{Binding DemandaProyectada.MensajeAdvertenciaDocentes}" Foreground="#E65100" TextWrapping="Wrap"/>
+                        </Border>
+                    </StackPanel>
+                    <DataGrid x:Name="DocentesNecesariosGrid" Grid.Row="4" ItemsSource="{Binding DemandaProyectada.DocentesPorPeriodo}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9"/>
                 </Grid>
             </TabItem>
 
-            <!-- ============= TAB 3: KAN-35 — Presupuestos y Seguro ============= -->
             <TabItem Header="3. Presupuestos y Seguro">
                 <Grid Margin="8">
                     <Grid.RowDefinitions>
@@ -334,20 +238,11 @@
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,4"
-                               Text="Presupuestos institucionales prorrateados por carrera"/>
-
-                    <Border Grid.Row="1" Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1"
-                            CornerRadius="4" Padding="8,5" Margin="0,0,0,8"
-                            Visibility="{Binding Presupuestos.MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}">
+                    <TextBlock Grid.Row="0" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,4" Text="Presupuestos institucionales prorrateados por carrera"/>
+                    <Border Grid.Row="1" Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1" CornerRadius="4" Padding="8,5" Margin="0,0,0,8" Visibility="{Binding Presupuestos.MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}">
                         <TextBlock Text="{Binding Presupuestos.MensajeAdvertencia}" Foreground="#E65100" TextWrapping="Wrap"/>
                     </Border>
-
-                    <DataGrid Grid.Row="2" ItemsSource="{Binding Presupuestos.Presupuestos}"
-                              AutoGenerateColumns="False" IsReadOnly="True"
-                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
-                              AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
+                    <DataGrid Grid.Row="2" ItemsSource="{Binding Presupuestos.Presupuestos}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Tipo presupuesto" Binding="{Binding TipoPresupuesto}" Width="*" MinWidth="200"/>
                             <DataGridTextColumn Header="Anual institucional" Binding="{Binding MontoAnualDisplay}" Width="160"/>
@@ -356,9 +251,7 @@
                             <DataGridTextColumn Header="Por semestre" Binding="{Binding SemestreDisplay}" Width="140"/>
                         </DataGrid.Columns>
                     </DataGrid>
-
-                    <Border Grid.Row="3" Background="#EEF2FF" BorderBrush="#1A237E" BorderThickness="1"
-                            CornerRadius="4" Padding="10,8" Margin="0,8,0,0">
+                    <Border Grid.Row="3" Background="#EEF2FF" BorderBrush="#1A237E" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,8,0,0">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -366,28 +259,15 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Estudiantes universidad" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding Presupuestos.EstudiantesUniversidad, FallbackValue=0}" FontWeight="Bold"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1">
-                                <TextBlock Text="Estudiantes carrera (promedio)" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding Presupuestos.EstudiantesCarreraPromedio, FallbackValue=0}" FontWeight="Bold"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="Total anual prorrateado" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding Presupuestos.TotalAnualDisplay, FallbackValue='$ 0,00'}" FontWeight="Bold" Foreground="#1A237E"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="3">
-                                <TextBlock Text="Total por semestre" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding Presupuestos.TotalSemestreDisplay, FallbackValue='$ 0,00'}" FontWeight="Bold" Foreground="#1A237E"/>
-                            </StackPanel>
+                            <StackPanel Grid.Column="0"><TextBlock Text="Estudiantes universidad" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Presupuestos.EstudiantesUniversidad, FallbackValue=0}" FontWeight="Bold"/></StackPanel>
+                            <StackPanel Grid.Column="1"><TextBlock Text="Estudiantes carrera (promedio)" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Presupuestos.EstudiantesCarreraPromedio, FallbackValue=0}" FontWeight="Bold"/></StackPanel>
+                            <StackPanel Grid.Column="2"><TextBlock Text="Total anual prorrateado" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Presupuestos.TotalAnualDisplay, FallbackValue='$ 0,00'}" FontWeight="Bold" Foreground="#1A237E"/></StackPanel>
+                            <StackPanel Grid.Column="3"><TextBlock Text="Total por semestre" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Presupuestos.TotalSemestreDisplay, FallbackValue='$ 0,00'}" FontWeight="Bold" Foreground="#1A237E"/></StackPanel>
                         </Grid>
                     </Border>
                 </Grid>
             </TabItem>
 
-            <!-- ============= TAB 4: KAN-33 — Ingresos Proyectados ============= -->
             <TabItem Header="4. Ingresos Proyectados">
                 <Grid Margin="8">
                     <Grid.RowDefinitions>
@@ -396,363 +276,69 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,4"
-                               Text="Ingresos proyectados por carrera/escenario (matriz Ciclo × Período)"/>
-
-                    <!-- Resumen superior: arancel/matrícula/becas/fórmula -->
-                    <Border Grid.Row="1" Background="#EEF2FF" BorderBrush="#1A237E" BorderThickness="1"
-                            CornerRadius="4" Padding="10,8" Margin="0,0,0,6">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Arancel efectivo" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding Ingresos.ArancelDisplay, FallbackValue='-'}" FontWeight="Bold" Foreground="#1A237E"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1">
-                                <TextBlock Text="Matrícula efectiva" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding Ingresos.MatriculaDisplay, FallbackValue='-'}" FontWeight="Bold"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="% Becas aplicado" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding Ingresos.PorcentajeBecasDisplay, FallbackValue='-'}" FontWeight="Bold"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="3">
-                                <TextBlock Text="Fórmula" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="Bruto = estudiantes × (arancel + matrícula); Neto = Bruto − Becas" FontSize="11" TextWrapping="Wrap"/>
-                            </StackPanel>
+                    <TextBlock Grid.Row="0" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,4" Text="Ingresos proyectados por carrera/escenario (matriz Ciclo × Período)"/>
+                    <Border Grid.Row="1" Background="#EEF2FF" BorderBrush="#1A237E" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,0,0,6">
+                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0"><TextBlock Text="Arancel efectivo" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Ingresos.ArancelDisplay, FallbackValue='-'}" FontWeight="Bold" Foreground="#1A237E"/></StackPanel>
+                            <StackPanel Grid.Column="1"><TextBlock Text="Matrícula efectiva" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Ingresos.MatriculaDisplay, FallbackValue='-'}" FontWeight="Bold"/></StackPanel>
+                            <StackPanel Grid.Column="2"><TextBlock Text="% Becas aplicado" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Ingresos.PorcentajeBecasDisplay, FallbackValue='-'}" FontWeight="Bold"/></StackPanel>
+                            <StackPanel Grid.Column="3"><TextBlock Text="Fórmula" FontSize="11" Foreground="#546E7A"/><TextBlock Text="Bruto = estudiantes × (arancel + matrícula); Neto = Bruto − Becas" FontSize="11" TextWrapping="Wrap"/></StackPanel>
                         </Grid>
                     </Border>
-
-                    <!-- Totales generales -->
-                    <Border Grid.Row="2" Background="#F8F9FF" BorderBrush="#C5CAE9" BorderThickness="1"
-                            CornerRadius="4" Padding="10,8" Margin="0,0,0,6">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Total bruto" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding Ingresos.TotalBrutoDisplay, FallbackValue='$ 0,00'}" FontWeight="Bold"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1">
-                                <TextBlock Text="Total becas" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding Ingresos.TotalBecasDisplay, FallbackValue='$ 0,00'}" FontWeight="Bold"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="Total neto" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding Ingresos.TotalNetoDisplay, FallbackValue='$ 0,00'}" FontWeight="Bold" Foreground="#1A237E" FontSize="14"/>
-                            </StackPanel>
+                    <Border Grid.Row="2" Background="#F8F9FF" BorderBrush="#C5CAE9" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,0,0,6">
+                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0"><TextBlock Text="Total bruto" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Ingresos.TotalBrutoDisplay, FallbackValue='$ 0,00'}" FontWeight="Bold"/></StackPanel>
+                            <StackPanel Grid.Column="1"><TextBlock Text="Total becas" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Ingresos.TotalBecasDisplay, FallbackValue='$ 0,00'}" FontWeight="Bold"/></StackPanel>
+                            <StackPanel Grid.Column="2"><TextBlock Text="Total neto" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Ingresos.TotalNetoDisplay, FallbackValue='$ 0,00'}" FontWeight="Bold" Foreground="#1A237E" FontSize="14"/></StackPanel>
                         </Grid>
                     </Border>
-
-                    <Border Grid.Row="3" Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1"
-                            CornerRadius="4" Padding="8,5" Margin="0,0,0,6"
-                            Visibility="{Binding Ingresos.MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}">
-                        <TextBlock Text="{Binding Ingresos.MensajeAdvertencia}" Foreground="#E65100" TextWrapping="Wrap"/>
-                    </Border>
-
-                    <DataGrid x:Name="IngresosProyectadosGrid"
-                              Grid.Row="4"
-                              ItemsSource="{Binding IngresosMatrizFilas}"
-                              AutoGenerateColumns="False" IsReadOnly="True"
-                              RowStyle="{StaticResource DemandaMatrizRowStyle}"
-                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
-                              AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9"/>
-
-                    <Border Grid.Row="5" Background="#EEF2FF" BorderBrush="#1A237E" BorderThickness="1"
-                            CornerRadius="4" Padding="10,8" Margin="0,8,0,0">
-                        <TextBlock FontSize="11" Foreground="#546E7A" TextWrapping="Wrap"
-                                   Text="Las celdas muestran el INGRESO NETO por ciclo y período. La fila final TOTAL INGRESOS suma los netos de todos los ciclos por período. Bruto y Becas se muestran en el resumen superior."/>
-                    </Border>
+                    <Border Grid.Row="3" Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1" CornerRadius="4" Padding="8,5" Margin="0,0,0,6" Visibility="{Binding Ingresos.MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}"><TextBlock Text="{Binding Ingresos.MensajeAdvertencia}" Foreground="#E65100" TextWrapping="Wrap"/></Border>
+                    <DataGrid x:Name="IngresosProyectadosGrid" Grid.Row="4" ItemsSource="{Binding IngresosMatrizFilas}" AutoGenerateColumns="False" IsReadOnly="True" RowStyle="{StaticResource MatrizRowStyle}" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9"/>
                 </Grid>
             </TabItem>
 
-            <!-- ============= TAB 5: KAN-34 — Materiales en Cantidades ============= -->
             <TabItem Header="5. Materiales en Cantidades">
                 <Grid Margin="8">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
-                        <TextBlock Text="Ratios de consumo (por carrera o globales)" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                        <Button Content="+ Nuevo ratio" Margin="12,0,4,0" Padding="8,3"
-                                Command="{Binding AbrirNuevoRatioCommand}"/>
-                    </StackPanel>
-
-                    <Border Grid.Row="1" Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1"
-                            CornerRadius="4" Padding="8,5" Margin="0,0,0,6"
-                            Visibility="{Binding Materiales.MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}">
-                        <TextBlock Text="{Binding Materiales.MensajeAdvertencia}" Foreground="#E65100" TextWrapping="Wrap"/>
-                    </Border>
-
-                    <!-- Formulario ratio -->
-                    <Border Grid.Row="2" Style="{StaticResource PanelFormulario}"
-                            Visibility="{Binding RatioFormVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6"><TextBlock Text="Ratios de consumo (por carrera o globales)" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/><Button Content="+ Nuevo ratio" Margin="12,0,4,0" Padding="8,3" Command="{Binding AbrirNuevoRatioCommand}"/></StackPanel>
+                    <Border Grid.Row="1" Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1" CornerRadius="4" Padding="8,5" Margin="0,0,0,6" Visibility="{Binding Materiales.MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}"><TextBlock Text="{Binding Materiales.MensajeAdvertencia}" Foreground="#E65100" TextWrapping="Wrap"/></Border>
+                    <Border Grid.Row="2" Style="{StaticResource PanelFormulario}" Visibility="{Binding RatioFormVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                         <StackPanel>
                             <TextBlock Text="{Binding TituloRatioFormulario}" FontWeight="Bold" FontSize="13" Margin="0,0,0,6"/>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="2*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-
-                                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,6,4">
-                                    <TextBlock Text="Categoría" FontSize="11"/>
-                                    <ComboBox ItemsSource="{Binding CategoriasRatio}"
-                                              SelectedItem="{Binding RatioFormCategoria, Mode=TwoWay}" Padding="4,2"/>
-                                </StackPanel>
-                                <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,6,4">
-                                    <TextBlock Text="Concepto" FontSize="11"/>
-                                    <TextBox Text="{Binding RatioFormConcepto, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
-                                </StackPanel>
-                                <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,6,4">
-                                    <TextBlock Text="Ratio consumo" FontSize="11"/>
-                                    <TextBox Text="{Binding RatioFormRatio, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
-                                </StackPanel>
-                                <StackPanel Grid.Row="0" Grid.Column="3" Margin="0,0,0,4">
-                                    <TextBlock Text="Unidad" FontSize="11"/>
-                                    <ComboBox ItemsSource="{Binding UnidadesRatio}"
-                                              SelectedItem="{Binding RatioFormUnidad, Mode=TwoWay}" Padding="4,2"/>
-                                </StackPanel>
-
-                                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,6,4">
-                                    <TextBlock Text="Meses operativos" FontSize="11"/>
-                                    <TextBox Text="{Binding RatioFormMeses, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
-                                </StackPanel>
-                                <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,6,4">
-                                    <TextBlock Text="Item Capital de Trabajo" FontSize="11"/>
-                                    <ComboBox ItemsSource="{Binding ItemsCapitalTrabajo}"
-                                              SelectedItem="{Binding RatioFormItemSeleccionado, Mode=TwoWay}"
-                                              DisplayMemberPath="NombreDisplay"
-                                              Padding="4,2"/>
-                                    <TextBlock Text="{Binding RatioFormItemAdvertencia}"
-                                               FontSize="10" Foreground="#E65100" TextWrapping="Wrap"
-                                               Visibility="{Binding RatioFormItemAdvertencia, Converter={StaticResource StringToVisibilityConverter}}"/>
-                                </StackPanel>
-                                <StackPanel Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" VerticalAlignment="Center">
-                                    <CheckBox Content="Aplica inflación" IsChecked="{Binding RatioFormAplicaInflacion, Mode=TwoWay}"/>
-                                </StackPanel>
-
-                                <StackPanel Grid.Row="2" Grid.ColumnSpan="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
-                                    <Button Content="Guardar" Style="{StaticResource BtnPrimario}"
-                                            Command="{Binding GuardarRatioCommand}"
-                                            IsEnabled="{Binding NoEstaGuardando}"/>
-                                    <Button Content="Cancelar" Padding="8,3" Margin="6,0,0,0"
-                                            Command="{Binding CancelarRatioCommand}"/>
-                                </StackPanel>
+                            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="2*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,6,4"><TextBlock Text="Categoría" FontSize="11"/><ComboBox ItemsSource="{Binding CategoriasRatio}" SelectedItem="{Binding RatioFormCategoria, Mode=TwoWay}" Padding="4,2"/></StackPanel>
+                                <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,6,4"><TextBlock Text="Concepto" FontSize="11"/><TextBox Text="{Binding RatioFormConcepto, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/></StackPanel>
+                                <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,6,4"><TextBlock Text="Ratio consumo" FontSize="11"/><TextBox Text="{Binding RatioFormRatio, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/></StackPanel>
+                                <StackPanel Grid.Row="0" Grid.Column="3" Margin="0,0,0,4"><TextBlock Text="Unidad" FontSize="11"/><ComboBox ItemsSource="{Binding UnidadesRatio}" SelectedItem="{Binding RatioFormUnidad, Mode=TwoWay}" Padding="4,2"/></StackPanel>
+                                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,6,4"><TextBlock Text="Meses operativos" FontSize="11"/><TextBox Text="{Binding RatioFormMeses, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/></StackPanel>
+                                <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,6,4"><TextBlock Text="Item Capital de Trabajo" FontSize="11"/><ComboBox ItemsSource="{Binding ItemsCapitalTrabajo}" SelectedItem="{Binding RatioFormItemSeleccionado, Mode=TwoWay}" DisplayMemberPath="NombreDisplay" Padding="4,2"/><TextBlock Text="{Binding RatioFormItemAdvertencia}" FontSize="10" Foreground="#E65100" TextWrapping="Wrap" Visibility="{Binding RatioFormItemAdvertencia, Converter={StaticResource StringToVisibilityConverter}}"/></StackPanel>
+                                <StackPanel Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" VerticalAlignment="Center"><CheckBox Content="Aplica inflación" IsChecked="{Binding RatioFormAplicaInflacion, Mode=TwoWay}"/></StackPanel>
+                                <StackPanel Grid.Row="2" Grid.ColumnSpan="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0"><Button Content="Guardar" Style="{StaticResource BtnPrimario}" Command="{Binding GuardarRatioCommand}" IsEnabled="{Binding NoEstaGuardando}"/><Button Content="Cancelar" Padding="8,3" Margin="6,0,0,0" Command="{Binding CancelarRatioCommand}"/></StackPanel>
                             </Grid>
                         </StackPanel>
                     </Border>
-
-                    <DataGrid Grid.Row="3" ItemsSource="{Binding Ratios}"
-                              SelectedItem="{Binding RatioSeleccionado, Mode=TwoWay}"
-                              AutoGenerateColumns="False" IsReadOnly="True"
-                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
-                              AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9"
-                              Margin="0,6,0,6">
+                    <DataGrid Grid.Row="3" ItemsSource="{Binding Ratios}" SelectedItem="{Binding RatioSeleccionado, Mode=TwoWay}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9" Margin="0,6,0,6">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Carrera" Binding="{Binding CarreraNombre}" Width="120"/>
-                            <DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" Width="160"/>
-                            <DataGridTextColumn Header="Concepto" Binding="{Binding Concepto}" Width="*" MinWidth="180"/>
-                            <DataGridTextColumn Header="Ratio" Binding="{Binding RatioDisplay}" Width="100"/>
-                            <DataGridTextColumn Header="Unidad" Binding="{Binding UnidadDisplay}" Width="150"/>
-                            <DataGridTextColumn Header="Meses" Binding="{Binding MesesOperativos}" Width="70"/>
-                            <DataGridTextColumn Header="Item vinculado" Binding="{Binding ItemVinculadoDisplay}" Width="160"/>
-                            <DataGridTextColumn Header="Precio ref." Binding="{Binding PrecioReferenciaDisplay}" Width="110"/>
-                            <DataGridTextColumn Header="Inflación" Binding="{Binding InflacionDisplay}" Width="80"/>
-                            <DataGridTemplateColumn Header="Acciones" Width="160">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button Content="Editar" Style="{StaticResource BtnAccion}"
-                                                    Command="{Binding DataContext.AbrirEditarRatioCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                    CommandParameter="{Binding}"/>
-                                            <Button Content="Eliminar" Style="{StaticResource BtnEliminar}"
-                                                    Command="{Binding DataContext.EliminarRatioCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                    CommandParameter="{Binding}"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Carrera" Binding="{Binding CarreraNombre}" Width="120"/><DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" Width="160"/><DataGridTextColumn Header="Concepto" Binding="{Binding Concepto}" Width="*" MinWidth="180"/><DataGridTextColumn Header="Ratio" Binding="{Binding RatioDisplay}" Width="100"/><DataGridTextColumn Header="Unidad" Binding="{Binding UnidadDisplay}" Width="150"/><DataGridTextColumn Header="Meses" Binding="{Binding MesesOperativos}" Width="70"/><DataGridTextColumn Header="Item vinculado" Binding="{Binding ItemVinculadoDisplay}" Width="160"/><DataGridTextColumn Header="Precio ref." Binding="{Binding PrecioReferenciaDisplay}" Width="110"/><DataGridTextColumn Header="Inflación" Binding="{Binding InflacionDisplay}" Width="80"/>
+                            <DataGridTemplateColumn Header="Acciones" Width="160"><DataGridTemplateColumn.CellTemplate><DataTemplate><StackPanel Orientation="Horizontal"><Button Content="Editar" Style="{StaticResource BtnAccion}" Command="{Binding DataContext.AbrirEditarRatioCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}"/><Button Content="Eliminar" Style="{StaticResource BtnEliminar}" Command="{Binding DataContext.EliminarRatioCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}"/></StackPanel></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
-
                     <TextBlock Grid.Row="4" Text="Cantidades calculadas por periodo (estudiantes × ratio)" FontSize="13" FontWeight="SemiBold" Margin="0,4,0,4" VerticalAlignment="Top"/>
-                    <DataGrid Grid.Row="4" Margin="0,28,0,0" ItemsSource="{Binding Materiales.Cantidades}"
-                              AutoGenerateColumns="False" IsReadOnly="True"
-                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
-                              AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" Width="160"/>
-                            <DataGridTextColumn Header="Concepto" Binding="{Binding Concepto}" Width="*" MinWidth="180"/>
-                            <DataGridTextColumn Header="Período" Binding="{Binding EtiquetaPeriodo}" Width="120"/>
-                            <DataGridTextColumn Header="Estudiantes" Binding="{Binding EstudiantesDisplay}" Width="120"/>
-                            <DataGridTextColumn Header="Cantidad" Binding="{Binding CantidadDisplay}" Width="140"/>
-                        </DataGrid.Columns>
+                    <DataGrid Grid.Row="4" Margin="0,28,0,0" ItemsSource="{Binding Materiales.Cantidades}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
+                        <DataGrid.Columns><DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" Width="160"/><DataGridTextColumn Header="Concepto" Binding="{Binding Concepto}" Width="*" MinWidth="180"/><DataGridTextColumn Header="Período" Binding="{Binding EtiquetaPeriodo}" Width="120"/><DataGridTextColumn Header="Estudiantes" Binding="{Binding EstudiantesDisplay}" Width="120"/><DataGridTextColumn Header="Cantidad" Binding="{Binding CantidadDisplay}" Width="140"/></DataGrid.Columns>
                     </DataGrid>
-
-                    <Border Grid.Row="5" Background="#EEF2FF" BorderBrush="#1A237E" BorderThickness="1"
-                            CornerRadius="4" Padding="10,8" Margin="0,8,0,0">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Año base inflación" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding Materiales.AnioBaseInflacion, TargetNullValue='No definido', FallbackValue='No definido'}" FontWeight="Bold"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1">
-                                <TextBlock Text="Total cantidad (todos los periodos)" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding Materiales.TotalCantidadDisplay, FallbackValue='0'}" FontWeight="Bold" Foreground="#1A237E"/>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
+                    <Border Grid.Row="5" Background="#EEF2FF" BorderBrush="#1A237E" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,8,0,0"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><StackPanel Grid.Column="0"><TextBlock Text="Año base inflación" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Materiales.AnioBaseInflacion, TargetNullValue='No definido', FallbackValue='No definido'}" FontWeight="Bold"/></StackPanel><StackPanel Grid.Column="1"><TextBlock Text="Total cantidad (todos los periodos)" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Materiales.TotalCantidadDisplay, FallbackValue='0'}" FontWeight="Bold" Foreground="#1A237E"/></StackPanel></Grid></Border>
                 </Grid>
             </TabItem>
 
-            <!-- ============= TAB 6: KAN-34 — Materiales Monetarios ============= -->
             <TabItem Header="6. Materiales Monetarios">
-                <Grid Margin="8">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" Text="Costos monetarios con inflación aplicada" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,4"/>
-
-                    <Border Grid.Row="1" Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1"
-                            CornerRadius="4" Padding="8,5" Margin="0,0,0,6"
-                            Visibility="{Binding Materiales.MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}">
-                        <TextBlock Text="{Binding Materiales.MensajeAdvertencia}" Foreground="#E65100" TextWrapping="Wrap"/>
-                    </Border>
-
-                    <DataGrid Grid.Row="2" ItemsSource="{Binding Materiales.Monetarios}"
-                              AutoGenerateColumns="False" IsReadOnly="True"
-                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
-                              AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" Width="160"/>
-                            <DataGridTextColumn Header="Concepto" Binding="{Binding Concepto}" Width="*" MinWidth="180"/>
-                            <DataGridTextColumn Header="Período" Binding="{Binding EtiquetaPeriodo}" Width="120"/>
-                            <DataGridTextColumn Header="Cantidad" Binding="{Binding CantidadDisplay}" Width="120"/>
-                            <DataGridTextColumn Header="Precio unit." Binding="{Binding PrecioDisplay}" Width="120"/>
-                            <DataGridTextColumn Header="Factor infl." Binding="{Binding FactorDisplay}" Width="110"/>
-                            <DataGridTextColumn Header="Costo" Binding="{Binding CostoDisplay}" Width="150"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-
-                    <Border Grid.Row="3" Background="#1A237E" BorderBrush="#1A237E" BorderThickness="1"
-                            CornerRadius="4" Padding="10,8" Margin="0,8,0,0">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="TOTAL MATERIALES" FontWeight="Bold" Foreground="White" FontSize="14" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="1" Text="{Binding Materiales.TotalCostoDisplay, FallbackValue='$ 0,00'}" Foreground="#FFEB3B" FontWeight="Bold" FontSize="15" HorizontalAlignment="Right"/>
-                        </Grid>
-                    </Border>
-                </Grid>
+                <Grid Margin="8"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><TextBlock Grid.Row="0" Text="Costos monetarios con inflación aplicada" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,4"/><Border Grid.Row="1" Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1" CornerRadius="4" Padding="8,5" Margin="0,0,0,6" Visibility="{Binding Materiales.MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}"><TextBlock Text="{Binding Materiales.MensajeAdvertencia}" Foreground="#E65100" TextWrapping="Wrap"/></Border><DataGrid Grid.Row="2" ItemsSource="{Binding Materiales.Monetarios}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9"><DataGrid.Columns><DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" Width="160"/><DataGridTextColumn Header="Concepto" Binding="{Binding Concepto}" Width="*" MinWidth="180"/><DataGridTextColumn Header="Período" Binding="{Binding EtiquetaPeriodo}" Width="120"/><DataGridTextColumn Header="Cantidad" Binding="{Binding CantidadDisplay}" Width="120"/><DataGridTextColumn Header="Precio unit." Binding="{Binding PrecioDisplay}" Width="120"/><DataGridTextColumn Header="Factor infl." Binding="{Binding FactorDisplay}" Width="110"/><DataGridTextColumn Header="Costo" Binding="{Binding CostoDisplay}" Width="150"/></DataGrid.Columns></DataGrid><Border Grid.Row="3" Background="#1A237E" BorderBrush="#1A237E" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,8,0,0"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Grid.Column="0" Text="TOTAL MATERIALES" FontWeight="Bold" Foreground="White" FontSize="14" VerticalAlignment="Center"/><TextBlock Grid.Column="1" Text="{Binding Materiales.TotalCostoDisplay, FallbackValue='$ 0,00'}" Foreground="#FFEB3B" FontWeight="Bold" FontSize="15" HorizontalAlignment="Right"/></Grid></Border></Grid>
             </TabItem>
 
-            <!-- ============= TAB 7: Resumen ============= -->
             <TabItem Header="7. Resumen">
-                <Grid Margin="8">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" Text="Resumen consolidado" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,8"/>
-
-                    <UniformGrid Grid.Row="1" Columns="4" Rows="2" Margin="0,0,0,8">
-                        <Border Background="#EEF2FF" BorderBrush="#C5CAE9" BorderThickness="1" Padding="10,8" Margin="0,0,6,6">
-                            <StackPanel>
-                                <TextBlock Text="Ingreso bruto" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding Resumen.TotalIngresoBrutoDisplay}" FontWeight="Bold" Foreground="#1A237E"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Background="#EEF2FF" BorderBrush="#C5CAE9" BorderThickness="1" Padding="10,8" Margin="0,0,6,6">
-                            <StackPanel>
-                                <TextBlock Text="Becas" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding Resumen.TotalBecasDisplay}" FontWeight="Bold"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Background="#EEF2FF" BorderBrush="#C5CAE9" BorderThickness="1" Padding="10,8" Margin="0,0,6,6">
-                            <StackPanel>
-                                <TextBlock Text="Ingreso neto" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding Resumen.TotalIngresoNetoDisplay}" FontWeight="Bold" Foreground="#1A237E"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Background="#EEF2FF" BorderBrush="#C5CAE9" BorderThickness="1" Padding="10,8" Margin="0,0,0,6">
-                            <StackPanel>
-                                <TextBlock Text="Materiales monetarios" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding Resumen.TotalMaterialesMonetariosDisplay}" FontWeight="Bold"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Background="#F8F9FF" BorderBrush="#C5CAE9" BorderThickness="1" Padding="10,8" Margin="0,0,6,0">
-                            <StackPanel>
-                                <TextBlock Text="Presupuesto anual" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding Resumen.TotalPresupuestosAnualDisplay}" FontWeight="Bold"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Background="#F8F9FF" BorderBrush="#C5CAE9" BorderThickness="1" Padding="10,8" Margin="0,0,6,0">
-                            <StackPanel>
-                                <TextBlock Text="Presupuesto semestre" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding Resumen.TotalPresupuestosSemestreDisplay}" FontWeight="Bold"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Background="#F8F9FF" BorderBrush="#C5CAE9" BorderThickness="1" Padding="10,8" Margin="0,0,6,0">
-                            <StackPanel>
-                                <TextBlock Text="Cantidad materiales" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding Resumen.TotalCantidadMaterialesDisplay}" FontWeight="Bold"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Background="#F8F9FF" BorderBrush="#C5CAE9" BorderThickness="1" Padding="10,8">
-                            <StackPanel>
-                                <TextBlock Text="Estado arancel" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding ArancelEfectivo.EstadoTexto, FallbackValue='OK'}" FontWeight="Bold" TextWrapping="Wrap"/>
-                            </StackPanel>
-                        </Border>
-                    </UniformGrid>
-
-                    <Border Grid.Row="2" Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1"
-                            CornerRadius="4" Padding="10,8">
-                        <StackPanel>
-                            <TextBlock Text="Advertencias activas" FontWeight="SemiBold" Margin="0,0,0,4"/>
-                            <TextBlock Text="{Binding Resumen.AdvertenciasTexto}" Foreground="#E65100" TextWrapping="Wrap"/>
-                        </StackPanel>
-                    </Border>
-                </Grid>
+                <Grid Margin="8"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><TextBlock Grid.Row="0" Text="Resumen consolidado" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,8"/><UniformGrid Grid.Row="1" Columns="4" Rows="2" Margin="0,0,0,8"><Border Background="#EEF2FF" BorderBrush="#C5CAE9" BorderThickness="1" Padding="10,8" Margin="0,0,6,6"><StackPanel><TextBlock Text="Ingreso bruto" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Resumen.TotalIngresoBrutoDisplay}" FontWeight="Bold" Foreground="#1A237E"/></StackPanel></Border><Border Background="#EEF2FF" BorderBrush="#C5CAE9" BorderThickness="1" Padding="10,8" Margin="0,0,6,6"><StackPanel><TextBlock Text="Becas" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Resumen.TotalBecasDisplay}" FontWeight="Bold"/></StackPanel></Border><Border Background="#EEF2FF" BorderBrush="#C5CAE9" BorderThickness="1" Padding="10,8" Margin="0,0,6,6"><StackPanel><TextBlock Text="Ingreso neto" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Resumen.TotalIngresoNetoDisplay}" FontWeight="Bold" Foreground="#1A237E"/></StackPanel></Border><Border Background="#EEF2FF" BorderBrush="#C5CAE9" BorderThickness="1" Padding="10,8" Margin="0,0,0,6"><StackPanel><TextBlock Text="Materiales monetarios" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Resumen.TotalMaterialesMonetariosDisplay}" FontWeight="Bold"/></StackPanel></Border><Border Background="#F8F9FF" BorderBrush="#C5CAE9" BorderThickness="1" Padding="10,8" Margin="0,0,6,0"><StackPanel><TextBlock Text="Presupuesto anual" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Resumen.TotalPresupuestosAnualDisplay}" FontWeight="Bold"/></StackPanel></Border><Border Background="#F8F9FF" BorderBrush="#C5CAE9" BorderThickness="1" Padding="10,8" Margin="0,0,6,0"><StackPanel><TextBlock Text="Presupuesto semestre" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Resumen.TotalPresupuestosSemestreDisplay}" FontWeight="Bold"/></StackPanel></Border><Border Background="#F8F9FF" BorderBrush="#C5CAE9" BorderThickness="1" Padding="10,8" Margin="0,0,6,0"><StackPanel><TextBlock Text="Cantidad materiales" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Resumen.TotalCantidadMaterialesDisplay}" FontWeight="Bold"/></StackPanel></Border><Border Background="#F8F9FF" BorderBrush="#C5CAE9" BorderThickness="1" Padding="10,8"><StackPanel><TextBlock Text="Estado arancel" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding ArancelEfectivo.EstadoTexto, FallbackValue='OK'}" FontWeight="Bold" TextWrapping="Wrap"/></StackPanel></Border></UniformGrid><Border Grid.Row="2" Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1" CornerRadius="4" Padding="10,8"><StackPanel><TextBlock Text="Advertencias activas" FontWeight="SemiBold" Margin="0,0,0,4"/><TextBlock Text="{Binding Resumen.AdvertenciasTexto}" Foreground="#E65100" TextWrapping="Wrap"/></StackPanel></Border></Grid>
             </TabItem>
-
         </TabControl>
     </Grid>
 </UserControl>
