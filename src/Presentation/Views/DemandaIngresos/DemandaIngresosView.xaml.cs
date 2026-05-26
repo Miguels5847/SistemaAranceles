@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Windows.Controls;
 using System.Windows.Data;
+using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Presentation.ViewModels.DemandaIngresos;
 
 namespace SistemaAranceles.Presentation.Views.DemandaIngresos;
@@ -15,6 +16,7 @@ public partial class DemandaIngresosView : UserControl
         Loaded += (_, _) =>
         {
             ActualizarColumnasDemanda();
+            ActualizarColumnasDocentes();
             ActualizarColumnasIngresos();
         };
         DataContextChanged += (_, args) =>
@@ -27,6 +29,7 @@ public partial class DemandaIngresosView : UserControl
                 _viewModelActual.PropertyChanged += OnViewModelPropertyChanged;
 
             ActualizarColumnasDemanda();
+            ActualizarColumnasDocentes();
             ActualizarColumnasIngresos();
         };
     }
@@ -34,9 +37,14 @@ public partial class DemandaIngresosView : UserControl
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(DemandaIngresosViewModel.DemandaProyectada))
+        {
             ActualizarColumnasDemanda();
+            ActualizarColumnasDocentes();
+        }
         else if (e.PropertyName == nameof(DemandaIngresosViewModel.Ingresos))
+        {
             ActualizarColumnasIngresos();
+        }
     }
 
     private void ActualizarColumnasDemanda()
@@ -69,6 +77,40 @@ public partial class DemandaIngresosView : UserControl
         {
             Header = "Total",
             Binding = new Binding(nameof(DemandaMatrizFilaView.TotalDisplay)),
+            Width = new DataGridLength(110)
+        });
+    }
+
+    private void ActualizarColumnasDocentes()
+    {
+        if (DocentesNecesariosGrid is null)
+            return;
+
+        DocentesNecesariosGrid.Columns.Clear();
+        DocentesNecesariosGrid.Columns.Add(new DataGridTextColumn
+        {
+            Header = "Tipo",
+            Binding = new Binding(nameof(DemandaDocenteFilaDto.Tipo)),
+            Width = new DataGridLength(220)
+        });
+
+        if (DataContext is DemandaIngresosViewModel vm && vm.DemandaProyectada is not null)
+        {
+            for (var i = 0; i < vm.DemandaProyectada.EtiquetasPeriodos.Count; i++)
+            {
+                DocentesNecesariosGrid.Columns.Add(new DataGridTextColumn
+                {
+                    Header = vm.DemandaProyectada.EtiquetasPeriodos[i],
+                    Binding = new Binding($"Periodos[{i}]") { StringFormat = "N0" },
+                    Width = new DataGridLength(110)
+                });
+            }
+        }
+
+        DocentesNecesariosGrid.Columns.Add(new DataGridTextColumn
+        {
+            Header = "Total",
+            Binding = new Binding(nameof(DemandaDocenteFilaDto.TotalDisplay)),
             Width = new DataGridLength(110)
         });
     }
