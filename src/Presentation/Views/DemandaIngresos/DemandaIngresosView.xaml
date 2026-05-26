@@ -384,14 +384,201 @@
 
             <!-- ============= TAB 5: KAN-34 — Materiales en Cantidades ============= -->
             <TabItem Header="5. Materiales en Cantidades">
-                <TextBlock Style="{StaticResource PlaceholderText}"
-                           Text="Pendiente KAN-34. Cantidad de materiales por periodo = estudiantes × ratio de consumo (definido por carrera)."/>
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
+                        <TextBlock Text="Ratios de consumo (por carrera o globales)" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Button Content="+ Nuevo ratio" Margin="12,0,4,0" Padding="8,3"
+                                Command="{Binding AbrirNuevoRatioCommand}"/>
+                    </StackPanel>
+
+                    <Border Grid.Row="1" Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1"
+                            CornerRadius="4" Padding="8,5" Margin="0,0,0,6"
+                            Visibility="{Binding Materiales.MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}">
+                        <TextBlock Text="{Binding Materiales.MensajeAdvertencia}" Foreground="#E65100" TextWrapping="Wrap"/>
+                    </Border>
+
+                    <!-- Formulario ratio -->
+                    <Border Grid.Row="2" Style="{StaticResource PanelFormulario}"
+                            Visibility="{Binding RatioFormVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding TituloRatioFormulario}" FontWeight="Bold" FontSize="13" Margin="0,0,0,6"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,6,4">
+                                    <TextBlock Text="Categoría" FontSize="11"/>
+                                    <ComboBox ItemsSource="{Binding CategoriasRatio}"
+                                              SelectedItem="{Binding RatioFormCategoria, Mode=TwoWay}" Padding="4,2"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,6,4">
+                                    <TextBlock Text="Concepto" FontSize="11"/>
+                                    <TextBox Text="{Binding RatioFormConcepto, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,6,4">
+                                    <TextBlock Text="Ratio consumo" FontSize="11"/>
+                                    <TextBox Text="{Binding RatioFormRatio, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="0" Grid.Column="3" Margin="0,0,0,4">
+                                    <TextBlock Text="Unidad" FontSize="11"/>
+                                    <ComboBox ItemsSource="{Binding UnidadesRatio}"
+                                              SelectedItem="{Binding RatioFormUnidad, Mode=TwoWay}" Padding="4,2"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,6,4">
+                                    <TextBlock Text="Meses operativos" FontSize="11"/>
+                                    <TextBox Text="{Binding RatioFormMeses, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,6,4">
+                                    <TextBlock Text="Item Capital de Trabajo (id, opcional)" FontSize="11"/>
+                                    <TextBox Text="{Binding RatioFormItemMaterialId, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" Padding="4,2"/>
+                                    <TextBlock Text="Vincula el ratio con un ítem para tomar su precio unitario." FontSize="10" Foreground="#90A4AE"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" VerticalAlignment="Center">
+                                    <CheckBox Content="Aplica inflación" IsChecked="{Binding RatioFormAplicaInflacion, Mode=TwoWay}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.ColumnSpan="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
+                                    <Button Content="Guardar" Style="{StaticResource BtnPrimario}"
+                                            Command="{Binding GuardarRatioCommand}"
+                                            IsEnabled="{Binding NoEstaGuardando}"/>
+                                    <Button Content="Cancelar" Padding="8,3" Margin="6,0,0,0"
+                                            Command="{Binding CancelarRatioCommand}"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <DataGrid Grid.Row="3" ItemsSource="{Binding Ratios}"
+                              SelectedItem="{Binding RatioSeleccionado, Mode=TwoWay}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9"
+                              Margin="0,6,0,6">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Carrera" Binding="{Binding CarreraNombre}" Width="120"/>
+                            <DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" Width="160"/>
+                            <DataGridTextColumn Header="Concepto" Binding="{Binding Concepto}" Width="*" MinWidth="180"/>
+                            <DataGridTextColumn Header="Ratio" Binding="{Binding RatioDisplay}" Width="100"/>
+                            <DataGridTextColumn Header="Unidad" Binding="{Binding UnidadDisplay}" Width="150"/>
+                            <DataGridTextColumn Header="Meses" Binding="{Binding MesesOperativos}" Width="70"/>
+                            <DataGridTextColumn Header="Item vinculado" Binding="{Binding ItemVinculadoDisplay}" Width="160"/>
+                            <DataGridTextColumn Header="Precio ref." Binding="{Binding PrecioReferenciaDisplay}" Width="110"/>
+                            <DataGridTextColumn Header="Inflación" Binding="{Binding InflacionDisplay}" Width="80"/>
+                            <DataGridTemplateColumn Header="Acciones" Width="160">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Editar" Style="{StaticResource BtnAccion}"
+                                                    Command="{Binding DataContext.AbrirEditarRatioCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"/>
+                                            <Button Content="Eliminar" Style="{StaticResource BtnEliminar}"
+                                                    Command="{Binding DataContext.EliminarRatioCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <TextBlock Grid.Row="4" Text="Cantidades calculadas por periodo (estudiantes × ratio)" FontSize="13" FontWeight="SemiBold" Margin="0,4,0,4" VerticalAlignment="Top"/>
+                    <DataGrid Grid.Row="4" Margin="0,28,0,0" ItemsSource="{Binding Materiales.Cantidades}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" Width="160"/>
+                            <DataGridTextColumn Header="Concepto" Binding="{Binding Concepto}" Width="*" MinWidth="180"/>
+                            <DataGridTextColumn Header="Período" Binding="{Binding EtiquetaPeriodo}" Width="120"/>
+                            <DataGridTextColumn Header="Estudiantes" Binding="{Binding EstudiantesDisplay}" Width="120"/>
+                            <DataGridTextColumn Header="Cantidad" Binding="{Binding CantidadDisplay}" Width="140"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Border Grid.Row="5" Background="#EEF2FF" BorderBrush="#1A237E" BorderThickness="1"
+                            CornerRadius="4" Padding="10,8" Margin="0,8,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Año base inflación" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding Materiales.AnioBaseInflacion, TargetNullValue='No definido', FallbackValue='No definido'}" FontWeight="Bold"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Total cantidad (todos los periodos)" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding Materiales.TotalCantidadDisplay, FallbackValue='0'}" FontWeight="Bold" Foreground="#1A237E"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
             </TabItem>
 
             <!-- ============= TAB 6: KAN-34 — Materiales Monetarios ============= -->
             <TabItem Header="6. Materiales Monetarios">
-                <TextBlock Style="{StaticResource PlaceholderText}"
-                           Text="Pendiente KAN-34. Costos de materiales por periodo con inflación aplicada y precios unitarios desde Capital de Trabajo."/>
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="Costos monetarios con inflación aplicada" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,4"/>
+
+                    <Border Grid.Row="1" Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1"
+                            CornerRadius="4" Padding="8,5" Margin="0,0,0,6"
+                            Visibility="{Binding Materiales.MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}">
+                        <TextBlock Text="{Binding Materiales.MensajeAdvertencia}" Foreground="#E65100" TextWrapping="Wrap"/>
+                    </Border>
+
+                    <DataGrid Grid.Row="2" ItemsSource="{Binding Materiales.Monetarios}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" Width="160"/>
+                            <DataGridTextColumn Header="Concepto" Binding="{Binding Concepto}" Width="*" MinWidth="180"/>
+                            <DataGridTextColumn Header="Período" Binding="{Binding EtiquetaPeriodo}" Width="120"/>
+                            <DataGridTextColumn Header="Cantidad" Binding="{Binding CantidadDisplay}" Width="120"/>
+                            <DataGridTextColumn Header="Precio unit." Binding="{Binding PrecioDisplay}" Width="120"/>
+                            <DataGridTextColumn Header="Factor infl." Binding="{Binding FactorDisplay}" Width="110"/>
+                            <DataGridTextColumn Header="Costo" Binding="{Binding CostoDisplay}" Width="150"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Border Grid.Row="3" Background="#1A237E" BorderBrush="#1A237E" BorderThickness="1"
+                            CornerRadius="4" Padding="10,8" Margin="0,8,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="TOTAL MATERIALES" FontWeight="Bold" Foreground="White" FontSize="14" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Materiales.TotalCostoDisplay, FallbackValue='$ 0,00'}" Foreground="#FFEB3B" FontWeight="Bold" FontSize="15" HorizontalAlignment="Right"/>
+                        </Grid>
+                    </Border>
+                </Grid>
             </TabItem>
 
             <!-- ============= TAB 7: Resumen ============= -->

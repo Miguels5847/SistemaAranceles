@@ -41,6 +41,20 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     [ObservableProperty] private ArancelEfectivoDto? _arancelEfectivo;
     [ObservableProperty] private PresupuestosCarreraDto? _presupuestos;
     [ObservableProperty] private IngresosProyectadosDto? _ingresos;
+    [ObservableProperty] private MaterialesProyectadosDto? _materiales;
+    [ObservableProperty] private ObservableCollection<RatioMaterialDemandaDto> _ratios = [];
+    [ObservableProperty] private RatioMaterialDemandaDto? _ratioSeleccionado;
+
+    [ObservableProperty] private bool _ratioFormVisible;
+    [ObservableProperty] private bool _ratioFormEsEdicion;
+    [ObservableProperty] private int _ratioFormId;
+    [ObservableProperty] private string _ratioFormCategoria = "MATERIALES_SUMINISTROS";
+    [ObservableProperty] private string _ratioFormConcepto = string.Empty;
+    [ObservableProperty] private string _ratioFormRatio = "0";
+    [ObservableProperty] private string _ratioFormUnidad = "por_estudiante";
+    [ObservableProperty] private string _ratioFormMeses = "6";
+    [ObservableProperty] private bool _ratioFormAplicaInflacion = true;
+    [ObservableProperty] private int? _ratioFormItemMaterialId;
 
     [ObservableProperty] private bool _formVisible;
     [ObservableProperty] private bool _formEsEdicion;
@@ -57,6 +71,15 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     [ObservableProperty] private bool _estaGuardando;
 
     public IReadOnlyList<string> ModosCalculo { get; } = [ModoManual, ModoAutomatico];
+    public IReadOnlyList<string> CategoriasRatio { get; } = ["MATERIALES_SUMINISTROS", "ASEO_LIMPIEZA", "ACCESORIOS_MATERIALES", "OTRO"];
+    public IReadOnlyList<string> UnidadesRatio { get; } = ["por_estudiante", "por_estudiante_mes"];
+    public string TituloRatioFormulario => RatioFormEsEdicion ? "Editar ratio" : "Nuevo ratio";
+
+    partial void OnRatioFormEsEdicionChanged(bool value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(TituloRatioFormulario));
+    }
     public string TituloFormulario => FormEsEdicion ? "Editar configuración" : "Nueva configuración";
     public bool FormEsModoManual => string.Equals(FormModoCalculo, ModoManual, StringComparison.OrdinalIgnoreCase);
     public bool FormPorcentajeMatriculaEditable => !FormUsaPorcentajeInstitucional;
@@ -206,13 +229,139 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
 
             var queryIngresos = scope.ServiceProvider.GetRequiredService<CalcularIngresosProyectadosQuery>();
             Ingresos = await queryIngresos.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado?.Id);
+
+            var queryMateriales = scope.ServiceProvider.GetRequiredService<CalcularMaterialesPorPeriodoQuery>();
+            Materiales = await queryMateriales.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado?.Id);
+
+            var listarRatios = scope.ServiceProvider.GetRequiredService<ListarRatiosMaterialDemandaQuery>();
+            var ratios = await listarRatios.EjecutarAsync(CarreraSeleccionada.Id);
+            Ratios = new ObservableCollection<RatioMaterialDemandaDto>(ratios);
         }
         catch (Exception ex)
         {
-            MensajeError = $"Error al calcular arancel/presupuestos/ingresos: {Detalle(ex)}";
+            MensajeError = $"Error al calcular arancel/presupuestos/ingresos/materiales: {Detalle(ex)}";
             ArancelEfectivo = null;
             Presupuestos = null;
             Ingresos = null;
+            Materiales = null;
+            Ratios = [];
+        }
+    }
+
+    [RelayCommand]
+    private void AbrirNuevoRatio()
+    {
+        if (!PuedeEditar) { MensajeError = "No tienes permiso para editar."; return; }
+        if (CarreraSeleccionada is null) { MensajeError = "Selecciona una carrera."; return; }
+        RatioFormId = 0;
+        RatioFormCategoria = "MATERIALES_SUMINISTROS";
+        RatioFormConcepto = string.Empty;
+        RatioFormRatio = "0";
+        RatioFormUnidad = "por_estudiante";
+        RatioFormMeses = "6";
+        RatioFormAplicaInflacion = true;
+        RatioFormItemMaterialId = null;
+        RatioFormEsEdicion = false;
+        RatioFormVisible = true;
+        MensajeError = string.Empty;
+        MensajeExito = string.Empty;
+    }
+
+    [RelayCommand]
+    private void AbrirEditarRatio(RatioMaterialDemandaDto? dto)
+    {
+        if (dto is null) return;
+        if (!PuedeEditar) { MensajeError = "No tienes permiso para editar."; return; }
+        RatioFormId = dto.Id;
+        RatioFormCategoria = dto.Categoria;
+        RatioFormConcepto = dto.Concepto;
+        RatioFormRatio = dto.RatioConsumo.ToString("0.######", CultureInfo.InvariantCulture);
+        RatioFormUnidad = dto.UnidadRatio;
+        RatioFormMeses = dto.MesesOperativos.ToString(CultureInfo.InvariantCulture);
+        RatioFormAplicaInflacion = dto.AplicaInflacion;
+        RatioFormItemMaterialId = dto.ItemMaterialInsumoId;
+        RatioFormEsEdicion = true;
+        RatioFormVisible = true;
+        MensajeError = string.Empty;
+        MensajeExito = string.Empty;
+    }
+
+    [RelayCommand]
+    private void CancelarRatio()
+    {
+        RatioFormVisible = false;
+        MensajeError = string.Empty;
+    }
+
+    [RelayCommand]
+    private async Task GuardarRatioAsync()
+    {
+        if (CarreraSeleccionada is null) { MensajeError = "Selecciona una carrera."; return; }
+        if (string.IsNullOrWhiteSpace(RatioFormConcepto)) { MensajeError = "Concepto es obligatorio."; return; }
+        if (!TryDecimal(RatioFormRatio, out var ratio) || ratio < 0m)
+        { MensajeError = "Ratio inválido (≥ 0)."; return; }
+        if (!int.TryParse(RatioFormMeses, NumberStyles.Integer, CultureInfo.InvariantCulture, out var meses)
+            || meses <= 0 || meses > 12)
+        { MensajeError = "Meses operativos entre 1 y 12."; return; }
+
+        EstaGuardando = true;
+        MensajeError = string.Empty;
+        try
+        {
+            var dto = new GuardarRatioMaterialDemandaDto
+            {
+                Id = RatioFormEsEdicion ? RatioFormId : null,
+                CarreraId = CarreraSeleccionada.Id,
+                Categoria = RatioFormCategoria,
+                Concepto = RatioFormConcepto.Trim(),
+                ItemMaterialInsumoId = RatioFormItemMaterialId,
+                RatioConsumo = ratio,
+                UnidadRatio = RatioFormUnidad,
+                MesesOperativos = meses,
+                AplicaInflacion = RatioFormAplicaInflacion
+            };
+
+            using var scope = _serviceProvider.CreateScope();
+            var command = scope.ServiceProvider.GetRequiredService<GuardarRatioMaterialDemandaCommand>();
+            await command.EjecutarAsync(dto, _sesionActual.UsuarioId);
+
+            RatioFormVisible = false;
+            MensajeExito = RatioFormEsEdicion ? "Ratio actualizado." : "Ratio creado.";
+            await RefrescarArancelEfectivoAsync();
+        }
+        catch (Exception ex)
+        {
+            MensajeError = Detalle(ex);
+        }
+        finally
+        {
+            EstaGuardando = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task EliminarRatioAsync(RatioMaterialDemandaDto? dto)
+    {
+        if (dto is null) return;
+        if (!PuedeEditar) { MensajeError = "No tienes permiso para eliminar."; return; }
+
+        EstaGuardando = true;
+        MensajeError = string.Empty;
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var command = scope.ServiceProvider.GetRequiredService<EliminarRatioMaterialDemandaCommand>();
+            await command.EjecutarAsync(dto.Id, _sesionActual.UsuarioId);
+            MensajeExito = "Ratio eliminado.";
+            await RefrescarArancelEfectivoAsync();
+        }
+        catch (Exception ex)
+        {
+            MensajeError = Detalle(ex);
+        }
+        finally
+        {
+            EstaGuardando = false;
         }
     }
 

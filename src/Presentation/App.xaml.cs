@@ -175,6 +175,10 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ObtenerArancelEfectivoQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ObtenerPresupuestosCarreraQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.CalcularIngresosProyectadosQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.GuardarRatioMaterialDemandaCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.EliminarRatioMaterialDemandaCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ListarRatiosMaterialDemandaQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.CalcularMaterialesPorPeriodoQuery>();
         servicios.AddTransient<CalcularAportePlantaCentralCarreraQuery>();
         servicios.AddTransient<CalcularProyeccionesCargoPlantaCentralCommand>();
         servicios.AddTransient<ListarProyeccionesCargoPlantaCentralQuery>();
