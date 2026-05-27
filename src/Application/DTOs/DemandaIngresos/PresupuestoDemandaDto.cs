@@ -19,8 +19,16 @@ public sealed class PresupuestosCarreraDto
     public int CarreraId { get; init; }
     public string CarreraNombre { get; init; } = string.Empty;
     public int EstudiantesUniversidad { get; init; }
+    public int DocentesUniversidad { get; init; }
     public decimal EstudiantesCarreraPromedio { get; init; }
     public int SemestresPorAnio { get; init; }
+    public decimal PorcentajeBecasInstitucionales { get; init; }
+    public decimal PresupuestoAnualCapacitacion { get; init; }
+    public decimal PresupuestoAnualInternacionalizacion { get; init; }
+    public decimal PresupuestoAnualMarketing { get; init; }
+    public decimal PolizaSeguroEstudiantilAnual { get; init; }
+    public int? AnioBaseInflacion { get; init; }
+    public IReadOnlyList<decimal> FactoresInflacionPeriodos { get; init; } = [];
     public IReadOnlyList<PresupuestoDemandaDto> Presupuestos { get; init; } = [];
     public string? MensajeAdvertencia { get; init; }
 

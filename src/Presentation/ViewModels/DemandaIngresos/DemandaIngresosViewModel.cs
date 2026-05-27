@@ -52,6 +52,17 @@ public sealed class MaterialMonetarioMatrizFilaView
     public string TotalDisplay => EsEncabezadoCategoria ? string.Empty : $"$ {Total:N2}";
 }
 
+public sealed class PresupuestoPeriodoMatrizFilaView
+{
+    public string Grupo { get; init; } = string.Empty;
+    public string Concepto { get; init; } = string.Empty;
+    public IReadOnlyList<decimal> Periodos { get; init; } = [];
+    public decimal Total { get; init; }
+    public bool EsEncabezadoGrupo { get; init; }
+    public bool EsTotal { get; init; }
+    public string TotalDisplay { get; init; } = string.Empty;
+}
+
 /// <summary>
 /// ViewModel composite para la vista "Demanda e Ingresos" (Épica 9).
 /// KAN-32 implementa la pestaña de Configuración de Arancel.
@@ -83,6 +94,13 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     [ObservableProperty] private DemandaProyectadaDto? _demandaProyectada;
     [ObservableProperty] private ObservableCollection<DemandaMatrizFilaView> _demandaMatrizFilas = [];
     [ObservableProperty] private PresupuestosCarreraDto? _presupuestos;
+    [ObservableProperty] private IReadOnlyList<string> _presupuestosEtiquetasPeriodos = [];
+    [ObservableProperty] private ObservableCollection<PresupuestoPeriodoMatrizFilaView> _presupuestosBaseMatrizFilas = [];
+    [ObservableProperty] private ObservableCollection<PresupuestoPeriodoMatrizFilaView> _presupuestosCarreraMatrizFilas = [];
+    [ObservableProperty] private ObservableCollection<PresupuestoPeriodoMatrizFilaView> _seguroBecasMatrizFilas = [];
+    [ObservableProperty] private string _presupuestosTotalAsignadoCarreraDisplay = "$ 0.00";
+    [ObservableProperty] private string _presupuestosTotalSeguroDisplay = "$ 0.00";
+    [ObservableProperty] private string _presupuestosTotalBecasDisplay = "$ 0.00";
     [ObservableProperty] private IngresosProyectadosDto? _ingresos;
     [ObservableProperty] private ObservableCollection<IngresosMatrizFilaView> _ingresosMatrizFilas = [];
     [ObservableProperty] private MaterialesProyectadosDto? _materiales;
@@ -152,11 +170,19 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     partial void OnDemandaProyectadaChanged(DemandaProyectadaDto? value)
     {
         DemandaMatrizFilas = ConstruirFilasDemanda(value);
+        ReconstruirMatricesPresupuestosYSeguro();
+    }
+
+    partial void OnPresupuestosChanged(PresupuestosCarreraDto? value)
+    {
+        _ = value;
+        ReconstruirMatricesPresupuestosYSeguro();
     }
 
     partial void OnIngresosChanged(IngresosProyectadosDto? value)
     {
         IngresosMatrizFilas = ConstruirFilasIngresos(value);
+        ReconstruirMatricesPresupuestosYSeguro();
     }
 
     partial void OnMaterialesChanged(MaterialesProyectadosDto? value)
@@ -341,6 +367,12 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         try
         {
             MensajeError = string.Empty;
+            ArancelEfectivo = null;
+            DemandaProyectada = null;
+            Presupuestos = null;
+            Ingresos = null;
+            Materiales = null;
+
             using var scope = _serviceProvider.CreateScope();
             var queryArancel = scope.ServiceProvider.GetRequiredService<ObtenerArancelEfectivoQuery>();
             ArancelEfectivo = await queryArancel.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
@@ -657,6 +689,179 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         RatioFormItemSeleccionado = null;
         ActualizarResumen();
     }
+
+    private void ReconstruirMatricesPresupuestosYSeguro()
+    {
+        var etiquetas = DemandaProyectada?.EtiquetasPeriodos?.ToList() ?? [];
+        PresupuestosEtiquetasPeriodos = etiquetas;
+
+        if (Presupuestos is null || DemandaProyectada is null || etiquetas.Count == 0)
+        {
+            PresupuestosBaseMatrizFilas = [];
+            PresupuestosCarreraMatrizFilas = [];
+            SeguroBecasMatrizFilas = [];
+            PresupuestosTotalAsignadoCarreraDisplay = Moneda(0m);
+            PresupuestosTotalSeguroDisplay = Moneda(0m);
+            PresupuestosTotalBecasDisplay = Moneda(0m);
+            return;
+        }
+
+        var semestres = Presupuestos.SemestresPorAnio <= 0 ? 2 : Presupuestos.SemestresPorAnio;
+        var factores = CompletarFactores(Presupuestos.FactoresInflacionPeriodos, etiquetas.Count);
+        var estudiantes = CompletarValores(DemandaProyectada.TotalesPorPeriodo, etiquetas.Count);
+        var docentesRequeridos = ObtenerDocentesRequeridosPorPeriodo(DemandaProyectada, etiquetas.Count);
+
+        var presupuestoCapacitacion = ConstruirBaseInstitucional(Presupuestos.PresupuestoAnualCapacitacion, semestres, factores);
+        var presupuestoInternacionalizacion = ConstruirBaseInstitucional(Presupuestos.PresupuestoAnualInternacionalizacion, semestres, factores);
+        var presupuestoMarketing = ConstruirBaseInstitucional(Presupuestos.PresupuestoAnualMarketing, semestres, factores);
+
+        PresupuestosBaseMatrizFilas = new ObservableCollection<PresupuestoPeriodoMatrizFilaView>
+        {
+            CrearFilaMonetaria("Presupuestos base institucionales", "Presupuesto Capacitación", presupuestoCapacitacion),
+            CrearFilaMonetaria("Presupuestos base institucionales", "Presupuesto Internacionalización", presupuestoInternacionalizacion),
+            CrearFilaMonetaria("Presupuestos base institucionales", "Presupuesto Marketing", presupuestoMarketing)
+        };
+
+        var capacitacionCarrera = ConstruirAsignadoPorDocentes(
+            presupuestoCapacitacion,
+            Presupuestos.DocentesUniversidad,
+            docentesRequeridos);
+        var internacionalizacionCarrera = ConstruirAsignadoPorEstudiantes(
+            presupuestoInternacionalizacion,
+            Presupuestos.EstudiantesUniversidad,
+            estudiantes);
+        var marketingCarrera = ConstruirAsignadoPorEstudiantes(
+            presupuestoMarketing,
+            Presupuestos.EstudiantesUniversidad,
+            estudiantes);
+
+        PresupuestosCarreraMatrizFilas = new ObservableCollection<PresupuestoPeriodoMatrizFilaView>
+        {
+            CrearFilaMonetaria("Montos asignados a la carrera", "Capacitación Docente", capacitacionCarrera),
+            CrearFilaMonetaria("Montos asignados a la carrera", "Internacionalización", internacionalizacionCarrera),
+            CrearFilaMonetaria("Montos asignados a la carrera", "Marketing y Comunicación", marketingCarrera)
+        };
+
+        var seguroPorEstudianteBase = Presupuestos.EstudiantesUniversidad > 0
+            ? Presupuestos.PolizaSeguroEstudiantilAnual / Presupuestos.EstudiantesUniversidad
+            : 0m;
+        var seguroPorEstudiante = factores
+            .Select(f => decimal.Round(seguroPorEstudianteBase * f, 2))
+            .ToList();
+        var costoSeguro = seguroPorEstudiante
+            .Select((valor, i) => decimal.Round(valor * estudiantes[i], 2))
+            .ToList();
+
+        var matricula = Ingresos?.MatriculaEfectiva ?? 0m;
+        var arancel = Ingresos?.ArancelEfectivo ?? 0m;
+        var porcentajeBecas = Ingresos?.PorcentajeBecasAplicado ?? Presupuestos.PorcentajeBecasInstitucionales;
+        var becas = estudiantes
+            .Select(total => decimal.Round(total * (arancel + matricula) * porcentajeBecas / 100m, 2))
+            .ToList();
+        var matriculas = Enumerable.Repeat(decimal.Round(matricula, 2), etiquetas.Count).ToList();
+        var aranceles = Enumerable.Repeat(decimal.Round(arancel, 2), etiquetas.Count).ToList();
+
+        SeguroBecasMatrizFilas = new ObservableCollection<PresupuestoPeriodoMatrizFilaView>
+        {
+            CrearFilaMonetaria("Seguro, becas y valores por estudiante", "Seguro Estudiantil", seguroPorEstudiante, mostrarTotal: false),
+            CrearFilaMonetaria("Seguro, becas y valores por estudiante", "Costo del Seguro Estudiantil", costoSeguro),
+            CrearFilaMonetaria("Seguro, becas y valores por estudiante", "Becas Institucionales", becas),
+            CrearFilaMonetaria("Seguro, becas y valores por estudiante", "Matrícula", matriculas, mostrarTotal: false),
+            CrearFilaMonetaria("Seguro, becas y valores por estudiante", "Valor ciclo por estudiante", aranceles, mostrarTotal: false)
+        };
+
+        PresupuestosTotalAsignadoCarreraDisplay = Moneda(
+            capacitacionCarrera.Sum() + internacionalizacionCarrera.Sum() + marketingCarrera.Sum());
+        PresupuestosTotalSeguroDisplay = Moneda(costoSeguro.Sum());
+        PresupuestosTotalBecasDisplay = Moneda(becas.Sum());
+    }
+
+    private static IReadOnlyList<decimal> ConstruirBaseInstitucional(
+        decimal presupuestoAnual,
+        int semestresPorAnio,
+        IReadOnlyList<decimal> factores)
+    {
+        var basePeriodo = semestresPorAnio > 0 ? presupuestoAnual / semestresPorAnio : 0m;
+        return factores.Select(f => decimal.Round(basePeriodo * f, 2)).ToList();
+    }
+
+    private static IReadOnlyList<decimal> ConstruirAsignadoPorDocentes(
+        IReadOnlyList<decimal> presupuestoPeriodo,
+        int docentesUniversidad,
+        IReadOnlyList<decimal> docentesRequeridos)
+    {
+        return presupuestoPeriodo
+            .Select((monto, i) => docentesUniversidad > 0
+                ? decimal.Round(monto / docentesUniversidad * docentesRequeridos[i], 2)
+                : 0m)
+            .ToList();
+    }
+
+    private static IReadOnlyList<decimal> ConstruirAsignadoPorEstudiantes(
+        IReadOnlyList<decimal> presupuestoPeriodo,
+        int estudiantesUniversidad,
+        IReadOnlyList<decimal> estudiantesCarrera)
+    {
+        return presupuestoPeriodo
+            .Select((monto, i) => estudiantesUniversidad > 0
+                ? decimal.Round(monto / estudiantesUniversidad * estudiantesCarrera[i], 2)
+                : 0m)
+            .ToList();
+    }
+
+    private static IReadOnlyList<decimal> ObtenerDocentesRequeridosPorPeriodo(
+        DemandaProyectadaDto demanda,
+        int cantidadPeriodos)
+    {
+        var fila = demanda.DocentesPorPeriodo.FirstOrDefault(f =>
+            string.Equals(f.Tipo, "Docentes Requeridos", StringComparison.OrdinalIgnoreCase));
+
+        return CompletarValores(fila?.Periodos ?? [], cantidadPeriodos);
+    }
+
+    private static IReadOnlyList<decimal> CompletarFactores(
+        IReadOnlyList<decimal> factores,
+        int cantidadPeriodos)
+    {
+        var valores = new List<decimal>(cantidadPeriodos);
+        for (var i = 0; i < cantidadPeriodos; i++)
+        {
+            var factor = i < factores.Count && factores[i] > 0m ? factores[i] : 1m;
+            valores.Add(factor);
+        }
+
+        return valores;
+    }
+
+    private static IReadOnlyList<decimal> CompletarValores(
+        IReadOnlyList<decimal> valoresOrigen,
+        int cantidadPeriodos)
+    {
+        var valores = new List<decimal>(cantidadPeriodos);
+        for (var i = 0; i < cantidadPeriodos; i++)
+            valores.Add(i < valoresOrigen.Count ? valoresOrigen[i] : 0m);
+
+        return valores;
+    }
+
+    private static PresupuestoPeriodoMatrizFilaView CrearFilaMonetaria(
+        string grupo,
+        string concepto,
+        IReadOnlyList<decimal> valores,
+        bool mostrarTotal = true)
+    {
+        var total = decimal.Round(valores.Sum(), 2);
+        return new PresupuestoPeriodoMatrizFilaView
+        {
+            Grupo = grupo,
+            Concepto = concepto,
+            Periodos = valores.Select(v => decimal.Round(v, 2)).ToList(),
+            Total = total,
+            TotalDisplay = mostrarTotal ? Moneda(total) : string.Empty
+        };
+    }
+
+    private static string Moneda(decimal valor) => $"$ {valor:N2}";
 
     private static IReadOnlyList<string> ObtenerEtiquetasMateriales(MaterialesProyectadosDto? materiales)
     {

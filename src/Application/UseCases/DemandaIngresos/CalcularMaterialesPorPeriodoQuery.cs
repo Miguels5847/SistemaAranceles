@@ -1,5 +1,6 @@
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.Interfaces.Persistencia;
+using SistemaAranceles.Application.UseCases.Inflacion;
 
 namespace SistemaAranceles.Application.UseCases.DemandaIngresos;
 
@@ -81,9 +82,17 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
                 g.First().EtiquetaPeriodo
             });
 
-        // Factor inflación por año (acumulado desde anio_base hasta el año destino)
-        var aniosDestino = estudiantesPorPeriodo.Values.Select(v => v.Anio).Distinct().ToList();
-        var (factoresPorAnio, aniosSinInflacion) = await CalcularFactoresInflacionAsync(anioBase, aniosDestino, ct);
+        // Factor de inflacion por periodo, inferido desde el primer periodo de la proyeccion.
+        var periodosInflacion = estudiantesPorPeriodo.Values
+            .Select(v => (v.Anio, v.NumeroPeriodo))
+            .Distinct()
+            .OrderBy(p => p.Anio)
+            .ThenBy(p => p.NumeroPeriodo)
+            .ToList();
+        var (factoresPorPeriodo, aniosSinInflacion) = await CalcularFactoresInflacionPorPeriodoAsync(
+            anioBase,
+            periodosInflacion,
+            ct);
 
         var cantidades = new List<MaterialCantidadCeldaDto>();
         var monetarios = new List<MaterialMonetarioCeldaDto>();
@@ -112,7 +121,7 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
                 });
 
                 var precio = ratio.PrecioUnitarioReferencia;
-                var factor = ratio.AplicaInflacion && factoresPorAnio.TryGetValue(info.Anio, out var f) ? f : 1m;
+                var factor = ratio.AplicaInflacion && factoresPorPeriodo.TryGetValue((info.Anio, info.NumeroPeriodo), out var f) ? f : 1m;
                 var costo = decimal.Round(cantidad * precio * factor, 2);
 
                 monetarios.Add(new MaterialMonetarioCeldaDto
@@ -152,41 +161,58 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
         };
     }
 
-    private async Task<(Dictionary<int, decimal> Factores, IReadOnlyList<int> AniosSinInflacion)> CalcularFactoresInflacionAsync(
+    private async Task<(Dictionary<(int Anio, int NumeroPeriodo), decimal> Factores, IReadOnlyList<int> AniosSinInflacion)> CalcularFactoresInflacionPorPeriodoAsync(
         int? anioBase,
-        IReadOnlyList<int> aniosDestino,
+        IReadOnlyList<(int Anio, int NumeroPeriodo)> periodos,
         CancellationToken ct)
     {
-        var resultado = new Dictionary<int, decimal>();
-        if (anioBase is null || aniosDestino.Count == 0)
+        var resultado = new Dictionary<(int Anio, int NumeroPeriodo), decimal>();
+        if (anioBase is null || periodos.Count == 0)
         {
-            foreach (var a in aniosDestino) resultado[a] = 1m;
+            foreach (var periodo in periodos) resultado[periodo] = 1m;
             return (resultado, []);
         }
 
-        var anioMaximo = aniosDestino.Max();
-        var anioMinimo = Math.Min(anioBase.Value, aniosDestino.Min());
-        var lista = await repositorioInflacion.ListarPorRangoAsync(anioMinimo, anioMaximo, ct);
-        var porAnio = lista.ToDictionary(x => x.Anio, x => x.PorcentajeInflacion);
+        var anioMaximo = periodos.Max(p => p.Anio);
+        var lista = await repositorioInflacion.ListarPorRangoAsync(anioBase.Value, anioMaximo, ct);
+        var aniosConInflacion = lista.Select(x => x.Anio).ToHashSet();
 
-        var aniosSinInflacion = new SortedSet<int>();
-        foreach (var anioDestino in aniosDestino.Distinct())
+        var aniosSinInflacion = ObtenerAniosInflacionNecesarios(periodos, anioBase.Value)
+            .Where(anio => !aniosConInflacion.Contains(anio))
+            .ToList();
+
+        foreach (var periodo in periodos.Distinct())
         {
-            var factor = 1m;
-            if (anioDestino > anioBase.Value)
-            {
-                for (var a = anioBase.Value + 1; a <= anioDestino; a++)
-                {
-                    if (porAnio.TryGetValue(a, out var inf))
-                        factor *= 1m + inf / 100m;
-                    else
-                        aniosSinInflacion.Add(a);
-                }
-            }
-            resultado[anioDestino] = decimal.Round(factor, 6);
+            resultado[periodo] = CalculoInflacionAplicada.CalcularFactorPeriodo(
+                lista,
+                anioBase.Value,
+                periodo.Anio,
+                NumeroPeriodoEnAnio(periodo.NumeroPeriodo));
         }
-        return (resultado, aniosSinInflacion.ToList());
+
+        return (resultado, aniosSinInflacion);
     }
+
+    private static IReadOnlyList<int> ObtenerAniosInflacionNecesarios(
+        IReadOnlyList<(int Anio, int NumeroPeriodo)> periodos,
+        int anioBase)
+    {
+        var resultado = new SortedSet<int>();
+        foreach (var periodo in periodos)
+        {
+            var numeroPeriodoEnAnio = NumeroPeriodoEnAnio(periodo.NumeroPeriodo);
+            for (var anio = anioBase; anio <= periodo.Anio; anio++)
+            {
+                if (anio < periodo.Anio || numeroPeriodoEnAnio >= 2)
+                    resultado.Add(anio);
+            }
+        }
+
+        return resultado.ToList();
+    }
+
+    private static int NumeroPeriodoEnAnio(int numeroPeriodo)
+        => numeroPeriodo <= 0 ? 1 : ((numeroPeriodo - 1) % 2) + 1;
 
     private static MaterialesProyectadosDto Vacio(
         int carreraId, string carreraNombre,

@@ -20,6 +20,9 @@ public partial class DemandaIngresosView : UserControl
             ActualizarColumnasDemanda();
             ActualizarColumnasDocentes();
             ActualizarColumnasIngresos();
+            ActualizarColumnasPresupuestosBase();
+            ActualizarColumnasPresupuestosCarrera();
+            ActualizarColumnasSeguroBecas();
             ActualizarColumnasMaterialesCantidades();
             ActualizarColumnasMaterialesMonetarios();
         };
@@ -35,6 +38,9 @@ public partial class DemandaIngresosView : UserControl
             ActualizarColumnasDemanda();
             ActualizarColumnasDocentes();
             ActualizarColumnasIngresos();
+            ActualizarColumnasPresupuestosBase();
+            ActualizarColumnasPresupuestosCarrera();
+            ActualizarColumnasSeguroBecas();
             ActualizarColumnasMaterialesCantidades();
             ActualizarColumnasMaterialesMonetarios();
         };
@@ -49,10 +55,21 @@ public partial class DemandaIngresosView : UserControl
         {
             ActualizarColumnasDemanda();
             ActualizarColumnasDocentes();
+            ActualizarColumnasPresupuestosBase();
+            ActualizarColumnasPresupuestosCarrera();
+            ActualizarColumnasSeguroBecas();
         }
         else if (e.PropertyName == nameof(DemandaIngresosViewModel.Ingresos))
         {
             ActualizarColumnasIngresos();
+            ActualizarColumnasSeguroBecas();
+        }
+        else if (e.PropertyName == nameof(DemandaIngresosViewModel.Presupuestos)
+              || e.PropertyName == nameof(DemandaIngresosViewModel.PresupuestosEtiquetasPeriodos))
+        {
+            ActualizarColumnasPresupuestosBase();
+            ActualizarColumnasPresupuestosCarrera();
+            ActualizarColumnasSeguroBecas();
         }
         else if (e.PropertyName == nameof(DemandaIngresosViewModel.Materiales)
               || e.PropertyName == nameof(DemandaIngresosViewModel.MaterialesEtiquetasPeriodos))
@@ -163,6 +180,51 @@ public partial class DemandaIngresosView : UserControl
             Binding = new Binding(nameof(IngresosMatrizFilaView.TotalDisplay)),
             Width = new DataGridLength(140)
         });
+    }
+
+    private DataGrid? ObtenerPresupuestosBaseGrid()
+        => FindName("PresupuestosBaseGrid") as DataGrid;
+
+    private DataGrid? ObtenerPresupuestosCarreraGrid()
+        => FindName("PresupuestosCarreraGrid") as DataGrid;
+
+    private DataGrid? ObtenerSeguroBecasGrid()
+        => FindName("SeguroBecasGrid") as DataGrid;
+
+    private void ActualizarColumnasPresupuestosBase()
+        => ActualizarColumnasPresupuestoMatriz(ObtenerPresupuestosBaseGrid());
+
+    private void ActualizarColumnasPresupuestosCarrera()
+        => ActualizarColumnasPresupuestoMatriz(ObtenerPresupuestosCarreraGrid());
+
+    private void ActualizarColumnasSeguroBecas()
+        => ActualizarColumnasPresupuestoMatriz(ObtenerSeguroBecasGrid());
+
+    private void ActualizarColumnasPresupuestoMatriz(DataGrid? grid)
+    {
+        if (grid is null)
+            return;
+
+        grid.Columns.Clear();
+        grid.Columns.Add(new DataGridTextColumn
+        {
+            Header = "Concepto",
+            Binding = new Binding(nameof(PresupuestoPeriodoMatrizFilaView.Concepto)),
+            Width = new DataGridLength(240)
+        });
+
+        if (DataContext is DemandaIngresosViewModel vm)
+        {
+            for (var i = 0; i < vm.PresupuestosEtiquetasPeriodos.Count; i++)
+            {
+                grid.Columns.Add(new DataGridTextColumn
+                {
+                    Header = vm.PresupuestosEtiquetasPeriodos[i],
+                    Binding = new Binding($"Periodos[{i}]") { StringFormat = "C2" },
+                    Width = new DataGridLength(120)
+                });
+            }
+        }
     }
 
     private DataGrid? ObtenerMaterialesCantidadesGrid()
