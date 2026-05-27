@@ -30,6 +30,28 @@ public sealed class IngresosMatrizFilaView
     public string TotalDisplay => $"$ {Total:N2}";
 }
 
+public sealed class MaterialCantidadMatrizFilaView
+{
+    public string Categoria { get; init; } = string.Empty;
+    public string Concepto { get; init; } = string.Empty;
+    public IReadOnlyList<decimal> Periodos { get; init; } = [];
+    public decimal Total { get; init; }
+    public bool EsEncabezadoCategoria { get; init; }
+    public bool EsTotal { get; init; }
+    public string TotalDisplay => EsEncabezadoCategoria ? string.Empty : Total.ToString("N2");
+}
+
+public sealed class MaterialMonetarioMatrizFilaView
+{
+    public string Categoria { get; init; } = string.Empty;
+    public string Concepto { get; init; } = string.Empty;
+    public IReadOnlyList<decimal> Periodos { get; init; } = [];
+    public decimal Total { get; init; }
+    public bool EsEncabezadoCategoria { get; init; }
+    public bool EsTotal { get; init; }
+    public string TotalDisplay => EsEncabezadoCategoria ? string.Empty : $"$ {Total:N2}";
+}
+
 /// <summary>
 /// ViewModel composite para la vista "Demanda e Ingresos" (Épica 9).
 /// KAN-32 implementa la pestaña de Configuración de Arancel.
@@ -64,6 +86,9 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     [ObservableProperty] private IngresosProyectadosDto? _ingresos;
     [ObservableProperty] private ObservableCollection<IngresosMatrizFilaView> _ingresosMatrizFilas = [];
     [ObservableProperty] private MaterialesProyectadosDto? _materiales;
+    [ObservableProperty] private ObservableCollection<MaterialCantidadMatrizFilaView> _materialesCantidadMatrizFilas = [];
+    [ObservableProperty] private ObservableCollection<MaterialMonetarioMatrizFilaView> _materialesMonetariosMatrizFilas = [];
+    [ObservableProperty] private IReadOnlyList<string> _materialesEtiquetasPeriodos = [];
     [ObservableProperty] private ResumenDemandaIngresosDto _resumen = new();
     [ObservableProperty] private ObservableCollection<RatioMaterialDemandaDto> _ratios = [];
     [ObservableProperty] private RatioMaterialDemandaDto? _ratioSeleccionado;
@@ -132,6 +157,13 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     partial void OnIngresosChanged(IngresosProyectadosDto? value)
     {
         IngresosMatrizFilas = ConstruirFilasIngresos(value);
+    }
+
+    partial void OnMaterialesChanged(MaterialesProyectadosDto? value)
+    {
+        MaterialesEtiquetasPeriodos = ObtenerEtiquetasMateriales(value);
+        MaterialesCantidadMatrizFilas = ConstruirFilasMaterialesCantidades(value, MaterialesEtiquetasPeriodos);
+        MaterialesMonetariosMatrizFilas = ConstruirFilasMaterialesMonetarios(value, MaterialesEtiquetasPeriodos);
     }
     public string TituloFormulario => FormEsEdicion ? "Editar configuración" : "Nueva configuración";
     public bool FormEsModoManual => string.Equals(FormModoCalculo, ModoManual, StringComparison.OrdinalIgnoreCase);
@@ -617,11 +649,173 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         Presupuestos = null;
         Ingresos = null;
         Materiales = null;
+        MaterialesCantidadMatrizFilas = [];
+        MaterialesMonetariosMatrizFilas = [];
+        MaterialesEtiquetasPeriodos = [];
         Ratios = [];
         ItemsCapitalTrabajo = [];
         RatioFormItemSeleccionado = null;
         ActualizarResumen();
     }
+
+    private static IReadOnlyList<string> ObtenerEtiquetasMateriales(MaterialesProyectadosDto? materiales)
+    {
+        if (materiales is null || materiales.Cantidades.Count == 0)
+            return [];
+
+        return materiales.Cantidades
+            .Select(c => new { c.Anio, c.NumeroPeriodo, c.EtiquetaPeriodo })
+            .Distinct()
+            .OrderBy(p => p.Anio).ThenBy(p => p.NumeroPeriodo)
+            .Select(p => p.EtiquetaPeriodo)
+            .ToList();
+    }
+
+    private static string FormatearCategoria(string categoria) => categoria?.ToUpperInvariant() switch
+    {
+        "MATERIALES_SUMINISTROS" => "MATERIALES Y SUMINISTROS",
+        "ASEO_LIMPIEZA" => "SUMINISTROS DE ASEO Y LIMPIEZA",
+        "ACCESORIOS_MATERIALES" => "ACCESORIOS Y MATERIALES",
+        "OTRO" => "OTRO",
+        _ => categoria ?? string.Empty
+    };
+
+    private static ObservableCollection<MaterialCantidadMatrizFilaView> ConstruirFilasMaterialesCantidades(
+        MaterialesProyectadosDto? materiales,
+        IReadOnlyList<string> etiquetas)
+    {
+        if (materiales is null || materiales.Cantidades.Count == 0 || etiquetas.Count == 0)
+            return [];
+
+        var filas = new List<MaterialCantidadMatrizFilaView>();
+        var totalesGenerales = new decimal[etiquetas.Count];
+
+        var grupos = materiales.Cantidades
+            .GroupBy(c => c.Categoria)
+            .OrderBy(g => OrdenCategoria(g.Key))
+            .ThenBy(g => g.Key);
+
+        foreach (var grupo in grupos)
+        {
+            filas.Add(new MaterialCantidadMatrizFilaView
+            {
+                Categoria = FormatearCategoria(grupo.Key),
+                Concepto = string.Empty,
+                EsEncabezadoCategoria = true
+            });
+
+            var conceptos = grupo
+                .GroupBy(c => c.Concepto)
+                .OrderBy(g => g.Key);
+
+            foreach (var conceptoGrp in conceptos)
+            {
+                var porEtiqueta = conceptoGrp
+                    .GroupBy(c => c.EtiquetaPeriodo)
+                    .ToDictionary(g => g.Key, g => g.Sum(x => x.Cantidad));
+
+                var valores = new List<decimal>(etiquetas.Count);
+                for (var i = 0; i < etiquetas.Count; i++)
+                {
+                    var v = porEtiqueta.TryGetValue(etiquetas[i], out var x) ? x : 0m;
+                    valores.Add(v);
+                    totalesGenerales[i] += v;
+                }
+
+                filas.Add(new MaterialCantidadMatrizFilaView
+                {
+                    Categoria = FormatearCategoria(grupo.Key),
+                    Concepto = conceptoGrp.Key,
+                    Periodos = valores,
+                    Total = valores.Sum()
+                });
+            }
+        }
+
+        filas.Add(new MaterialCantidadMatrizFilaView
+        {
+            Categoria = string.Empty,
+            Concepto = "TOTAL",
+            Periodos = totalesGenerales,
+            Total = totalesGenerales.Sum(),
+            EsTotal = true
+        });
+
+        return new ObservableCollection<MaterialCantidadMatrizFilaView>(filas);
+    }
+
+    private static ObservableCollection<MaterialMonetarioMatrizFilaView> ConstruirFilasMaterialesMonetarios(
+        MaterialesProyectadosDto? materiales,
+        IReadOnlyList<string> etiquetas)
+    {
+        if (materiales is null || materiales.Monetarios.Count == 0 || etiquetas.Count == 0)
+            return [];
+
+        var filas = new List<MaterialMonetarioMatrizFilaView>();
+        var totalesGenerales = new decimal[etiquetas.Count];
+
+        var grupos = materiales.Monetarios
+            .GroupBy(c => c.Categoria)
+            .OrderBy(g => OrdenCategoria(g.Key))
+            .ThenBy(g => g.Key);
+
+        foreach (var grupo in grupos)
+        {
+            filas.Add(new MaterialMonetarioMatrizFilaView
+            {
+                Categoria = FormatearCategoria(grupo.Key),
+                Concepto = string.Empty,
+                EsEncabezadoCategoria = true
+            });
+
+            var conceptos = grupo
+                .GroupBy(c => c.Concepto)
+                .OrderBy(g => g.Key);
+
+            foreach (var conceptoGrp in conceptos)
+            {
+                var porEtiqueta = conceptoGrp
+                    .GroupBy(c => c.EtiquetaPeriodo)
+                    .ToDictionary(g => g.Key, g => g.Sum(x => x.Costo));
+
+                var valores = new List<decimal>(etiquetas.Count);
+                for (var i = 0; i < etiquetas.Count; i++)
+                {
+                    var v = porEtiqueta.TryGetValue(etiquetas[i], out var x) ? x : 0m;
+                    valores.Add(v);
+                    totalesGenerales[i] += v;
+                }
+
+                filas.Add(new MaterialMonetarioMatrizFilaView
+                {
+                    Categoria = FormatearCategoria(grupo.Key),
+                    Concepto = conceptoGrp.Key,
+                    Periodos = valores,
+                    Total = valores.Sum()
+                });
+            }
+        }
+
+        filas.Add(new MaterialMonetarioMatrizFilaView
+        {
+            Categoria = string.Empty,
+            Concepto = "TOTAL",
+            Periodos = totalesGenerales,
+            Total = totalesGenerales.Sum(),
+            EsTotal = true
+        });
+
+        return new ObservableCollection<MaterialMonetarioMatrizFilaView>(filas);
+    }
+
+    private static int OrdenCategoria(string categoria) => categoria?.ToUpperInvariant() switch
+    {
+        "MATERIALES_SUMINISTROS" => 1,
+        "ASEO_LIMPIEZA" => 2,
+        "ACCESORIOS_MATERIALES" => 3,
+        "OTRO" => 99,
+        _ => 50
+    };
 
     private static ObservableCollection<IngresosMatrizFilaView> ConstruirFilasIngresos(IngresosProyectadosDto? ingresos)
     {

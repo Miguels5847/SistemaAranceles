@@ -60,6 +60,19 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="MatrizMaterialesRowStyle" TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsEncabezadoCategoria}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Background" Value="#C5CAE9"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsTotal}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Background" Value="#EEF2FF"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
     <Grid Margin="12">
@@ -326,15 +339,13 @@
                         </DataGrid.Columns>
                     </DataGrid>
                     <TextBlock Grid.Row="4" Text="Cantidades calculadas por período (estudiantes × consumo)" FontSize="13" FontWeight="SemiBold" Margin="0,4,0,4" VerticalAlignment="Top"/>
-                    <DataGrid Grid.Row="4" Margin="0,28,0,0" ItemsSource="{Binding Materiales.Cantidades}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9">
-                        <DataGrid.Columns><DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" Width="160"/><DataGridTextColumn Header="Concepto" Binding="{Binding Concepto}" Width="*" MinWidth="180"/><DataGridTextColumn Header="Período" Binding="{Binding EtiquetaPeriodo}" Width="120"/><DataGridTextColumn Header="Estudiantes" Binding="{Binding EstudiantesDisplay}" Width="120"/><DataGridTextColumn Header="Cantidad" Binding="{Binding CantidadDisplay}" Width="140"/></DataGrid.Columns>
-                    </DataGrid>
+                    <DataGrid x:Name="MaterialesCantidadesGrid" Grid.Row="4" Margin="0,28,0,0" ItemsSource="{Binding MaterialesCantidadMatrizFilas}" AutoGenerateColumns="False" IsReadOnly="True" RowStyle="{StaticResource MatrizMaterialesRowStyle}" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9"/>
                     <Border Grid.Row="5" Background="#EEF2FF" BorderBrush="#1A237E" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,8,0,0"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><StackPanel Grid.Column="0"><TextBlock Text="Año base inflación" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Materiales.AnioBaseInflacion, TargetNullValue='No definido', FallbackValue='No definido'}" FontWeight="Bold"/></StackPanel><StackPanel Grid.Column="1"><TextBlock Text="Total cantidad (todos los periodos)" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Materiales.TotalCantidadDisplay, FallbackValue='0'}" FontWeight="Bold" Foreground="#1A237E"/></StackPanel></Grid></Border>
                 </Grid>
             </TabItem>
 
             <TabItem Header="6. Materiales Monetarios">
-                <Grid Margin="8"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><TextBlock Grid.Row="0" Text="Costos monetarios con inflación aplicada" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,4"/><Border Grid.Row="1" Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1" CornerRadius="4" Padding="8,5" Margin="0,0,0,6" Visibility="{Binding Materiales.MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}"><TextBlock Text="{Binding Materiales.MensajeAdvertencia}" Foreground="#E65100" TextWrapping="Wrap"/></Border><DataGrid Grid.Row="2" ItemsSource="{Binding Materiales.Monetarios}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9"><DataGrid.Columns><DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" Width="160"/><DataGridTextColumn Header="Concepto" Binding="{Binding Concepto}" Width="*" MinWidth="180"/><DataGridTextColumn Header="Período" Binding="{Binding EtiquetaPeriodo}" Width="120"/><DataGridTextColumn Header="Cantidad" Binding="{Binding CantidadDisplay}" Width="120"/><DataGridTextColumn Header="Precio unit." Binding="{Binding PrecioDisplay}" Width="120"/><DataGridTextColumn Header="Factor infl." Binding="{Binding FactorDisplay}" Width="110"/><DataGridTextColumn Header="Costo" Binding="{Binding CostoDisplay}" Width="150"/></DataGrid.Columns></DataGrid><Border Grid.Row="3" Background="#1A237E" BorderBrush="#1A237E" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,8,0,0"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Grid.Column="0" Text="TOTAL MATERIALES" FontWeight="Bold" Foreground="White" FontSize="14" VerticalAlignment="Center"/><TextBlock Grid.Column="1" Text="{Binding Materiales.TotalCostoDisplay, FallbackValue='$ 0,00'}" Foreground="#FFEB3B" FontWeight="Bold" FontSize="15" HorizontalAlignment="Right"/></Grid></Border></Grid>
+                <Grid Margin="8"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><TextBlock Grid.Row="0" Text="Costos monetarios con inflación aplicada" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,4"/><Border Grid.Row="1" Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1" CornerRadius="4" Padding="8,5" Margin="0,0,0,6" Visibility="{Binding Materiales.MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}"><TextBlock Text="{Binding Materiales.MensajeAdvertencia}" Foreground="#E65100" TextWrapping="Wrap"/></Border><DataGrid x:Name="MaterialesMonetariosGrid" Grid.Row="2" ItemsSource="{Binding MaterialesMonetariosMatrizFilas}" AutoGenerateColumns="False" IsReadOnly="True" RowStyle="{StaticResource MatrizMaterialesRowStyle}" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9"/><Border Grid.Row="3" Background="#1A237E" BorderBrush="#1A237E" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,8,0,0"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Grid.Column="0" Text="TOTAL MATERIALES" FontWeight="Bold" Foreground="White" FontSize="14" VerticalAlignment="Center"/><TextBlock Grid.Column="1" Text="{Binding Materiales.TotalCostoDisplay, FallbackValue='$ 0,00'}" Foreground="#FFEB3B" FontWeight="Bold" FontSize="15" HorizontalAlignment="Right"/></Grid></Border></Grid>
             </TabItem>
 
             <TabItem Header="7. Resumen">
