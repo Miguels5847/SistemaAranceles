@@ -73,6 +73,15 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="DocentesNecesariosRowStyle" TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Tipo}" Value="Docentes Requeridos">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Background" Value="#EEF2FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
     <Grid Margin="12">
@@ -240,7 +249,7 @@
                             <TextBlock Text="{Binding DemandaProyectada.MensajeAdvertenciaDocentes}" Foreground="#E65100" TextWrapping="Wrap"/>
                         </Border>
                     </StackPanel>
-                    <DataGrid x:Name="DocentesNecesariosGrid" Grid.Row="4" ItemsSource="{Binding DemandaProyectada.DocentesPorPeriodo}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9"/>
+                    <DataGrid x:Name="DocentesNecesariosGrid" Grid.Row="4" ItemsSource="{Binding DemandaProyectada.DocentesPorPeriodo}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9" RowStyle="{StaticResource DocentesNecesariosRowStyle}"/>
                 </Grid>
             </TabItem>
 
