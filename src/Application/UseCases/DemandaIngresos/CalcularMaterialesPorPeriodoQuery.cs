@@ -7,7 +7,7 @@ namespace SistemaAranceles.Application.UseCases.DemandaIngresos;
 
 /// <summary>
 /// KAN-34: Calcula materiales por periodo a partir de ratios + proyección estudiantes.
-///   cantidad = estudiantes × ratio × (meses_operativos si unidad='por_estudiante_mes', sino 1)
+///   cantidad = estudiantes x ratio, estudiantes x ratio x meses, o ratio fijo por periodo.
 ///   precio   = item_material_insumo.precio_unitario (si vinculado) o 0
 ///   factor_inflacion = (1+inf₁)·(1+inf₂)... desde anio_base hasta año del periodo (si aplica_inflacion)
 ///   costo    = cantidad × precio × factor
