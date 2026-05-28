@@ -1,6 +1,7 @@
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.Inflacion;
+using SistemaAranceles.Domain.Enums;
 
 namespace SistemaAranceles.Application.UseCases.DemandaIngresos;
 
@@ -99,13 +100,18 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
 
         foreach (var ratio in ratios)
         {
-            var multiplicadorUnidad = ratio.UnidadRatio == "por_estudiante_mes"
-                ? ratio.MesesOperativos
-                : 1;
-
             foreach (var (periodoId, info) in estudiantesPorPeriodo.OrderBy(p => p.Value.Anio).ThenBy(p => p.Value.NumeroPeriodo))
             {
-                var cantidad = decimal.Round(info.Total * ratio.RatioConsumo * multiplicadorUnidad, 4);
+                var cantidad = ratio.UnidadRatio switch
+                {
+                    UnidadRatioMaterialExtensiones.PorEstudianteMesText =>
+                        info.Total * ratio.RatioConsumo * ratio.MesesOperativos,
+                    UnidadRatioMaterialExtensiones.FijoPeriodoText =>
+                        ratio.RatioConsumo,
+                    _ =>
+                        info.Total * ratio.RatioConsumo
+                };
+                cantidad = decimal.Round(cantidad, 4);
 
                 cantidades.Add(new MaterialCantidadCeldaDto
                 {

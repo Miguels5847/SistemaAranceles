@@ -62,7 +62,8 @@ public sealed class RepositorioConfiguracionArancelCarrera(ContextoAplicacion co
                        from es in esJoin.DefaultIfEmpty()
                        where c.EstaActivo
                           && c.CarreraId == carreraId
-                          && c.EscenarioProyeccionId == escenarioProyeccionId
+                          && (c.EscenarioProyeccionId == escenarioProyeccionId
+                              || c.EscenarioProyeccionId == null)
                        select new ConfiguracionArancelCarreraDto
                        {
                            Id = c.Id,
@@ -80,15 +81,9 @@ public sealed class RepositorioConfiguracionArancelCarrera(ContextoAplicacion co
                            ActualizadoEn = c.ActualizadoEn
                        };
 
-        var resultado = await consulta.FirstOrDefaultAsync(ct);
-        if (resultado is not null)
-            return resultado;
-
-        if (escenarioProyeccionId is not null)
-        {
-            return await ObtenerPorCarreraEscenarioAsync(carreraId, null, ct);
-        }
-        return null;
+        return await consulta
+            .OrderByDescending(x => x.EscenarioProyeccionId == escenarioProyeccionId)
+            .FirstOrDefaultAsync(ct);
     }
 
     public async Task<DominioConfiguracion?> ObtenerDominioAsync(int id, CancellationToken ct = default)

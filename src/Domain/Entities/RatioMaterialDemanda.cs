@@ -78,11 +78,14 @@ public sealed class RatioMaterialDemanda : EntidadDominioBase
     /// <summary>Cantidad consumida en un periodo según número de estudiantes.</summary>
     public decimal CalcularCantidad(decimal estudiantes)
     {
-        if (estudiantes <= 0m) return 0m;
-        var multiplicador = UnidadRatio == UnidadRatioMaterial.PorEstudianteMes
-            ? MesesOperativos
-            : 1;
-        return decimal.Round(estudiantes * RatioConsumo * multiplicador, 4);
+        var cantidad = UnidadRatio switch
+        {
+            UnidadRatioMaterial.FijoPeriodo => RatioConsumo,
+            UnidadRatioMaterial.PorEstudianteMes => estudiantes > 0m ? estudiantes * RatioConsumo * MesesOperativos : 0m,
+            _ => estudiantes > 0m ? estudiantes * RatioConsumo : 0m
+        };
+
+        return decimal.Round(cantidad, 4);
     }
 
     private static int? NormalizarId(int? id) => id is int v && v > 0 ? v : null;

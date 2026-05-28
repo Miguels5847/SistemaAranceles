@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.Interfaces.Persistencia;
+using SistemaAranceles.Domain.Enums;
 using InfraRatio = SistemaAranceles.Infrastructure.Persistence.Entidades.RatioMaterialDemanda;
 
 namespace SistemaAranceles.Infrastructure.Persistence.Repositories;
@@ -66,7 +67,7 @@ public sealed class RepositorioRatioMaterialDemanda(ContextoAplicacion contexto)
             existente.ItemMaterialInsumoId = dto.ItemMaterialInsumoId is > 0 ? dto.ItemMaterialInsumoId : null;
             existente.RatioConsumo = dto.RatioConsumo;
             existente.UnidadRatio = dto.UnidadRatio;
-            existente.MesesOperativos = dto.MesesOperativos;
+            existente.MesesOperativos = NormalizarMesesOperativos(dto);
             existente.AplicaInflacion = dto.AplicaInflacion;
             existente.ActualizadoEn = DateTime.UtcNow;
             existente.ActualizadoPorUsuarioId = usuarioId;
@@ -82,7 +83,7 @@ public sealed class RepositorioRatioMaterialDemanda(ContextoAplicacion contexto)
                 ItemMaterialInsumoId = dto.ItemMaterialInsumoId is > 0 ? dto.ItemMaterialInsumoId : null,
                 RatioConsumo = dto.RatioConsumo,
                 UnidadRatio = dto.UnidadRatio,
-                MesesOperativos = dto.MesesOperativos,
+                MesesOperativos = NormalizarMesesOperativos(dto),
                 AplicaInflacion = dto.AplicaInflacion,
                 CreadoEn = DateTime.UtcNow,
                 CreadoPorUsuarioId = usuarioId,
@@ -96,6 +97,11 @@ public sealed class RepositorioRatioMaterialDemanda(ContextoAplicacion contexto)
         await contexto.SaveChangesAsync(ct);
         return dto.Id!.Value;
     }
+
+    private static int NormalizarMesesOperativos(GuardarRatioMaterialDemandaDto dto)
+        => dto.UnidadRatio == UnidadRatioMaterialExtensiones.FijoPeriodoText
+            ? 1
+            : dto.MesesOperativos;
 
     public async Task EliminarAsync(int id, int? usuarioId, CancellationToken ct = default)
     {

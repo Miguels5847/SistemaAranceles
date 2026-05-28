@@ -1,3 +1,5 @@
+using SistemaAranceles.Domain.Enums;
+
 namespace SistemaAranceles.Application.DTOs.DemandaIngresos;
 
 public sealed class RatioMaterialDemandaDto
@@ -18,7 +20,12 @@ public sealed class RatioMaterialDemandaDto
     public bool EstaActivo { get; init; } = true;
 
     public string RatioDisplay => RatioConsumo.ToString("0.######");
-    public string UnidadDisplay => UnidadRatio == "por_estudiante_mes" ? "por estudiante / mes" : "por estudiante";
+    public string UnidadDisplay => UnidadRatio switch
+    {
+        UnidadRatioMaterialExtensiones.PorEstudianteMesText => "por estudiante / mes",
+        UnidadRatioMaterialExtensiones.FijoPeriodoText => "fijo por período",
+        _ => "por estudiante"
+    };
     public string PrecioReferenciaDisplay => $"$ {PrecioUnitarioReferencia:N2}";
     public string InflacionDisplay => AplicaInflacion ? "Sí" : "No";
     public string ItemVinculadoDisplay => string.IsNullOrWhiteSpace(ItemMaterialInsumoNombre)

@@ -8,6 +8,7 @@ using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.DemandaIngresos;
 using SistemaAranceles.Domain.Entities;
+using SistemaAranceles.Domain.Enums;
 using SistemaAranceles.Presentation.State;
 
 namespace SistemaAranceles.Presentation.ViewModels.DemandaIngresos;
@@ -63,6 +64,12 @@ public sealed class PresupuestoPeriodoMatrizFilaView
     public string TotalDisplay { get; init; } = string.Empty;
 }
 
+public sealed class UnidadConsumoOpcion
+{
+    public string Valor { get; init; } = string.Empty;
+    public string Display { get; init; } = string.Empty;
+}
+
 /// <summary>
 /// ViewModel composite para la vista "Demanda e Ingresos" (Épica 9).
 /// KAN-32 implementa la pestaña de Configuración de Arancel.
@@ -76,6 +83,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
     private bool _suprimirCambios;
+    private int _refrescoArancelVersion;
 
     public DemandaIngresosViewModel(IServiceProvider serviceProvider, SesionActual sesionActual)
     {
@@ -119,7 +127,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     [ObservableProperty] private string _ratioFormCategoria = "MATERIALES_SUMINISTROS";
     [ObservableProperty] private string _ratioFormConcepto = string.Empty;
     [ObservableProperty] private string _ratioFormRatio = "0";
-    [ObservableProperty] private string _ratioFormUnidad = "por_estudiante";
+    [ObservableProperty] private string _ratioFormUnidad = UnidadRatioMaterialExtensiones.PorEstudianteText;
     [ObservableProperty] private string _ratioFormMeses = "6";
     [ObservableProperty] private bool _ratioFormAplicaInflacion = true;
     [ObservableProperty] private int? _ratioFormItemMaterialId;
@@ -132,6 +140,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     [ObservableProperty] private bool _formUsaPorcentajeInstitucional = true;
     [ObservableProperty] private string _formPorcentajeMatricula = "10";
     [ObservableProperty] private bool _formEscenarioGlobal = true;
+    [ObservableProperty] private int? _formEscenarioProyeccionId;
 
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
@@ -140,8 +149,17 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
 
     public IReadOnlyList<string> ModosCalculo { get; } = [ModoManual, ModoAutomatico];
     public IReadOnlyList<string> CategoriasRatio { get; } = ["MATERIALES_SUMINISTROS", "ASEO_LIMPIEZA", "ACCESORIOS_MATERIALES", "OTRO"];
-    public IReadOnlyList<string> UnidadesRatio { get; } = ["por_estudiante", "por_estudiante_mes"];
+    public IReadOnlyList<UnidadConsumoOpcion> UnidadesRatio { get; } =
+    [
+        new() { Valor = UnidadRatioMaterialExtensiones.PorEstudianteText, Display = "Por estudiante" },
+        new() { Valor = UnidadRatioMaterialExtensiones.PorEstudianteMesText, Display = "Por estudiante / mes" },
+        new() { Valor = UnidadRatioMaterialExtensiones.FijoPeriodoText, Display = "Fijo por período" }
+    ];
     public string TituloRatioFormulario => RatioFormEsEdicion ? "Editar consumo" : "Nuevo consumo";
+    public bool RatioFormMesesEditable => RatioFormUnidad != UnidadRatioMaterialExtensiones.FijoPeriodoText;
+    public string RatioFormConsumoEtiqueta => RatioFormUnidad == UnidadRatioMaterialExtensiones.FijoPeriodoText
+        ? "Cantidad fija por período"
+        : "Consumo por estudiante";
     public string RatioFormItemAdvertencia
     {
         get
@@ -165,6 +183,15 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     {
         RatioFormItemMaterialId = value?.Id;
         OnPropertyChanged(nameof(RatioFormItemAdvertencia));
+    }
+
+    partial void OnRatioFormUnidadChanged(string value)
+    {
+        if (value == UnidadRatioMaterialExtensiones.FijoPeriodoText)
+            RatioFormMeses = "1";
+
+        OnPropertyChanged(nameof(RatioFormMesesEditable));
+        OnPropertyChanged(nameof(RatioFormConsumoEtiqueta));
     }
 
     partial void OnDemandaProyectadaChanged(DemandaProyectadaDto? value)
@@ -229,6 +256,12 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     {
         _ = value;
         OnPropertyChanged(nameof(FormPorcentajeMatriculaEditable));
+    }
+
+    partial void OnFormEscenarioGlobalChanged(bool value)
+    {
+        if (!value && FormEscenarioProyeccionId is null)
+            FormEscenarioProyeccionId = EscenarioSeleccionado?.Id;
     }
 
     partial void OnEstaGuardandoChanged(bool value)
@@ -347,12 +380,14 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     {
         if (CarreraSeleccionada is null)
         {
+            _refrescoArancelVersion++;
             LimpiarTodo();
             return;
         }
 
         if (EscenarioSeleccionado is null)
         {
+            _refrescoArancelVersion++;
             ArancelEfectivo = null;
             DemandaProyectada = null;
             Presupuestos = null;
@@ -363,6 +398,10 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             MensajeError = "Selecciona un escenario para calcular Demanda e Ingresos.";
             return;
         }
+
+        var version = ++_refrescoArancelVersion;
+        var carreraId = CarreraSeleccionada.Id;
+        var escenarioId = EscenarioSeleccionado.Id;
 
         try
         {
@@ -375,28 +414,44 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
 
             using var scope = _serviceProvider.CreateScope();
             var queryArancel = scope.ServiceProvider.GetRequiredService<ObtenerArancelEfectivoQuery>();
-            ArancelEfectivo = await queryArancel.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
+            var arancel = await queryArancel.EjecutarAsync(carreraId, escenarioId);
 
             var queryDemanda = scope.ServiceProvider.GetRequiredService<ObtenerDemandaProyectadaQuery>();
-            DemandaProyectada = await queryDemanda.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
+            var demanda = await queryDemanda.EjecutarAsync(carreraId, escenarioId);
 
             var queryPresup = scope.ServiceProvider.GetRequiredService<ObtenerPresupuestosCarreraQuery>();
-            Presupuestos = await queryPresup.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
+            var presupuestos = await queryPresup.EjecutarAsync(carreraId, escenarioId);
 
             var queryIngresos = scope.ServiceProvider.GetRequiredService<CalcularIngresosProyectadosQuery>();
-            Ingresos = await queryIngresos.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
+            var ingresos = await queryIngresos.EjecutarAsync(carreraId, escenarioId);
 
             var queryMateriales = scope.ServiceProvider.GetRequiredService<CalcularMaterialesPorPeriodoQuery>();
-            Materiales = await queryMateriales.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
+            var materiales = await queryMateriales.EjecutarAsync(carreraId, escenarioId);
 
             var listarRatios = scope.ServiceProvider.GetRequiredService<ListarRatiosMaterialDemandaQuery>();
-            var ratios = await listarRatios.EjecutarAsync(CarreraSeleccionada.Id);
+            var ratios = await listarRatios.EjecutarAsync(carreraId);
+
+            var listarConfigs = scope.ServiceProvider.GetRequiredService<ListarConfiguracionesArancelCarreraQuery>();
+            var configs = await listarConfigs.EjecutarAsync(carreraId);
+
+            if (!EsRefrescoVigente(version, carreraId, escenarioId))
+                return;
+
+            ArancelEfectivo = arancel;
+            DemandaProyectada = demanda;
+            Presupuestos = presupuestos;
+            Ingresos = ingresos;
+            Materiales = materiales;
+            Configuraciones = new ObservableCollection<ConfiguracionArancelCarreraDto>(configs);
             Ratios = new ObservableCollection<RatioMaterialDemandaDto>(ratios);
 
             ActualizarResumen();
         }
         catch (Exception ex)
         {
+            if (!EsRefrescoVigente(version, carreraId, escenarioId))
+                return;
+
             MensajeError = $"Error al calcular arancel/presupuestos/ingresos/materiales: {Detalle(ex)}";
             ArancelEfectivo = null;
             DemandaProyectada = null;
@@ -408,6 +463,11 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         }
     }
 
+    private bool EsRefrescoVigente(int version, int carreraId, int escenarioId)
+        => version == _refrescoArancelVersion
+           && CarreraSeleccionada?.Id == carreraId
+           && EscenarioSeleccionado?.Id == escenarioId;
+
     [RelayCommand]
     private void AbrirNuevoRatio()
     {
@@ -417,7 +477,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         RatioFormCategoria = "MATERIALES_SUMINISTROS";
         RatioFormConcepto = string.Empty;
         RatioFormRatio = "0";
-        RatioFormUnidad = "por_estudiante";
+        RatioFormUnidad = UnidadRatioMaterialExtensiones.PorEstudianteText;
         RatioFormMeses = "6";
         RatioFormAplicaInflacion = true;
         RatioFormItemMaterialId = null;
@@ -462,9 +522,18 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(RatioFormConcepto)) { MensajeError = "Concepto es obligatorio."; return; }
         if (!TryDecimal(RatioFormRatio, out var ratio) || ratio < 0m)
         { MensajeError = "Ratio inválido (≥ 0)."; return; }
-        if (!int.TryParse(RatioFormMeses, NumberStyles.Integer, CultureInfo.InvariantCulture, out var meses)
+        var unidad = RatioFormUnidad;
+        var meses = 1;
+        if (unidad == UnidadRatioMaterialExtensiones.FijoPeriodoText)
+        {
+            RatioFormMeses = "1";
+        }
+        else if (!int.TryParse(RatioFormMeses, NumberStyles.Integer, CultureInfo.InvariantCulture, out meses)
             || meses <= 0 || meses > 12)
-        { MensajeError = "Meses operativos entre 1 y 12."; return; }
+        {
+            MensajeError = "Meses operativos entre 1 y 12.";
+            return;
+        }
 
         EstaGuardando = true;
         MensajeError = string.Empty;
@@ -478,7 +547,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
                 Concepto = RatioFormConcepto.Trim(),
                 ItemMaterialInsumoId = RatioFormItemSeleccionado?.Id,
                 RatioConsumo = ratio,
-                UnidadRatio = RatioFormUnidad,
+                UnidadRatio = unidad,
                 MesesOperativos = meses,
                 AplicaInflacion = RatioFormAplicaInflacion
             };
@@ -547,6 +616,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         FormUsaPorcentajeInstitucional = true;
         FormPorcentajeMatricula = "10";
         FormEscenarioGlobal = EscenarioSeleccionado is null;
+        FormEscenarioProyeccionId = EscenarioSeleccionado?.Id;
         FormEsEdicion = false;
         FormVisible = true;
         MensajeError = string.Empty;
@@ -569,6 +639,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         FormUsaPorcentajeInstitucional = dto.UsaPorcentajeMatriculaInstitucional;
         FormPorcentajeMatricula = (dto.PorcentajeMatricula ?? 10m).ToString("0.##", CultureInfo.InvariantCulture);
         FormEscenarioGlobal = dto.EscenarioProyeccionId is null;
+        FormEscenarioProyeccionId = dto.EscenarioProyeccionId;
         FormEsEdicion = true;
         FormVisible = true;
         MensajeError = string.Empty;
@@ -616,7 +687,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             {
                 Id = FormEsEdicion ? FormId : null,
                 CarreraId = CarreraSeleccionada.Id,
-                EscenarioProyeccionId = FormEscenarioGlobal ? null : EscenarioSeleccionado?.Id,
+                EscenarioProyeccionId = FormEscenarioGlobal ? null : FormEscenarioProyeccionId ?? EscenarioSeleccionado?.Id,
                 ModoCalculoArancel = FormModoCalculo,
                 ArancelManual = TryDecimal(FormArancelManual, out var a) ? a : (decimal?)null,
                 PorcentajeMatricula = porcMatricula,

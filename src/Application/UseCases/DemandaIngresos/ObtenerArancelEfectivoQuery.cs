@@ -23,6 +23,8 @@ public sealed class ObtenerArancelEfectivoQuery(
         var carreraNombre = carrera?.Nombre ?? string.Empty;
 
         var configuracion = await repositorioArancel.ObtenerPorCarreraEscenarioAsync(carreraId, escenarioProyeccionId, ct);
+        if (configuracion is null && escenarioProyeccionId is not null)
+            configuracion = await repositorioArancel.ObtenerPorCarreraEscenarioAsync(carreraId, null, ct);
 
         if (configuracion is null)
         {
