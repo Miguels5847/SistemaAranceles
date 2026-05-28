@@ -13,6 +13,7 @@ public sealed class RatioMaterialDemanda
     public decimal RatioConsumo { get; set; }
     public string UnidadRatio { get; set; } = "por_estudiante";
     public int MesesOperativos { get; set; } = 6;
+    public decimal CantidadFijaAdicional { get; set; }
     public bool AplicaInflacion { get; set; } = true;
 
     public DateTime CreadoEn { get; set; } = DateTime.UtcNow;

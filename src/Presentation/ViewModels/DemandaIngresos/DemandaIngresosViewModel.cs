@@ -129,6 +129,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     [ObservableProperty] private string _ratioFormRatio = "0";
     [ObservableProperty] private string _ratioFormUnidad = UnidadRatioMaterialExtensiones.PorEstudianteText;
     [ObservableProperty] private string _ratioFormMeses = "6";
+    [ObservableProperty] private string _ratioFormAdicionalFijo = "0";
     [ObservableProperty] private bool _ratioFormAplicaInflacion = true;
     [ObservableProperty] private int? _ratioFormItemMaterialId;
 
@@ -153,13 +154,19 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     [
         new() { Valor = UnidadRatioMaterialExtensiones.PorEstudianteText, Display = "Por estudiante" },
         new() { Valor = UnidadRatioMaterialExtensiones.PorEstudianteMesText, Display = "Por estudiante / mes" },
-        new() { Valor = UnidadRatioMaterialExtensiones.FijoPeriodoText, Display = "Fijo por período" }
+        new() { Valor = UnidadRatioMaterialExtensiones.FijoPeriodoText, Display = "Fijo por período" },
+        new() { Valor = UnidadRatioMaterialExtensiones.PorDocenteText, Display = "Por docente" }
     ];
     public string TituloRatioFormulario => RatioFormEsEdicion ? "Editar consumo" : "Nuevo consumo";
-    public bool RatioFormMesesEditable => RatioFormUnidad != UnidadRatioMaterialExtensiones.FijoPeriodoText;
-    public string RatioFormConsumoEtiqueta => RatioFormUnidad == UnidadRatioMaterialExtensiones.FijoPeriodoText
-        ? "Cantidad fija por período"
-        : "Consumo por estudiante";
+    public bool RatioFormMesesEditable => RatioFormUnidad is not (UnidadRatioMaterialExtensiones.FijoPeriodoText
+        or UnidadRatioMaterialExtensiones.PorDocenteText);
+    public bool RatioFormAdicionalFijoEditable => RatioFormUnidad == UnidadRatioMaterialExtensiones.PorDocenteText;
+    public string RatioFormConsumoEtiqueta => RatioFormUnidad switch
+    {
+        UnidadRatioMaterialExtensiones.FijoPeriodoText => "Cantidad fija por período",
+        UnidadRatioMaterialExtensiones.PorDocenteText => "Consumo por docente",
+        _ => "Consumo por estudiante"
+    };
     public string RatioFormItemAdvertencia
     {
         get
@@ -187,10 +194,14 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
 
     partial void OnRatioFormUnidadChanged(string value)
     {
-        if (value == UnidadRatioMaterialExtensiones.FijoPeriodoText)
+        if (value is UnidadRatioMaterialExtensiones.FijoPeriodoText
+            or UnidadRatioMaterialExtensiones.PorDocenteText)
             RatioFormMeses = "1";
+        if (value != UnidadRatioMaterialExtensiones.PorDocenteText)
+            RatioFormAdicionalFijo = "0";
 
         OnPropertyChanged(nameof(RatioFormMesesEditable));
+        OnPropertyChanged(nameof(RatioFormAdicionalFijoEditable));
         OnPropertyChanged(nameof(RatioFormConsumoEtiqueta));
     }
 
@@ -479,6 +490,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         RatioFormRatio = "0";
         RatioFormUnidad = UnidadRatioMaterialExtensiones.PorEstudianteText;
         RatioFormMeses = "6";
+        RatioFormAdicionalFijo = "0";
         RatioFormAplicaInflacion = true;
         RatioFormItemMaterialId = null;
         SeleccionarItemRatio(null);
@@ -499,6 +511,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         RatioFormRatio = dto.RatioConsumo.ToString("0.######", CultureInfo.InvariantCulture);
         RatioFormUnidad = dto.UnidadRatio;
         RatioFormMeses = dto.MesesOperativos.ToString(CultureInfo.InvariantCulture);
+        RatioFormAdicionalFijo = dto.CantidadFijaAdicional.ToString("0.####", CultureInfo.InvariantCulture);
         RatioFormAplicaInflacion = dto.AplicaInflacion;
         RatioFormItemMaterialId = dto.ItemMaterialInsumoId;
         SeleccionarItemRatio(dto.ItemMaterialInsumoId);
@@ -524,7 +537,8 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         { MensajeError = "Ratio inválido (≥ 0)."; return; }
         var unidad = RatioFormUnidad;
         var meses = 1;
-        if (unidad == UnidadRatioMaterialExtensiones.FijoPeriodoText)
+        if (unidad is UnidadRatioMaterialExtensiones.FijoPeriodoText
+            or UnidadRatioMaterialExtensiones.PorDocenteText)
         {
             RatioFormMeses = "1";
         }
@@ -534,6 +548,15 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             MensajeError = "Meses operativos entre 1 y 12.";
             return;
         }
+        var adicionalFijo = 0m;
+        if (unidad == UnidadRatioMaterialExtensiones.PorDocenteText
+            && (!TryDecimal(RatioFormAdicionalFijo, out adicionalFijo) || adicionalFijo < 0m))
+        {
+            MensajeError = "Adicional fijo invalido (>= 0).";
+            return;
+        }
+        if (unidad != UnidadRatioMaterialExtensiones.PorDocenteText)
+            RatioFormAdicionalFijo = "0";
 
         EstaGuardando = true;
         MensajeError = string.Empty;
@@ -549,6 +572,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
                 RatioConsumo = ratio,
                 UnidadRatio = unidad,
                 MesesOperativos = meses,
+                CantidadFijaAdicional = adicionalFijo,
                 AplicaInflacion = RatioFormAplicaInflacion
             };
 

@@ -37,6 +37,7 @@ public sealed class RepositorioRatioMaterialDemanda(ContextoAplicacion contexto)
                            RatioConsumo = r.RatioConsumo,
                            UnidadRatio = r.UnidadRatio,
                            MesesOperativos = r.MesesOperativos,
+                           CantidadFijaAdicional = r.CantidadFijaAdicional,
                            AplicaInflacion = r.AplicaInflacion,
                            EstaActivo = r.EstaActivo
                        };
@@ -68,6 +69,7 @@ public sealed class RepositorioRatioMaterialDemanda(ContextoAplicacion contexto)
             existente.RatioConsumo = dto.RatioConsumo;
             existente.UnidadRatio = dto.UnidadRatio;
             existente.MesesOperativos = NormalizarMesesOperativos(dto);
+            existente.CantidadFijaAdicional = NormalizarCantidadFijaAdicional(dto);
             existente.AplicaInflacion = dto.AplicaInflacion;
             existente.ActualizadoEn = DateTime.UtcNow;
             existente.ActualizadoPorUsuarioId = usuarioId;
@@ -84,6 +86,7 @@ public sealed class RepositorioRatioMaterialDemanda(ContextoAplicacion contexto)
                 RatioConsumo = dto.RatioConsumo,
                 UnidadRatio = dto.UnidadRatio,
                 MesesOperativos = NormalizarMesesOperativos(dto),
+                CantidadFijaAdicional = NormalizarCantidadFijaAdicional(dto),
                 AplicaInflacion = dto.AplicaInflacion,
                 CreadoEn = DateTime.UtcNow,
                 CreadoPorUsuarioId = usuarioId,
@@ -99,9 +102,15 @@ public sealed class RepositorioRatioMaterialDemanda(ContextoAplicacion contexto)
     }
 
     private static int NormalizarMesesOperativos(GuardarRatioMaterialDemandaDto dto)
-        => dto.UnidadRatio == UnidadRatioMaterialExtensiones.FijoPeriodoText
+        => dto.UnidadRatio is UnidadRatioMaterialExtensiones.FijoPeriodoText
+            or UnidadRatioMaterialExtensiones.PorDocenteText
             ? 1
             : dto.MesesOperativos;
+
+    private static decimal NormalizarCantidadFijaAdicional(GuardarRatioMaterialDemandaDto dto)
+        => dto.UnidadRatio == UnidadRatioMaterialExtensiones.PorDocenteText
+            ? dto.CantidadFijaAdicional
+            : 0m;
 
     public async Task EliminarAsync(int id, int? usuarioId, CancellationToken ct = default)
     {
@@ -128,6 +137,7 @@ public sealed class RepositorioRatioMaterialDemanda(ContextoAplicacion contexto)
                 ratio_consumo              NUMERIC(12,6) NOT NULL DEFAULT 0,
                 unidad_ratio               VARCHAR(40)  NOT NULL DEFAULT 'por_estudiante',
                 meses_operativos           INTEGER      NOT NULL DEFAULT 6,
+                cantidad_fija_adicional    NUMERIC(18,4) NOT NULL DEFAULT 0,
                 aplica_inflacion           BOOLEAN      NOT NULL DEFAULT TRUE,
                 creado_en                  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
                 creado_por_usuario_id      INTEGER NULL,

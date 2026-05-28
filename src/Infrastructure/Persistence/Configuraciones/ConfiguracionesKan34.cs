@@ -18,6 +18,7 @@ internal sealed class RatioMaterialDemandaConfiguracion : IEntityTypeConfigurati
         builder.Property(x => x.RatioConsumo).HasColumnName("ratio_consumo").HasColumnType("numeric(12,6)").HasDefaultValue(0m).IsRequired();
         builder.Property(x => x.UnidadRatio).HasColumnName("unidad_ratio").HasMaxLength(40).HasDefaultValue("por_estudiante").IsRequired();
         builder.Property(x => x.MesesOperativos).HasColumnName("meses_operativos").HasDefaultValue(6).IsRequired();
+        builder.Property(x => x.CantidadFijaAdicional).HasColumnName("cantidad_fija_adicional").HasColumnType("numeric(18,4)").HasDefaultValue(0m).IsRequired();
         builder.Property(x => x.AplicaInflacion).HasColumnName("aplica_inflacion").HasDefaultValue(true).IsRequired();
 
         builder.Property(x => x.CreadoEn).HasColumnName("creado_en").IsRequired();

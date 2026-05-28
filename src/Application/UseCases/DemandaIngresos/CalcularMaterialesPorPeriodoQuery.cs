@@ -1,7 +1,10 @@
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
+using SistemaAranceles.Application.DTOs.Estudiantes;
 using SistemaAranceles.Application.Interfaces.Persistencia;
+using SistemaAranceles.Application.UseCases.Estudiantes;
 using SistemaAranceles.Application.UseCases.Inflacion;
 using SistemaAranceles.Domain.Enums;
+using SistemaAranceles.Domain.Entities;
 
 namespace SistemaAranceles.Application.UseCases.DemandaIngresos;
 
@@ -18,7 +21,9 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
     IRepositorioCarrera repositorioCarrera,
     IRepositorioEscenarioProyeccion repositorioEscenario,
     IRepositorioDatosInstitucionales repositorioDatos,
-    IRepositorioInflacionAnual repositorioInflacion)
+    IRepositorioInflacionAnual repositorioInflacion,
+    IRepositorioConfiguracionRetencion repositorioConfiguracionRetencion,
+    IRepositorioOverrideHorasPeriodo repositorioOverrideHorasPeriodo)
 {
     public async Task<MaterialesProyectadosDto> EjecutarAsync(
         int carreraId,
@@ -72,6 +77,8 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
                 escenario?.Nombre ?? "Global", anioBase, advertencias);
         }
 
+        var requiereDocentes = ratios.Any(r => r.UnidadRatio == UnidadRatioMaterialExtensiones.PorDocenteText);
+
         // Estudiantes promedio por periodo (sumar todos los ciclos)
         var estudiantesPorPeriodo = proyeccion.Detalles
             .GroupBy(d => d.PeriodoAcademicoId)
@@ -82,6 +89,21 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
                 g.First().NumeroPeriodo,
                 g.First().EtiquetaPeriodo
             });
+
+        var periodosOrdenados = estudiantesPorPeriodo
+            .OrderBy(p => p.Value.Anio)
+            .ThenBy(p => p.Value.NumeroPeriodo)
+            .ToList();
+
+        var docentesNecesariosPorPeriodo = requiereDocentes
+            ? await ObtenerDocentesNecesariosPorPeriodoAsync(
+                proyeccion,
+                carreraId,
+                escenarioProyeccionId.Value,
+                periodosOrdenados.Select(p => p.Key).ToList(),
+                advertencias,
+                ct)
+            : [];
 
         // Factor de inflacion por periodo, inferido desde el primer periodo de la proyeccion.
         var periodosInflacion = estudiantesPorPeriodo.Values
@@ -100,7 +122,7 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
 
         foreach (var ratio in ratios)
         {
-            foreach (var (periodoId, info) in estudiantesPorPeriodo.OrderBy(p => p.Value.Anio).ThenBy(p => p.Value.NumeroPeriodo))
+            foreach (var (periodoId, info) in periodosOrdenados)
             {
                 var cantidad = ratio.UnidadRatio switch
                 {
@@ -108,6 +130,9 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
                         info.Total * ratio.RatioConsumo * ratio.MesesOperativos,
                     UnidadRatioMaterialExtensiones.FijoPeriodoText =>
                         ratio.RatioConsumo,
+                    UnidadRatioMaterialExtensiones.PorDocenteText =>
+                        docentesNecesariosPorPeriodo.GetValueOrDefault(periodoId) * ratio.RatioConsumo
+                        + ratio.CantidadFijaAdicional,
                     _ =>
                         info.Total * ratio.RatioConsumo
                 };
@@ -165,6 +190,94 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
             Monetarios = monetarios,
             MensajeAdvertencia = advertencias.Count > 0 ? string.Join(" ", advertencias) : null
         };
+    }
+
+    private async Task<Dictionary<int, decimal>> ObtenerDocentesNecesariosPorPeriodoAsync(
+        ProyeccionEstudiantesDto proyeccion,
+        int carreraId,
+        int escenarioProyeccionId,
+        IReadOnlyList<int> periodosOrdenados,
+        List<string> advertencias,
+        CancellationToken ct)
+    {
+        var configuraciones = await repositorioConfiguracionRetencion.ListarDtoAsync(ct);
+        var configuracion = configuraciones.FirstOrDefault(c =>
+            c.CarreraId == carreraId && c.EscenarioProyeccionId == escenarioProyeccionId);
+
+        if (configuracion is null)
+        {
+            advertencias.Add("No existe configuracion de retencion para calcular materiales por docente.");
+            return [];
+        }
+
+        var overrides = await repositorioOverrideHorasPeriodo.ListarPorProyeccionAsync(proyeccion.Id, ct);
+        var (horasDocencia, horasPractica) = ConstruirArreglosOverride(overrides, proyeccion);
+
+        var tasaRet = configuracion.MetaRetencionPorcentaje ?? configuracion.TasaRetencionPorcentaje;
+        var tasaGrad = configuracion.MetaGraduacionPorcentaje ?? configuracion.TasaGraduacionPorcentaje;
+
+        var consolidado = ConsolidadorProyeccionEstudiantes.Calcular(
+            proyeccion,
+            configuracion.ParalelosPeriodo1,
+            configuracion.ParalelosPeriodo2,
+            tasaRet,
+            tasaGrad,
+            horasDocSemestralesOverride: horasDocencia,
+            horasTecSemestralesOverride: horasPractica);
+
+        var filaDocentes = consolidado.DocentesPorPeriodo.FirstOrDefault(f =>
+            string.Equals(f.Tipo, "Docentes Requeridos", StringComparison.OrdinalIgnoreCase));
+        if (filaDocentes is null)
+        {
+            advertencias.Add("No se encontro la fila Docentes Requeridos para calcular materiales por docente.");
+            return [];
+        }
+
+        return periodosOrdenados
+            .Select((periodoId, index) => new
+            {
+                PeriodoId = periodoId,
+                Valor = index < filaDocentes.Periodos.Length ? (decimal)filaDocentes.Periodos[index] : 0m
+            })
+            .ToDictionary(x => x.PeriodoId, x => x.Valor);
+    }
+
+    private static (decimal[]? doc, decimal[]? prac) ConstruirArreglosOverride(
+        IReadOnlyList<OverrideHorasPeriodo> overrides,
+        ProyeccionEstudiantesDto proyeccion)
+    {
+        if (overrides.Count == 0)
+            return (null, null);
+
+        var totalPeriodos = proyeccion.Detalles.Select(d => d.NumeroPeriodo).DefaultIfEmpty(0).Max();
+        if (totalPeriodos <= 0)
+            return (null, null);
+
+        var doc = new decimal[totalPeriodos];
+        var prac = new decimal[totalPeriodos];
+        var hayDoc = false;
+        var hayPrac = false;
+
+        foreach (var o in overrides)
+        {
+            var idx = o.Periodo - 1;
+            if (idx < 0 || idx >= totalPeriodos)
+                continue;
+
+            if (o.HorasDocencia is { } hd)
+            {
+                doc[idx] = hd;
+                hayDoc = true;
+            }
+
+            if (o.HorasPractica is { } hp)
+            {
+                prac[idx] = hp;
+                hayPrac = true;
+            }
+        }
+
+        return (hayDoc ? doc : null, hayPrac ? prac : null);
     }
 
     private async Task<(Dictionary<(int Anio, int NumeroPeriodo), decimal> Factores, IReadOnlyList<int> AniosSinInflacion)> CalcularFactoresInflacionPorPeriodoAsync(

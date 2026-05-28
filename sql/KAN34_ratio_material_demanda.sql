@@ -11,7 +11,10 @@
 -- se considera ratio puro y el precio se gestionará por separado.
 --
 -- Cálculo posterior (en CalcularMaterialesPorPeriodoQuery):
---   cantidad_periodo  = estudiantes_periodo × ratio_consumo × (meses_operativos si unidad='por_estudiante_mes', sino 1)
+--   por_estudiante      => cantidad_periodo = estudiantes_periodo x ratio_consumo
+--   por_estudiante_mes  => cantidad_periodo = estudiantes_periodo x ratio_consumo x meses_operativos
+--   fijo_periodo        => cantidad_periodo = ratio_consumo
+--   por_docente         => cantidad_periodo = docentes_necesarios_periodo x ratio_consumo + cantidad_fija_adicional
 --   precio_unitario   = item_material_insumo.precio_unitario (si vinculado) o 0
 --   factor_inflacion  = factor acumulado desde anio_base_proyeccion al año del periodo
 --   costo_monetario   = cantidad_periodo × precio_unitario × factor_inflacion (si aplica_inflacion=true)
@@ -28,6 +31,7 @@ CREATE TABLE IF NOT EXISTS public.ratio_material_demanda (
     ratio_consumo              NUMERIC(12,6) NOT NULL DEFAULT 0,
     unidad_ratio               VARCHAR(40)  NOT NULL DEFAULT 'por_estudiante',
     meses_operativos           INTEGER      NOT NULL DEFAULT 6,
+    cantidad_fija_adicional    NUMERIC(18,4) NOT NULL DEFAULT 0,
     aplica_inflacion           BOOLEAN      NOT NULL DEFAULT TRUE,
 
     creado_en                  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
@@ -44,6 +48,8 @@ ALTER TABLE public.ratio_material_demanda
     ADD COLUMN IF NOT EXISTS unidad_ratio     VARCHAR(40)  NOT NULL DEFAULT 'por_estudiante';
 ALTER TABLE public.ratio_material_demanda
     ADD COLUMN IF NOT EXISTS meses_operativos INTEGER      NOT NULL DEFAULT 6;
+ALTER TABLE public.ratio_material_demanda
+    ADD COLUMN IF NOT EXISTS cantidad_fija_adicional NUMERIC(18,4) NOT NULL DEFAULT 0;
 ALTER TABLE public.ratio_material_demanda
     ADD COLUMN IF NOT EXISTS aplica_inflacion BOOLEAN      NOT NULL DEFAULT TRUE;
 
@@ -67,7 +73,7 @@ BEGIN
 
     ALTER TABLE public.ratio_material_demanda
         ADD CONSTRAINT "CK_ratio_material_demanda_unidad"
-        CHECK (unidad_ratio IN ('por_estudiante', 'por_estudiante_mes', 'fijo_periodo'));
+        CHECK (unidad_ratio IN ('por_estudiante', 'por_estudiante_mes', 'fijo_periodo', 'por_docente'));
 END $$;
 
 -- Índices

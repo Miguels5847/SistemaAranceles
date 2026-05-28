@@ -22,18 +22,26 @@ public sealed class GuardarRatioMaterialDemandaCommand(
             throw new ArgumentException("Concepto es obligatorio.", nameof(dto.Concepto));
         if (dto.RatioConsumo < 0m)
             throw new ArgumentException("Ratio consumo no puede ser negativo.", nameof(dto.RatioConsumo));
-        var mesesOperativos = dto.UnidadRatio == UnidadRatioMaterialExtensiones.FijoPeriodoText
+        var mesesOperativos = dto.UnidadRatio is UnidadRatioMaterialExtensiones.FijoPeriodoText
+            or UnidadRatioMaterialExtensiones.PorDocenteText
             ? 1
             : dto.MesesOperativos;
+        var cantidadFijaAdicional = dto.UnidadRatio == UnidadRatioMaterialExtensiones.PorDocenteText
+            ? dto.CantidadFijaAdicional
+            : 0m;
 
         if (mesesOperativos <= 0 || mesesOperativos > 12)
             throw new ArgumentException("Meses operativos entre 1 y 12.", nameof(dto.MesesOperativos));
+        if (cantidadFijaAdicional < 0m)
+            throw new ArgumentException("Adicional fijo no puede ser negativo.", nameof(dto.CantidadFijaAdicional));
         if (dto.UnidadRatio is not (UnidadRatioMaterialExtensiones.PorEstudianteText
             or UnidadRatioMaterialExtensiones.PorEstudianteMesText
-            or UnidadRatioMaterialExtensiones.FijoPeriodoText))
+            or UnidadRatioMaterialExtensiones.FijoPeriodoText
+            or UnidadRatioMaterialExtensiones.PorDocenteText))
             throw new ArgumentException("Unidad inválida.", nameof(dto.UnidadRatio));
 
         var dtoNormalizado = mesesOperativos == dto.MesesOperativos
+                              && cantidadFijaAdicional == dto.CantidadFijaAdicional
             ? dto
             : new GuardarRatioMaterialDemandaDto
             {
@@ -45,6 +53,7 @@ public sealed class GuardarRatioMaterialDemandaCommand(
                 RatioConsumo = dto.RatioConsumo,
                 UnidadRatio = dto.UnidadRatio,
                 MesesOperativos = mesesOperativos,
+                CantidadFijaAdicional = cantidadFijaAdicional,
                 AplicaInflacion = dto.AplicaInflacion
             };
 

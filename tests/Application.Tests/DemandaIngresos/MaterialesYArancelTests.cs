@@ -26,6 +26,24 @@ public class MaterialesYArancelTests
         Assert.Equal(2m, ratio.CalcularCantidad(0m));
     }
 
+    [Fact]
+    public void RatioMaterial_PorDocente_UsaDocentesMasAdicionalFijo()
+    {
+        var ratio = new RatioMaterialDemanda(
+            carreraId: 1,
+            categoria: "ACCESORIOS_MATERIALES",
+            concepto: "Grapadora",
+            itemMaterialInsumoId: null,
+            ratioConsumo: 1m,
+            unidadRatio: UnidadRatioMaterial.PorDocente,
+            mesesOperativos: 1,
+            aplicaInflacion: true,
+            cantidadFijaAdicional: 4m);
+
+        Assert.Equal(9m, ratio.CalcularCantidad(estudiantes: 30m, docentes: 5m));
+        Assert.Equal(4m, ratio.CalcularCantidad(estudiantes: 30m, docentes: 0m));
+    }
+
     [Theory]
     [InlineData(UnidadRatioMaterial.PorEstudiante, 30, 2, 6, 60)]
     [InlineData(UnidadRatioMaterial.PorEstudianteMes, 30, 0.13, 6, 23.4)]
