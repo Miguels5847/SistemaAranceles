@@ -334,31 +334,59 @@
                                                          IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
                                         </StackPanel>
 
-                                        <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,6,0">
-                                                <TextBlock Text="Fuente inflación (informativo)" FontSize="11"/>
-                                                <TextBlock Text="Módulo Inflación / Inflación anual registrada"
-                                                           Padding="4,4"
-                                                           Background="#F1F3F8"
-                                                           Foreground="#1A237E"
-                                                           FontStyle="Italic"/>
-                                                <TextBlock Text="Se toma del módulo Inflación. No se edita manualmente aquí."
-                                                           FontSize="10" Foreground="#90A4AE" Margin="0,2,0,0"/>
-                                        </StackPanel>
-                                        <StackPanel Grid.Row="3" Grid.Column="2">
-                                                <TextBlock Text="Año base proyección (automático)" FontSize="11"/>
-                                                <TextBlock Text="Se calcula del primer período de la proyección"
-                                                           Padding="4,4"
-                                                           Background="#F1F3F8"
-                                                           Foreground="#1A237E"
-                                                           FontStyle="Italic"/>
-                                                <TextBlock Text="No se edita manualmente."
-                                                           FontSize="10" Foreground="#90A4AE" Margin="0,2,0,0"/>
-                                        </StackPanel>
-
-                                        <TextBlock Grid.Row="4" Grid.ColumnSpan="4"
-                                                   Text="Nota: el arancel NO se configura aquí. Cada carrera define su arancel en el módulo Demanda e Ingresos → Configuración de Arancel. La inflación viene del módulo Inflación y el año base se infiere automáticamente del primer período de la proyección de estudiantes seleccionada."
+                                        <TextBlock Grid.Row="3" Grid.ColumnSpan="4"
+                                                   Text="La inflación se toma automáticamente del módulo Inflación. El año base se infiere del primer período de la proyección."
                                                    FontSize="11" Foreground="#546E7A" FontStyle="Italic"
-                                                   TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                                   TextWrapping="Wrap" Margin="0,2,0,6"/>
+
+                                        <Border Grid.Row="4" Grid.ColumnSpan="4"
+                                                BorderBrush="#C5CAE9" BorderThickness="1" CornerRadius="4"
+                                                Background="#F8F9FF" Padding="10,8" Margin="0,2,0,0">
+                                                <Grid>
+                                                        <Grid.RowDefinitions>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <TextBlock Grid.Row="0" Grid.ColumnSpan="3"
+                                                                   Text="Seguro estudiantil calculado (solo lectura)"
+                                                                   FontWeight="SemiBold" Foreground="#1A237E" Margin="0,0,0,6"/>
+
+                                                        <StackPanel Grid.Row="1" Grid.Column="0">
+                                                                <TextBlock Text="Póliza anual" FontSize="11" Foreground="#555"/>
+                                                                <TextBlock Text="{Binding PolizaSeguroAnualDisplay}" FontWeight="SemiBold" FontSize="14"/>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Row="1" Grid.Column="1">
+                                                                <TextBlock Text="Semestres/año" FontSize="11" Foreground="#555"/>
+                                                                <TextBlock Text="{Binding SemestresPorAnio}" FontWeight="SemiBold" FontSize="14"/>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Row="1" Grid.Column="2">
+                                                                <TextBlock Text="Valor por semestre" FontSize="11" Foreground="#555"/>
+                                                                <TextBlock Text="{Binding PolizaSeguroSemestralDisplay}" FontWeight="SemiBold" FontSize="14"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,6,0,0">
+                                                                <TextBlock Text="Semestre 1" FontSize="11" Foreground="#555"/>
+                                                                <TextBlock Text="{Binding SeguroSemestre1Display}" FontWeight="SemiBold" FontSize="14"/>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,6,0,0">
+                                                                <TextBlock Text="Semestre 2" FontSize="11" Foreground="#555"/>
+                                                                <TextBlock Text="{Binding SeguroSemestre2Display}" FontWeight="SemiBold" FontSize="14"/>
+                                                        </StackPanel>
+
+                                                        <TextBlock Grid.Row="3" Grid.ColumnSpan="3"
+                                                                   Text="El seguro por estudiante se calcula como valor por semestre dividido para N. estudiantes universidad."
+                                                                   FontSize="11" Foreground="#546E7A" FontStyle="Italic"
+                                                                   TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                                </Grid>
+                                        </Border>
                                 </Grid>
                         </Border>
 

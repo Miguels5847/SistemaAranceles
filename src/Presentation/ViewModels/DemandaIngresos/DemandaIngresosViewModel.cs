@@ -743,7 +743,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         };
 
         var seguroPorEstudianteBase = Presupuestos.EstudiantesUniversidad > 0
-            ? Presupuestos.PolizaSeguroEstudiantilAnual / Presupuestos.EstudiantesUniversidad
+            ? Presupuestos.PolizaSeguroEstudiantilAnual / semestres / Presupuestos.EstudiantesUniversidad
             : 0m;
         var seguroPorEstudiante = factores
             .Select(f => decimal.Round(seguroPorEstudianteBase * f, 2))
