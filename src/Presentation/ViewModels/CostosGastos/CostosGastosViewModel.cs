@@ -305,7 +305,7 @@ public sealed partial class CostosGastosViewModel : ObservableObject
                 Concepto = "Nº estudiantes",
                 Periodos = periodos.Select(p => p.NumeroEstudiantes).ToList(),
                 Total = periodos.Sum(p => p.NumeroEstudiantes),
-                FormatoValor = FormatoMatrizCostosGastos.Decimal
+                FormatoValor = FormatoMatrizCostosGastos.Entero
             },
             new()
             {

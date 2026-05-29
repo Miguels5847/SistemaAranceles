@@ -41,10 +41,17 @@ public sealed class ObtenerCostoCarreraQuery(
         var periodos = new List<CostoCarreraPeriodoDto>();
         for (var i = 0; i < matriz.ValoresPorPeriodo.Count; i++)
         {
-            var costoNeto = decimal.Round(matriz.ValoresPorPeriodo[i].TotalDescontadoBecasGobierno, 2);
-            var estudiantesPeriodo = estudiantes[i];
+            // Hoja 11 Costo de la Carrera usa el Total Costos y Gastos BRUTO, no el descontado por
+            // becas gobierno (ese bloque es solo análisis en la hoja 10 y puede quedar negativo).
+            var costoPeriodoOriginal = decimal.Round(matriz.ValoresPorPeriodo[i].TotalCostosGastos, 2);
+            var costoPeriodo = Math.Max(0m, costoPeriodoOriginal);
+            if (costoPeriodoOriginal < 0m)
+                advertencias.Add($"Se detectó un costo negativo en el período {matriz.ValoresPorPeriodo[i].EtiquetaPeriodo}; se usó 0 para evitar arancel negativo.");
+
+            // Nº estudiantes redondeado a entero para coincidir con Proyección de Estudiantes.
+            var estudiantesPeriodo = decimal.Round(estudiantes[i], 0, MidpointRounding.AwayFromZero);
             if (estudiantesPeriodo <= 0m)
-            advertencias.Add($"Período {matriz.ValoresPorPeriodo[i].EtiquetaPeriodo}: estudiantes en 0; costo por estudiante queda en 0.");
+                advertencias.Add($"Período {matriz.ValoresPorPeriodo[i].EtiquetaPeriodo}: estudiantes en 0; costo por estudiante queda en 0.");
 
             periodos.Add(new CostoCarreraPeriodoDto
             {
@@ -52,10 +59,10 @@ public sealed class ObtenerCostoCarreraQuery(
                 Anio = matriz.ValoresPorPeriodo[i].Anio,
                 NumeroPeriodo = matriz.ValoresPorPeriodo[i].NumeroPeriodo,
                 EtiquetaPeriodo = matriz.ValoresPorPeriodo[i].EtiquetaPeriodo,
-                TotalCostosGastos = costoNeto,
+                TotalCostosGastos = costoPeriodo,
                 NumeroEstudiantes = estudiantesPeriodo,
                 CostoPorEstudiante = estudiantesPeriodo > 0m
-                    ? decimal.Round(costoNeto / estudiantesPeriodo, 2)
+                    ? decimal.Round(costoPeriodo / estudiantesPeriodo, 2)
                     : 0m
             });
         }
