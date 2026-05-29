@@ -19,6 +19,18 @@ public sealed class DatosInstitucionales
     public int MesesCapitalTrabajo { get; set; } = 2;
     public decimal PorcentajeImprevistosInversion { get; set; } = 5m;
 
+    // KAN-35: parámetros Épica 9
+    public decimal PorcentajeMatriculaDefault { get; set; } = 10m;
+    public decimal PorcentajeBecasInstitucionales { get; set; } = 10m;
+    public int SemestresPorAnio { get; set; } = 2;
+    public int MesesOperativosCiclo { get; set; } = 6;
+    public decimal PresupuestoAnualCapacitacion { get; set; }
+    public decimal PresupuestoAnualInternacionalizacion { get; set; }
+    public decimal PresupuestoAnualMarketing { get; set; }
+    public decimal PolizaSeguroEstudiantilAnual { get; set; }
+    public string? FuenteInflacion { get; set; }
+    public int? AnioBaseProyeccion { get; set; }
+
     public DateTimeOffset FechaActualizacion { get; set; } = DateTimeOffset.UtcNow;
     public int ActualizadoPorUsuarioId { get; set; }
     public string? FuenteNotas { get; set; }

@@ -21,6 +21,15 @@ public sealed class ServicioInactividad : IDisposable
 
     public event EventHandler<TimeSpan>? TiempoRestanteActualizado;
 
+    public TimeSpan TiempoRestante
+    {
+        get
+        {
+            var tiempoRestante = _ultimaActividad.Add(_timeout) - DateTime.UtcNow;
+            return tiempoRestante > TimeSpan.Zero ? tiempoRestante : TimeSpan.Zero;
+        }
+    }
+
     public ServicioInactividad(
         IServiceProvider serviceProvider,
         SesionActual sesionActual,
@@ -42,6 +51,7 @@ public sealed class ServicioInactividad : IDisposable
         Interlocked.Exchange(ref _cerrandoPorInactividad, 0);
         _timerCountdown.Stop();
         _timerCountdown.Start();
+        TiempoRestanteActualizado?.Invoke(this, TiempoRestante);
         Trace.WriteLine($"[{DateTime.UtcNow:O}] ServicioInactividad: timer iniciado. Timeout={_timeout.TotalMinutes}min.");
     }
 
@@ -54,6 +64,7 @@ public sealed class ServicioInactividad : IDisposable
     public void ResetarActividad()
     {
         _ultimaActividad = DateTime.UtcNow;
+        TiempoRestanteActualizado?.Invoke(this, TiempoRestante);
     }
 
     private void OnTickCountdown(object? sender, EventArgs e)

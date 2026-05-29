@@ -38,6 +38,34 @@ public class CalculoDocentesTests
     }
 
     [Theory]
+    [InlineData(18.13, 18, 0, 1, 0, 0,  0, 0)]
+    [InlineData(18.75, 19, 0, 1, 0, 1,  0, 1)]
+    [InlineData(21.38, 21, 0, 1, 0, 1,  0, 3)]
+    [InlineData(28.50, 29, 0, 1, 0, 1,  0, 11)]
+    [InlineData(31.20, 31, 0, 1, 1, 1, 12, 1)]
+    public void Desglose_RedondeaHorasAntesDeAsignarDocentes(
+        decimal horas, decimal horasRedondeadasEsperadas, int phdEsperado, int mgsEsperado,
+        int mtEsperado, int tpEsperado, int hMTEsperado, int hTPEsperado)
+    {
+        var (phd, mgs, mt, tp, hMT, hTP) =
+            ConsolidadorProyeccionEstudiantes.DesglosarDocentesPorPeriodo(horas);
+
+        Assert.Equal(phdEsperado, phd);
+        Assert.Equal(mgsEsperado, mgs);
+        Assert.Equal(mtEsperado, mt);
+        Assert.Equal(tpEsperado, tp);
+        Assert.Equal(hMTEsperado, hMT);
+        Assert.Equal(hTPEsperado, hTP);
+        Assert.Equal(decimal.Truncate(hMT), hMT);
+        Assert.Equal(decimal.Truncate(hTP), hTP);
+
+        var horasCubiertas = phd * ConstantesDocentes.HorasDocenteTC
+                           + mgs * ConstantesDocentes.HorasDocenteTC
+                           + hMT + hTP;
+        Assert.Equal(horasRedondeadasEsperadas, horasCubiertas);
+    }
+
+    [Theory]
     [InlineData(0)]
     [InlineData(-5)]
     public void Desglose_HorasNoPositivas_DevuelveCero(decimal horas)

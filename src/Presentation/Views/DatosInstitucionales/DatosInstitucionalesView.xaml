@@ -15,6 +15,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Row="0"
@@ -264,8 +265,133 @@
                                 </Grid>
                         </Border>
 
-                        <!-- Metricas calculadas -->
+                        <!-- KAN-35: Parámetros Demanda e Ingresos -->
                         <Border Grid.Row="6"
+                                BorderBrush="#7986CB"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="10,8"
+                                Margin="0,0,0,8">
+                                <Grid>
+                                        <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.ColumnSpan="4"
+                                                   Text="Parámetros Demanda e Ingresos (Épica 9)"
+                                                   FontWeight="SemiBold" Foreground="#1A237E"
+                                                   Margin="0,0,0,6"/>
+
+                                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,6,4">
+                                                <TextBlock Text="% Matrícula default" FontSize="11"/>
+                                                <TextBox Text="{Binding PorcentajeMatriculaDefault, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,6,4">
+                                                <TextBlock Text="% Becas institucionales" FontSize="11"/>
+                                                <TextBox Text="{Binding PorcentajeBecasInstitucionales, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,6,4">
+                                                <TextBlock Text="Semestres / año" FontSize="11"/>
+                                                <TextBox Text="{Binding SemestresPorAnio, UpdateSourceTrigger=PropertyChanged}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="3" Margin="0,0,0,4">
+                                                <TextBlock Text="Meses operativos / ciclo" FontSize="11"/>
+                                                <TextBox Text="{Binding MesesOperativosCiclo, UpdateSourceTrigger=PropertyChanged}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,6,4">
+                                                <TextBlock Text="Presup. Capacitación (USD/año)" FontSize="11"/>
+                                                <TextBox Text="{Binding PresupuestoAnualCapacitacion, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,6,4">
+                                                <TextBlock Text="Presup. Internacionalización (USD/año)" FontSize="11"/>
+                                                <TextBox Text="{Binding PresupuestoAnualInternacionalizacion, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,6,4">
+                                                <TextBlock Text="Presup. Marketing (USD/año)" FontSize="11"/>
+                                                <TextBox Text="{Binding PresupuestoAnualMarketing, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="2" Grid.Column="3" Margin="0,0,0,4">
+                                                <TextBlock Text="Póliza Seguro Estudiantil (USD/año)" FontSize="11"/>
+                                                <TextBox Text="{Binding PolizaSeguroEstudiantilAnual, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+
+                                        <TextBlock Grid.Row="3" Grid.ColumnSpan="4"
+                                                   Text="La inflación se toma automáticamente del módulo Inflación. El año base se infiere del primer período de la proyección."
+                                                   FontSize="11" Foreground="#546E7A" FontStyle="Italic"
+                                                   TextWrapping="Wrap" Margin="0,2,0,6"/>
+
+                                        <Border Grid.Row="4" Grid.ColumnSpan="4"
+                                                BorderBrush="#C5CAE9" BorderThickness="1" CornerRadius="4"
+                                                Background="#F8F9FF" Padding="10,8" Margin="0,2,0,0">
+                                                <Grid>
+                                                        <Grid.RowDefinitions>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <TextBlock Grid.Row="0" Grid.ColumnSpan="3"
+                                                                   Text="Seguro estudiantil calculado (solo lectura)"
+                                                                   FontWeight="SemiBold" Foreground="#1A237E" Margin="0,0,0,6"/>
+
+                                                        <StackPanel Grid.Row="1" Grid.Column="0">
+                                                                <TextBlock Text="Póliza anual" FontSize="11" Foreground="#555"/>
+                                                                <TextBlock Text="{Binding PolizaSeguroAnualDisplay}" FontWeight="SemiBold" FontSize="14"/>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Row="1" Grid.Column="1">
+                                                                <TextBlock Text="Semestres/año" FontSize="11" Foreground="#555"/>
+                                                                <TextBlock Text="{Binding SemestresPorAnio}" FontWeight="SemiBold" FontSize="14"/>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Row="1" Grid.Column="2">
+                                                                <TextBlock Text="Valor por semestre" FontSize="11" Foreground="#555"/>
+                                                                <TextBlock Text="{Binding PolizaSeguroSemestralDisplay}" FontWeight="SemiBold" FontSize="14"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,6,0,0">
+                                                                <TextBlock Text="Semestre 1" FontSize="11" Foreground="#555"/>
+                                                                <TextBlock Text="{Binding SeguroSemestre1Display}" FontWeight="SemiBold" FontSize="14"/>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,6,0,0">
+                                                                <TextBlock Text="Semestre 2" FontSize="11" Foreground="#555"/>
+                                                                <TextBlock Text="{Binding SeguroSemestre2Display}" FontWeight="SemiBold" FontSize="14"/>
+                                                        </StackPanel>
+
+                                                        <TextBlock Grid.Row="3" Grid.ColumnSpan="3"
+                                                                   Text="El seguro por estudiante se calcula como valor por semestre dividido para N. estudiantes universidad."
+                                                                   FontSize="11" Foreground="#546E7A" FontStyle="Italic"
+                                                                   TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                                </Grid>
+                                        </Border>
+                                </Grid>
+                        </Border>
+
+                        <!-- Metricas calculadas -->
+                        <Border Grid.Row="7"
                                 BorderBrush="#C5CAE9"
                                 BorderThickness="1"
                                 CornerRadius="4"
