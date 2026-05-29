@@ -184,3 +184,27 @@ public sealed class CostoCarreraResultadoDto
         ? "Costo de carrera calculado."
         : MensajeAdvertencia!;
 }
+
+public sealed class ArancelOptimoCarreraDto
+{
+    public int CarreraId { get; init; }
+    public string CarreraNombre { get; init; } = string.Empty;
+    public int? EscenarioProyeccionId { get; init; }
+    public string EscenarioNombre { get; init; } = string.Empty;
+    public decimal? ArancelSugeridoSemestre { get; init; }
+    public decimal MatriculaSugerida { get; init; }
+    public decimal PorcentajeMatriculaAplicado { get; init; }
+    public decimal TotalPorSemestre { get; init; }
+    public string FuenteCalculo { get; init; } = "Costo de la Carrera";
+    public string? MensajeAdvertencia { get; init; }
+
+    public bool Disponible => ArancelSugeridoSemestre is > 0m;
+    public string EstadoTexto => Disponible
+        ? "Arancel sugerido disponible."
+        : MensajeAdvertencia ?? "Costo de carrera pendiente.";
+    public string ArancelSugeridoDisplay => Disponible
+        ? $"$ {ArancelSugeridoSemestre!.Value:N2}"
+        : "Pendiente";
+    public string MatriculaSugeridaDisplay => $"$ {MatriculaSugerida:N2}";
+    public string TotalPorSemestreDisplay => $"$ {TotalPorSemestre:N2}";
+}

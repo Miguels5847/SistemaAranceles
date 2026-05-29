@@ -183,6 +183,7 @@ public partial class App
         servicios.AddTransient<ObtenerMatrizInvVinBecasQuery>();
         servicios.AddTransient<ObtenerMatrizCostosGastosQuery>();
         servicios.AddTransient<ObtenerCostoCarreraQuery>();
+        servicios.AddTransient<ObtenerArancelOptimoCarreraQuery>();
         servicios.AddTransient<CalcularAportePlantaCentralCarreraQuery>();
         servicios.AddTransient<CalcularProyeccionesCargoPlantaCentralCommand>();
         servicios.AddTransient<ListarProyeccionesCargoPlantaCentralQuery>();
