@@ -41,11 +41,11 @@ public sealed class ObtenerDemandaProyectadaQuery(
             ct);
 
         if (proyeccionId is null or <= 0)
-            return Vacio("No existe proyeccion generada para esta carrera y escenario. Generela primero en Proyeccion de Estudiantes.");
+            return Vacio("No existe proyección generada para esta carrera y escenario. Genérela primero en Proyección de Estudiantes.");
 
         var proyeccion = await repositorioProyeccion.ObtenerDtoPorIdAsync(proyeccionId.Value, ct);
         if (proyeccion is null || proyeccion.Detalles.Count == 0)
-            return Vacio("La proyeccion de estudiantes existe, pero no tiene detalles. Generela nuevamente en Proyeccion de Estudiantes.");
+            return Vacio("La proyección de estudiantes existe, pero no tiene detalles. Genérela nuevamente en Proyección de Estudiantes.");
 
         var periodos = proyeccion.Detalles
             .GroupBy(d => d.PeriodoAcademicoId)
@@ -126,7 +126,7 @@ public sealed class ObtenerDemandaProyectadaQuery(
             c.CarreraId == carreraId && c.EscenarioProyeccionId == escenarioProyeccionId);
 
         if (configuracion is null)
-            return ([], "No existe configuracion de retencion para calcular docentes necesarios.");
+            return ([], "No existe configuración de retención para calcular docentes necesarios.");
 
         var overrides = await repositorioOverrideHorasPeriodo.ListarPorProyeccionAsync(proyeccion.Id, ct);
         var (horasDocencia, horasPractica) = ConstruirArreglosOverride(overrides, proyeccion);

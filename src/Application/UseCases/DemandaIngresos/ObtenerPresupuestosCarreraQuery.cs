@@ -61,11 +61,11 @@ public sealed class ObtenerPresupuestosCarreraQuery(
         };
 
         if (estudiantesUniv <= 0)
-            advertencias.Add("Datos Institucionales: numero de estudiantes universidad debe ser > 0.");
+            advertencias.Add("Datos Institucionales: número de estudiantes universidad debe ser > 0.");
         if (datos.NumeroDocentesUniversidad <= 0)
-            advertencias.Add("Datos Institucionales: numero de docentes universidad debe ser > 0.");
+            advertencias.Add("Datos Institucionales: número de docentes universidad debe ser > 0.");
         if (estudiantesCarrera <= 0m)
-            advertencias.Add("No hay proyeccion de estudiantes para esta carrera/escenario. Genere la proyeccion para calcular la asignacion a la carrera.");
+            advertencias.Add("No hay proyección de estudiantes para esta carrera/escenario. Genere la proyección para calcular la asignación a la carrera.");
 
         return new PresupuestosCarreraDto
         {

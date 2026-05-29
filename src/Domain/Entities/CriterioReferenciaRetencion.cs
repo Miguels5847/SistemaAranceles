@@ -10,7 +10,7 @@ public sealed class CriterioReferenciaRetencion : EntidadDominioBase
 
     public CriterioReferenciaRetencion(int configuracionRetencionId, decimal metaRetencionPorcentaje, decimal metaGraduacionPorcentaje)
     {
-        ConfiguracionRetencionId = GuardiaDominio.EnteroPositivo(configuracionRetencionId, "Configuracion de retencion");
+        ConfiguracionRetencionId = GuardiaDominio.EnteroPositivo(configuracionRetencionId, "Configuración de retención");
         ActualizarMetas(metaRetencionPorcentaje, metaGraduacionPorcentaje);
     }
 
@@ -20,7 +20,7 @@ public sealed class CriterioReferenciaRetencion : EntidadDominioBase
 
     public void ActualizarMetas(decimal metaRetencionPorcentaje, decimal metaGraduacionPorcentaje)
     {
-        MetaRetencionPorcentaje = GuardiaDominio.Porcentaje(metaRetencionPorcentaje, "Meta de retencion");
-        MetaGraduacionPorcentaje = GuardiaDominio.Porcentaje(metaGraduacionPorcentaje, "Meta de graduacion");
+        MetaRetencionPorcentaje = GuardiaDominio.Porcentaje(metaRetencionPorcentaje, "Meta de retención");
+        MetaGraduacionPorcentaje = GuardiaDominio.Porcentaje(metaGraduacionPorcentaje, "Meta de graduación");
     }
 }

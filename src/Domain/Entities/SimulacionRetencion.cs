@@ -12,7 +12,7 @@ public sealed class SimulacionRetencion : EntidadDominioBase
 
     public SimulacionRetencion(int configuracionRetencionId, int cohorteAnio)
     {
-        ConfiguracionRetencionId = GuardiaDominio.EnteroPositivo(configuracionRetencionId, "Configuracion de retencion");
+        ConfiguracionRetencionId = GuardiaDominio.EnteroPositivo(configuracionRetencionId, "Configuración de retención");
         CohorteAnio = ValidarCohorte(cohorteAnio);
         FechaSimulacion = DateTime.UtcNow;
     }
@@ -51,7 +51,7 @@ public sealed class SimulacionRetencion : EntidadDominioBase
         EstudiantesTotalesInicio = GuardiaDominio.DecimalNoNegativo(estudiantesInicio, "Estudiantes totales inicio", 4);
         EstudiantesRetenidos = GuardiaDominio.DecimalNoNegativo(estudiantesRetenidos, "Estudiantes retenidos", 4);
         EstudiantesGraduados = GuardiaDominio.DecimalNoNegativo(estudiantesGraduados, "Estudiantes graduados", 4);
-        CostoMatriculaPromedio = GuardiaDominio.DecimalNoNegativo(costoMatriculaPromedio, "Costo matricula promedio", 2);
+        CostoMatriculaPromedio = GuardiaDominio.DecimalNoNegativo(costoMatriculaPromedio, "Costo matrícula promedio", 2);
 
         if (EstudiantesTotalesInicio == 0)
         {

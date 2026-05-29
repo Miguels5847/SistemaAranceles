@@ -269,13 +269,13 @@ public sealed class ObtenerMatrizCostosGastosQuery(
             configuracion = await repositorioConfiguracionArancel.ObtenerPorCarreraEscenarioAsync(carreraId, null, ct);
 
         if (configuracion is null)
-            return (0m, "No existe configuracion de arancel; Becas institucionales se calcularon en 0.");
+            return (0m, "No existe configuración de arancel; Becas institucionales se calcularon en 0.");
 
         var modo = Enum.TryParse<ModoCalculoArancel>(configuracion.ModoCalculoArancel, ignoreCase: true, out var m)
             ? m
             : ModoCalculoArancel.Manual;
         if (modo != ModoCalculoArancel.Manual)
-            return (0m, "Becas institucionales se calcularon en 0 porque el modo Automatico/Costo Carrera se resuelve despues de este consolidado.");
+            return (0m, "Becas institucionales se calcularon en 0 porque el modo Automático/Costo Carrera se resuelve después de este consolidado.");
 
         if (configuracion.ArancelManual is not > 0m)
             return (0m, "Arancel manual no definido; Becas institucionales se calcularon en 0.");
@@ -295,19 +295,19 @@ public sealed class ObtenerMatrizCostosGastosQuery(
         return
         [
             new("1. Costos por servicios", "Mantenimiento", V(x => x.Mantenimiento)),
-            new("1. Costos por servicios", "Capacitacion docente", V(x => x.CapacitacionDocente)),
+            new("1. Costos por servicios", "Capacitación docente", V(x => x.CapacitacionDocente)),
             new("1. Costos por servicios", "Sueldos docentes", V(x => x.SueldosDocentes)),
             new("1. Costos por servicios", "Seguro estudiantil", V(x => x.SeguroEstudiantil)),
             new("1. Costos por servicios", "Becas institucionales", V(x => x.BecasInstitucionales)),
-            new("1. Costos por servicios", "Investigacion", V(x => x.Investigacion)),
-            new("1. Costos por servicios", "Vinculacion", V(x => x.Vinculacion)),
-            new("1. Costos por servicios", "Depreciacion", V(x => x.Depreciacion)),
-            new("2. Gastos de administracion", "Sueldos administrativos", V(x => x.GastosAdministracion)),
-            new("3. Gastos de ventas", "Marketing y comunicacion", V(x => x.MarketingComunicacion)),
-            new("4. Otros gastos", "Servicios basicos", V(x => x.ServiciosBasicos)),
-            new("4. Otros gastos", "Amortizacion activos diferidos", V(x => x.AmortizacionActivosDiferidos)),
+            new("1. Costos por servicios", "Investigación", V(x => x.Investigacion)),
+            new("1. Costos por servicios", "Vinculación", V(x => x.Vinculacion)),
+            new("1. Costos por servicios", "Depreciación", V(x => x.Depreciacion)),
+            new("2. Gastos de administración", "Sueldos administrativos", V(x => x.GastosAdministracion)),
+            new("3. Gastos de ventas", "Marketing y comunicación", V(x => x.MarketingComunicacion)),
+            new("4. Otros gastos", "Servicios básicos", V(x => x.ServiciosBasicos)),
+            new("4. Otros gastos", "Amortización activos diferidos", V(x => x.AmortizacionActivosDiferidos)),
             new("4. Otros gastos", "Imprevistos / recargo", V(x => x.ImprevistosRecargo)),
-            new("5. Gasto financiero", "Intereses prestamo", V(x => x.GastoFinanciero))
+            new("5. Gasto financiero", "Intereses préstamo", V(x => x.GastoFinanciero))
         ];
     }
 
@@ -368,7 +368,7 @@ public sealed class ObtenerMatrizCostosGastosQuery(
         filas.Add(new PonderacionCostoGastoDto
         {
             Grupo = "6. Total Costos y Gastos",
-            Concepto = "Total ponderacion",
+            Concepto = "Total ponderación",
             Periodos = totales.Select(t => t > 0m ? 1m : 0m).ToList(),
             Total = totalGeneral > 0m ? 1m : 0m,
             EsTotal = true

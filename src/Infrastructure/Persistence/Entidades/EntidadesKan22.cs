@@ -31,7 +31,7 @@ public sealed class DatosInstitucionales
     public string? FuenteInflacion { get; set; }
     public int? AnioBaseProyeccion { get; set; }
 
-    // KAN-36: parametros Epica 10
+    // KAN-36: parámetros Épica 10
     public decimal PresupuestoBaseUniversidad { get; set; }
     public decimal PresupuestoGobiernoBecas { get; set; }
     public decimal PorcentajeInvestigacion { get; set; } = 5m;

@@ -16,7 +16,7 @@ public sealed class EscenarioCostosGastosOpcion
     public string Nombre { get; init; } = string.Empty;
     public bool EsPredeterminado { get; init; }
     public bool TieneProyeccion { get; init; }
-    public string NombreDisplay => TieneProyeccion ? $"{Nombre} (con proyeccion)" : $"{Nombre} (sin proyeccion)";
+    public string NombreDisplay => TieneProyeccion ? $"{Nombre} (con proyección)" : $"{Nombre} (sin proyección)";
 }
 
 public sealed class CostoCarreraMatrizFilaView
@@ -294,7 +294,7 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             },
             new()
             {
-                Concepto = "N. estudiantes",
+                Concepto = "Nº estudiantes",
                 Periodos = periodos.Select(p => p.NumeroEstudiantes).ToList(),
                 Total = periodos.Sum(p => p.NumeroEstudiantes),
                 FormatoValor = FormatoMatrizCostosGastos.Decimal

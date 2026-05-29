@@ -82,7 +82,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
-                        <TextBlock Text="Periodo institucional vigente" FontSize="11" Foreground="#555"/>
+                        <TextBlock Text="Período institucional vigente" FontSize="11" Foreground="#555"/>
                         <TextBlock Text="{Binding PeriodoInstitucionalVigente}" FontWeight="SemiBold" FontSize="14"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1">

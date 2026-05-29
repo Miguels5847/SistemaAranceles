@@ -89,7 +89,7 @@ public sealed class DatosInstitucionales : EntidadDominioBase
     public string? FuenteInflacion { get; private set; }
     public int? AnioBaseProyeccion { get; private set; }
 
-    // KAN-36: parametros Epica 10 (Costos y Gastos)
+    // KAN-36: parámetros Épica 10 (Costos y Gastos)
     public decimal PresupuestoBaseUniversidad { get; private set; } = PresupuestoBaseUniversidadPorDefecto;
     public decimal PresupuestoGobiernoBecas { get; private set; } = PresupuestoGobiernoBecasPorDefecto;
     public decimal PorcentajeInvestigacion { get; private set; } = PorcentajeInvestigacionPorDefecto;
@@ -113,14 +113,14 @@ public sealed class DatosInstitucionales : EntidadDominioBase
 
     public void CambiarPeriodo(string periodo)
     {
-        Periodo = GuardiaDominio.Requerido(periodo, "Periodo", 20);
+        Periodo = GuardiaDominio.Requerido(periodo, "Período", 20);
     }
 
     public void CambiarPoblacion(int estudiantesUniversidad, int docentesUniversidad, int personasPlantaCentral)
     {
-        NumeroEstudiantesUniversidad = GuardiaDominio.EnteroPositivo(estudiantesUniversidad, "Numero de estudiantes universidad");
-        NumeroDocentesUniversidad = GuardiaDominio.EnteroPositivo(docentesUniversidad, "Numero de docentes universidad");
-        NumeroPersonasPlantaCentral = GuardiaDominio.EnteroNoNegativo(personasPlantaCentral, "Numero de personas planta central");
+        NumeroEstudiantesUniversidad = GuardiaDominio.EnteroPositivo(estudiantesUniversidad, "Número de estudiantes universidad");
+        NumeroDocentesUniversidad = GuardiaDominio.EnteroPositivo(docentesUniversidad, "Número de docentes universidad");
+        NumeroPersonasPlantaCentral = GuardiaDominio.EnteroNoNegativo(personasPlantaCentral, "Número de personas planta central");
     }
 
     public void CambiarRubros(
@@ -132,7 +132,7 @@ public sealed class DatosInstitucionales : EntidadDominioBase
         decimal aportePatronal,
         decimal varios)
     {
-        SueldoBasico = GuardiaDominio.DecimalNoNegativo(sueldoBasico, "Sueldo basico", 2);
+        SueldoBasico = GuardiaDominio.DecimalNoNegativo(sueldoBasico, "Sueldo básico", 2);
         Funcional = GuardiaDominio.DecimalNoNegativo(funcional, "Funcional", 2);
         FondoReserva = GuardiaDominio.DecimalNoNegativo(fondoReserva, "Fondo de reserva", 2);
         BeneficioXiv = GuardiaDominio.DecimalNoNegativo(beneficioXiv, "Beneficio XIV", 2);
@@ -146,7 +146,7 @@ public sealed class DatosInstitucionales : EntidadDominioBase
         MesesCapitalTrabajo = GuardiaDominio.EnteroPositivo(mesesCapitalTrabajo, "Meses capital trabajo");
         PorcentajeImprevistosInversion = GuardiaDominio.Porcentaje(
             porcentajeImprevistosInversion,
-            "Porcentaje imprevistos inversion");
+            "Porcentaje imprevistos inversión");
     }
 
     /// <summary>KAN-35: parámetros globales para módulo Demanda e Ingresos.</summary>
@@ -184,7 +184,7 @@ public sealed class DatosInstitucionales : EntidadDominioBase
         AnioBaseProyeccion = anioBaseProyeccion;
     }
 
-    /// <summary>KAN-36: parametros globales para modulo Costos y Gastos.</summary>
+    /// <summary>KAN-36: parámetros globales para módulo Costos y Gastos.</summary>
     public void CambiarParametrosCostosGastos(
         decimal presupuestoBaseUniversidad,
         decimal presupuestoGobiernoBecas,
@@ -195,8 +195,8 @@ public sealed class DatosInstitucionales : EntidadDominioBase
     {
         PresupuestoBaseUniversidad = GuardiaDominio.DecimalNoNegativo(presupuestoBaseUniversidad, "Presupuesto base universidad", 2);
         PresupuestoGobiernoBecas = GuardiaDominio.DecimalNoNegativo(presupuestoGobiernoBecas, "Presupuesto gobierno becas", 2);
-        PorcentajeInvestigacion = GuardiaDominio.Porcentaje(porcentajeInvestigacion, "Porcentaje investigacion");
-        PorcentajeVinculacion = GuardiaDominio.Porcentaje(porcentajeVinculacion, "Porcentaje vinculacion");
+        PorcentajeInvestigacion = GuardiaDominio.Porcentaje(porcentajeInvestigacion, "Porcentaje investigación");
+        PorcentajeVinculacion = GuardiaDominio.Porcentaje(porcentajeVinculacion, "Porcentaje vinculación");
         PorcentajeBecasEstudiantes = GuardiaDominio.Porcentaje(porcentajeBecasEstudiantes, "Porcentaje becas estudiantes");
         PorcentajeBecasDocentes = GuardiaDominio.Porcentaje(porcentajeBecasDocentes, "Porcentaje becas docentes");
     }

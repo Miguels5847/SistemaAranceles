@@ -7,8 +7,8 @@ using SistemaAranceles.Domain.Enums;
 namespace SistemaAranceles.Application.UseCases.DemandaIngresos;
 
 /// <summary>
-/// Resuelve el arancel y matricula efectivos por carrera+escenario.
-/// En modo AutomaticoCostoCarrera toma el arancel sugerido del modulo Costos y Gastos.
+/// Resuelve el arancel y matrícula efectivos por carrera+escenario.
+/// En modo AutomaticoCostoCarrera toma el arancel sugerido del módulo Costos y Gastos.
 /// </summary>
 public sealed class ObtenerArancelEfectivoQuery(
     IRepositorioConfiguracionArancelCarrera repositorioArancel,
@@ -39,8 +39,8 @@ public sealed class ObtenerArancelEfectivoQuery(
                 ArancelEfectivo = null,
                 MatriculaEfectiva = 0m,
                 PorcentajeMatriculaAplicado = 0m,
-                FuenteCalculo = "Sin configuracion",
-                MensajeAdvertencia = "No existe configuracion de arancel para esta carrera/escenario."
+                FuenteCalculo = "Sin configuración",
+                MensajeAdvertencia = "No existe configuración de arancel para esta carrera/escenario."
             };
         }
 
@@ -67,13 +67,13 @@ public sealed class ObtenerArancelEfectivoQuery(
             if (obtenerArancelOptimoCarreraQuery is null)
             {
                 arancel = null;
-                fuente = "Automatico (Costo Carrera)";
-                advertencia = "Costo de Carrera pendiente; no se puede resolver el arancel automatico.";
+                fuente = "Automático (Costo Carrera)";
+                advertencia = "Costo de Carrera pendiente; no se puede resolver el arancel automático.";
             }
             else
             {
                 var optimo = await obtenerArancelOptimoCarreraQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
-                fuente = "Automatico (Costo Carrera)";
+                fuente = "Automático (Costo Carrera)";
                 if (optimo.Disponible)
                 {
                     arancel = optimo.ArancelSugeridoSemestre;
@@ -82,7 +82,7 @@ public sealed class ObtenerArancelEfectivoQuery(
                 else
                 {
                     arancel = null;
-                    advertencia = optimo.MensajeAdvertencia ?? "Costo de Carrera pendiente; no se puede resolver el arancel automatico.";
+                    advertencia = optimo.MensajeAdvertencia ?? "Costo de Carrera pendiente; no se puede resolver el arancel automático.";
                 }
             }
         }

@@ -38,7 +38,7 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
         var datos = await repositorioDatos.ObtenerVigenteAsync(ct);
         if (datos is null)
         {
-            advertencias.Add("No hay Datos Institucionales vigentes. Se usaron parametros de Costos y Gastos en cero/default.");
+            advertencias.Add("No hay Datos Institucionales vigentes. Se usaron parámetros de Costos y Gastos en cero/default.");
             datos = CrearDatosInstitucionalesFallback();
         }
 
@@ -48,13 +48,13 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
         var docentes = ObtenerDocentesRequeridosPorPeriodo(demanda, periodos.Count);
 
         if (datos.NumeroEstudiantesUniversidad <= 0)
-            advertencias.Add("Datos Institucionales: numero de estudiantes universidad debe ser > 0.");
+            advertencias.Add("Datos Institucionales: número de estudiantes universidad debe ser > 0.");
         if (datos.NumeroDocentesUniversidad <= 0)
-            advertencias.Add("Datos Institucionales: numero de docentes universidad debe ser > 0.");
+            advertencias.Add("Datos Institucionales: número de docentes universidad debe ser > 0.");
         if (datos.PresupuestoBaseUniversidad <= 0m)
-            advertencias.Add("Presupuesto base universidad esta en 0; Investigacion y Vinculacion quedan en 0.");
+            advertencias.Add("Presupuesto base universidad está en 0; Investigación y Vinculación quedan en 0.");
         if (datos.PresupuestoGobiernoBecas <= 0m)
-            advertencias.Add("Presupuesto gobierno becas esta en 0; Becas Gobierno quedan en 0.");
+            advertencias.Add("Presupuesto gobierno becas está en 0; Becas Gobierno quedan en 0.");
 
         var valores = new List<InvVinBecasPeriodoDto>();
         for (var i = 0; i < periodos.Count; i++)
@@ -123,7 +123,7 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
             .ToList();
 
         if (aniosSinInflacion.Count > 0)
-            advertencias.Add($"No hay inflacion registrada para el anio {string.Join(", ", aniosSinInflacion)}; se uso factor 1.");
+            advertencias.Add($"No hay inflación registrada para el año {string.Join(", ", aniosSinInflacion)}; se usó factor 1.");
 
         return periodos
             .Select(p => CalculoInflacionAplicada.CalcularFactorPeriodo(
@@ -173,11 +173,11 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
     {
         return
         [
-            CrearFila("Inv. Vin. Becas", "N. estudiantes carrera", valores.Select(v => v.EstudiantesCarrera).ToList(), FormatoMatrizCostosGastos.Entero),
-            CrearFila("Inv. Vin. Becas", "N. docentes carrera", valores.Select(v => v.DocentesCarrera).ToList(), FormatoMatrizCostosGastos.Decimal),
-            CrearFila("Inv. Vin. Becas", "Presupuesto universidad", valores.Select(v => v.PresupuestoUniversidad).ToList()),
-            CrearFila("Inv. Vin. Becas", "Investigacion 5%", valores.Select(v => v.Investigacion).ToList()),
-            CrearFila("Inv. Vin. Becas", "Vinculacion 1%", valores.Select(v => v.Vinculacion).ToList()),
+            CrearFila("Inv. Vin. Becas", "Nº estudiantes carrera", valores.Select(v => v.EstudiantesCarrera).ToList(), FormatoMatrizCostosGastos.Entero),
+            CrearFila("Inv. Vin. Becas", "Nº docentes carrera", valores.Select(v => v.DocentesCarrera).ToList(), FormatoMatrizCostosGastos.Decimal),
+            CrearFila("Inv. Vin. Becas", "Presupuesto Universidad", valores.Select(v => v.PresupuestoUniversidad).ToList()),
+            CrearFila("Inv. Vin. Becas", "Investigación 5%", valores.Select(v => v.Investigacion).ToList()),
+            CrearFila("Inv. Vin. Becas", "Vinculación 1%", valores.Select(v => v.Vinculacion).ToList()),
             CrearFila("Inv. Vin. Becas", "Becas estudiantes 90%", valores.Select(v => v.BecasEstudiantes).ToList()),
             CrearFila("Inv. Vin. Becas", "Becas docentes 10%", valores.Select(v => v.BecasDocentes).ToList()),
             CrearFila("Inv. Vin. Becas", "Total Inv. Vin. Becas", valores.Select(v => v.TotalInvVinBecas).ToList(), esTotal: true)

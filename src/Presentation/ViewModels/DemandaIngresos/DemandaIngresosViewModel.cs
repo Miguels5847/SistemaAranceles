@@ -175,10 +175,10 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         get
         {
             if (RatioFormItemSeleccionado is null || RatioFormItemSeleccionado.EsSinItem)
-                return "Sin item vinculado: Materiales Monetarios calculara costo 0.";
+                return "Sin item vinculado: Materiales Monetarios calculará costo 0.";
 
             return RatioFormItemSeleccionado.PrecioUnitario <= 0m
-                ? "El item seleccionado tiene precio unitario 0; Materiales Monetarios calculara costo 0."
+                ? "El item seleccionado tiene precio unitario 0; Materiales Monetarios calculará costo 0."
                 : string.Empty;
         }
     }
@@ -810,7 +810,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             var command = scope.ServiceProvider.GetRequiredService<GuardarConfiguracionArancelCarreraCommand>();
             await command.EjecutarAsync(dto, _sesionActual.UsuarioId);
 
-            MensajeExito = "Arancel sugerido copiado como configuracion manual del escenario.";
+            MensajeExito = "Arancel sugerido copiado como configuración manual del escenario.";
             await RecargarPorCarreraAsync();
         }
         catch (Exception ex)
@@ -1215,7 +1215,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             .OrderBy(f => f.NumeroCiclo)
             .Select(f =>
             {
-                // Asegurar una celda por etiqueta de periodo, en el orden de EtiquetasPeriodos
+                // Asegurar una celda por etiqueta de período, en el orden de EtiquetasPeriodos
                 var celdasPorEtiqueta = f.Periodos.ToDictionary(p => p.EtiquetaPeriodo, p => p.IngresoNeto);
                 var valores = etiquetas
                     .Select(et => celdasPorEtiqueta.TryGetValue(et, out var v) ? v : 0m)

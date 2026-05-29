@@ -15,9 +15,9 @@ public sealed class DetalleProyeccionEstudiantes : EntidadDominioBase
         int cantidadParalelos,
         decimal totalEstudiantes)
     {
-        ProyeccionEstudiantesId = GuardiaDominio.EnteroPositivo(proyeccionEstudiantesId, "Proyeccion de estudiantes");
-        PeriodoAcademicoId = GuardiaDominio.EnteroPositivo(periodoAcademicoId, "Periodo academico");
-        NumeroCiclo = GuardiaDominio.EnteroPositivo(numeroCiclo, "Numero de ciclo");
+        ProyeccionEstudiantesId = GuardiaDominio.EnteroPositivo(proyeccionEstudiantesId, "Proyección de estudiantes");
+        PeriodoAcademicoId = GuardiaDominio.EnteroPositivo(periodoAcademicoId, "Período académico");
+        NumeroCiclo = GuardiaDominio.EnteroPositivo(numeroCiclo, "Número de ciclo");
         CantidadParalelos = GuardiaDominio.EnteroPositivo(cantidadParalelos, "Cantidad de paralelos");
         TotalEstudiantes = GuardiaDominio.DecimalNoNegativo(totalEstudiantes, "Total de estudiantes", 4);
     }

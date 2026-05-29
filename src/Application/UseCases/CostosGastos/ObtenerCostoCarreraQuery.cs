@@ -44,7 +44,7 @@ public sealed class ObtenerCostoCarreraQuery(
             var costoNeto = decimal.Round(matriz.ValoresPorPeriodo[i].TotalDescontadoBecasGobierno, 2);
             var estudiantesPeriodo = estudiantes[i];
             if (estudiantesPeriodo <= 0m)
-                advertencias.Add($"Periodo {matriz.ValoresPorPeriodo[i].EtiquetaPeriodo}: estudiantes en 0; costo por estudiante queda en 0.");
+            advertencias.Add($"Período {matriz.ValoresPorPeriodo[i].EtiquetaPeriodo}: estudiantes en 0; costo por estudiante queda en 0.");
 
             periodos.Add(new CostoCarreraPeriodoDto
             {
@@ -64,7 +64,7 @@ public sealed class ObtenerCostoCarreraQuery(
             ? carrera.TotalCiclos
             : periodos.Count;
         if (numeroSemestres <= 0)
-            advertencias.Add("La carrera no tiene numero de semestres/ciclos configurado.");
+            advertencias.Add("La carrera no tiene número de semestres/ciclos configurado.");
 
         var costoCarreraCompleta = decimal.Round(periodos.Sum(p => p.CostoPorEstudiante), 2);
         var arancelSugerido = numeroSemestres > 0
