@@ -103,13 +103,13 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Margin="0,0,10,0">
                     <TextBlock Text="Carrera" FontSize="11" Foreground="#546E7A"/>
-                    <ComboBox ItemsSource="{Binding Carreras}" SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}" DisplayMemberPath="Nombre" MinWidth="220" Padding="4,2"/>
+                    <ComboBox ItemsSource="{Binding Carreras}" SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}" DisplayMemberPath="Nombre" MinWidth="220" Padding="4,2" IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Margin="0,0,10,0">
                     <TextBlock Text="Escenario" FontSize="11" Foreground="#546E7A"/>
-                    <ComboBox ItemsSource="{Binding Escenarios}" SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}" DisplayMemberPath="NombreDisplay" MinWidth="220" Padding="4,2"/>
+                    <ComboBox ItemsSource="{Binding Escenarios}" SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}" DisplayMemberPath="NombreDisplay" MinWidth="220" Padding="4,2" IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}"/>
                 </StackPanel>
-                <Button Grid.Column="2" Content="Refrescar" Padding="10,4" VerticalAlignment="Bottom" Command="{Binding CargarCommand}"/>
+                <Button Grid.Column="2" Content="Refrescar" Padding="10,4" VerticalAlignment="Bottom" Command="{Binding CargarCommand}" IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}"/>
             </Grid>
         </Border>
 
@@ -118,7 +118,8 @@
             <TextBlock Text="{Binding MensajeError}" Foreground="#C62828" FontWeight="SemiBold" Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
         </StackPanel>
 
-        <TabControl Grid.Row="3">
+        <TabControl Grid.Row="3"
+                    IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}">
             <TabItem Header="1. Configuración de Arancel">
                 <Grid Margin="8">
                     <Grid.RowDefinitions>
@@ -367,5 +368,18 @@
                 <Grid Margin="8"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><TextBlock Grid.Row="0" Text="Costos monetarios con inflación aplicada" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,4"/><Border Grid.Row="1" Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1" CornerRadius="4" Padding="8,5" Margin="0,0,0,6" Visibility="{Binding Materiales.MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}"><TextBlock Text="{Binding Materiales.MensajeAdvertencia}" Foreground="#E65100" TextWrapping="Wrap"/></Border><DataGrid x:Name="MaterialesMonetariosGrid" Grid.Row="2" ItemsSource="{Binding MaterialesMonetariosMatrizFilas}" AutoGenerateColumns="False" IsReadOnly="True" RowStyle="{StaticResource MatrizMaterialesRowStyle}" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9"/><Border Grid.Row="3" Background="#1A237E" BorderBrush="#1A237E" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,8,0,0"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Grid.Column="0" Text="TOTAL MATERIALES" FontWeight="Bold" Foreground="White" FontSize="14" VerticalAlignment="Center"/><TextBlock Grid.Column="1" Text="{Binding Materiales.TotalCostoDisplay, FallbackValue='$ 0,00'}" Foreground="#FFEB3B" FontWeight="Bold" FontSize="15" HorizontalAlignment="Right"/></Grid></Border></Grid>
             </TabItem>
         </TabControl>
+
+        <Border Grid.Row="3"
+                Background="#B3FFFFFF"
+                Visibility="{Binding EstaCargando, Converter={StaticResource BoolToVisibilityConverter}}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="220" Height="6" Foreground="#1A237E"/>
+                <TextBlock Text="Calculando demanda e ingresos…"
+                           Margin="0,10,0,0"
+                           HorizontalAlignment="Center"
+                           FontWeight="SemiBold"
+                           Foreground="#1A237E"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </UserControl>

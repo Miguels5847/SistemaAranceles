@@ -31,7 +31,8 @@ public sealed class ObtenerMatrizCostosGastosQuery(
     public async Task<MatrizCostosGastosDto> EjecutarAsync(
         int carreraId,
         int? escenarioProyeccionId,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        MatrizInvVinBecasDto? invVinBecasPrecalculado = null)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -52,7 +53,9 @@ public sealed class ObtenerMatrizCostosGastosQuery(
         if (datos is null)
             advertencias.Add("No hay Datos Institucionales vigentes. Se usaron defaults para porcentajes y rubros institucionales.");
 
-        var invVinBecas = await obtenerMatrizInvVinBecasQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+        // Reutiliza la matriz Inv. Vin. Becas si ya fue calculada (evita recomputar Ingresos/arancel).
+        var invVinBecas = invVinBecasPrecalculado
+            ?? await obtenerMatrizInvVinBecasQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
         AgregarAdvertencia(advertencias, invVinBecas.MensajeAdvertencia);
 
         var periodos = ObtenerMatrizInvVinBecasQuery.ConstruirPeriodos(demanda);

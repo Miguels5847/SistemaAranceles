@@ -430,6 +430,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         var carreraId = CarreraSeleccionada.Id;
         var escenarioId = EscenarioSeleccionado.Id;
 
+        EstaCargando = true;
         try
         {
             MensajeError = string.Empty;
@@ -493,6 +494,10 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             Materiales = null;
             Ratios = [];
             ActualizarResumen();
+        }
+        finally
+        {
+            EstaCargando = false;
         }
     }
 

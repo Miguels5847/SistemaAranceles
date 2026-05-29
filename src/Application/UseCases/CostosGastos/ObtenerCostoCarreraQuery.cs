@@ -16,7 +16,8 @@ public sealed class ObtenerCostoCarreraQuery(
     public async Task<CostoCarreraResultadoDto> EjecutarAsync(
         int carreraId,
         int? escenarioProyeccionId,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        MatrizCostosGastosDto? matrizPrecalculada = null)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -27,7 +28,9 @@ public sealed class ObtenerCostoCarreraQuery(
         if (escenarioProyeccionId is null or <= 0)
             return Vacio(carreraId, carrera?.Nombre ?? string.Empty, escenarioProyeccionId, escenario?.Nombre ?? string.Empty, "Selecciona un escenario para calcular Costo de la Carrera.");
 
-        var matriz = await obtenerMatrizCostosGastosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+        // Reutiliza la matriz de Costos y Gastos si ya fue calculada (evita recomputar el consolidado completo).
+        var matriz = matrizPrecalculada
+            ?? await obtenerMatrizCostosGastosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
         AgregarAdvertencia(advertencias, matriz.MensajeAdvertencia);
 
         var demanda = await obtenerDemandaProyectadaQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);

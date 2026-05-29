@@ -248,9 +248,13 @@ public sealed partial class CostosGastosViewModel : ObservableObject
 
             var carreraId = CarreraSeleccionada.Id;
             var escenarioId = EscenarioSeleccionado.Id;
-            MatrizInvVinBecas = await queryInv.EjecutarAsync(carreraId, escenarioId);
-            MatrizCostosGastos = await queryCostos.EjecutarAsync(carreraId, escenarioId);
-            ResultadoCostoCarrera = await queryCostoCarrera.EjecutarAsync(carreraId, escenarioId);
+            // Encadena resultados ya calculados: InvVinBecas → CostosGastos → CostoCarrera
+            // para no recomputar las matrices anidadas (ni reconsultar arancel) varias veces.
+            var invVinBecas = await queryInv.EjecutarAsync(carreraId, escenarioId);
+            MatrizInvVinBecas = invVinBecas;
+            var costosGastos = await queryCostos.EjecutarAsync(carreraId, escenarioId, invVinBecasPrecalculado: invVinBecas);
+            MatrizCostosGastos = costosGastos;
+            ResultadoCostoCarrera = await queryCostoCarrera.EjecutarAsync(carreraId, escenarioId, matrizPrecalculada: costosGastos);
 
             var advertencias = new[]
             {

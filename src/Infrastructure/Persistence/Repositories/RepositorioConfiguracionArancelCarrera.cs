@@ -104,50 +104,43 @@ public sealed class RepositorioConfiguracionArancelCarrera(ContextoAplicacion co
     {
         await AsegurarTablaAsync(ct);
 
-        if (dto.Id is int id && id > 0)
-        {
-            var existente = await contexto.ConfiguracionesArancelCarrera
-                .FirstOrDefaultAsync(x => x.Id == id, ct);
-            if (existente is null)
-                throw new InvalidOperationException($"No existe configuración arancel id={id}.");
+        // Upsert por clave natural (carrera, escenario) y NO por Id: así cada escenario tiene su
+        // propia fila y guardar uno no reescribe el escenario de otro (bug ping-pong esc5<->esc6).
+        var escenarioId = dto.EscenarioProyeccionId;
+        var existente = await contexto.ConfiguracionesArancelCarrera
+            .FirstOrDefaultAsync(
+                x => x.EstaActivo
+                  && x.CarreraId == dto.CarreraId
+                  && x.EscenarioProyeccionId == escenarioId,
+                ct);
 
-            existente.EscenarioProyeccionId = dto.EscenarioProyeccionId;
+        if (existente is not null)
+        {
             existente.ModoCalculoArancel = dto.ModoCalculoArancel;
             existente.ArancelManual = dto.ArancelManual;
             existente.PorcentajeMatricula = dto.UsaPorcentajeMatriculaInstitucional ? null : dto.PorcentajeMatricula;
             existente.UsaPorcentajeMatriculaInstitucional = dto.UsaPorcentajeMatriculaInstitucional;
             existente.ActualizadoEn = DateTime.UtcNow;
             existente.ActualizadoPorUsuarioId = usuarioId;
-            existente.EstaActivo = true;
-        }
-        else
-        {
-            var duplicada = await contexto.ConfiguracionesArancelCarrera
-                .AnyAsync(x => x.EstaActivo
-                            && x.CarreraId == dto.CarreraId
-                            && x.EscenarioProyeccionId == dto.EscenarioProyeccionId, ct);
-            if (duplicada)
-                throw new InvalidOperationException("Ya existe configuración para esa carrera/escenario.");
-
-            var nueva = new InfraConfiguracion
-            {
-                CarreraId = dto.CarreraId,
-                EscenarioProyeccionId = dto.EscenarioProyeccionId,
-                ModoCalculoArancel = dto.ModoCalculoArancel,
-                ArancelManual = dto.ArancelManual,
-                PorcentajeMatricula = dto.UsaPorcentajeMatriculaInstitucional ? null : dto.PorcentajeMatricula,
-                UsaPorcentajeMatriculaInstitucional = dto.UsaPorcentajeMatriculaInstitucional,
-                CreadoEn = DateTime.UtcNow,
-                CreadoPorUsuarioId = usuarioId,
-                EstaActivo = true
-            };
-            await contexto.ConfiguracionesArancelCarrera.AddAsync(nueva, ct);
             await contexto.SaveChangesAsync(ct);
-            return nueva.Id;
+            return existente.Id;
         }
 
+        var nueva = new InfraConfiguracion
+        {
+            CarreraId = dto.CarreraId,
+            EscenarioProyeccionId = dto.EscenarioProyeccionId,
+            ModoCalculoArancel = dto.ModoCalculoArancel,
+            ArancelManual = dto.ArancelManual,
+            PorcentajeMatricula = dto.UsaPorcentajeMatriculaInstitucional ? null : dto.PorcentajeMatricula,
+            UsaPorcentajeMatriculaInstitucional = dto.UsaPorcentajeMatriculaInstitucional,
+            CreadoEn = DateTime.UtcNow,
+            CreadoPorUsuarioId = usuarioId,
+            EstaActivo = true
+        };
+        await contexto.ConfiguracionesArancelCarrera.AddAsync(nueva, ct);
         await contexto.SaveChangesAsync(ct);
-        return dto.Id!.Value;
+        return nueva.Id;
     }
 
     public async Task EliminarAsync(int id, int? usuarioId, CancellationToken ct = default)
