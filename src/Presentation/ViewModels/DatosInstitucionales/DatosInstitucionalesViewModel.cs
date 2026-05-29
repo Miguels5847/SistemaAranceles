@@ -56,6 +56,14 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
     [ObservableProperty] private string? _fuenteInflacion;
     [ObservableProperty] private int? _anioBaseProyeccion;
 
+    // KAN-36
+    [ObservableProperty] private decimal _presupuestoBaseUniversidad = DatosInstitucionalesDominio.PresupuestoBaseUniversidadPorDefecto;
+    [ObservableProperty] private decimal _presupuestoGobiernoBecas = DatosInstitucionalesDominio.PresupuestoGobiernoBecasPorDefecto;
+    [ObservableProperty] private decimal _porcentajeInvestigacion = DatosInstitucionalesDominio.PorcentajeInvestigacionPorDefecto;
+    [ObservableProperty] private decimal _porcentajeVinculacion = DatosInstitucionalesDominio.PorcentajeVinculacionPorDefecto;
+    [ObservableProperty] private decimal _porcentajeBecasEstudiantes = DatosInstitucionalesDominio.PorcentajeBecasEstudiantesPorDefecto;
+    [ObservableProperty] private decimal _porcentajeBecasDocentes = DatosInstitucionalesDominio.PorcentajeBecasDocentesPorDefecto;
+
     [ObservableProperty] private string? _fuenteNotas;
 
     [ObservableProperty] private decimal _masaSalarialMensual;
@@ -130,6 +138,12 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
                 Periodo = DateTime.Now.Year.ToString();
                 MesesCapitalTrabajo = DatosInstitucionalesDominio.MesesCapitalTrabajoPorDefecto;
                 PorcentajeImprevistosInversion = DatosInstitucionalesDominio.PorcentajeImprevistosInversionPorDefecto;
+                PresupuestoBaseUniversidad = DatosInstitucionalesDominio.PresupuestoBaseUniversidadPorDefecto;
+                PresupuestoGobiernoBecas = DatosInstitucionalesDominio.PresupuestoGobiernoBecasPorDefecto;
+                PorcentajeInvestigacion = DatosInstitucionalesDominio.PorcentajeInvestigacionPorDefecto;
+                PorcentajeVinculacion = DatosInstitucionalesDominio.PorcentajeVinculacionPorDefecto;
+                PorcentajeBecasEstudiantes = DatosInstitucionalesDominio.PorcentajeBecasEstudiantesPorDefecto;
+                PorcentajeBecasDocentes = DatosInstitucionalesDominio.PorcentajeBecasDocentesPorDefecto;
                 UltimaActualizacionTexto = "Sin registros previos. Ingrese los datos iniciales.";
                 RecalcularMetricas();
                 return;
@@ -189,6 +203,12 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
                     PolizaSeguroEstudiantilAnual = PolizaSeguroEstudiantilAnual,
                     FuenteInflacion = FuenteInflacion,
                     AnioBaseProyeccion = AnioBaseProyeccion,
+                    PresupuestoBaseUniversidad = PresupuestoBaseUniversidad,
+                    PresupuestoGobiernoBecas = PresupuestoGobiernoBecas,
+                    PorcentajeInvestigacion = PorcentajeInvestigacion,
+                    PorcentajeVinculacion = PorcentajeVinculacion,
+                    PorcentajeBecasEstudiantes = PorcentajeBecasEstudiantes,
+                    PorcentajeBecasDocentes = PorcentajeBecasDocentes,
                     FuenteNotas = FuenteNotas,
                 },
                 _sesionActual.UsuarioId);
@@ -252,6 +272,12 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
         PolizaSeguroEstudiantilAnual = dto.PolizaSeguroEstudiantilAnual;
         FuenteInflacion = dto.FuenteInflacion;
         AnioBaseProyeccion = dto.AnioBaseProyeccion;
+        PresupuestoBaseUniversidad = dto.PresupuestoBaseUniversidad;
+        PresupuestoGobiernoBecas = dto.PresupuestoGobiernoBecas;
+        PorcentajeInvestigacion = dto.PorcentajeInvestigacion;
+        PorcentajeVinculacion = dto.PorcentajeVinculacion;
+        PorcentajeBecasEstudiantes = dto.PorcentajeBecasEstudiantes;
+        PorcentajeBecasDocentes = dto.PorcentajeBecasDocentes;
         FuenteNotas = dto.FuenteNotas;
         MasaSalarialMensual = dto.MasaSalarialMensual;
         TotalAnualPlantaCentral = dto.TotalAnualPlantaCentral;
