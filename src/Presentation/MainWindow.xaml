@@ -19,6 +19,7 @@
         xmlns:vmII="clr-namespace:SistemaAranceles.Presentation.ViewModels.InversionInicial"
         xmlns:vmMI="clr-namespace:SistemaAranceles.Presentation.ViewModels.MantenimientoInversion"
         xmlns:vmDIng="clr-namespace:SistemaAranceles.Presentation.ViewModels.DemandaIngresos"
+        xmlns:vmCG="clr-namespace:SistemaAranceles.Presentation.ViewModels.CostosGastos"
         xmlns:vU="clr-namespace:SistemaAranceles.Presentation.Views.Usuarios"
         xmlns:vA="clr-namespace:SistemaAranceles.Presentation.Views.Auditoria"
         xmlns:vCF="clr-namespace:SistemaAranceles.Presentation.Views.CargosFacultad"
@@ -36,6 +37,7 @@
         xmlns:vII="clr-namespace:SistemaAranceles.Presentation.Views.InversionInicial"
         xmlns:vMI="clr-namespace:SistemaAranceles.Presentation.Views.MantenimientoInversion"
         xmlns:vDIng="clr-namespace:SistemaAranceles.Presentation.Views.DemandaIngresos"
+        xmlns:vCG="clr-namespace:SistemaAranceles.Presentation.Views.CostosGastos"
         Title="Sistema de Aranceles Universitarios"
         Width="1400"
         Height="820"
@@ -103,6 +105,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmDIng:DemandaIngresosViewModel}">
             <vDIng:DemandaIngresosView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmCG:CostosGastosViewModel}">
+            <vCG:CostosGastosView/>
         </DataTemplate>
     </Window.Resources>
 

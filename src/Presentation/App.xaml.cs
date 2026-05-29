@@ -14,6 +14,7 @@ using SistemaAranceles.Application.Options;
 using SistemaAranceles.Application.UseCases.Auditoria;
 using SistemaAranceles.Application.UseCases.Autenticacion;
 using SistemaAranceles.Application.UseCases.CargosFacultad;
+using SistemaAranceles.Application.UseCases.CostosGastos;
 using SistemaAranceles.Application.UseCases.Inflacion;
 using SistemaAranceles.Application.UseCases.SueldosPlantaCentral;
 using SistemaAranceles.Application.UseCases.TasaRetencion;
@@ -179,6 +180,9 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.EliminarRatioMaterialDemandaCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ListarRatiosMaterialDemandaQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.CalcularMaterialesPorPeriodoQuery>();
+        servicios.AddTransient<ObtenerMatrizInvVinBecasQuery>();
+        servicios.AddTransient<ObtenerMatrizCostosGastosQuery>();
+        servicios.AddTransient<ObtenerCostoCarreraQuery>();
         servicios.AddTransient<CalcularAportePlantaCentralCarreraQuery>();
         servicios.AddTransient<CalcularProyeccionesCargoPlantaCentralCommand>();
         servicios.AddTransient<ListarProyeccionesCargoPlantaCentralQuery>();
@@ -251,6 +255,7 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.InversionInicial.InversionInicialViewModel>();
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.MantenimientoInversion.MantenimientoInversionViewModel>();
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.DemandaIngresos.DemandaIngresosViewModel>();
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.CostosGastos.CostosGastosViewModel>();
         servicios.AddTransient<CargosFacultadViewModel>();
         servicios.AddTransient<EstudiantesViewModel>();
         servicios.AddTransient<MainViewModel>();
@@ -267,6 +272,7 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Presentation.Views.InversionInicial.InversionInicialView>();
         servicios.AddTransient<SistemaAranceles.Presentation.Views.MantenimientoInversion.MantenimientoInversionView>();
         servicios.AddTransient<SistemaAranceles.Presentation.Views.DemandaIngresos.DemandaIngresosView>();
+        servicios.AddTransient<SistemaAranceles.Presentation.Views.CostosGastos.CostosGastosView>();
         servicios.AddTransient<MainWindow>();
     }
 
