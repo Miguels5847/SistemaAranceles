@@ -72,6 +72,7 @@ public sealed class InvVinBecasPeriodoDto
     public decimal EstudiantesCarrera { get; init; }
     public decimal DocentesCarrera { get; init; }
     public decimal FactorInflacion { get; init; } = 1m;
+    public decimal InflacionAnual { get; init; }
     public decimal BecasInstitucionales { get; init; }
     public decimal PresupuestoUniversidad { get; init; }
     public decimal NumeroEstudiantesUniversidad { get; init; }

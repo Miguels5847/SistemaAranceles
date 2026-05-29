@@ -50,6 +50,7 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
 
         var periodos = ConstruirPeriodos(demanda);
         var factores = await CalcularFactoresInflacionAsync(periodos, datos.SemestresPorAnio, advertencias, ct);
+        var inflacionesAnualesPorPeriodo = await ObtenerInflacionAnualPorPeriodoAsync(periodos, advertencias, ct);
         var estudiantes = CompletarValores(demanda.TotalesPorPeriodo, periodos.Count);
         var docentes = ObtenerDocentesRequeridosPorPeriodo(demanda, periodos.Count);
 
@@ -93,6 +94,7 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
                 EstudiantesCarrera = estudiantes[i],
                 DocentesCarrera = docentes[i],
                 FactorInflacion = factores[i],
+                InflacionAnual = inflacionesAnualesPorPeriodo[i],
                 BecasInstitucionales = becasInstitucionales[i],
                 PresupuestoUniversidad = presupuestoUniversidad,
                 NumeroEstudiantesUniversidad = datos.NumeroEstudiantesUniversidad,
@@ -206,6 +208,38 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
             .ToList();
     }
 
+    private async Task<IReadOnlyList<decimal>> ObtenerInflacionAnualPorPeriodoAsync(
+        IReadOnlyList<PeriodoCostoGastoDto> periodos,
+        List<string> advertencias,
+        CancellationToken ct)
+    {
+        if (periodos.Count == 0)
+            return [];
+
+        var anioBase = periodos.Min(p => p.Anio);
+        var anioMaximo = periodos.Max(p => p.Anio);
+        var registros = await repositorioInflacion.ListarPorRangoAsync(anioBase, anioMaximo, ct);
+        var inflacionPorAnio = registros
+            .GroupBy(r => r.Anio)
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderBy(r => r.TipoFuente).First().PorcentajeInflacion);
+
+        var aniosFaltantes = periodos
+            .Select(p => p.Anio)
+            .Distinct()
+            .Where(anio => !inflacionPorAnio.ContainsKey(anio))
+            .OrderBy(anio => anio)
+            .ToList();
+
+        foreach (var anio in aniosFaltantes)
+            advertencias.Add($"No hay inflación registrada para el año {anio}; se mostró 0 en la fila de inflación anual.");
+
+        return periodos
+            .Select(p => inflacionPorAnio.TryGetValue(p.Anio, out var inflacion) ? inflacion : 0m)
+            .ToList();
+    }
+
     public static IReadOnlyList<PeriodoCostoGastoDto> ConstruirPeriodos(DemandaProyectadaDto demanda)
     {
         var total = demanda.EtiquetasPeriodos.Count;
@@ -249,12 +283,12 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
         [
             CrearFila(GrupoInvVinBecas, "Total Nº de Estudiantes", valores.Select(v => v.EstudiantesCarrera).ToList(), FormatoMatrizCostosGastos.Entero),
             CrearFila(GrupoInvVinBecas, "Becas Institucionales", valores.Select(v => v.BecasInstitucionales).ToList()),
-            CrearFila(GrupoInvVinBecas, "Factor inflación / % Variación Presupuesto", valores.Select(v => v.FactorInflacion).ToList(), FormatoMatrizCostosGastos.Decimal),
+            CrearFila(GrupoInvVinBecas, "Inflación anual / % Variación Presupuesto", valores.Select(v => v.InflacionAnual).ToList(), FormatoMatrizCostosGastos.Decimal),
             CrearFila(GrupoInvVinBecas, "Presupuesto Universidad", valores.Select(v => v.PresupuestoUniversidad).ToList()),
             CrearFila(GrupoInvVinBecas, "Nº Estudiantes Uni", valores.Select(v => v.NumeroEstudiantesUniversidad).ToList(), FormatoMatrizCostosGastos.Entero),
             CrearFila(GrupoInvVinBecas, "Investigación 5%", valores.Select(v => v.Investigacion).ToList()),
             CrearFila(GrupoInvVinBecas, "Vinculación 1%", valores.Select(v => v.Vinculacion).ToList()),
-            CrearFila(GrupoInvVinBecas, "Factor inflación / % Variación Presupuesto Gobierno", valores.Select(v => v.FactorInflacion).ToList(), FormatoMatrizCostosGastos.Decimal),
+            CrearFila(GrupoInvVinBecas, "Inflación anual / % Variación Presupuesto Gobierno", valores.Select(v => v.InflacionAnual).ToList(), FormatoMatrizCostosGastos.Decimal),
             CrearFila(GrupoInvVinBecas, "Presupuesto Gobierno", valores.Select(v => v.PresupuestoGobierno).ToList()),
             CrearFila(GrupoInvVinBecas, "Nº Docentes Universidad", valores.Select(v => v.NumeroDocentesUniversidad).ToList(), FormatoMatrizCostosGastos.Entero),
             CrearFila(GrupoInvVinBecas, "Becas Estudiantes 90%", valores.Select(v => v.BecasEstudiantes).ToList()),
