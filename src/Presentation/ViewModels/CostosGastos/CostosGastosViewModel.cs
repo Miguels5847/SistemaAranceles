@@ -175,18 +175,20 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             var escenariosConProyeccion = proyecciones.Select(p => p.EscenarioProyeccionId).ToHashSet();
             var escenarioActualId = EscenarioSeleccionado?.Id;
 
+            // Solo escenarios con proyección para la carrera: evita seleccionar duplicados sin datos
+            // (arancel/becas/costos no se pueden resolver sin proyección de estudiantes).
             var opciones = escenarios
-                .Where(e => e.CarreraId == CarreraSeleccionada.Id)
+                .Where(e => e.CarreraId == CarreraSeleccionada.Id
+                            && escenariosConProyeccion.Contains(e.Id))
                 .Select(e => new EscenarioCostosGastosOpcion
                 {
                     Id = e.Id,
                     CarreraId = e.CarreraId,
                     Nombre = e.Nombre,
                     EsPredeterminado = e.EsPredeterminado,
-                    TieneProyeccion = escenariosConProyeccion.Contains(e.Id)
+                    TieneProyeccion = true
                 })
-                .OrderByDescending(e => e.TieneProyeccion)
-                .ThenByDescending(e => e.EsPredeterminado)
+                .OrderByDescending(e => e.EsPredeterminado)
                 .ThenBy(e => e.Nombre)
                 .ToList();
 
@@ -195,12 +197,18 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             {
                 Escenarios = new ObservableCollection<EscenarioCostosGastosOpcion>(opciones);
                 EscenarioSeleccionado = Escenarios.FirstOrDefault(e => e.Id == escenarioActualId)
-                    ?? Escenarios.FirstOrDefault(e => e.TieneProyeccion)
                     ?? Escenarios.FirstOrDefault();
             }
             finally
             {
                 _suprimirCambios = false;
+            }
+
+            if (EscenarioSeleccionado is null)
+            {
+                LimpiarMatrices();
+                MensajeError = "La carrera no tiene escenarios con proyección de estudiantes. Genera la proyección en Proyección de Estudiantes.";
+                return;
             }
 
             await RefrescarAsync();
