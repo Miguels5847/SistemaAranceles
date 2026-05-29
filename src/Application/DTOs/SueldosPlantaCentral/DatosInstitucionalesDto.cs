@@ -21,6 +21,18 @@ public sealed class DatosInstitucionalesDto
     public int MesesCapitalTrabajo { get; init; } = DatosInstitucionales.MesesCapitalTrabajoPorDefecto;
     public decimal PorcentajeImprevistosInversion { get; init; } = DatosInstitucionales.PorcentajeImprevistosInversionPorDefecto;
 
+    // KAN-35
+    public decimal PorcentajeMatriculaDefault { get; init; } = DatosInstitucionales.PorcentajeMatriculaDefaultPorDefecto;
+    public decimal PorcentajeBecasInstitucionales { get; init; } = DatosInstitucionales.PorcentajeBecasInstitucionalesPorDefecto;
+    public int SemestresPorAnio { get; init; } = DatosInstitucionales.SemestresPorAnioPorDefecto;
+    public int MesesOperativosCiclo { get; init; } = DatosInstitucionales.MesesOperativosCicloPorDefecto;
+    public decimal PresupuestoAnualCapacitacion { get; init; }
+    public decimal PresupuestoAnualInternacionalizacion { get; init; }
+    public decimal PresupuestoAnualMarketing { get; init; }
+    public decimal PolizaSeguroEstudiantilAnual { get; init; }
+    public string? FuenteInflacion { get; init; }
+    public int? AnioBaseProyeccion { get; init; }
+
     public decimal MasaSalarialMensual { get; init; }
     public decimal TotalMensualPlantaCentral { get; init; }
     public decimal TotalAnualPlantaCentral { get; init; }
@@ -56,6 +68,18 @@ public sealed class GuardarDatosInstitucionalesDto
     public decimal Varios { get; init; }
     public int MesesCapitalTrabajo { get; init; } = DatosInstitucionales.MesesCapitalTrabajoPorDefecto;
     public decimal PorcentajeImprevistosInversion { get; init; } = DatosInstitucionales.PorcentajeImprevistosInversionPorDefecto;
+
+    // KAN-35
+    public decimal PorcentajeMatriculaDefault { get; init; } = DatosInstitucionales.PorcentajeMatriculaDefaultPorDefecto;
+    public decimal PorcentajeBecasInstitucionales { get; init; } = DatosInstitucionales.PorcentajeBecasInstitucionalesPorDefecto;
+    public int SemestresPorAnio { get; init; } = DatosInstitucionales.SemestresPorAnioPorDefecto;
+    public int MesesOperativosCiclo { get; init; } = DatosInstitucionales.MesesOperativosCicloPorDefecto;
+    public decimal PresupuestoAnualCapacitacion { get; init; }
+    public decimal PresupuestoAnualInternacionalizacion { get; init; }
+    public decimal PresupuestoAnualMarketing { get; init; }
+    public decimal PolizaSeguroEstudiantilAnual { get; init; }
+    public string? FuenteInflacion { get; init; }
+    public int? AnioBaseProyeccion { get; init; }
 
     public string? FuenteNotas { get; init; }
 }

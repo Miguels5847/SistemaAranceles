@@ -7,6 +7,7 @@ using SistemaAranceles.Application.DTOs.Usuarios;
 using SistemaAranceles.Application.UseCases.Autenticacion;
 using SistemaAranceles.Presentation.ViewModels.CargosFacultad;
 using SistemaAranceles.Presentation.ViewModels.DatosInstitucionales;
+using SistemaAranceles.Presentation.ViewModels.DemandaIngresos;
 using SistemaAranceles.Presentation.ViewModels.PlantaCentral;
 using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.Services;
@@ -22,12 +23,14 @@ using System.Diagnostics;
 
 namespace SistemaAranceles.Presentation.ViewModels;
 
-public sealed class ItemMenu
+public sealed partial class ItemMenu : ObservableObject
 {
     public string Titulo { get; init; } = string.Empty;
     public string Icono { get; init; } = string.Empty;
     public System.Windows.Input.ICommand? Comando { get; init; }
     public bool EsVisible { get; init; } = true;
+
+    [ObservableProperty] private bool _estaSeleccionado;
 }
 
 public sealed partial class MainViewModel : ObservableObject
@@ -46,6 +49,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly DatosInstitucionalesViewModel _datosInstitucionalesViewModel;
     private readonly AportePlantaCentralViewModel _aportePlantaCentralViewModel;
     private readonly SistemaAranceles.Presentation.ViewModels.RecursosFisicos.ActivosFijosViewModel _activosFijosViewModel;
+    private readonly DemandaIngresosViewModel _demandaIngresosViewModel;
     private readonly Func<EditarUsuarioViewModel> _editarUsuarioViewModelFactory;
     private int _cerrandoSesion;
     private int _cargandoUsuarios;
@@ -65,6 +69,7 @@ public sealed partial class MainViewModel : ObservableObject
         DatosInstitucionalesViewModel datosInstitucionalesViewModel,
         AportePlantaCentralViewModel aportePlantaCentralViewModel,
         SistemaAranceles.Presentation.ViewModels.RecursosFisicos.ActivosFijosViewModel activosFijosViewModel,
+        DemandaIngresosViewModel demandaIngresosViewModel,
         Func<EditarUsuarioViewModel> editarUsuarioViewModelFactory)
     {
         _serviceProvider = serviceProvider;
@@ -81,12 +86,14 @@ public sealed partial class MainViewModel : ObservableObject
         _datosInstitucionalesViewModel = datosInstitucionalesViewModel;
         _aportePlantaCentralViewModel = aportePlantaCentralViewModel;
         _activosFijosViewModel = activosFijosViewModel;
+        _demandaIngresosViewModel = demandaIngresosViewModel;
         _editarUsuarioViewModelFactory = editarUsuarioViewModelFactory;
 
         _servicioInactividad.TiempoRestanteActualizado += (_, tiempoRestante) =>
         {
             TiempoRestanteSesion = FormatearTiempoRestante(tiempoRestante);
         };
+        TiempoRestanteSesion = FormatearTiempoRestante(_servicioInactividad.TiempoRestante);
 
         WeakReferenceMessenger.Default.Register<NavegarAMensaje>(this, (_, msg) =>
         {
@@ -139,6 +146,12 @@ public sealed partial class MainViewModel : ObservableObject
     private static string FormatearTiempoRestante(TimeSpan tiempo)
     {
         return $"{(int)tiempo.TotalMinutes}:{tiempo.Seconds:D2}";
+    }
+
+    private void SeleccionarMenu(string titulo)
+    {
+        foreach (var item in MenuItems)
+            item.EstaSeleccionado = item.Titulo == titulo;
     }
 
     private void ConstruirMenu()
@@ -200,6 +213,11 @@ public sealed partial class MainViewModel : ObservableObject
             MenuItems.Add(new ItemMenu { Titulo = "Capital de Trabajo", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarCapitalTrabajoAsync()) });
         }
 
+        if (_sesionActual.TienePermiso("DI_NG.VER") || _sesionActual.EsAdministrador)
+        {
+            MenuItems.Add(new ItemMenu { Titulo = "Demanda e Ingresos", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarDemandaIngresosAsync()) });
+        }
+
         if (_sesionActual.TienePermiso("CFG.VER"))
         {
             MenuItems.Add(new ItemMenu { Titulo = "Configuración", Icono = string.Empty, Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Configuración", "Pendiente")) });
@@ -222,6 +240,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void MostrarModuloEnDesarrollo(string modulo, string epica)
     {
+        SeleccionarMenu(modulo);
         PaginaActual = null;
         MensajePagina = $"Módulo {modulo} — en desarrollo ({epica}). Se habilitó menú por permisos para pruebas de acceso por rol.";
     }
@@ -234,6 +253,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarEstudiantesAsync()
     {
+        SeleccionarMenu("Proyección de Estudiantes");
         if (!(_sesionActual.TienePermiso("ES.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo de Proyección de Estudiantes."; return; }
         MensajePagina = string.Empty;
         PaginaActual = _estudiantesViewModel;
@@ -242,6 +262,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarCarrerasAsync()
     {
+        SeleccionarMenu("Carreras");
         if (!(_sesionActual.TienePermiso("CA.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo de Carreras."; return; }
         MensajePagina = string.Empty;
         PaginaActual = _carrerasViewModel;
@@ -250,6 +271,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarTasaRetencionAsync()
     {
+        SeleccionarMenu("Tasa de Retención y Graduación");
         var puede = _sesionActual.TienePermiso("TRE.VER") || _sesionActual.EsAdministrador;
         if (!puede) { MensajePagina = "Acceso denegado al módulo de Tasa de Retención."; return; }
         MensajePagina = string.Empty;
@@ -259,6 +281,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarUsuariosAsync(string? mensajeExito = null)
     {
+        SeleccionarMenu("Usuarios");
         if (!_sesionActual.TienePermiso("US.VER")) { MensajePagina = "Acceso denegado a Gestión de Usuarios."; return; }
         if (Interlocked.Exchange(ref _cargandoUsuarios, 1) == 1) { Trace.TraceInformation($"[{DateTime.UtcNow:O}] MainViewModel: MostrarUsuariosAsync ignorado por carga en curso."); return; }
         MensajePagina = string.Empty;
@@ -273,6 +296,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private Task MostrarAuditoriaAsync()
     {
+        SeleccionarMenu("Auditoría");
         if (!(_sesionActual.EsAdministrador && _sesionActual.TienePermiso("AUD.VER"))) { MensajePagina = "Acceso denegado a Auditoría."; return Task.CompletedTask; }
         MensajePagina = string.Empty;
         PaginaActual = _auditoriaViewModel;
@@ -281,6 +305,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarInflacionAsync()
     {
+        SeleccionarMenu("Inflación");
         if (!_sesionActual.TienePermiso("INF.VER")) { MensajePagina = "Acceso denegado al módulo de Inflación."; return; }
         MensajePagina = string.Empty;
         PaginaActual = _inflacionViewModel;
@@ -289,6 +314,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarDatosInstitucionalesAsync()
     {
+        SeleccionarMenu("Datos Institucionales");
         if (!(_sesionActual.TienePermiso("DI.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al modulo Datos Institucionales."; return; }
         MensajePagina = string.Empty;
         PaginaActual = _datosInstitucionalesViewModel;
@@ -297,6 +323,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarAportePlantaCentralAsync()
     {
+        SeleccionarMenu("Aporte Planta Central");
         if (!(_sesionActual.TienePermiso("PC.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al modulo Aporte Planta Central."; return; }
         MensajePagina = string.Empty;
         PaginaActual = _aportePlantaCentralViewModel;
@@ -305,6 +332,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarActivosFijosAsync()
     {
+        SeleccionarMenu("Recursos y Depreciación");
         if (!(_sesionActual.TienePermiso("RD.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo de Recursos y Depreciación."; return; }
         MensajePagina = string.Empty;
         PaginaActual = _activosFijosViewModel;
@@ -313,6 +341,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarCargosFacultadAsync()
     {
+        SeleccionarMenu("Sueldos Carrera");
         if (!(_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo de Sueldos."; return; }
         MensajePagina = string.Empty;
         PaginaActual = _cargosFacultadViewModel;
@@ -323,6 +352,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarCapitalTrabajoAsync()
     {
+        SeleccionarMenu("Capital de Trabajo");
         if (!(_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo Capital de Trabajo."; return; }
         MensajePagina = string.Empty;
         PaginaActual = _capitalTrabajoViewModel;
@@ -331,8 +361,18 @@ public sealed partial class MainViewModel : ObservableObject
 
     private Task MostrarCatalogoMaterialesAsync() => MostrarCapitalTrabajoAsync();
 
+    private async Task MostrarDemandaIngresosAsync()
+    {
+        SeleccionarMenu("Demanda e Ingresos");
+        if (!(_sesionActual.TienePermiso("DI_NG.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo Demanda e Ingresos."; return; }
+        MensajePagina = string.Empty;
+        PaginaActual = _demandaIngresosViewModel;
+        await _demandaIngresosViewModel.CargarCommand.ExecuteAsync(null);
+    }
+
     private async Task MostrarMantenimientoInversionAsync()
     {
+        SeleccionarMenu("Mantenimiento e Inversión");
         if (!(_sesionActual.EsAdministrador || _sesionActual.TienePermiso("MI.VER"))) { MensajePagina = "Acceso denegado al módulo de Mantenimiento e Inversión."; return; }
         MensajePagina = string.Empty;
         var vm = _serviceProvider.GetRequiredService<MantenimientoInversionViewModel>();
@@ -343,6 +383,7 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task MostrarNuevoUsuarioAsync()
     {
+        SeleccionarMenu("Usuarios");
         if (!_sesionActual.TienePermiso("US.CREAR")) { MensajePagina = "Acceso denegado. No tiene permiso para crear usuarios."; return; }
         var vm = _editarUsuarioViewModelFactory();
         PaginaActual = vm;
@@ -357,6 +398,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task MostrarEditarUsuarioAsync(UsuarioDto usuario)
     {
+        SeleccionarMenu("Usuarios");
         if (!_sesionActual.TienePermiso("US.EDITAR")) { MensajePagina = "Acceso denegado. No tiene permiso para editar usuarios."; return; }
         var vm = _editarUsuarioViewModelFactory();
         PaginaActual = vm;

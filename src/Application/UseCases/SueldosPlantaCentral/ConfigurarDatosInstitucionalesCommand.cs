@@ -40,6 +40,17 @@ public sealed class ConfigurarDatosInstitucionalesCommand(
                 dto.FuenteNotas,
                 dto.MesesCapitalTrabajo,
                 dto.PorcentajeImprevistosInversion);
+            datos.CambiarParametrosDemandaIngresos(
+                dto.PorcentajeMatriculaDefault,
+                dto.PorcentajeBecasInstitucionales,
+                dto.SemestresPorAnio,
+                dto.MesesOperativosCiclo,
+                dto.PresupuestoAnualCapacitacion,
+                dto.PresupuestoAnualInternacionalizacion,
+                dto.PresupuestoAnualMarketing,
+                dto.PolizaSeguroEstudiantilAnual,
+                dto.FuenteInflacion,
+                dto.AnioBaseProyeccion);
             repositorio.Agregar(datos);
         }
         else
@@ -59,6 +70,17 @@ public sealed class ConfigurarDatosInstitucionalesCommand(
             existente.CambiarParametrosInversion(
                 dto.MesesCapitalTrabajo,
                 dto.PorcentajeImprevistosInversion);
+            existente.CambiarParametrosDemandaIngresos(
+                dto.PorcentajeMatriculaDefault,
+                dto.PorcentajeBecasInstitucionales,
+                dto.SemestresPorAnio,
+                dto.MesesOperativosCiclo,
+                dto.PresupuestoAnualCapacitacion,
+                dto.PresupuestoAnualInternacionalizacion,
+                dto.PresupuestoAnualMarketing,
+                dto.PolizaSeguroEstudiantilAnual,
+                dto.FuenteInflacion,
+                dto.AnioBaseProyeccion);
             existente.RegistrarActualizacion(usuarioId, dto.FuenteNotas);
             repositorio.Actualizar(existente);
             datos = existente;

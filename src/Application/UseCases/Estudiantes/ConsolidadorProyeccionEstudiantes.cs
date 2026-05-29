@@ -27,6 +27,8 @@ public static class ConsolidadorProyeccionEstudiantes
     public static (int phd, int mgs, int mt, int tp, decimal hMT, decimal hTP)
         DesglosarDocentesPorPeriodo(decimal horasAsistidas)
     {
+        horasAsistidas = decimal.Round(horasAsistidas, 0, MidpointRounding.AwayFromZero);
+
         if (horasAsistidas <= 0m) return (0, 0, 0, 0, 0m, 0m);
 
         var totalDec = horasAsistidas / ConstantesDocentes.HorasDocenteTC;
@@ -70,6 +72,9 @@ public static class ConsolidadorProyeccionEstudiantes
                 hTP = residuoDespuesMT;
             }
         }
+
+        hMT = decimal.Round(hMT, 0, MidpointRounding.AwayFromZero);
+        hTP = decimal.Round(hTP, 0, MidpointRounding.AwayFromZero);
 
         return (phd, mgs, mt, tp, hMT, hTP);
     }
@@ -195,7 +200,8 @@ public static class ConsolidadorProyeccionEstudiantes
 
         for (var p = 0; p < totalPeriodos; p++)
         {
-            var (phd, mgs, mt, tp, hMT, hTP) = DesglosarDocentesPorPeriodo(fila15[p]);
+            var horasParaDesglose = decimal.Round(fila15[p], 0, MidpointRounding.AwayFromZero);
+            var (phd, mgs, mt, tp, hMT, hTP) = DesglosarDocentesPorPeriodo(horasParaDesglose);
 
             phdArr[p]      = phd;
             tcMgsArr[p]    = mgs;
