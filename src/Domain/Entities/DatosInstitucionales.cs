@@ -14,6 +14,12 @@ public sealed class DatosInstitucionales : EntidadDominioBase
     public const decimal PorcentajeBecasInstitucionalesPorDefecto = 10m;
     public const int SemestresPorAnioPorDefecto = 2;
     public const int MesesOperativosCicloPorDefecto = 6;
+    public const decimal PresupuestoBaseUniversidadPorDefecto = 0m;
+    public const decimal PresupuestoGobiernoBecasPorDefecto = 0m;
+    public const decimal PorcentajeInvestigacionPorDefecto = 5m;
+    public const decimal PorcentajeVinculacionPorDefecto = 1m;
+    public const decimal PorcentajeBecasEstudiantesPorDefecto = 90m;
+    public const decimal PorcentajeBecasDocentesPorDefecto = 10m;
 
     private DatosInstitucionales()
     {
@@ -23,6 +29,12 @@ public sealed class DatosInstitucionales : EntidadDominioBase
         PorcentajeBecasInstitucionales = PorcentajeBecasInstitucionalesPorDefecto;
         SemestresPorAnio = SemestresPorAnioPorDefecto;
         MesesOperativosCiclo = MesesOperativosCicloPorDefecto;
+        PresupuestoBaseUniversidad = PresupuestoBaseUniversidadPorDefecto;
+        PresupuestoGobiernoBecas = PresupuestoGobiernoBecasPorDefecto;
+        PorcentajeInvestigacion = PorcentajeInvestigacionPorDefecto;
+        PorcentajeVinculacion = PorcentajeVinculacionPorDefecto;
+        PorcentajeBecasEstudiantes = PorcentajeBecasEstudiantesPorDefecto;
+        PorcentajeBecasDocentes = PorcentajeBecasDocentesPorDefecto;
     }
 
     public DatosInstitucionales(
@@ -76,6 +88,14 @@ public sealed class DatosInstitucionales : EntidadDominioBase
     public decimal PolizaSeguroEstudiantilAnual { get; private set; }
     public string? FuenteInflacion { get; private set; }
     public int? AnioBaseProyeccion { get; private set; }
+
+    // KAN-36: parametros Epica 10 (Costos y Gastos)
+    public decimal PresupuestoBaseUniversidad { get; private set; } = PresupuestoBaseUniversidadPorDefecto;
+    public decimal PresupuestoGobiernoBecas { get; private set; } = PresupuestoGobiernoBecasPorDefecto;
+    public decimal PorcentajeInvestigacion { get; private set; } = PorcentajeInvestigacionPorDefecto;
+    public decimal PorcentajeVinculacion { get; private set; } = PorcentajeVinculacionPorDefecto;
+    public decimal PorcentajeBecasEstudiantes { get; private set; } = PorcentajeBecasEstudiantesPorDefecto;
+    public decimal PorcentajeBecasDocentes { get; private set; } = PorcentajeBecasDocentesPorDefecto;
 
     public DateTimeOffset FechaActualizacion { get; private set; }
     public int ActualizadoPorUsuarioId { get; private set; }
@@ -162,6 +182,23 @@ public sealed class DatosInstitucionales : EntidadDominioBase
         if (anioBaseProyeccion is int a && (a < 2010 || a > 2050))
             throw new DominioException("Año base proyección debe estar entre 2010 y 2050.");
         AnioBaseProyeccion = anioBaseProyeccion;
+    }
+
+    /// <summary>KAN-36: parametros globales para modulo Costos y Gastos.</summary>
+    public void CambiarParametrosCostosGastos(
+        decimal presupuestoBaseUniversidad,
+        decimal presupuestoGobiernoBecas,
+        decimal porcentajeInvestigacion,
+        decimal porcentajeVinculacion,
+        decimal porcentajeBecasEstudiantes,
+        decimal porcentajeBecasDocentes)
+    {
+        PresupuestoBaseUniversidad = GuardiaDominio.DecimalNoNegativo(presupuestoBaseUniversidad, "Presupuesto base universidad", 2);
+        PresupuestoGobiernoBecas = GuardiaDominio.DecimalNoNegativo(presupuestoGobiernoBecas, "Presupuesto gobierno becas", 2);
+        PorcentajeInvestigacion = GuardiaDominio.Porcentaje(porcentajeInvestigacion, "Porcentaje investigacion");
+        PorcentajeVinculacion = GuardiaDominio.Porcentaje(porcentajeVinculacion, "Porcentaje vinculacion");
+        PorcentajeBecasEstudiantes = GuardiaDominio.Porcentaje(porcentajeBecasEstudiantes, "Porcentaje becas estudiantes");
+        PorcentajeBecasDocentes = GuardiaDominio.Porcentaje(porcentajeBecasDocentes, "Porcentaje becas docentes");
     }
 
     public void RehidratarFechaActualizacion(DateTimeOffset fecha)

@@ -51,6 +51,13 @@ public sealed class ConfigurarDatosInstitucionalesCommand(
                 dto.PolizaSeguroEstudiantilAnual,
                 dto.FuenteInflacion,
                 dto.AnioBaseProyeccion);
+            datos.CambiarParametrosCostosGastos(
+                dto.PresupuestoBaseUniversidad,
+                dto.PresupuestoGobiernoBecas,
+                dto.PorcentajeInvestigacion,
+                dto.PorcentajeVinculacion,
+                dto.PorcentajeBecasEstudiantes,
+                dto.PorcentajeBecasDocentes);
             repositorio.Agregar(datos);
         }
         else
@@ -81,6 +88,13 @@ public sealed class ConfigurarDatosInstitucionalesCommand(
                 dto.PolizaSeguroEstudiantilAnual,
                 dto.FuenteInflacion,
                 dto.AnioBaseProyeccion);
+            existente.CambiarParametrosCostosGastos(
+                dto.PresupuestoBaseUniversidad,
+                dto.PresupuestoGobiernoBecas,
+                dto.PorcentajeInvestigacion,
+                dto.PorcentajeVinculacion,
+                dto.PorcentajeBecasEstudiantes,
+                dto.PorcentajeBecasDocentes);
             existente.RegistrarActualizacion(usuarioId, dto.FuenteNotas);
             repositorio.Actualizar(existente);
             datos = existente;

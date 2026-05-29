@@ -31,6 +31,14 @@ public sealed class DatosInstitucionales
     public string? FuenteInflacion { get; set; }
     public int? AnioBaseProyeccion { get; set; }
 
+    // KAN-36: parametros Epica 10
+    public decimal PresupuestoBaseUniversidad { get; set; }
+    public decimal PresupuestoGobiernoBecas { get; set; }
+    public decimal PorcentajeInvestigacion { get; set; } = 5m;
+    public decimal PorcentajeVinculacion { get; set; } = 1m;
+    public decimal PorcentajeBecasEstudiantes { get; set; } = 90m;
+    public decimal PorcentajeBecasDocentes { get; set; } = 10m;
+
     public DateTimeOffset FechaActualizacion { get; set; } = DateTimeOffset.UtcNow;
     public int ActualizadoPorUsuarioId { get; set; }
     public string? FuenteNotas { get; set; }

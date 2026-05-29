@@ -33,6 +33,14 @@ public sealed class DatosInstitucionalesDto
     public string? FuenteInflacion { get; init; }
     public int? AnioBaseProyeccion { get; init; }
 
+    // KAN-36
+    public decimal PresupuestoBaseUniversidad { get; init; } = DatosInstitucionales.PresupuestoBaseUniversidadPorDefecto;
+    public decimal PresupuestoGobiernoBecas { get; init; } = DatosInstitucionales.PresupuestoGobiernoBecasPorDefecto;
+    public decimal PorcentajeInvestigacion { get; init; } = DatosInstitucionales.PorcentajeInvestigacionPorDefecto;
+    public decimal PorcentajeVinculacion { get; init; } = DatosInstitucionales.PorcentajeVinculacionPorDefecto;
+    public decimal PorcentajeBecasEstudiantes { get; init; } = DatosInstitucionales.PorcentajeBecasEstudiantesPorDefecto;
+    public decimal PorcentajeBecasDocentes { get; init; } = DatosInstitucionales.PorcentajeBecasDocentesPorDefecto;
+
     public decimal MasaSalarialMensual { get; init; }
     public decimal TotalMensualPlantaCentral { get; init; }
     public decimal TotalAnualPlantaCentral { get; init; }
@@ -80,6 +88,14 @@ public sealed class GuardarDatosInstitucionalesDto
     public decimal PolizaSeguroEstudiantilAnual { get; init; }
     public string? FuenteInflacion { get; init; }
     public int? AnioBaseProyeccion { get; init; }
+
+    // KAN-36
+    public decimal PresupuestoBaseUniversidad { get; init; } = DatosInstitucionales.PresupuestoBaseUniversidadPorDefecto;
+    public decimal PresupuestoGobiernoBecas { get; init; } = DatosInstitucionales.PresupuestoGobiernoBecasPorDefecto;
+    public decimal PorcentajeInvestigacion { get; init; } = DatosInstitucionales.PorcentajeInvestigacionPorDefecto;
+    public decimal PorcentajeVinculacion { get; init; } = DatosInstitucionales.PorcentajeVinculacionPorDefecto;
+    public decimal PorcentajeBecasEstudiantes { get; init; } = DatosInstitucionales.PorcentajeBecasEstudiantesPorDefecto;
+    public decimal PorcentajeBecasDocentes { get; init; } = DatosInstitucionales.PorcentajeBecasDocentesPorDefecto;
 
     public string? FuenteNotas { get; init; }
 }

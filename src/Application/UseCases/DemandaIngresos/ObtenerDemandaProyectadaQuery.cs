@@ -103,6 +103,7 @@ public sealed class ObtenerDemandaProyectadaQuery(
             CarreraNombre = carrera?.Nombre ?? proyeccion.CarreraNombre,
             EscenarioProyeccionId = escenarioProyeccionId,
             EscenarioNombre = escenario?.Nombre ?? proyeccion.EscenarioNombre,
+            PeriodoAcademicoIds = periodos.Select(p => p.PeriodoAcademicoId).ToList(),
             EtiquetasPeriodos = periodos.Select(p => p.EtiquetaPeriodo).ToList(),
             AniosPeriodos = periodos.Select(p => p.Anio).ToList(),
             NumerosPeriodos = periodos.Select(p => p.NumeroPeriodo).ToList(),

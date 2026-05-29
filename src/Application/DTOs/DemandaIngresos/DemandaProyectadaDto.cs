@@ -23,6 +23,7 @@ public sealed class DemandaProyectadaDto
     public string CarreraNombre { get; init; } = string.Empty;
     public int? EscenarioProyeccionId { get; init; }
     public string EscenarioNombre { get; init; } = string.Empty;
+    public IReadOnlyList<int> PeriodoAcademicoIds { get; init; } = [];
     public IReadOnlyList<string> EtiquetasPeriodos { get; init; } = [];
     public IReadOnlyList<int> AniosPeriodos { get; init; } = [];
     public IReadOnlyList<int> NumerosPeriodos { get; init; } = [];

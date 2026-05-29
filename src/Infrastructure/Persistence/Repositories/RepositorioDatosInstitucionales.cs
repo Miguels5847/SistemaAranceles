@@ -59,6 +59,14 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
             ALTER TABLE public.datos_institucionales
                 ADD COLUMN IF NOT EXISTS porcentaje_imprevistos_inversion NUMERIC(7,4) NOT NULL DEFAULT 5.0000;
 
+            ALTER TABLE public.datos_institucionales
+                ADD COLUMN IF NOT EXISTS presupuesto_base_universidad NUMERIC(18,2) NOT NULL DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS presupuesto_gobierno_becas NUMERIC(18,2) NOT NULL DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS porcentaje_investigacion NUMERIC(7,4) NOT NULL DEFAULT 5.0000,
+                ADD COLUMN IF NOT EXISTS porcentaje_vinculacion NUMERIC(7,4) NOT NULL DEFAULT 1.0000,
+                ADD COLUMN IF NOT EXISTS porcentaje_becas_estudiantes NUMERIC(7,4) NOT NULL DEFAULT 90.0000,
+                ADD COLUMN IF NOT EXISTS porcentaje_becas_docentes NUMERIC(7,4) NOT NULL DEFAULT 10.0000;
+
             UPDATE public.datos_institucionales
                SET meses_capital_trabajo = 2
              WHERE meses_capital_trabajo IS NULL;
@@ -67,11 +75,39 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
                SET porcentaje_imprevistos_inversion = 5.0000
              WHERE porcentaje_imprevistos_inversion IS NULL;
 
+            UPDATE public.datos_institucionales
+               SET porcentaje_investigacion = 5.0000
+             WHERE porcentaje_investigacion IS NULL;
+
+            UPDATE public.datos_institucionales
+               SET porcentaje_vinculacion = 1.0000
+             WHERE porcentaje_vinculacion IS NULL;
+
+            UPDATE public.datos_institucionales
+               SET porcentaje_becas_estudiantes = 90.0000
+             WHERE porcentaje_becas_estudiantes IS NULL;
+
+            UPDATE public.datos_institucionales
+               SET porcentaje_becas_docentes = 10.0000
+             WHERE porcentaje_becas_docentes IS NULL;
+
             ALTER TABLE public.datos_institucionales
                 ALTER COLUMN meses_capital_trabajo SET DEFAULT 2,
                 ALTER COLUMN meses_capital_trabajo SET NOT NULL,
                 ALTER COLUMN porcentaje_imprevistos_inversion SET DEFAULT 5.0000,
-                ALTER COLUMN porcentaje_imprevistos_inversion SET NOT NULL;
+                ALTER COLUMN porcentaje_imprevistos_inversion SET NOT NULL,
+                ALTER COLUMN presupuesto_base_universidad SET DEFAULT 0.00,
+                ALTER COLUMN presupuesto_base_universidad SET NOT NULL,
+                ALTER COLUMN presupuesto_gobierno_becas SET DEFAULT 0.00,
+                ALTER COLUMN presupuesto_gobierno_becas SET NOT NULL,
+                ALTER COLUMN porcentaje_investigacion SET DEFAULT 5.0000,
+                ALTER COLUMN porcentaje_investigacion SET NOT NULL,
+                ALTER COLUMN porcentaje_vinculacion SET DEFAULT 1.0000,
+                ALTER COLUMN porcentaje_vinculacion SET NOT NULL,
+                ALTER COLUMN porcentaje_becas_estudiantes SET DEFAULT 90.0000,
+                ALTER COLUMN porcentaje_becas_estudiantes SET NOT NULL,
+                ALTER COLUMN porcentaje_becas_docentes SET DEFAULT 10.0000,
+                ALTER COLUMN porcentaje_becas_docentes SET NOT NULL;
             """, cancellationToken);
 
     public void Agregar(DominioDatosInstitucionales datos)
@@ -120,6 +156,14 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
             e.FuenteInflacion,
             e.AnioBaseProyeccion);
 
+        dominio.CambiarParametrosCostosGastos(
+            e.PresupuestoBaseUniversidad,
+            e.PresupuestoGobiernoBecas,
+            e.PorcentajeInvestigacion,
+            e.PorcentajeVinculacion,
+            e.PorcentajeBecasEstudiantes,
+            e.PorcentajeBecasDocentes);
+
         dominio.RehidratarId(e.Id);
         dominio.RehidratarFechaActualizacion(e.FechaActualizacion);
         return dominio;
@@ -151,6 +195,12 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
         PolizaSeguroEstudiantilAnual = d.PolizaSeguroEstudiantilAnual,
         FuenteInflacion = d.FuenteInflacion,
         AnioBaseProyeccion = d.AnioBaseProyeccion,
+        PresupuestoBaseUniversidad = d.PresupuestoBaseUniversidad,
+        PresupuestoGobiernoBecas = d.PresupuestoGobiernoBecas,
+        PorcentajeInvestigacion = d.PorcentajeInvestigacion,
+        PorcentajeVinculacion = d.PorcentajeVinculacion,
+        PorcentajeBecasEstudiantes = d.PorcentajeBecasEstudiantes,
+        PorcentajeBecasDocentes = d.PorcentajeBecasDocentes,
         FechaActualizacion = d.FechaActualizacion,
         ActualizadoPorUsuarioId = d.ActualizadoPorUsuarioId,
         FuenteNotas = d.FuenteNotas,
