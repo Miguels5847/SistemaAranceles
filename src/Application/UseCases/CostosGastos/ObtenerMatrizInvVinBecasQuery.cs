@@ -132,38 +132,47 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
     {
         var ceros = Enumerable.Repeat(0m, periodos.Count).ToList();
 
+        // Solo se consulta la configuración para detectar el modo Automático Costo Carrera y evitar
+        // la recursión con Costo de la Carrera. La existencia/validez del arancel la decide Ingresos Proyectados.
         var configuracion = await repositorioConfiguracionArancel.ObtenerPorCarreraEscenarioAsync(carreraId, escenarioProyeccionId, ct);
         if (configuracion is null && escenarioProyeccionId is not null)
             configuracion = await repositorioConfiguracionArancel.ObtenerPorCarreraEscenarioAsync(carreraId, null, ct);
 
-        if (configuracion is null)
+        if (configuracion is not null)
         {
-            advertencias.Add("No se pudo calcular Becas Institucionales porque no existe arancel efectivo para la carrera/escenario.");
-            return ceros;
-        }
-
-        var modo = Enum.TryParse<ModoCalculoArancel>(configuracion.ModoCalculoArancel, ignoreCase: true, out var m)
-            ? m
-            : ModoCalculoArancel.Manual;
-        if (modo == ModoCalculoArancel.AutomaticoCostoCarrera)
-        {
-            advertencias.Add("Becas institucionales no se calcularon porque el arancel está en modo Automático Costo Carrera y depende del propio costo consolidado.");
-            return ceros;
+            var modo = Enum.TryParse<ModoCalculoArancel>(configuracion.ModoCalculoArancel, ignoreCase: true, out var m)
+                ? m
+                : ModoCalculoArancel.Manual;
+            if (modo == ModoCalculoArancel.AutomaticoCostoCarrera)
+            {
+                advertencias.Add("Becas institucionales no se calcularon porque el arancel está en modo Automático Costo Carrera y depende del propio costo consolidado.");
+                return ceros;
+            }
         }
 
         var ingresos = await calcularIngresosProyectadosQuery.Value.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
-        var becas = periodos
+
+        if (ingresos.ArancelEfectivo <= 0m)
+        {
+            advertencias.Add("No se pudo calcular Becas Institucionales porque no existe arancel efectivo para la carrera/escenario.");
+            AgregarAdvertencia(advertencias, ingresos.MensajeAdvertencia);
+            return ceros;
+        }
+
+        if (ingresos.CeldasPlanas.Count == 0)
+        {
+            advertencias.Add("No se pudo calcular Becas Institucionales porque no hay ingresos proyectados para esta carrera/escenario.");
+            AgregarAdvertencia(advertencias, ingresos.MensajeAdvertencia);
+            return ceros;
+        }
+
+        return periodos
             .Select(periodo => decimal.Round(
                 ingresos.CeldasPlanas
                     .Where(c => c.PeriodoAcademicoId == periodo.PeriodoAcademicoId)
                     .Sum(c => c.Becas),
                 2))
             .ToList();
-
-        if (becas.All(b => b == 0m))
-            AgregarAdvertencia(advertencias, ingresos.MensajeAdvertencia);
-
-        return becas;
     }
 
     private async Task<IReadOnlyList<decimal>> CalcularFactoresInflacionAsync(
