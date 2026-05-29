@@ -4,15 +4,21 @@ using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.DemandaIngresos;
 using SistemaAranceles.Application.UseCases.Inflacion;
 using SistemaAranceles.Domain.Entities;
+using SistemaAranceles.Domain.Enums;
 
 namespace SistemaAranceles.Application.UseCases.CostosGastos;
 
 public sealed class ObtenerMatrizInvVinBecasQuery(
     ObtenerDemandaProyectadaQuery obtenerDemandaProyectadaQuery,
+    // Lazy rompe el ciclo de construcción en el contenedor DI:
+    // InvVinBecas -> Ingresos -> ArancelEfectivo -> ArancelOptimo -> CostoCarrera -> CostosGastos -> InvVinBecas.
+    // En tiempo de ejecución solo se invoca en modo Manual (sin recursión); en Automático se omite.
+    Lazy<CalcularIngresosProyectadosQuery> calcularIngresosProyectadosQuery,
     IRepositorioDatosInstitucionales repositorioDatos,
     IRepositorioCarrera repositorioCarrera,
     IRepositorioEscenarioProyeccion repositorioEscenario,
-    IRepositorioInflacionAnual repositorioInflacion)
+    IRepositorioInflacionAnual repositorioInflacion,
+    IRepositorioConfiguracionArancelCarrera repositorioConfiguracionArancel)
 {
     public async Task<MatrizInvVinBecasDto> EjecutarAsync(
         int carreraId,
@@ -56,21 +62,26 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
         if (datos.PresupuestoGobiernoBecas <= 0m)
             advertencias.Add("Presupuesto gobierno becas está en 0; Becas Gobierno quedan en 0.");
 
+        var semestresPorAnio = datos.SemestresPorAnio > 0 ? datos.SemestresPorAnio : DatosInstitucionales.SemestresPorAnioPorDefecto;
+        var becasInstitucionales = await ObtenerBecasInstitucionalesPorPeriodoAsync(
+            carreraId, escenarioProyeccionId, periodos, advertencias, ct);
+
         var valores = new List<InvVinBecasPeriodoDto>();
         for (var i = 0; i < periodos.Count; i++)
         {
-            var presupuestoUniversidad = decimal.Round(datos.PresupuestoBaseUniversidad * factores[i], 2);
+            var presupuestoUniversidad = decimal.Round(datos.PresupuestoBaseUniversidad / semestresPorAnio * factores[i], 2);
+            var presupuestoGobierno = decimal.Round(datos.PresupuestoGobiernoBecas / semestresPorAnio * factores[i], 2);
             var investigacion = datos.NumeroEstudiantesUniversidad > 0
                 ? decimal.Round(presupuestoUniversidad * datos.PorcentajeInvestigacion / 100m / datos.NumeroEstudiantesUniversidad * estudiantes[i], 2)
                 : 0m;
             var vinculacion = datos.NumeroEstudiantesUniversidad > 0
                 ? decimal.Round(presupuestoUniversidad * datos.PorcentajeVinculacion / 100m / datos.NumeroEstudiantesUniversidad * estudiantes[i], 2)
                 : 0m;
-            var becasEstudiantes = datos.NumeroEstudiantesUniversidad > 0 && datos.PresupuestoGobiernoBecas > 0m
-                ? decimal.Round(datos.PresupuestoGobiernoBecas * datos.PorcentajeBecasEstudiantes / 100m / datos.NumeroEstudiantesUniversidad * estudiantes[i], 2)
+            var becasEstudiantes = datos.NumeroEstudiantesUniversidad > 0 && presupuestoGobierno > 0m
+                ? decimal.Round(presupuestoGobierno * datos.PorcentajeBecasEstudiantes / 100m / datos.NumeroEstudiantesUniversidad * estudiantes[i], 2)
                 : 0m;
-            var becasDocentes = datos.NumeroDocentesUniversidad > 0 && datos.PresupuestoGobiernoBecas > 0m
-                ? decimal.Round(datos.PresupuestoGobiernoBecas * datos.PorcentajeBecasDocentes / 100m / datos.NumeroDocentesUniversidad * docentes[i], 2)
+            var becasDocentes = datos.NumeroDocentesUniversidad > 0 && presupuestoGobierno > 0m
+                ? decimal.Round(presupuestoGobierno * datos.PorcentajeBecasDocentes / 100m / datos.NumeroDocentesUniversidad * docentes[i], 2)
                 : 0m;
 
             valores.Add(new InvVinBecasPeriodoDto
@@ -82,9 +93,13 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
                 EstudiantesCarrera = estudiantes[i],
                 DocentesCarrera = docentes[i],
                 FactorInflacion = factores[i],
+                BecasInstitucionales = becasInstitucionales[i],
                 PresupuestoUniversidad = presupuestoUniversidad,
+                NumeroEstudiantesUniversidad = datos.NumeroEstudiantesUniversidad,
                 Investigacion = investigacion,
                 Vinculacion = vinculacion,
+                PresupuestoGobierno = presupuestoGobierno,
+                NumeroDocentesUniversidad = datos.NumeroDocentesUniversidad,
                 BecasEstudiantes = becasEstudiantes,
                 BecasDocentes = becasDocentes
             });
@@ -101,6 +116,54 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
             Filas = ConstruirFilas(valores),
             MensajeAdvertencia = ConstruirMensaje(advertencias)
         };
+    }
+
+    /// <summary>
+    /// Becas Institucionales por período = misma serie que Demanda e Ingresos → Ingresos Proyectados
+    /// (suma de Becas de todos los ciclos por período). Si el arancel está en modo Automático Costo
+    /// Carrera, no se invoca Ingresos Proyectados para evitar recursión con Costo de la Carrera.
+    /// </summary>
+    private async Task<IReadOnlyList<decimal>> ObtenerBecasInstitucionalesPorPeriodoAsync(
+        int carreraId,
+        int? escenarioProyeccionId,
+        IReadOnlyList<PeriodoCostoGastoDto> periodos,
+        List<string> advertencias,
+        CancellationToken ct)
+    {
+        var ceros = Enumerable.Repeat(0m, periodos.Count).ToList();
+
+        var configuracion = await repositorioConfiguracionArancel.ObtenerPorCarreraEscenarioAsync(carreraId, escenarioProyeccionId, ct);
+        if (configuracion is null && escenarioProyeccionId is not null)
+            configuracion = await repositorioConfiguracionArancel.ObtenerPorCarreraEscenarioAsync(carreraId, null, ct);
+
+        if (configuracion is null)
+        {
+            advertencias.Add("No se pudo calcular Becas Institucionales porque no existe arancel efectivo para la carrera/escenario.");
+            return ceros;
+        }
+
+        var modo = Enum.TryParse<ModoCalculoArancel>(configuracion.ModoCalculoArancel, ignoreCase: true, out var m)
+            ? m
+            : ModoCalculoArancel.Manual;
+        if (modo == ModoCalculoArancel.AutomaticoCostoCarrera)
+        {
+            advertencias.Add("Becas institucionales no se calcularon porque el arancel está en modo Automático Costo Carrera y depende del propio costo consolidado.");
+            return ceros;
+        }
+
+        var ingresos = await calcularIngresosProyectadosQuery.Value.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+        var becas = periodos
+            .Select(periodo => decimal.Round(
+                ingresos.CeldasPlanas
+                    .Where(c => c.PeriodoAcademicoId == periodo.PeriodoAcademicoId)
+                    .Sum(c => c.Becas),
+                2))
+            .ToList();
+
+        if (becas.All(b => b == 0m))
+            AgregarAdvertencia(advertencias, ingresos.MensajeAdvertencia);
+
+        return becas;
     }
 
     private async Task<IReadOnlyList<decimal>> CalcularFactoresInflacionAsync(
@@ -169,18 +232,25 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
         return valores;
     }
 
+    private const string GrupoInvVinBecas = "Inv. Vin. Becas";
+
     private static IReadOnlyList<CostoGastoRubroDto> ConstruirFilas(IReadOnlyList<InvVinBecasPeriodoDto> valores)
     {
         return
         [
-            CrearFila("Inv. Vin. Becas", "Nº estudiantes carrera", valores.Select(v => v.EstudiantesCarrera).ToList(), FormatoMatrizCostosGastos.Entero),
-            CrearFila("Inv. Vin. Becas", "Nº docentes carrera", valores.Select(v => v.DocentesCarrera).ToList(), FormatoMatrizCostosGastos.Decimal),
-            CrearFila("Inv. Vin. Becas", "Presupuesto Universidad", valores.Select(v => v.PresupuestoUniversidad).ToList()),
-            CrearFila("Inv. Vin. Becas", "Investigación 5%", valores.Select(v => v.Investigacion).ToList()),
-            CrearFila("Inv. Vin. Becas", "Vinculación 1%", valores.Select(v => v.Vinculacion).ToList()),
-            CrearFila("Inv. Vin. Becas", "Becas estudiantes 90%", valores.Select(v => v.BecasEstudiantes).ToList()),
-            CrearFila("Inv. Vin. Becas", "Becas docentes 10%", valores.Select(v => v.BecasDocentes).ToList()),
-            CrearFila("Inv. Vin. Becas", "Total Inv. Vin. Becas", valores.Select(v => v.TotalInvVinBecas).ToList(), esTotal: true)
+            CrearFila(GrupoInvVinBecas, "Total Nº de Estudiantes", valores.Select(v => v.EstudiantesCarrera).ToList(), FormatoMatrizCostosGastos.Entero),
+            CrearFila(GrupoInvVinBecas, "Becas Institucionales", valores.Select(v => v.BecasInstitucionales).ToList()),
+            CrearFila(GrupoInvVinBecas, "Factor inflación / % Variación Presupuesto", valores.Select(v => v.FactorInflacion).ToList(), FormatoMatrizCostosGastos.Decimal),
+            CrearFila(GrupoInvVinBecas, "Presupuesto Universidad", valores.Select(v => v.PresupuestoUniversidad).ToList()),
+            CrearFila(GrupoInvVinBecas, "Nº Estudiantes Uni", valores.Select(v => v.NumeroEstudiantesUniversidad).ToList(), FormatoMatrizCostosGastos.Entero),
+            CrearFila(GrupoInvVinBecas, "Investigación 5%", valores.Select(v => v.Investigacion).ToList()),
+            CrearFila(GrupoInvVinBecas, "Vinculación 1%", valores.Select(v => v.Vinculacion).ToList()),
+            CrearFila(GrupoInvVinBecas, "Factor inflación / % Variación Presupuesto Gobierno", valores.Select(v => v.FactorInflacion).ToList(), FormatoMatrizCostosGastos.Decimal),
+            CrearFila(GrupoInvVinBecas, "Presupuesto Gobierno", valores.Select(v => v.PresupuestoGobierno).ToList()),
+            CrearFila(GrupoInvVinBecas, "Nº Docentes Universidad", valores.Select(v => v.NumeroDocentesUniversidad).ToList(), FormatoMatrizCostosGastos.Entero),
+            CrearFila(GrupoInvVinBecas, "Becas Estudiantes 90%", valores.Select(v => v.BecasEstudiantes).ToList()),
+            CrearFila(GrupoInvVinBecas, "Becas Docentes 10%", valores.Select(v => v.BecasDocentes).ToList()),
+            CrearFila(GrupoInvVinBecas, "Total Inv. Vin. Becas", valores.Select(v => v.TotalInvVinBecas).ToList(), esTotal: true)
         ];
     }
 

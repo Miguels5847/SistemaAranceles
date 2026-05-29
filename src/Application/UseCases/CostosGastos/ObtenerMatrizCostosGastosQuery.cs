@@ -9,7 +9,6 @@ using SistemaAranceles.Application.UseCases.Estudiantes;
 using SistemaAranceles.Application.UseCases.Mantenimiento;
 using SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion;
 using SistemaAranceles.Domain.Entities;
-using SistemaAranceles.Domain.Enums;
 
 namespace SistemaAranceles.Application.UseCases.CostosGastos;
 
@@ -25,8 +24,7 @@ public sealed class ObtenerMatrizCostosGastosQuery(
     IRepositorioEscenarioProyeccion repositorioEscenario,
     IRepositorioProyeccionEstudiantes repositorioProyeccion,
     IRepositorioConfiguracionRetencion repositorioConfiguracionRetencion,
-    IRepositorioOverrideHorasPeriodo repositorioOverrides,
-    IRepositorioConfiguracionArancelCarrera repositorioConfiguracionArancel)
+    IRepositorioOverrideHorasPeriodo repositorioOverrides)
 {
     private sealed record RubroBase(string Grupo, string Concepto, IReadOnlyList<decimal> Valores);
 
@@ -85,14 +83,10 @@ public sealed class ObtenerMatrizCostosGastosQuery(
             ? null
             : await ObtenerConsolidadoAsync(proyeccion, carreraId, escenarioProyeccionId.Value, ct);
 
-        var precioBecas = await ObtenerPrecioManualParaBecasAsync(carreraId, escenarioProyeccionId, datos, ct);
-        AgregarAdvertencia(advertencias, precioBecas.Advertencia);
-
         var valores = new List<CostoGastoPeriodoDto>();
         var semestresPorAnio = datos?.SemestresPorAnio is > 0 ? datos.SemestresPorAnio : DatosInstitucionales.SemestresPorAnioPorDefecto;
         var estudiantesUniversidad = datos?.NumeroEstudiantesUniversidad ?? 0;
         var docentesUniversidad = datos?.NumeroDocentesUniversidad ?? 0;
-        var porcentajeBecasInstitucionales = datos?.PorcentajeBecasInstitucionales ?? DatosInstitucionales.PorcentajeBecasInstitucionalesPorDefecto;
         var porcentajeImprevistos = datos?.PorcentajeImprevistosInversion ?? DatosInstitucionales.PorcentajeImprevistosInversionPorDefecto;
 
         for (var i = 0; i < periodos.Count; i++)
@@ -120,13 +114,12 @@ public sealed class ObtenerMatrizCostosGastosQuery(
             var marketing = datos is not null && estudiantesUniversidad > 0
                 ? decimal.Round((datos.PresupuestoAnualMarketing / semestresPorAnio) * factores[i] / estudiantesUniversidad * estudiantes[i], 2)
                 : 0m;
-            var becasInstitucionales = decimal.Round(
-                estudiantes[i] * precioBecas.PrecioPorEstudiante * porcentajeBecasInstitucionales / 100m,
-                2);
             var amortizacionPeriodo = amortizacionPorAnio.TryGetValue(periodo.Anio, out var amortizacionAnual)
                 ? decimal.Round(amortizacionAnual / semestresPorAnio, 2)
                 : 0m;
             var invPeriodo = invVinBecas.ValoresPorPeriodo.FirstOrDefault(v => v.PeriodoAcademicoId == periodo.PeriodoAcademicoId);
+            // Becas Institucionales = misma serie que 9 Inv. Vin. Becas (origen Demanda/Ingresos Proyectados).
+            var becasInstitucionales = decimal.Round(invPeriodo?.BecasInstitucionales ?? 0m, 2);
 
             var subtotalSinImprevistos =
                 (mant?.CostoMantenimiento ?? 0m)
@@ -256,35 +249,6 @@ public sealed class ObtenerMatrizCostosGastosQuery(
         }
 
         return (hayDoc ? doc : null, hayPrac ? prac : null);
-    }
-
-    private async Task<(decimal PrecioPorEstudiante, string? Advertencia)> ObtenerPrecioManualParaBecasAsync(
-        int carreraId,
-        int? escenarioProyeccionId,
-        DatosInstitucionales? datos,
-        CancellationToken ct)
-    {
-        var configuracion = await repositorioConfiguracionArancel.ObtenerPorCarreraEscenarioAsync(carreraId, escenarioProyeccionId, ct);
-        if (configuracion is null && escenarioProyeccionId is not null)
-            configuracion = await repositorioConfiguracionArancel.ObtenerPorCarreraEscenarioAsync(carreraId, null, ct);
-
-        if (configuracion is null)
-            return (0m, "No existe configuración de arancel; Becas institucionales se calcularon en 0.");
-
-        var modo = Enum.TryParse<ModoCalculoArancel>(configuracion.ModoCalculoArancel, ignoreCase: true, out var m)
-            ? m
-            : ModoCalculoArancel.Manual;
-        if (modo != ModoCalculoArancel.Manual)
-            return (0m, "Becas institucionales se calcularon en 0 porque el modo Automático/Costo Carrera se resuelve después de este consolidado.");
-
-        if (configuracion.ArancelManual is not > 0m)
-            return (0m, "Arancel manual no definido; Becas institucionales se calcularon en 0.");
-
-        var porcentajeMatricula = configuracion.UsaPorcentajeMatriculaInstitucional
-            ? datos?.PorcentajeMatriculaDefault ?? DatosInstitucionales.PorcentajeMatriculaDefaultPorDefecto
-            : configuracion.PorcentajeMatricula ?? 0m;
-        var matricula = decimal.Round(configuracion.ArancelManual.Value * porcentajeMatricula / 100m, 2);
-        return (configuracion.ArancelManual.Value + matricula, null);
     }
 
     private static IReadOnlyList<RubroBase> ConstruirRubrosBase(IReadOnlyList<CostoGastoPeriodoDto> valores)

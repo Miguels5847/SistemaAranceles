@@ -72,12 +72,17 @@ public sealed class InvVinBecasPeriodoDto
     public decimal EstudiantesCarrera { get; init; }
     public decimal DocentesCarrera { get; init; }
     public decimal FactorInflacion { get; init; } = 1m;
+    public decimal BecasInstitucionales { get; init; }
     public decimal PresupuestoUniversidad { get; init; }
+    public decimal NumeroEstudiantesUniversidad { get; init; }
     public decimal Investigacion { get; init; }
     public decimal Vinculacion { get; init; }
+    public decimal PresupuestoGobierno { get; init; }
+    public decimal NumeroDocentesUniversidad { get; init; }
     public decimal BecasEstudiantes { get; init; }
     public decimal BecasDocentes { get; init; }
     public decimal TotalBecasGobierno => BecasEstudiantes + BecasDocentes;
+    // Becas Institucionales es dato de referencia (viene de Demanda/Ingresos) y NO se suma aquí.
     public decimal TotalInvVinBecas => Investigacion + Vinculacion + BecasEstudiantes + BecasDocentes;
 }
 

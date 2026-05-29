@@ -109,15 +109,9 @@ public partial class CostosGastosView : UserControl
         grid.Columns.Clear();
         grid.Columns.Add(new DataGridTextColumn
         {
-            Header = "Grupo",
-            Binding = new Binding(nameof(CostoGastoRubroDto.Grupo)),
-            Width = new DataGridLength(190)
-        });
-        grid.Columns.Add(new DataGridTextColumn
-        {
             Header = "Concepto",
             Binding = new Binding(nameof(CostoGastoRubroDto.Concepto)),
-            Width = new DataGridLength(240)
+            Width = new DataGridLength(280)
         });
 
         for (var i = 0; i < etiquetas.Count; i++)
