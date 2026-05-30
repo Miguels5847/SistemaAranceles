@@ -4,8 +4,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.DTOs.CapitalTrabajo;
+using SistemaAranceles.Application.DTOs.CostosGastos;
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.Interfaces.Persistencia;
+using SistemaAranceles.Application.UseCases.CostosGastos;
 using SistemaAranceles.Application.UseCases.DemandaIngresos;
 using SistemaAranceles.Domain.Entities;
 using SistemaAranceles.Domain.Enums;
@@ -99,6 +101,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<ConfiguracionArancelCarreraDto> _configuraciones = [];
     [ObservableProperty] private ConfiguracionArancelCarreraDto? _configuracionSeleccionada;
     [ObservableProperty] private ArancelEfectivoDto? _arancelEfectivo;
+    [ObservableProperty] private ArancelOptimoCarreraDto? _arancelSugeridoCostoCarrera;
     [ObservableProperty] private DemandaProyectadaDto? _demandaProyectada;
     [ObservableProperty] private ObservableCollection<DemandaMatrizFilaView> _demandaMatrizFilas = [];
     [ObservableProperty] private PresupuestosCarreraDto? _presupuestos;
@@ -172,10 +175,10 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         get
         {
             if (RatioFormItemSeleccionado is null || RatioFormItemSeleccionado.EsSinItem)
-                return "Sin item vinculado: Materiales Monetarios calculara costo 0.";
+                return "Sin item vinculado: Materiales Monetarios calculará costo 0.";
 
             return RatioFormItemSeleccionado.PrecioUnitario <= 0m
-                ? "El item seleccionado tiene precio unitario 0; Materiales Monetarios calculara costo 0."
+                ? "El item seleccionado tiene precio unitario 0; Materiales Monetarios calculará costo 0."
                 : string.Empty;
         }
     }
@@ -223,6 +226,12 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         ReconstruirMatricesPresupuestosYSeguro();
     }
 
+    partial void OnArancelSugeridoCostoCarreraChanged(ArancelOptimoCarreraDto? value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(PuedeUsarArancelSugerido));
+    }
+
     partial void OnMaterialesChanged(MaterialesProyectadosDto? value)
     {
         MaterialesEtiquetasPeriodos = ObtenerEtiquetasMateriales(value);
@@ -233,6 +242,11 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     public bool FormEsModoManual => string.Equals(FormModoCalculo, ModoManual, StringComparison.OrdinalIgnoreCase);
     public bool FormPorcentajeMatriculaEditable => !FormUsaPorcentajeInstitucional;
     public bool NoEstaGuardando => !EstaGuardando;
+    public bool PuedeUsarArancelSugerido => PuedeEditar
+                                            && !EstaGuardando
+                                            && ArancelSugeridoCostoCarrera?.Disponible == true
+                                            && CarreraSeleccionada is not null
+                                            && EscenarioSeleccionado is not null;
 
     public bool PuedeEditar => _sesionActual.EsAdministrador
                             || _sesionActual.TienePermiso("DI_NG.EDITAR");
@@ -279,6 +293,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     {
         _ = value;
         OnPropertyChanged(nameof(NoEstaGuardando));
+        OnPropertyChanged(nameof(PuedeUsarArancelSugerido));
     }
 
     [RelayCommand]
@@ -400,6 +415,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         {
             _refrescoArancelVersion++;
             ArancelEfectivo = null;
+            ArancelSugeridoCostoCarrera = null;
             DemandaProyectada = null;
             Presupuestos = null;
             Ingresos = null;
@@ -414,10 +430,12 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         var carreraId = CarreraSeleccionada.Id;
         var escenarioId = EscenarioSeleccionado.Id;
 
+        EstaCargando = true;
         try
         {
             MensajeError = string.Empty;
             ArancelEfectivo = null;
+            ArancelSugeridoCostoCarrera = null;
             DemandaProyectada = null;
             Presupuestos = null;
             Ingresos = null;
@@ -426,6 +444,9 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             using var scope = _serviceProvider.CreateScope();
             var queryArancel = scope.ServiceProvider.GetRequiredService<ObtenerArancelEfectivoQuery>();
             var arancel = await queryArancel.EjecutarAsync(carreraId, escenarioId);
+
+            var queryArancelSugerido = scope.ServiceProvider.GetRequiredService<ObtenerArancelOptimoCarreraQuery>();
+            var arancelSugerido = await queryArancelSugerido.EjecutarAsync(carreraId, escenarioId);
 
             var queryDemanda = scope.ServiceProvider.GetRequiredService<ObtenerDemandaProyectadaQuery>();
             var demanda = await queryDemanda.EjecutarAsync(carreraId, escenarioId);
@@ -449,6 +470,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
                 return;
 
             ArancelEfectivo = arancel;
+            ArancelSugeridoCostoCarrera = arancelSugerido;
             DemandaProyectada = demanda;
             Presupuestos = presupuestos;
             Ingresos = ingresos;
@@ -465,12 +487,17 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
 
             MensajeError = $"Error al calcular arancel/presupuestos/ingresos/materiales: {Detalle(ex)}";
             ArancelEfectivo = null;
+            ArancelSugeridoCostoCarrera = null;
             DemandaProyectada = null;
             Presupuestos = null;
             Ingresos = null;
             Materiales = null;
             Ratios = [];
             ActualizarResumen();
+        }
+        finally
+        {
+            EstaCargando = false;
         }
     }
 
@@ -737,6 +764,71 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task UsarArancelSugeridoAsync()
+    {
+        if (!PuedeEditar)
+        {
+            MensajeError = "No tienes permiso para editar.";
+            return;
+        }
+        if (CarreraSeleccionada is null || EscenarioSeleccionado is null)
+        {
+            MensajeError = "Selecciona carrera y escenario.";
+            return;
+        }
+
+        EstaGuardando = true;
+        MensajeError = string.Empty;
+        MensajeExito = string.Empty;
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var queryOptimo = scope.ServiceProvider.GetRequiredService<ObtenerArancelOptimoCarreraQuery>();
+            var optimo = ArancelSugeridoCostoCarrera?.Disponible == true
+                ? ArancelSugeridoCostoCarrera
+                : await queryOptimo.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
+
+            if (!optimo.Disponible || optimo.ArancelSugeridoSemestre is not > 0m)
+            {
+                MensajeError = optimo.MensajeAdvertencia ?? "Costo de Carrera pendiente; no hay arancel sugerido para copiar.";
+                return;
+            }
+
+            var listarConfigs = scope.ServiceProvider.GetRequiredService<ListarConfiguracionesArancelCarreraQuery>();
+            var configs = await listarConfigs.EjecutarAsync(CarreraSeleccionada.Id);
+            var configExacta = configs.FirstOrDefault(c => c.EscenarioProyeccionId == EscenarioSeleccionado.Id);
+            var usaPorcentajeInstitucional = configExacta?.UsaPorcentajeMatriculaInstitucional ?? true;
+
+            var dto = new GuardarConfiguracionArancelCarreraDto
+            {
+                Id = configExacta?.Id,
+                CarreraId = CarreraSeleccionada.Id,
+                EscenarioProyeccionId = EscenarioSeleccionado.Id,
+                ModoCalculoArancel = ModoManual,
+                ArancelManual = optimo.ArancelSugeridoSemestre,
+                UsaPorcentajeMatriculaInstitucional = usaPorcentajeInstitucional,
+                PorcentajeMatricula = usaPorcentajeInstitucional
+                    ? null
+                    : configExacta?.PorcentajeMatricula ?? optimo.PorcentajeMatriculaAplicado
+            };
+
+            var command = scope.ServiceProvider.GetRequiredService<GuardarConfiguracionArancelCarreraCommand>();
+            await command.EjecutarAsync(dto, _sesionActual.UsuarioId);
+
+            MensajeExito = "Arancel sugerido copiado como configuración manual del escenario.";
+            await RecargarPorCarreraAsync();
+        }
+        catch (Exception ex)
+        {
+            MensajeError = Detalle(ex);
+        }
+        finally
+        {
+            EstaGuardando = false;
+        }
+    }
+
+    [RelayCommand]
     private async Task EliminarConfiguracionAsync(ConfiguracionArancelCarreraDto? dto)
     {
         if (dto is null) return;
@@ -772,6 +864,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         Escenarios = [];
         EscenarioSeleccionado = null;
         ArancelEfectivo = null;
+        ArancelSugeridoCostoCarrera = null;
         DemandaProyectada = null;
         Presupuestos = null;
         Ingresos = null;
@@ -1127,7 +1220,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             .OrderBy(f => f.NumeroCiclo)
             .Select(f =>
             {
-                // Asegurar una celda por etiqueta de periodo, en el orden de EtiquetasPeriodos
+                // Asegurar una celda por etiqueta de período, en el orden de EtiquetasPeriodos
                 var celdasPorEtiqueta = f.Periodos.ToDictionary(p => p.EtiquetaPeriodo, p => p.IngresoNeto);
                 var valores = etiquetas
                     .Select(et => celdasPorEtiqueta.TryGetValue(et, out var v) ? v : 0m)
@@ -1216,6 +1309,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     {
         var advertencias = new List<string>();
         AgregarAdvertencia(advertencias, ArancelEfectivo?.MensajeAdvertencia);
+        AgregarAdvertencia(advertencias, ArancelSugeridoCostoCarrera?.MensajeAdvertencia);
         AgregarAdvertencia(advertencias, DemandaProyectada?.MensajeAdvertencia);
         AgregarAdvertencia(advertencias, Presupuestos?.MensajeAdvertencia);
         AgregarAdvertencia(advertencias, Ingresos?.MensajeAdvertencia);

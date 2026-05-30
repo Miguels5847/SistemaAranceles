@@ -92,7 +92,7 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" Margin="0,0,10,0">
-                    <TextBlock Text="Periodo base" FontSize="11" Foreground="#546E7A"/>
+                    <TextBlock Text="Período base" FontSize="11" Foreground="#546E7A"/>
                     <TextBlock Text="{Binding PeriodoBaseDisplay}" FontWeight="SemiBold" Foreground="#263238" VerticalAlignment="Center"/>
                 </StackPanel>
 

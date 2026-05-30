@@ -16,7 +16,7 @@ public sealed class ConfiguracionRetencion : EntidadDominioBase
         decimal tasaGraduacionPorcentaje)
     {
         CarreraId = GuardiaDominio.EnteroPositivo(carreraId, "Carrera");
-        EscenarioProyeccionId = GuardiaDominio.EnteroPositivo(escenarioProyeccionId, "Escenario de proyeccion");
+        EscenarioProyeccionId = GuardiaDominio.EnteroPositivo(escenarioProyeccionId, "Escenario de proyección");
         TotalCiclos = GuardiaDominio.EnteroPositivo(totalCiclos, "Total de ciclos");
         ActualizarTasas(tasaRetencionPorcentaje, tasaGraduacionPorcentaje);
     }
@@ -34,15 +34,15 @@ public sealed class ConfiguracionRetencion : EntidadDominioBase
 
     public void ActualizarTasas(decimal tasaRetencionPorcentaje, decimal tasaGraduacionPorcentaje)
     {
-        TasaRetencionPorcentaje = GuardiaDominio.Porcentaje(tasaRetencionPorcentaje, "Tasa de retencion");
-        TasaGraduacionPorcentaje = GuardiaDominio.Porcentaje(tasaGraduacionPorcentaje, "Tasa de graduacion");
+        TasaRetencionPorcentaje = GuardiaDominio.Porcentaje(tasaRetencionPorcentaje, "Tasa de retención");
+        TasaGraduacionPorcentaje = GuardiaDominio.Porcentaje(tasaGraduacionPorcentaje, "Tasa de graduación");
     }
 
     public void ActualizarBaseEstudiantes(decimal estudiantesPeriodo1, decimal estudiantesPeriodo2, int paralelosPeriodo1, int paralelosPeriodo2)
     {
-        EstudiantesPeriodo1 = GuardiaDominio.DecimalNoNegativo(estudiantesPeriodo1, "Estudiantes periodo 1", 4);
-        EstudiantesPeriodo2 = GuardiaDominio.DecimalNoNegativo(estudiantesPeriodo2, "Estudiantes periodo 2", 4);
-        ParalelosPeriodo1 = GuardiaDominio.EnteroNoNegativo(paralelosPeriodo1, "Paralelos periodo 1");
-        ParalelosPeriodo2 = GuardiaDominio.EnteroNoNegativo(paralelosPeriodo2, "Paralelos periodo 2");
+        EstudiantesPeriodo1 = GuardiaDominio.DecimalNoNegativo(estudiantesPeriodo1, "Estudiantes período 1", 4);
+        EstudiantesPeriodo2 = GuardiaDominio.DecimalNoNegativo(estudiantesPeriodo2, "Estudiantes período 2", 4);
+        ParalelosPeriodo1 = GuardiaDominio.EnteroNoNegativo(paralelosPeriodo1, "Paralelos período 1");
+        ParalelosPeriodo2 = GuardiaDominio.EnteroNoNegativo(paralelosPeriodo2, "Paralelos período 2");
     }
 }

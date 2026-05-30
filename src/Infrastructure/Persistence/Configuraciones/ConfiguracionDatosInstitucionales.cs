@@ -39,6 +39,14 @@ internal sealed class ConfiguracionDatosInstitucionales : IEntityTypeConfigurati
         builder.Property(x => x.FuenteInflacion).HasColumnName("fuente_inflacion").HasMaxLength(80);
         builder.Property(x => x.AnioBaseProyeccion).HasColumnName("anio_base_proyeccion");
 
+        // KAN-36
+        builder.Property(x => x.PresupuestoBaseUniversidad).HasColumnName("presupuesto_base_universidad").HasColumnType("numeric(18,2)").HasDefaultValue(0m).IsRequired();
+        builder.Property(x => x.PresupuestoGobiernoBecas).HasColumnName("presupuesto_gobierno_becas").HasColumnType("numeric(18,2)").HasDefaultValue(0m).IsRequired();
+        builder.Property(x => x.PorcentajeInvestigacion).HasColumnName("porcentaje_investigacion").HasColumnType("numeric(7,4)").HasDefaultValue(5m).IsRequired();
+        builder.Property(x => x.PorcentajeVinculacion).HasColumnName("porcentaje_vinculacion").HasColumnType("numeric(7,4)").HasDefaultValue(1m).IsRequired();
+        builder.Property(x => x.PorcentajeBecasEstudiantes).HasColumnName("porcentaje_becas_estudiantes").HasColumnType("numeric(7,4)").HasDefaultValue(90m).IsRequired();
+        builder.Property(x => x.PorcentajeBecasDocentes).HasColumnName("porcentaje_becas_docentes").HasColumnType("numeric(7,4)").HasDefaultValue(10m).IsRequired();
+
         builder.Property(x => x.FechaActualizacion).HasColumnName("fecha_actualizacion").IsRequired();
         builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id").IsRequired();
         builder.Property(x => x.FuenteNotas).HasColumnName("fuente_notas").HasMaxLength(500);

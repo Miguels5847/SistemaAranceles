@@ -9,10 +9,10 @@ using SistemaAranceles.Domain.Entities;
 namespace SistemaAranceles.Application.UseCases.DemandaIngresos;
 
 /// <summary>
-/// KAN-34: Calcula materiales por periodo a partir de ratios + proyección estudiantes.
-///   cantidad = estudiantes x ratio, estudiantes x ratio x meses, o ratio fijo por periodo.
+/// KAN-34: Calcula materiales por período a partir de ratios + proyección estudiantes.
+///   cantidad = estudiantes x ratio, estudiantes x ratio x meses, o ratio fijo por período.
 ///   precio   = item_material_insumo.precio_unitario (si vinculado) o 0
-///   factor_inflacion = (1+inf₁)·(1+inf₂)... desde anio_base hasta año del periodo (si aplica_inflacion)
+///   factor_inflacion = (1+inf₁)·(1+inf₂)... desde anio_base hasta año del período (si aplica_inflacion)
 ///   costo    = cantidad × precio × factor
 /// </summary>
 public sealed class CalcularMaterialesPorPeriodoQuery(
@@ -51,7 +51,7 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
             carreraId, escenarioProyeccionId.Value, ct);
         if (proyeccionId is null or <= 0)
         {
-            advertencias.Add("No hay proyeccion de estudiantes para esta carrera/escenario.");
+            advertencias.Add("No hay proyección de estudiantes para esta carrera/escenario.");
             return Vacio(carreraId, carrera?.Nombre ?? string.Empty, escenarioProyeccionId,
                 escenario?.Nombre ?? "Global", anioBase, advertencias);
         }
@@ -79,7 +79,7 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
 
         var requiereDocentes = ratios.Any(r => r.UnidadRatio == UnidadRatioMaterialExtensiones.PorDocenteText);
 
-        // Estudiantes promedio por periodo (sumar todos los ciclos)
+        // Estudiantes promedio por período (sumar todos los ciclos)
         var estudiantesPorPeriodo = proyeccion.Detalles
             .GroupBy(d => d.PeriodoAcademicoId)
             .ToDictionary(g => g.Key, g => new
@@ -105,7 +105,7 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
                 ct)
             : [];
 
-        // Factor de inflacion por periodo, inferido desde el primer periodo de la proyeccion.
+        // Factor de inflación por período, inferido desde el primer período de la proyección.
         var periodosInflacion = estudiantesPorPeriodo.Values
             .Select(v => (v.Anio, v.NumeroPeriodo))
             .Distinct()
@@ -206,7 +206,7 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
 
         if (configuracion is null)
         {
-            advertencias.Add("No existe configuracion de retencion para calcular materiales por docente.");
+            advertencias.Add("No existe configuración de retención para calcular materiales por docente.");
             return [];
         }
 
@@ -229,7 +229,7 @@ public sealed class CalcularMaterialesPorPeriodoQuery(
             string.Equals(f.Tipo, "Docentes Requeridos", StringComparison.OrdinalIgnoreCase));
         if (filaDocentes is null)
         {
-            advertencias.Add("No se encontro la fila Docentes Requeridos para calcular materiales por docente.");
+            advertencias.Add("No se encontró la fila Docentes Requeridos para calcular materiales por docente.");
             return [];
         }
 

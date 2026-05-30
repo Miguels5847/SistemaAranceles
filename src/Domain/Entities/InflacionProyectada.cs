@@ -10,7 +10,7 @@ public sealed class InflacionProyectada : EntidadDominioBase
 
     public InflacionProyectada(int escenarioProyeccionId, int anio, decimal porcentajeInflacion, string metodoProyeccion, bool esAjusteManual)
     {
-        EscenarioProyeccionId = GuardiaDominio.EnteroPositivo(escenarioProyeccionId, "Escenario de proyeccion");
+        EscenarioProyeccionId = GuardiaDominio.EnteroPositivo(escenarioProyeccionId, "Escenario de proyección");
         CambiarAnio(anio);
         CambiarPorcentajeInflacion(porcentajeInflacion);
         CambiarMetodoProyeccion(metodoProyeccion);
@@ -27,7 +27,7 @@ public sealed class InflacionProyectada : EntidadDominioBase
     {
         if (anio < 2000 || anio > 2100)
         {
-            throw new DominioException("Anio de inflacion proyectada fuera del rango permitido.");
+            throw new DominioException("Año de inflación proyectada fuera del rango permitido.");
         }
 
         Anio = anio;
@@ -37,7 +37,7 @@ public sealed class InflacionProyectada : EntidadDominioBase
     {
         if (porcentajeInflacion < -100 || porcentajeInflacion > 100)
         {
-            throw new DominioException("Inflacion proyectada fuera del rango valido (-100 a 100).");
+            throw new DominioException("Inflación proyectada fuera del rango válido (-100 a 100).");
         }
 
         PorcentajeInflacion = decimal.Round(porcentajeInflacion, 4);
@@ -45,7 +45,7 @@ public sealed class InflacionProyectada : EntidadDominioBase
 
     public void CambiarMetodoProyeccion(string metodoProyeccion)
     {
-        MetodoProyeccion = GuardiaDominio.Requerido(metodoProyeccion, "Metodo de proyeccion", 80);
+        MetodoProyeccion = GuardiaDominio.Requerido(metodoProyeccion, "Método de proyección", 80);
     }
 
     public void DefinirAjusteManual(bool esAjusteManual)

@@ -14,6 +14,7 @@ using SistemaAranceles.Presentation.Services;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.ViewModels.Auditoria;
 using SistemaAranceles.Presentation.ViewModels.Carreras;
+using SistemaAranceles.Presentation.ViewModels.CostosGastos;
 using SistemaAranceles.Presentation.ViewModels.Estudiantes;
 using SistemaAranceles.Presentation.ViewModels.Inflacion;
 using SistemaAranceles.Presentation.ViewModels.MantenimientoInversion;
@@ -218,6 +219,11 @@ public sealed partial class MainViewModel : ObservableObject
             MenuItems.Add(new ItemMenu { Titulo = "Demanda e Ingresos", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarDemandaIngresosAsync()) });
         }
 
+        if (_sesionActual.TienePermiso("CG.VER") || _sesionActual.EsAdministrador)
+        {
+            MenuItems.Add(new ItemMenu { Titulo = "Costos y Gastos", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarCostosGastosAsync()) });
+        }
+
         if (_sesionActual.TienePermiso("CFG.VER"))
         {
             MenuItems.Add(new ItemMenu { Titulo = "Configuración", Icono = string.Empty, Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Configuración", "Pendiente")) });
@@ -368,6 +374,16 @@ public sealed partial class MainViewModel : ObservableObject
         MensajePagina = string.Empty;
         PaginaActual = _demandaIngresosViewModel;
         await _demandaIngresosViewModel.CargarCommand.ExecuteAsync(null);
+    }
+
+    private async Task MostrarCostosGastosAsync()
+    {
+        SeleccionarMenu("Costos y Gastos");
+        if (!(_sesionActual.TienePermiso("CG.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al modulo Costos y Gastos."; return; }
+        MensajePagina = string.Empty;
+        var vm = _serviceProvider.GetRequiredService<CostosGastosViewModel>();
+        PaginaActual = vm;
+        await vm.CargarCommand.ExecuteAsync(null);
     }
 
     private async Task MostrarMantenimientoInversionAsync()
