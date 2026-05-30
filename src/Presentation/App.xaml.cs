@@ -13,6 +13,7 @@ using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Application.Options;
 using SistemaAranceles.Application.UseCases.Auditoria;
 using SistemaAranceles.Application.UseCases.Autenticacion;
+using SistemaAranceles.Application.UseCases.AnalisisFinanciero;
 using SistemaAranceles.Application.UseCases.CargosFacultad;
 using SistemaAranceles.Application.UseCases.CostosGastos;
 using SistemaAranceles.Application.UseCases.Inflacion;
@@ -31,6 +32,7 @@ using SistemaAranceles.Application.DTOs.TasaRetencion;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.ViewModels;
 using SistemaAranceles.Presentation.ViewModels.Auditoria;
+using SistemaAranceles.Presentation.ViewModels.AnalisisFinanciero;
 using SistemaAranceles.Presentation.ViewModels.Carreras;
 using SistemaAranceles.Presentation.ViewModels.Inflacion;
 using SistemaAranceles.Presentation.ViewModels.TasaRetencion;
@@ -187,6 +189,7 @@ public partial class App
         servicios.AddTransient<ObtenerMatrizCostosGastosQuery>();
         servicios.AddTransient<ObtenerCostoCarreraQuery>();
         servicios.AddTransient<ObtenerArancelOptimoCarreraQuery>();
+        servicios.AddTransient<ObtenerEstadoPerdidasGananciasQuery>();
         servicios.AddTransient<CalcularAportePlantaCentralCarreraQuery>();
         servicios.AddTransient<CalcularProyeccionesCargoPlantaCentralCommand>();
         servicios.AddTransient<ListarProyeccionesCargoPlantaCentralQuery>();
@@ -260,6 +263,7 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.MantenimientoInversion.MantenimientoInversionViewModel>();
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.DemandaIngresos.DemandaIngresosViewModel>();
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.CostosGastos.CostosGastosViewModel>();
+        servicios.AddTransient<AnalisisFinancieroViewModel>();
         servicios.AddTransient<CargosFacultadViewModel>();
         servicios.AddTransient<EstudiantesViewModel>();
         servicios.AddTransient<MainViewModel>();
@@ -277,6 +281,7 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Presentation.Views.MantenimientoInversion.MantenimientoInversionView>();
         servicios.AddTransient<SistemaAranceles.Presentation.Views.DemandaIngresos.DemandaIngresosView>();
         servicios.AddTransient<SistemaAranceles.Presentation.Views.CostosGastos.CostosGastosView>();
+        servicios.AddTransient<SistemaAranceles.Presentation.Views.AnalisisFinanciero.AnalisisFinancieroView>();
         servicios.AddTransient<MainWindow>();
     }
 
