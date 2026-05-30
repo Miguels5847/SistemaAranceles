@@ -34,6 +34,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<EscenarioAnalisisFinancieroOpcion> _escenarios = [];
     [ObservableProperty] private EscenarioAnalisisFinancieroOpcion? _escenarioSeleccionado;
     [ObservableProperty] private EstadoPerdidasGananciasDto? _estadoPerdidasGanancias;
+    [ObservableProperty] private FlujoFondosDto? _flujoFondos;
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
     [ObservableProperty] private bool _estaCargando;
@@ -41,6 +42,9 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     public IReadOnlyList<string> EtiquetasPerdidasGanancias => EstadoPerdidasGanancias?.EtiquetasPeriodos ?? [];
     public IReadOnlyList<EstadoPerdidasGananciasRubroDto> FilasPerdidasGanancias => EstadoPerdidasGanancias?.Filas ?? [];
     public bool TieneEstadoPerdidasGanancias => EstadoPerdidasGanancias?.TieneDatos == true;
+    public IReadOnlyList<string> EtiquetasFlujoFondos => FlujoFondos?.EtiquetasPeriodos ?? [];
+    public IReadOnlyList<FlujoFondosRubroDto> FilasFlujoFondos => FlujoFondos?.Filas ?? [];
+    public bool TieneFlujoFondos => FlujoFondos?.TieneDatos == true;
 
     partial void OnCarreraSeleccionadaChanged(Carrera? value)
     {
@@ -66,6 +70,14 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         OnPropertyChanged(nameof(EtiquetasPerdidasGanancias));
         OnPropertyChanged(nameof(FilasPerdidasGanancias));
         OnPropertyChanged(nameof(TieneEstadoPerdidasGanancias));
+    }
+
+    partial void OnFlujoFondosChanged(FlujoFondosDto? value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(EtiquetasFlujoFondos));
+        OnPropertyChanged(nameof(FilasFlujoFondos));
+        OnPropertyChanged(nameof(TieneFlujoFondos));
     }
 
     [RelayCommand]
@@ -199,16 +211,31 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         try
         {
             using var scope = _serviceProvider.CreateScope();
-            var query = scope.ServiceProvider.GetRequiredService<ObtenerEstadoPerdidasGananciasQuery>();
-            EstadoPerdidasGanancias = await query.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
+            var queryEstado = scope.ServiceProvider.GetRequiredService<ObtenerEstadoPerdidasGananciasQuery>();
+            var queryFlujo = scope.ServiceProvider.GetRequiredService<ObtenerFlujoFondosQuery>();
 
-            if (string.IsNullOrWhiteSpace(EstadoPerdidasGanancias.MensajeAdvertencia))
+            EstadoPerdidasGanancias = await queryEstado.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
+            FlujoFondos = await queryFlujo.EjecutarAsync(
+                CarreraSeleccionada.Id,
+                EscenarioSeleccionado.Id,
+                estadoPrecalculado: EstadoPerdidasGanancias);
+
+            var advertencias = new[]
             {
-                MensajeExito = "Estado de Pérdidas y Ganancias calculado correctamente.";
+                EstadoPerdidasGanancias.MensajeAdvertencia,
+                FlujoFondos.MensajeAdvertencia
+            }
+            .Where(m => !string.IsNullOrWhiteSpace(m))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+            if (advertencias.Count == 0)
+            {
+                MensajeExito = "Análisis financiero calculado correctamente.";
             }
             else
             {
-                MensajeError = EstadoPerdidasGanancias.MensajeAdvertencia;
+                MensajeError = string.Join(Environment.NewLine, advertencias);
             }
         }
         catch (Exception ex)
@@ -225,6 +252,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     private void LimpiarResultados()
     {
         EstadoPerdidasGanancias = null;
+        FlujoFondos = null;
     }
 
     private static string Detalle(Exception ex) => ex.InnerException?.Message ?? ex.Message;

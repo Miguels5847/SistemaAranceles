@@ -13,7 +13,7 @@ public partial class AnalisisFinancieroView : UserControl
     public AnalisisFinancieroView()
     {
         InitializeComponent();
-        Loaded += (_, _) => ActualizarColumnasPerdidasGanancias();
+        Loaded += (_, _) => ActualizarTodasLasColumnas();
         DataContextChanged += (_, args) =>
         {
             if (_viewModelActual is not null)
@@ -23,7 +23,7 @@ public partial class AnalisisFinancieroView : UserControl
             if (_viewModelActual is not null)
                 _viewModelActual.PropertyChanged += OnViewModelPropertyChanged;
 
-            ActualizarColumnasPerdidasGanancias();
+            ActualizarTodasLasColumnas();
         };
     }
 
@@ -34,6 +34,17 @@ public partial class AnalisisFinancieroView : UserControl
         {
             ActualizarColumnasPerdidasGanancias();
         }
+        else if (e.PropertyName == nameof(AnalisisFinancieroViewModel.FlujoFondos)
+              || e.PropertyName == nameof(AnalisisFinancieroViewModel.EtiquetasFlujoFondos))
+        {
+            ActualizarColumnasFlujoFondos();
+        }
+    }
+
+    private void ActualizarTodasLasColumnas()
+    {
+        ActualizarColumnasPerdidasGanancias();
+        ActualizarColumnasFlujoFondos();
     }
 
     private void ActualizarColumnasPerdidasGanancias()
@@ -68,6 +79,41 @@ public partial class AnalisisFinancieroView : UserControl
         });
     }
 
+    private void ActualizarColumnasFlujoFondos()
+    {
+        if (FlujoFondosGrid is null)
+            return;
+
+        FlujoFondosGrid.Columns.Clear();
+        FlujoFondosGrid.Columns.Add(new DataGridTextColumn
+        {
+            Header = "Concepto",
+            Binding = new Binding(nameof(FlujoFondosRubroDto.Concepto)),
+            Width = new DataGridLength(280)
+        });
+
+        var etiquetas = ObtenerEtiquetasFlujoFondos();
+        for (var i = 0; i < etiquetas.Count; i++)
+        {
+            FlujoFondosGrid.Columns.Add(new DataGridTextColumn
+            {
+                Header = etiquetas[i],
+                Binding = new Binding($"PeriodosDisplay[{i}]"),
+                Width = new DataGridLength(130)
+            });
+        }
+
+        FlujoFondosGrid.Columns.Add(new DataGridTextColumn
+        {
+            Header = "Total",
+            Binding = new Binding(nameof(FlujoFondosRubroDto.TotalDisplay)),
+            Width = new DataGridLength(140)
+        });
+    }
+
     private IReadOnlyList<string> ObtenerEtiquetasPerdidasGanancias()
         => DataContext is AnalisisFinancieroViewModel vm ? vm.EtiquetasPerdidasGanancias : [];
+
+    private IReadOnlyList<string> ObtenerEtiquetasFlujoFondos()
+        => DataContext is AnalisisFinancieroViewModel vm ? vm.EtiquetasFlujoFondos : [];
 }

@@ -190,6 +190,7 @@ public partial class App
         servicios.AddTransient<ObtenerCostoCarreraQuery>();
         servicios.AddTransient<ObtenerArancelOptimoCarreraQuery>();
         servicios.AddTransient<ObtenerEstadoPerdidasGananciasQuery>();
+        servicios.AddTransient<ObtenerFlujoFondosQuery>();
         servicios.AddTransient<CalcularAportePlantaCentralCarreraQuery>();
         servicios.AddTransient<CalcularProyeccionesCargoPlantaCentralCommand>();
         servicios.AddTransient<ListarProyeccionesCargoPlantaCentralQuery>();
