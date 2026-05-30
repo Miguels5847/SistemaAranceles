@@ -17,6 +17,14 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
     IRepositorioProyeccionEstudiantes repositorioProyeccionEstudiantes,
     IRepositorioCarrera repositorioCarrera)
 {
+    public sealed class ContextoSueldosCarrera
+    {
+        public required ProyeccionEstudiantesDto Proyeccion { get; init; }
+        public required string CarreraNombre { get; init; }
+        public required IReadOnlyList<InflacionAnual> RegistrosInflacion { get; init; }
+        public required IReadOnlyList<CargoFacultad> Cargos { get; init; }
+    }
+
     public async Task<SueldosPeriodoVistaDto> EjecutarAsync(
         int carreraId,
         int escenarioProyeccionId,
@@ -28,43 +36,45 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
         if (carreraId <= 0 || escenarioProyeccionId <= 0 || periodoAcademicoId <= 0)
             return new SueldosPeriodoVistaDto { CarreraId = carreraId, PeriodoAcademicoId = periodoAcademicoId };
 
+        var contexto = await PrepararContextoAsync(carreraId, escenarioProyeccionId, cancellationToken);
+        if (contexto is null)
+            return new SueldosPeriodoVistaDto { CarreraId = carreraId, PeriodoAcademicoId = periodoAcademicoId };
+
+        return GenerarParaPeriodo(contexto, carreraId, periodoAcademicoId, estudiantesUA, consolidadoActual);
+    }
+
+    /// <summary>
+    /// Carga (una sola vez) los datos invariantes por período: proyección, carrera, cargos e
+    /// inflación del horizonte completo. Permite calcular todos los períodos en memoria sin re-consultar
+    /// la base por cada período (evita N+1 al consolidar la matriz de Costos y Gastos).
+    /// </summary>
+    public async Task<ContextoSueldosCarrera?> PrepararContextoAsync(
+        int carreraId,
+        int escenarioProyeccionId,
+        CancellationToken cancellationToken = default)
+    {
+        if (carreraId <= 0 || escenarioProyeccionId <= 0)
+            return null;
+
         var proyeccionId = await repositorioProyeccionEstudiantes.ObtenerIdPorCarreraYEscenarioAsync(
             carreraId,
             escenarioProyeccionId,
             cancellationToken);
 
         if (proyeccionId is null or 0)
-            return new SueldosPeriodoVistaDto { CarreraId = carreraId, PeriodoAcademicoId = periodoAcademicoId };
+            return null;
 
         var proyeccion = await repositorioProyeccionEstudiantes.ObtenerDtoPorIdAsync(proyeccionId.Value, cancellationToken);
         if (proyeccion is null)
-            return new SueldosPeriodoVistaDto { CarreraId = carreraId, PeriodoAcademicoId = periodoAcademicoId };
-
-        var detallesPeriodo = proyeccion.Detalles
-            .Where(d => d.PeriodoAcademicoId == periodoAcademicoId)
-            .ToList();
-
-        if (detallesPeriodo.Count == 0)
-            return new SueldosPeriodoVistaDto { CarreraId = carreraId, PeriodoAcademicoId = periodoAcademicoId };
-
-        var primerDetalle = detallesPeriodo[0];
-        var anioPeriodo = primerDetalle.Anio;
-        var numeroPeriodo = primerDetalle.NumeroPeriodo;
-        var etiquetaPeriodo = primerDetalle.EtiquetaPeriodo;
-        var anioBase = proyeccion.AnioBase;
-
-        var estudiantesCarrera = detallesPeriodo.Sum(d => d.TotalEstudiantes);
+            return null;
 
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, cancellationToken);
-        var carreraNombre = carrera?.Nombre ?? string.Empty;
 
-        var registrosInflacion = await repositorioInflacion.ListarPorRangoAsync(anioBase, anioPeriodo, cancellationToken);
-        var factorEncadenado = CalculoCargosFacultad.CalcularFactorInflacionEncadenado(
-            registrosInflacion,
-            anioBase,
-            anioPeriodo,
-            numeroPeriodo);
-        var inflacionPeriodoPct = ObtenerPorcentajeAnio(registrosInflacion, anioPeriodo);
+        var anioBase = proyeccion.AnioBase;
+        var anioMaximo = proyeccion.Detalles.Count > 0
+            ? proyeccion.Detalles.Max(d => d.Anio)
+            : anioBase;
+        var registrosInflacion = await repositorioInflacion.ListarPorRangoAsync(anioBase, anioMaximo, cancellationToken);
 
         var cargos = await repositorioCargo.ListarPorCarreraAsync(carreraId, cancellationToken);
 
@@ -84,6 +94,51 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
             }
         }
 
+        return new ContextoSueldosCarrera
+        {
+            Proyeccion = proyeccion,
+            CarreraNombre = carrera?.Nombre ?? string.Empty,
+            RegistrosInflacion = registrosInflacion,
+            Cargos = cargos
+        };
+    }
+
+    /// <summary>
+    /// Calcula la tabla de sueldos de un período en memoria a partir del contexto precargado.
+    /// </summary>
+    public SueldosPeriodoVistaDto GenerarParaPeriodo(
+        ContextoSueldosCarrera contexto,
+        int carreraId,
+        int periodoAcademicoId,
+        decimal estudiantesUA,
+        ProyeccionConsolidadaDto? consolidadoActual = null)
+    {
+        if (periodoAcademicoId <= 0)
+            return new SueldosPeriodoVistaDto { CarreraId = carreraId, PeriodoAcademicoId = periodoAcademicoId };
+
+        var proyeccion = contexto.Proyeccion;
+        var detallesPeriodo = proyeccion.Detalles
+            .Where(d => d.PeriodoAcademicoId == periodoAcademicoId)
+            .ToList();
+
+        if (detallesPeriodo.Count == 0)
+            return new SueldosPeriodoVistaDto { CarreraId = carreraId, PeriodoAcademicoId = periodoAcademicoId };
+
+        var primerDetalle = detallesPeriodo[0];
+        var anioPeriodo = primerDetalle.Anio;
+        var numeroPeriodo = primerDetalle.NumeroPeriodo;
+        var etiquetaPeriodo = primerDetalle.EtiquetaPeriodo;
+        var anioBase = proyeccion.AnioBase;
+
+        var estudiantesCarrera = detallesPeriodo.Sum(d => d.TotalEstudiantes);
+
+        var factorEncadenado = CalculoCargosFacultad.CalcularFactorInflacionEncadenado(
+            contexto.RegistrosInflacion,
+            anioBase,
+            anioPeriodo,
+            numeroPeriodo);
+        var inflacionPeriodoPct = ObtenerPorcentajeAnio(contexto.RegistrosInflacion, anioPeriodo);
+
         var parametros = new ParametrosCalculoCargoFacultadDto
         {
             EstudiantesCarreraPeriodo = estudiantesCarrera,
@@ -92,7 +147,7 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
         };
 
         var periodoIndex = ObtenerIndicePeriodo(proyeccion.Detalles, periodoAcademicoId);
-        var filas = cargos
+        var filas = contexto.Cargos
             .OrderBy(c => c.NombreCargo)
             .Select(c => Calcular(c, parametros, consolidadoActual, periodoIndex))
             .ToList();
@@ -100,7 +155,7 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
         return new SueldosPeriodoVistaDto
         {
             CarreraId = carreraId,
-            CarreraNombre = carreraNombre,
+            CarreraNombre = contexto.CarreraNombre,
             PeriodoAcademicoId = periodoAcademicoId,
             Anio = anioPeriodo,
             NumeroPeriodo = numeroPeriodo,

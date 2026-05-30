@@ -9,6 +9,7 @@ using SistemaAranceles.Application.DTOs.AnalisisFinanciero;
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.AnalisisFinanciero;
+using SistemaAranceles.Application.UseCases.CostosGastos;
 using SistemaAranceles.Application.UseCases.DemandaIngresos;
 using SistemaAranceles.Domain.Entities;
 using SistemaAranceles.Presentation.State;
@@ -292,6 +293,8 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         try
         {
             using var scope = _serviceProvider.CreateScope();
+            var queryDemanda = scope.ServiceProvider.GetRequiredService<ObtenerDemandaProyectadaQuery>();
+            var queryMatriz = scope.ServiceProvider.GetRequiredService<ObtenerMatrizCostosGastosQuery>();
             var queryEstado = scope.ServiceProvider.GetRequiredService<ObtenerEstadoPerdidasGananciasQuery>();
             var queryFlujo = scope.ServiceProvider.GetRequiredService<ObtenerFlujoFondosQuery>();
             var queryIndicadores = scope.ServiceProvider.GetRequiredService<ObtenerIndicadoresFinancierosQuery>();
@@ -300,29 +303,44 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             var queryArancelOptimo = scope.ServiceProvider.GetRequiredService<ObtenerArancelOptimoBiseccionQuery>();
             var queryDashboard = scope.ServiceProvider.GetRequiredService<ObtenerDashboardFinancieroQuery>();
 
-            EstadoPerdidasGanancias = await queryEstado.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
+            var carreraId = CarreraSeleccionada.Id;
+            var escenarioId = EscenarioSeleccionado.Id;
+
+            // Calcula una sola vez la demanda y la matriz de Costos y Gastos (lo más pesado) y las
+            // propaga a cada query que las acepta, evitando recomputarlas 3 veces por refresco.
+            var demanda = await queryDemanda.EjecutarAsync(carreraId, escenarioId);
+            var matriz = await queryMatriz.EjecutarAsync(carreraId, escenarioId, demandaPrecalculada: demanda);
+
+            EstadoPerdidasGanancias = await queryEstado.EjecutarAsync(
+                carreraId,
+                escenarioId,
+                costosPrecalculados: matriz);
             FlujoFondos = await queryFlujo.EjecutarAsync(
-                CarreraSeleccionada.Id,
-                EscenarioSeleccionado.Id,
+                carreraId,
+                escenarioId,
                 estadoPrecalculado: EstadoPerdidasGanancias);
             IndicadoresFinancieros = await queryIndicadores.EjecutarAsync(
-                CarreraSeleccionada.Id,
-                EscenarioSeleccionado.Id,
+                carreraId,
+                escenarioId,
                 flujoPrecalculado: FlujoFondos);
             PeriodoRecuperacion = await queryPeriodoRecuperacion.EjecutarAsync(
-                CarreraSeleccionada.Id,
-                EscenarioSeleccionado.Id,
+                carreraId,
+                escenarioId,
                 flujoPrecalculado: FlujoFondos);
             PuntoEquilibrio = await queryPuntoEquilibrio.EjecutarAsync(
-                CarreraSeleccionada.Id,
-                EscenarioSeleccionado.Id,
-                estadoPrecalculado: EstadoPerdidasGanancias);
+                carreraId,
+                escenarioId,
+                estadoPrecalculado: EstadoPerdidasGanancias,
+                costosPrecalculados: matriz,
+                demandaPrecalculada: demanda);
             ArancelOptimoBiseccion = await queryArancelOptimo.EjecutarAsync(
-                CarreraSeleccionada.Id,
-                EscenarioSeleccionado.Id);
+                carreraId,
+                escenarioId,
+                costosPrecalculados: matriz,
+                demandaPrecalculada: demanda);
             DashboardFinanciero = await queryDashboard.EjecutarAsync(
-                CarreraSeleccionada.Id,
-                EscenarioSeleccionado.Id,
+                carreraId,
+                escenarioId,
                 estadoPrecalculado: EstadoPerdidasGanancias,
                 flujoPrecalculado: FlujoFondos,
                 indicadoresPrecalculados: IndicadoresFinancieros,

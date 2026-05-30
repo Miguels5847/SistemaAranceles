@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.DTOs.CostosGastos;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.CostosGastos;
+using SistemaAranceles.Application.UseCases.DemandaIngresos;
 using SistemaAranceles.Domain.Entities;
 
 namespace SistemaAranceles.Presentation.ViewModels.CostosGastos;
@@ -242,17 +243,19 @@ public sealed partial class CostosGastosViewModel : ObservableObject
         try
         {
             using var scope = _serviceProvider.CreateScope();
+            var queryDemanda = scope.ServiceProvider.GetRequiredService<ObtenerDemandaProyectadaQuery>();
             var queryInv = scope.ServiceProvider.GetRequiredService<ObtenerMatrizInvVinBecasQuery>();
             var queryCostos = scope.ServiceProvider.GetRequiredService<ObtenerMatrizCostosGastosQuery>();
             var queryCostoCarrera = scope.ServiceProvider.GetRequiredService<ObtenerCostoCarreraQuery>();
 
             var carreraId = CarreraSeleccionada.Id;
             var escenarioId = EscenarioSeleccionado.Id;
-            // Encadena resultados ya calculados: InvVinBecas → CostosGastos → CostoCarrera
-            // para no recomputar las matrices anidadas (ni reconsultar arancel) varias veces.
-            var invVinBecas = await queryInv.EjecutarAsync(carreraId, escenarioId);
+            // Encadena resultados ya calculados: Demanda → InvVinBecas → CostosGastos → CostoCarrera
+            // para no recomputar las matrices anidadas (ni reconsultar demanda/arancel) varias veces.
+            var demanda = await queryDemanda.EjecutarAsync(carreraId, escenarioId);
+            var invVinBecas = await queryInv.EjecutarAsync(carreraId, escenarioId, demandaPrecalculada: demanda);
             MatrizInvVinBecas = invVinBecas;
-            var costosGastos = await queryCostos.EjecutarAsync(carreraId, escenarioId, invVinBecasPrecalculado: invVinBecas);
+            var costosGastos = await queryCostos.EjecutarAsync(carreraId, escenarioId, invVinBecasPrecalculado: invVinBecas, demandaPrecalculada: demanda);
             MatrizCostosGastos = costosGastos;
             ResultadoCostoCarrera = await queryCostoCarrera.EjecutarAsync(carreraId, escenarioId, matrizPrecalculada: costosGastos);
 

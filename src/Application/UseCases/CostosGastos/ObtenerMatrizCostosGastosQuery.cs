@@ -1,3 +1,4 @@
+using SistemaAranceles.Application.DTOs.CargosFacultad;
 using SistemaAranceles.Application.DTOs.CostosGastos;
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.DTOs.Estudiantes;
@@ -32,7 +33,8 @@ public sealed class ObtenerMatrizCostosGastosQuery(
         int carreraId,
         int? escenarioProyeccionId,
         CancellationToken ct = default,
-        MatrizInvVinBecasDto? invVinBecasPrecalculado = null)
+        MatrizInvVinBecasDto? invVinBecasPrecalculado = null,
+        DemandaProyectadaDto? demandaPrecalculada = null)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -43,7 +45,8 @@ public sealed class ObtenerMatrizCostosGastosQuery(
         if (escenarioProyeccionId is null or <= 0)
             return Vacia(carreraId, carrera?.Nombre ?? string.Empty, escenarioProyeccionId, escenario?.Nombre ?? string.Empty, "Selecciona un escenario para consolidar Costos y Gastos.");
 
-        var demanda = await obtenerDemandaProyectadaQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+        var demanda = demandaPrecalculada
+            ?? await obtenerDemandaProyectadaQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
         AgregarAdvertencia(advertencias, demanda.MensajeAdvertencia);
         AgregarAdvertencia(advertencias, demanda.MensajeAdvertenciaDocentes);
         if (!demanda.TieneDatos || demanda.EtiquetasPeriodos.Count == 0)
@@ -55,7 +58,7 @@ public sealed class ObtenerMatrizCostosGastosQuery(
 
         // Reutiliza la matriz Inv. Vin. Becas si ya fue calculada (evita recomputar Ingresos/arancel).
         var invVinBecas = invVinBecasPrecalculado
-            ?? await obtenerMatrizInvVinBecasQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+            ?? await obtenerMatrizInvVinBecasQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, demandaPrecalculada: demanda);
         AgregarAdvertencia(advertencias, invVinBecas.MensajeAdvertencia);
 
         var periodos = ObtenerMatrizInvVinBecasQuery.ConstruirPeriodos(demanda);
@@ -86,6 +89,13 @@ public sealed class ObtenerMatrizCostosGastosQuery(
             ? null
             : await ObtenerConsolidadoAsync(proyeccion, carreraId, escenarioProyeccionId.Value, ct);
 
+        // Contexto de sueldos cargado una sola vez (proyección, cargos, inflación) para calcular
+        // cada período en memoria y evitar N+1 de consultas dentro del bucle de períodos.
+        var contextoSueldos = await generarTablaSueldosPeriodoQuery.PrepararContextoAsync(
+            carreraId,
+            escenarioProyeccionId.Value,
+            ct);
+
         var valores = new List<CostoGastoPeriodoDto>();
         var semestresPorAnio = datos?.SemestresPorAnio is > 0 ? datos.SemestresPorAnio : DatosInstitucionales.SemestresPorAnioPorDefecto;
         var estudiantesUniversidad = datos?.NumeroEstudiantesUniversidad ?? 0;
@@ -98,13 +108,14 @@ public sealed class ObtenerMatrizCostosGastosQuery(
             mantenimientoPorPeriodo.TryGetValue(periodo.NumeroPeriodo, out var mant);
             depreciacionPorPeriodo.TryGetValue(periodo.NumeroPeriodo, out var dep);
 
-            var sueldos = await generarTablaSueldosPeriodoQuery.EjecutarAsync(
-                carreraId,
-                escenarioProyeccionId.Value,
-                periodo.PeriodoAcademicoId,
-                estudiantesUniversidad,
-                consolidado,
-                ct);
+            var sueldos = contextoSueldos is null
+                ? new SueldosPeriodoVistaDto { CarreraId = carreraId, PeriodoAcademicoId = periodo.PeriodoAcademicoId }
+                : generarTablaSueldosPeriodoQuery.GenerarParaPeriodo(
+                    contextoSueldos,
+                    carreraId,
+                    periodo.PeriodoAcademicoId,
+                    estudiantesUniversidad,
+                    consolidado);
             var sueldosDocentes = decimal.Round(sueldos.Filas.Where(f => f.EsCargoDocente).Sum(f => f.TotalSemestre), 2);
             var sueldosAdministrativos = decimal.Round(sueldos.Filas.Where(f => !f.EsCargoDocente).Sum(f => f.TotalSemestre), 2);
 

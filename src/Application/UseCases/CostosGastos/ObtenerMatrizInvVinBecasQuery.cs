@@ -23,7 +23,8 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
     public async Task<MatrizInvVinBecasDto> EjecutarAsync(
         int carreraId,
         int? escenarioProyeccionId,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        DemandaProyectadaDto? demandaPrecalculada = null)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -34,7 +35,8 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
         if (escenarioProyeccionId is null or <= 0)
             return Vacia(carreraId, carrera?.Nombre ?? string.Empty, escenarioProyeccionId, escenario?.Nombre ?? string.Empty, "Selecciona un escenario para calcular Inv. Vin. Becas.");
 
-        var demanda = await obtenerDemandaProyectadaQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+        var demanda = demandaPrecalculada
+            ?? await obtenerDemandaProyectadaQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
         AgregarAdvertencia(advertencias, demanda.MensajeAdvertencia);
         AgregarAdvertencia(advertencias, demanda.MensajeAdvertenciaDocentes);
 
