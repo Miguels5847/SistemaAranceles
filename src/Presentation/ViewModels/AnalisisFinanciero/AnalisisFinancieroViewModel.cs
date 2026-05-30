@@ -37,6 +37,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     [ObservableProperty] private FlujoFondosDto? _flujoFondos;
     [ObservableProperty] private IndicadoresFinancierosDto? _indicadoresFinancieros;
     [ObservableProperty] private PeriodoRecuperacionDto? _periodoRecuperacion;
+    [ObservableProperty] private PuntoEquilibrioDto? _puntoEquilibrio;
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
     [ObservableProperty] private bool _estaCargando;
@@ -51,6 +52,8 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     public bool TieneIndicadoresFinancieros => IndicadoresFinancieros?.TieneDatos == true;
     public IReadOnlyList<PeriodoRecuperacionDetalleDto> DetallePeriodoRecuperacion => PeriodoRecuperacion?.Detalle ?? [];
     public bool TienePeriodoRecuperacion => PeriodoRecuperacion?.TieneDatos == true;
+    public IReadOnlyList<PuntoEquilibrioPeriodoDto> DetallePuntoEquilibrio => PuntoEquilibrio?.Periodos ?? [];
+    public bool TienePuntoEquilibrio => PuntoEquilibrio?.TieneDatos == true;
 
     partial void OnCarreraSeleccionadaChanged(Carrera? value)
     {
@@ -98,6 +101,13 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         _ = value;
         OnPropertyChanged(nameof(DetallePeriodoRecuperacion));
         OnPropertyChanged(nameof(TienePeriodoRecuperacion));
+    }
+
+    partial void OnPuntoEquilibrioChanged(PuntoEquilibrioDto? value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(DetallePuntoEquilibrio));
+        OnPropertyChanged(nameof(TienePuntoEquilibrio));
     }
 
     [RelayCommand]
@@ -235,6 +245,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             var queryFlujo = scope.ServiceProvider.GetRequiredService<ObtenerFlujoFondosQuery>();
             var queryIndicadores = scope.ServiceProvider.GetRequiredService<ObtenerIndicadoresFinancierosQuery>();
             var queryPeriodoRecuperacion = scope.ServiceProvider.GetRequiredService<ObtenerPeriodoRecuperacionQuery>();
+            var queryPuntoEquilibrio = scope.ServiceProvider.GetRequiredService<ObtenerPuntoEquilibrioQuery>();
 
             EstadoPerdidasGanancias = await queryEstado.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
             FlujoFondos = await queryFlujo.EjecutarAsync(
@@ -249,13 +260,18 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                 CarreraSeleccionada.Id,
                 EscenarioSeleccionado.Id,
                 flujoPrecalculado: FlujoFondos);
+            PuntoEquilibrio = await queryPuntoEquilibrio.EjecutarAsync(
+                CarreraSeleccionada.Id,
+                EscenarioSeleccionado.Id,
+                estadoPrecalculado: EstadoPerdidasGanancias);
 
             var advertencias = new[]
             {
                 EstadoPerdidasGanancias.MensajeAdvertencia,
                 FlujoFondos.MensajeAdvertencia,
                 IndicadoresFinancieros.MensajeAdvertencia,
-                PeriodoRecuperacion.MensajeAdvertencia
+                PeriodoRecuperacion.MensajeAdvertencia,
+                PuntoEquilibrio.MensajeAdvertencia
             }
             .Where(m => !string.IsNullOrWhiteSpace(m))
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -287,6 +303,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         FlujoFondos = null;
         IndicadoresFinancieros = null;
         PeriodoRecuperacion = null;
+        PuntoEquilibrio = null;
     }
 
     private static string Detalle(Exception ex) => ex.InnerException?.Message ?? ex.Message;

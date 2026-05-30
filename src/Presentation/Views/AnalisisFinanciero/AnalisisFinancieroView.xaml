@@ -34,6 +34,14 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="PuntoEquilibrioRowStyle" TargetType="DataGridRow" BasedOn="{StaticResource EstadoPgRowStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsCalculable}" Value="False">
+                    <Setter Property="Foreground" Value="#B71C1C"/>
+                    <Setter Property="Background" Value="#FFF5F5"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
         <Style x:Key="AnalisisDataGridCellStyle" TargetType="DataGridCell">
             <Setter Property="Foreground" Value="#263238"/>
             <Setter Property="Background" Value="Transparent"/>
@@ -48,6 +56,9 @@
                     <Setter Property="FontWeight" Value="Bold"/>
                     <Setter Property="Foreground" Value="#1B5E20"/>
                     <Setter Property="Background" Value="#DCEDC8"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsCalculable}" Value="False">
+                    <Setter Property="Foreground" Value="#B71C1C"/>
                 </DataTrigger>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Foreground" Value="#1B5E20"/>
@@ -398,10 +409,77 @@
             </TabItem>
 
             <TabItem Header="5. Punto de Equilibrio">
-                <TextBlock Text="Pendiente"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           Foreground="#546E7A"/>
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,8">
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="Estado" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding PuntoEquilibrio.EstadoGeneral, FallbackValue='Sin datos'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="PE estudiantes promedio" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding PuntoEquilibrio.PuntoEquilibrioEstudiantesPromedioDisplay, FallbackValue='No calculable'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="PE monetario total" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding PuntoEquilibrio.PuntoEquilibrioMonetarioTotalDisplay, FallbackValue='No calculable'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="Margen promedio" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding PuntoEquilibrio.MargenPromedioContribucionDisplay, FallbackValue='No calculable'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <DataGrid Grid.Row="1"
+                              ItemsSource="{Binding DetallePuntoEquilibrio}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              RowStyle="{StaticResource PuntoEquilibrioRowStyle}"
+                              CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F7FAF7"
+                              BorderBrush="#C8E6C9"
+                              ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Período" Binding="{Binding EtiquetaPeriodo}" Width="120"/>
+                            <DataGridTextColumn Header="Estudiantes" Binding="{Binding EstudiantesDisplay}" Width="110"/>
+                            <DataGridTextColumn Header="Ingresos" Binding="{Binding IngresosDisplay}" Width="150"/>
+                            <DataGridTextColumn Header="Costos variables" Binding="{Binding CostosVariablesDisplay}" Width="150"/>
+                            <DataGridTextColumn Header="Costos fijos" Binding="{Binding CostosFijosDisplay}" Width="150"/>
+                            <DataGridTextColumn Header="Ingreso prom. estudiante" Binding="{Binding IngresoPromedioEstudianteDisplay}" Width="170"/>
+                            <DataGridTextColumn Header="Costo variable estudiante" Binding="{Binding CostoVariablePorEstudianteDisplay}" Width="180"/>
+                            <DataGridTextColumn Header="Margen contribución" Binding="{Binding MargenContribucionDisplay}" Width="160"/>
+                            <DataGridTextColumn Header="PE estudiantes" Binding="{Binding PuntoEquilibrioEstudiantesDisplay}" Width="140"/>
+                            <DataGridTextColumn Header="PE monetario" Binding="{Binding PuntoEquilibrioMonetarioDisplay}" Width="150"/>
+                            <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="220"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
             </TabItem>
 
             <TabItem Header="6. Arancel Óptimo">
