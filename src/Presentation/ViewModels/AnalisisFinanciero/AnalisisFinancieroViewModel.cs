@@ -1,7 +1,10 @@
+using System.IO;
 using System.Collections.ObjectModel;
+using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Win32;
 using SistemaAranceles.Application.DTOs.AnalisisFinanciero;
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.Interfaces.Persistencia;
@@ -44,6 +47,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     [ObservableProperty] private PeriodoRecuperacionDto? _periodoRecuperacion;
     [ObservableProperty] private PuntoEquilibrioDto? _puntoEquilibrio;
     [ObservableProperty] private ArancelOptimoBiseccionDto? _arancelOptimoBiseccion;
+    [ObservableProperty] private DashboardFinancieroDto? _dashboardFinanciero;
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
     [ObservableProperty] private bool _estaCargando;
@@ -63,11 +67,18 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     public IReadOnlyList<ArancelOptimoBiseccionIteracionDto> IteracionesArancelOptimo => ArancelOptimoBiseccion?.Iteraciones ?? [];
     public IReadOnlyList<ArancelOptimoBiseccionPeriodoDto> DetalleArancelOptimo => ArancelOptimoBiseccion?.Periodos ?? [];
     public bool TieneArancelOptimoBiseccion => ArancelOptimoBiseccion?.TieneDatos == true;
+    public IReadOnlyList<DashboardIndicadorFinancieroDto> IndicadoresDashboard => DashboardFinanciero?.Indicadores ?? [];
+    public IReadOnlyList<DashboardRecomendacionFinancieraDto> RecomendacionesDashboard => DashboardFinanciero?.Recomendaciones ?? [];
+    public bool TieneDashboardFinanciero => DashboardFinanciero?.TieneDatos == true;
     public bool PuedeUsarArancelOptimo => PuedeEditar
                                            && !EstaCargando
                                            && ArancelOptimoBiseccion?.Disponible == true
                                            && CarreraSeleccionada is not null
                                            && EscenarioSeleccionado is not null;
+    public bool PuedeVerExportarDashboard => _sesionActual.EsAdministrador;
+    public bool PuedeExportarDashboard => PuedeVerExportarDashboard
+                                          && !EstaCargando
+                                          && DashboardFinanciero?.TieneDatos == true;
     public bool PuedeEditar => _sesionActual.EsAdministrador || _sesionActual.TienePermiso("DI_NG.EDITAR");
 
     partial void OnCarreraSeleccionadaChanged(Carrera? value)
@@ -134,10 +145,20 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         OnPropertyChanged(nameof(PuedeUsarArancelOptimo));
     }
 
+    partial void OnDashboardFinancieroChanged(DashboardFinancieroDto? value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(IndicadoresDashboard));
+        OnPropertyChanged(nameof(RecomendacionesDashboard));
+        OnPropertyChanged(nameof(TieneDashboardFinanciero));
+        OnPropertyChanged(nameof(PuedeExportarDashboard));
+    }
+
     partial void OnEstaCargandoChanged(bool value)
     {
         _ = value;
         OnPropertyChanged(nameof(PuedeUsarArancelOptimo));
+        OnPropertyChanged(nameof(PuedeExportarDashboard));
     }
 
     [RelayCommand]
@@ -277,6 +298,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             var queryPeriodoRecuperacion = scope.ServiceProvider.GetRequiredService<ObtenerPeriodoRecuperacionQuery>();
             var queryPuntoEquilibrio = scope.ServiceProvider.GetRequiredService<ObtenerPuntoEquilibrioQuery>();
             var queryArancelOptimo = scope.ServiceProvider.GetRequiredService<ObtenerArancelOptimoBiseccionQuery>();
+            var queryDashboard = scope.ServiceProvider.GetRequiredService<ObtenerDashboardFinancieroQuery>();
 
             EstadoPerdidasGanancias = await queryEstado.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
             FlujoFondos = await queryFlujo.EjecutarAsync(
@@ -298,6 +320,15 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             ArancelOptimoBiseccion = await queryArancelOptimo.EjecutarAsync(
                 CarreraSeleccionada.Id,
                 EscenarioSeleccionado.Id);
+            DashboardFinanciero = await queryDashboard.EjecutarAsync(
+                CarreraSeleccionada.Id,
+                EscenarioSeleccionado.Id,
+                estadoPrecalculado: EstadoPerdidasGanancias,
+                flujoPrecalculado: FlujoFondos,
+                indicadoresPrecalculados: IndicadoresFinancieros,
+                periodoRecuperacionPrecalculado: PeriodoRecuperacion,
+                puntoEquilibrioPrecalculado: PuntoEquilibrio,
+                arancelOptimoPrecalculado: ArancelOptimoBiseccion);
 
             var advertencias = new[]
             {
@@ -329,6 +360,45 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         finally
         {
             EstaCargando = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ExportarDashboardAsync()
+    {
+        if (!PuedeVerExportarDashboard)
+        {
+            MensajeError = "Solo un administrador puede exportar el dashboard.";
+            return;
+        }
+
+        if (DashboardFinanciero is null || !DashboardFinanciero.TieneDatos)
+        {
+            MensajeError = "No hay dashboard financiero para exportar.";
+            return;
+        }
+
+        var nombreCarrera = NormalizarNombreArchivo(DashboardFinanciero.CarreraNombre);
+        var nombreEscenario = NormalizarNombreArchivo(DashboardFinanciero.EscenarioNombre);
+        var dialog = new SaveFileDialog
+        {
+            Title = "Exportar Dashboard Financiero",
+            Filter = "CSV UTF-8 (*.csv)|*.csv",
+            FileName = $"dashboard_financiero_{nombreCarrera}_{nombreEscenario}_{DateTime.Now:yyyyMMddHHmm}.csv"
+        };
+
+        if (dialog.ShowDialog() != true)
+            return;
+
+        try
+        {
+            await File.WriteAllTextAsync(dialog.FileName, ConstruirCsvDashboard(DashboardFinanciero), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+            MensajeError = string.Empty;
+            MensajeExito = "Dashboard financiero exportado correctamente.";
+        }
+        catch (Exception ex)
+        {
+            MensajeError = Detalle(ex);
         }
     }
 
@@ -406,6 +476,43 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         PeriodoRecuperacion = null;
         PuntoEquilibrio = null;
         ArancelOptimoBiseccion = null;
+        DashboardFinanciero = null;
+    }
+
+    private static string ConstruirCsvDashboard(DashboardFinancieroDto dashboard)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("Seccion;Campo;Valor;Detalle;Estado");
+        sb.AppendLine($"Resumen;Carrera;{Csv(dashboard.CarreraNombre)};;");
+        sb.AppendLine($"Resumen;Escenario;{Csv(dashboard.EscenarioNombre)};;");
+        sb.AppendLine($"Resumen;Estado general;{Csv(dashboard.EstadoGeneral)};{Csv(dashboard.ViabilidadDisplay)};");
+        sb.AppendLine($"Resumen;Fecha calculo;{Csv(dashboard.FechaCalculoDisplay)};;");
+        sb.AppendLine($"Resumen;Ingresos;{Csv(dashboard.TotalIngresosDisplay)};;");
+        sb.AppendLine($"Resumen;Costos y gastos;{Csv(dashboard.TotalCostosGastosDisplay)};;");
+        sb.AppendLine($"Resumen;Utilidad o perdida;{Csv(dashboard.UtilidadPerdidaDisplay)};;");
+        sb.AppendLine($"Resumen;Flujo acumulado final;{Csv(dashboard.FlujoAcumuladoFinalDisplay)};;");
+        sb.AppendLine($"Resumen;VAN;{Csv(dashboard.VanDisplay)};;");
+        sb.AppendLine($"Resumen;TIR;{Csv(dashboard.TirDisplay)};;");
+        sb.AppendLine($"Resumen;TMR;{Csv(dashboard.TmrDisplay)};;");
+        sb.AppendLine($"Resumen;Arancel optimo;{Csv(dashboard.ArancelOptimoDisplay)};;");
+
+        foreach (var indicador in dashboard.Indicadores)
+            sb.AppendLine($"Indicador;{Csv(indicador.Nombre)};{Csv(indicador.ValorDisplay)};{Csv(indicador.Detalle)};{Csv(indicador.Estado)}");
+
+        foreach (var recomendacion in dashboard.Recomendaciones)
+            sb.AppendLine($"Recomendacion;{Csv(recomendacion.Origen)};{Csv(recomendacion.Prioridad)};{Csv(recomendacion.Mensaje)};");
+
+        return sb.ToString();
+    }
+
+    private static string Csv(string? value)
+        => "\"" + (value ?? string.Empty).Replace("\"", "\"\"") + "\"";
+
+    private static string NormalizarNombreArchivo(string value)
+    {
+        var invalido = Path.GetInvalidFileNameChars().ToHashSet();
+        var normalizado = new string(value.Select(c => invalido.Contains(c) || char.IsWhiteSpace(c) ? '_' : c).ToArray());
+        return string.IsNullOrWhiteSpace(normalizado) ? "sin_nombre" : normalizado;
     }
 
     private static string Detalle(Exception ex) => ex.InnerException?.Message ?? ex.Message;

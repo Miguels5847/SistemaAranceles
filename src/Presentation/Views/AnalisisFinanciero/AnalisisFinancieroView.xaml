@@ -79,6 +79,38 @@
             <Setter Property="Padding" Value="10,8"/>
             <Setter Property="Margin" Value="0,0,8,8"/>
         </Style>
+        <Style x:Key="DashboardIndicadorCard" TargetType="Border" BasedOn="{StaticResource PanelResumen}">
+            <Setter Property="MinHeight" Value="116"/>
+            <Setter Property="Width" Value="220"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsViable}" Value="True">
+                    <Setter Property="Background" Value="#F1F8E9"/>
+                    <Setter Property="BorderBrush" Value="#81C784"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsViable}" Value="False">
+                    <Setter Property="Background" Value="#FFF5F5"/>
+                    <Setter Property="BorderBrush" Value="#EF9A9A"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="DashboardSemaforoStyle" TargetType="Ellipse">
+            <Setter Property="Width" Value="10"/>
+            <Setter Property="Height" Value="10"/>
+            <Setter Property="Fill" Value="#C62828"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsViable}" Value="True">
+                    <Setter Property="Fill" Value="#2E7D32"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="DashboardRecomendacionRowStyle" TargetType="DataGridRow" BasedOn="{StaticResource EstadoPgRowStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Prioridad}" Value="Alta">
+                    <Setter Property="Foreground" Value="#B71C1C"/>
+                    <Setter Property="Background" Value="#FFF5F5"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
     <Grid Margin="12">
@@ -619,10 +651,181 @@
             </TabItem>
 
             <TabItem Header="7. Dashboard Financiero">
-                <TextBlock Text="Pendiente"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           Foreground="#546E7A"/>
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <UniformGrid Grid.Row="0" Columns="5" Margin="0,0,0,8">
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="Estado general" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding DashboardFinanciero.EstadoGeneral, FallbackValue='Sin datos'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                                <TextBlock Text="{Binding DashboardFinanciero.ViabilidadDisplay, FallbackValue='0/0 indicadores'}"
+                                           FontSize="10"
+                                           Foreground="#546E7A"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="VAN" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding DashboardFinanciero.VanDisplay, FallbackValue='$ 0.00'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                                <TextBlock Text="{Binding DashboardFinanciero.PorcentajeViabilidadDisplay, FallbackValue='0.00 %'}"
+                                           FontSize="10"
+                                           Foreground="#546E7A"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="TIR / TMR" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock FontWeight="Bold" FontSize="16" Foreground="#1B5E20">
+                                    <Run Text="{Binding DashboardFinanciero.TirDisplay, Mode=OneWay, FallbackValue='No calculable'}"/>
+                                    <Run Text=" / "/>
+                                    <Run Text="{Binding DashboardFinanciero.TmrDisplay, Mode=OneWay, FallbackValue='0.00 %'}"/>
+                                </TextBlock>
+                                <TextBlock Text="{Binding DashboardFinanciero.FechaCalculoDisplay, FallbackValue=''}"
+                                           FontSize="10"
+                                           Foreground="#546E7A"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="Flujo acumulado final" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding DashboardFinanciero.FlujoAcumuladoFinalDisplay, FallbackValue='$ 0.00'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                                <TextBlock Text="{Binding DashboardFinanciero.UtilidadPerdidaDisplay, FallbackValue='$ 0.00'}"
+                                           FontSize="10"
+                                           Foreground="#546E7A"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Arancel óptimo" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Grid.Row="1"
+                                           Text="{Binding DashboardFinanciero.ArancelOptimoDisplay, FallbackValue='No calculable'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                                <Button Grid.Row="2"
+                                        Content="Exportar CSV"
+                                        Margin="0,6,0,0"
+                                        Padding="8,3"
+                                        HorizontalAlignment="Left"
+                                        Command="{Binding ExportarDashboardCommand}"
+                                        IsEnabled="{Binding PuedeExportarDashboard}"
+                                        Visibility="{Binding PuedeVerExportarDashboard, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                            </Grid>
+                        </Border>
+                    </UniformGrid>
+
+                    <ItemsControl Grid.Row="1"
+                                  ItemsSource="{Binding IndicadoresDashboard}"
+                                  Margin="0,0,0,8">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource DashboardIndicadorCard}">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <DockPanel>
+                                            <Ellipse Style="{StaticResource DashboardSemaforoStyle}"
+                                                     DockPanel.Dock="Left"
+                                                     Margin="0,3,6,0"/>
+                                            <TextBlock Text="{Binding Nombre}"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="#263238"/>
+                                        </DockPanel>
+                                        <TextBlock Grid.Row="1"
+                                                   Text="{Binding ValorDisplay}"
+                                                   FontSize="18"
+                                                   FontWeight="Bold"
+                                                   Foreground="#1B5E20"
+                                                   Margin="0,5,0,0"/>
+                                        <TextBlock Grid.Row="2"
+                                                   Text="{Binding Estado}"
+                                                   FontSize="11"
+                                                   Foreground="#546E7A"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,4,0,0"/>
+                                        <TextBlock Grid.Row="3"
+                                                   Text="{Binding Detalle}"
+                                                   FontSize="11"
+                                                   Foreground="#37474F"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,4,0,0"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="3*"/>
+                            <ColumnDefinition Width="2*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <DataGrid Grid.Column="0"
+                                  ItemsSource="{Binding IndicadoresDashboard}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  RowStyle="{StaticResource EstadoPgRowStyle}"
+                                  CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="Horizontal"
+                                  AlternatingRowBackground="#F7FAF7"
+                                  BorderBrush="#C8E6C9"
+                                  Margin="0,0,8,0">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Indicador" Binding="{Binding Nombre}" Width="150"/>
+                                <DataGridTextColumn Header="Valor" Binding="{Binding ValorDisplay}" Width="160"/>
+                                <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="220"/>
+                                <DataGridTextColumn Header="Módulo" Binding="{Binding Modulo}" Width="160"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <DataGrid Grid.Column="1"
+                                  ItemsSource="{Binding RecomendacionesDashboard}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  RowStyle="{StaticResource DashboardRecomendacionRowStyle}"
+                                  CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="Horizontal"
+                                  AlternatingRowBackground="#F7FAF7"
+                                  BorderBrush="#C8E6C9">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Prioridad" Binding="{Binding Prioridad}" Width="90"/>
+                                <DataGridTextColumn Header="Origen" Binding="{Binding Origen}" Width="120"/>
+                                <DataGridTextColumn Header="Recomendación" Binding="{Binding Mensaje}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Grid>
             </TabItem>
 
             <TabItem Header="8. CES / INF CES">
