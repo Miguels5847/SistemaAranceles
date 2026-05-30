@@ -192,6 +192,7 @@ public partial class App
         servicios.AddTransient<ObtenerEstadoPerdidasGananciasQuery>();
         servicios.AddTransient<ObtenerFlujoFondosQuery>();
         servicios.AddTransient<ObtenerIndicadoresFinancierosQuery>();
+        servicios.AddTransient<ObtenerPeriodoRecuperacionQuery>();
         servicios.AddTransient<CalcularAportePlantaCentralCarreraQuery>();
         servicios.AddTransient<CalcularProyeccionesCargoPlantaCentralCommand>();
         servicios.AddTransient<ListarProyeccionesCargoPlantaCentralQuery>();

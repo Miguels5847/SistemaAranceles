@@ -3,7 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Resources>
         <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="White"/>
             <Setter Property="Foreground" Value="#263238"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#E8F5E9"/>
@@ -21,6 +23,41 @@
                     <Setter Property="FontWeight" Value="Bold"/>
                     <Setter Property="Background" Value="#F1F8E9"/>
                 </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="PeriodoRecuperacionRowStyle" TargetType="DataGridRow" BasedOn="{StaticResource EstadoPgRowStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsPeriodoRecuperacion}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Background" Value="#DCEDC8"/>
+                    <Setter Property="Foreground" Value="#1B5E20"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="AnalisisDataGridCellStyle" TargetType="DataGridCell">
+            <Setter Property="Foreground" Value="#263238"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsTotal}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Foreground" Value="#1B5E20"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsPeriodoRecuperacion}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Foreground" Value="#1B5E20"/>
+                    <Setter Property="Background" Value="#DCEDC8"/>
+                </DataTrigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="#1B5E20"/>
+                    <Setter Property="Background" Value="#E8F5E9"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Foreground" Value="#1B5E20"/>
+                    <Setter Property="Background" Value="#C8E6C9"/>
+                    <Setter Property="BorderBrush" Value="#A5D6A7"/>
+                </Trigger>
             </Style.Triggers>
         </Style>
         <Style x:Key="PanelResumen" TargetType="Border">
@@ -153,6 +190,7 @@
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
                               RowStyle="{StaticResource EstadoPgRowStyle}"
+                              CellStyle="{StaticResource AnalisisDataGridCellStyle}"
                               HeadersVisibility="Column"
                               GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F7FAF7"
@@ -206,6 +244,7 @@
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
                               RowStyle="{StaticResource EstadoPgRowStyle}"
+                              CellStyle="{StaticResource AnalisisDataGridCellStyle}"
                               HeadersVisibility="Column"
                               GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F7FAF7"
@@ -273,6 +312,8 @@
                               ItemsSource="{Binding DetalleVanFinanciero}"
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
+                              RowStyle="{StaticResource EstadoPgRowStyle}"
+                              CellStyle="{StaticResource AnalisisDataGridCellStyle}"
                               HeadersVisibility="Column"
                               GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F7FAF7"
@@ -288,10 +329,72 @@
             </TabItem>
 
             <TabItem Header="4. Periodo de Recuperación">
-                <TextBlock Text="Pendiente"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           Foreground="#546E7A"/>
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,8">
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="Estado" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding PeriodoRecuperacion.Estado, FallbackValue='Sin datos'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="Periodo exacto" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding PeriodoRecuperacion.PeriodoRecuperacion, FallbackValue='Pendiente'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="Tiempo de recuperación" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding PeriodoRecuperacion.TiempoRecuperacionDisplay, FallbackValue='Pendiente'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                                <TextBlock Text="{Binding PeriodoRecuperacion.TotalMesesDisplay, FallbackValue=''}"
+                                           FontSize="10"
+                                           Foreground="#546E7A"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="Flujo acumulado final" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding PeriodoRecuperacion.FlujoAcumuladoFinalDisplay, FallbackValue='$ 0.00'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <DataGrid Grid.Row="1"
+                              ItemsSource="{Binding DetallePeriodoRecuperacion}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              RowStyle="{StaticResource PeriodoRecuperacionRowStyle}"
+                              CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F7FAF7"
+                              BorderBrush="#C8E6C9">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Periodo" Binding="{Binding EtiquetaPeriodo}" Width="*"/>
+                            <DataGridTextColumn Header="Flujo neto" Binding="{Binding FlujoNetoDisplay}" Width="170"/>
+                            <DataGridTextColumn Header="Flujo acumulado" Binding="{Binding FlujoAcumuladoDisplay}" Width="170"/>
+                            <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="150"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
             </TabItem>
 
             <TabItem Header="5. Punto de Equilibrio">
