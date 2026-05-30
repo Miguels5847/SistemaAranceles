@@ -64,6 +64,12 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
     [ObservableProperty] private decimal _porcentajeBecasEstudiantes = DatosInstitucionalesDominio.PorcentajeBecasEstudiantesPorDefecto;
     [ObservableProperty] private decimal _porcentajeBecasDocentes = DatosInstitucionalesDominio.PorcentajeBecasDocentesPorDefecto;
 
+    // KAN-40
+    [ObservableProperty] private decimal _tasaInteresFinanciera = DatosInstitucionalesDominio.TasaInteresFinancieraPorDefecto;
+    [ObservableProperty] private decimal _premioRiesgo = DatosInstitucionalesDominio.PremioRiesgoPorDefecto;
+    [ObservableProperty] private decimal _tmrManual = DatosInstitucionalesDominio.TmrManualPorDefecto;
+    [ObservableProperty] private bool _usarTmrManual = DatosInstitucionalesDominio.UsarTmrManualPorDefecto;
+
     [ObservableProperty] private string? _fuenteNotas;
 
     [ObservableProperty] private decimal _masaSalarialMensual;
@@ -144,6 +150,10 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
                 PorcentajeVinculacion = DatosInstitucionalesDominio.PorcentajeVinculacionPorDefecto;
                 PorcentajeBecasEstudiantes = DatosInstitucionalesDominio.PorcentajeBecasEstudiantesPorDefecto;
                 PorcentajeBecasDocentes = DatosInstitucionalesDominio.PorcentajeBecasDocentesPorDefecto;
+                TasaInteresFinanciera = DatosInstitucionalesDominio.TasaInteresFinancieraPorDefecto;
+                PremioRiesgo = DatosInstitucionalesDominio.PremioRiesgoPorDefecto;
+                TmrManual = DatosInstitucionalesDominio.TmrManualPorDefecto;
+                UsarTmrManual = DatosInstitucionalesDominio.UsarTmrManualPorDefecto;
                 UltimaActualizacionTexto = "Sin registros previos. Ingrese los datos iniciales.";
                 RecalcularMetricas();
                 return;
@@ -209,6 +219,10 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
                     PorcentajeVinculacion = PorcentajeVinculacion,
                     PorcentajeBecasEstudiantes = PorcentajeBecasEstudiantes,
                     PorcentajeBecasDocentes = PorcentajeBecasDocentes,
+                    TasaInteresFinanciera = TasaInteresFinanciera,
+                    PremioRiesgo = PremioRiesgo,
+                    TmrManual = TmrManual,
+                    UsarTmrManual = UsarTmrManual,
                     FuenteNotas = FuenteNotas,
                 },
                 _sesionActual.UsuarioId);
@@ -278,6 +292,10 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
         PorcentajeVinculacion = dto.PorcentajeVinculacion;
         PorcentajeBecasEstudiantes = dto.PorcentajeBecasEstudiantes;
         PorcentajeBecasDocentes = dto.PorcentajeBecasDocentes;
+        TasaInteresFinanciera = dto.TasaInteresFinanciera;
+        PremioRiesgo = dto.PremioRiesgo;
+        TmrManual = dto.TmrManual;
+        UsarTmrManual = dto.UsarTmrManual;
         FuenteNotas = dto.FuenteNotas;
         MasaSalarialMensual = dto.MasaSalarialMensual;
         TotalAnualPlantaCentral = dto.TotalAnualPlantaCentral;

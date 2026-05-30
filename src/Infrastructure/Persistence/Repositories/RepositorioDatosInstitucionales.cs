@@ -108,6 +108,12 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
                 ALTER COLUMN porcentaje_becas_estudiantes SET NOT NULL,
                 ALTER COLUMN porcentaje_becas_docentes SET DEFAULT 10.0000,
                 ALTER COLUMN porcentaje_becas_docentes SET NOT NULL;
+
+            ALTER TABLE public.datos_institucionales
+                ADD COLUMN IF NOT EXISTS tasa_interes_financiera NUMERIC(7,4) NOT NULL DEFAULT 8.0000,
+                ADD COLUMN IF NOT EXISTS premio_riesgo NUMERIC(7,4) NOT NULL DEFAULT 5.0000,
+                ADD COLUMN IF NOT EXISTS tmr_manual NUMERIC(7,4) NOT NULL DEFAULT 0.0000,
+                ADD COLUMN IF NOT EXISTS usar_tmr_manual BOOLEAN NOT NULL DEFAULT FALSE;
             """, cancellationToken);
 
     public void Agregar(DominioDatosInstitucionales datos)
@@ -164,6 +170,12 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
             e.PorcentajeBecasEstudiantes,
             e.PorcentajeBecasDocentes);
 
+        dominio.CambiarParametrosAnalisisFinanciero(
+            e.TasaInteresFinanciera,
+            e.PremioRiesgo,
+            e.TmrManual,
+            e.UsarTmrManual);
+
         dominio.RehidratarId(e.Id);
         dominio.RehidratarFechaActualizacion(e.FechaActualizacion);
         return dominio;
@@ -201,6 +213,10 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
         PorcentajeVinculacion = d.PorcentajeVinculacion,
         PorcentajeBecasEstudiantes = d.PorcentajeBecasEstudiantes,
         PorcentajeBecasDocentes = d.PorcentajeBecasDocentes,
+        TasaInteresFinanciera = d.TasaInteresFinanciera,
+        PremioRiesgo = d.PremioRiesgo,
+        TmrManual = d.TmrManual,
+        UsarTmrManual = d.UsarTmrManual,
         FechaActualizacion = d.FechaActualizacion,
         ActualizadoPorUsuarioId = d.ActualizadoPorUsuarioId,
         FuenteNotas = d.FuenteNotas,

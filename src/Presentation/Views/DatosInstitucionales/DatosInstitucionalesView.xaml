@@ -17,6 +17,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Row="0"
@@ -456,8 +457,62 @@
                                 </Grid>
                         </Border>
 
-                        <!-- Métricas calculadas -->
+                        <!-- KAN-40: Parámetros Análisis Financiero -->
                         <Border Grid.Row="8"
+                                BorderBrush="#7986CB"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="10,8"
+                                Margin="0,0,0,8">
+                                <Grid>
+                                        <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.ColumnSpan="4"
+                                                   Text="Parámetros Análisis Financiero (Épica 11)"
+                                                   FontWeight="SemiBold" Foreground="#1A237E"
+                                                   Margin="0,0,0,6"/>
+
+                                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,6,4">
+                                                <TextBlock Text="Tasa interés financiera (%)" FontSize="11"/>
+                                                <TextBox Text="{Binding TasaInteresFinanciera, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,6,4">
+                                                <TextBlock Text="Premio al riesgo (%)" FontSize="11"/>
+                                                <TextBox Text="{Binding PremioRiesgo, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,6,4">
+                                                <TextBlock Text="TMR manual (%)" FontSize="11"/>
+                                                <TextBox Text="{Binding TmrManual, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="3" Margin="0,0,0,4" VerticalAlignment="Bottom">
+                                                <CheckBox IsChecked="{Binding UsarTmrManual}"
+                                                          IsEnabled="{Binding CamposEditables}"
+                                                          Content="Usar TMR manual"
+                                                          Margin="0,18,0,4"/>
+                                        </StackPanel>
+
+                                        <TextBlock Grid.Row="2" Grid.ColumnSpan="4"
+                                                   Text="Si 'Usar TMR manual' está activo se usa la TMR manual; si no, TMR = tasa interés + inflación promedio + premio al riesgo. La inflación proviene del módulo Inflación, no se escribe aquí."
+                                                   FontSize="11" Foreground="#546E7A" FontStyle="Italic"
+                                                   TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                </Grid>
+                        </Border>
+
+                        <!-- Métricas calculadas -->
+                        <Border Grid.Row="9"
                                 BorderBrush="#C5CAE9"
                                 BorderThickness="1"
                                 CornerRadius="4"

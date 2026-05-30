@@ -41,6 +41,12 @@ public sealed class DatosInstitucionalesDto
     public decimal PorcentajeBecasEstudiantes { get; init; } = DatosInstitucionales.PorcentajeBecasEstudiantesPorDefecto;
     public decimal PorcentajeBecasDocentes { get; init; } = DatosInstitucionales.PorcentajeBecasDocentesPorDefecto;
 
+    // KAN-40
+    public decimal TasaInteresFinanciera { get; init; } = DatosInstitucionales.TasaInteresFinancieraPorDefecto;
+    public decimal PremioRiesgo { get; init; } = DatosInstitucionales.PremioRiesgoPorDefecto;
+    public decimal TmrManual { get; init; } = DatosInstitucionales.TmrManualPorDefecto;
+    public bool UsarTmrManual { get; init; } = DatosInstitucionales.UsarTmrManualPorDefecto;
+
     public decimal MasaSalarialMensual { get; init; }
     public decimal TotalMensualPlantaCentral { get; init; }
     public decimal TotalAnualPlantaCentral { get; init; }
@@ -96,6 +102,12 @@ public sealed class GuardarDatosInstitucionalesDto
     public decimal PorcentajeVinculacion { get; init; } = DatosInstitucionales.PorcentajeVinculacionPorDefecto;
     public decimal PorcentajeBecasEstudiantes { get; init; } = DatosInstitucionales.PorcentajeBecasEstudiantesPorDefecto;
     public decimal PorcentajeBecasDocentes { get; init; } = DatosInstitucionales.PorcentajeBecasDocentesPorDefecto;
+
+    // KAN-40
+    public decimal TasaInteresFinanciera { get; init; } = DatosInstitucionales.TasaInteresFinancieraPorDefecto;
+    public decimal PremioRiesgo { get; init; } = DatosInstitucionales.PremioRiesgoPorDefecto;
+    public decimal TmrManual { get; init; } = DatosInstitucionales.TmrManualPorDefecto;
+    public bool UsarTmrManual { get; init; } = DatosInstitucionales.UsarTmrManualPorDefecto;
 
     public string? FuenteNotas { get; init; }
 }

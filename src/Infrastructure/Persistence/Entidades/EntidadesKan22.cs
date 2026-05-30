@@ -39,6 +39,12 @@ public sealed class DatosInstitucionales
     public decimal PorcentajeBecasEstudiantes { get; set; } = 90m;
     public decimal PorcentajeBecasDocentes { get; set; } = 10m;
 
+    // KAN-40: parámetros Épica 11
+    public decimal TasaInteresFinanciera { get; set; } = 8m;
+    public decimal PremioRiesgo { get; set; } = 5m;
+    public decimal TmrManual { get; set; }
+    public bool UsarTmrManual { get; set; }
+
     public DateTimeOffset FechaActualizacion { get; set; } = DateTimeOffset.UtcNow;
     public int ActualizadoPorUsuarioId { get; set; }
     public string? FuenteNotas { get; set; }

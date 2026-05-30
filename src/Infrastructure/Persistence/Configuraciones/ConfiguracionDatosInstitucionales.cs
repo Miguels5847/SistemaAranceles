@@ -47,6 +47,12 @@ internal sealed class ConfiguracionDatosInstitucionales : IEntityTypeConfigurati
         builder.Property(x => x.PorcentajeBecasEstudiantes).HasColumnName("porcentaje_becas_estudiantes").HasColumnType("numeric(7,4)").HasDefaultValue(90m).IsRequired();
         builder.Property(x => x.PorcentajeBecasDocentes).HasColumnName("porcentaje_becas_docentes").HasColumnType("numeric(7,4)").HasDefaultValue(10m).IsRequired();
 
+        // KAN-40
+        builder.Property(x => x.TasaInteresFinanciera).HasColumnName("tasa_interes_financiera").HasColumnType("numeric(7,4)").HasDefaultValue(8m).IsRequired();
+        builder.Property(x => x.PremioRiesgo).HasColumnName("premio_riesgo").HasColumnType("numeric(7,4)").HasDefaultValue(5m).IsRequired();
+        builder.Property(x => x.TmrManual).HasColumnName("tmr_manual").HasColumnType("numeric(7,4)").HasDefaultValue(0m).IsRequired();
+        builder.Property(x => x.UsarTmrManual).HasColumnName("usar_tmr_manual").HasDefaultValue(false).IsRequired();
+
         builder.Property(x => x.FechaActualizacion).HasColumnName("fecha_actualizacion").IsRequired();
         builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id").IsRequired();
         builder.Property(x => x.FuenteNotas).HasColumnName("fuente_notas").HasMaxLength(500);

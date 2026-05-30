@@ -20,6 +20,10 @@ public sealed class DatosInstitucionales : EntidadDominioBase
     public const decimal PorcentajeVinculacionPorDefecto = 1m;
     public const decimal PorcentajeBecasEstudiantesPorDefecto = 90m;
     public const decimal PorcentajeBecasDocentesPorDefecto = 10m;
+    public const decimal TasaInteresFinancieraPorDefecto = 8m;
+    public const decimal PremioRiesgoPorDefecto = 5m;
+    public const decimal TmrManualPorDefecto = 0m;
+    public const bool UsarTmrManualPorDefecto = false;
 
     private DatosInstitucionales()
     {
@@ -35,6 +39,10 @@ public sealed class DatosInstitucionales : EntidadDominioBase
         PorcentajeVinculacion = PorcentajeVinculacionPorDefecto;
         PorcentajeBecasEstudiantes = PorcentajeBecasEstudiantesPorDefecto;
         PorcentajeBecasDocentes = PorcentajeBecasDocentesPorDefecto;
+        TasaInteresFinanciera = TasaInteresFinancieraPorDefecto;
+        PremioRiesgo = PremioRiesgoPorDefecto;
+        TmrManual = TmrManualPorDefecto;
+        UsarTmrManual = UsarTmrManualPorDefecto;
     }
 
     public DatosInstitucionales(
@@ -96,6 +104,12 @@ public sealed class DatosInstitucionales : EntidadDominioBase
     public decimal PorcentajeVinculacion { get; private set; } = PorcentajeVinculacionPorDefecto;
     public decimal PorcentajeBecasEstudiantes { get; private set; } = PorcentajeBecasEstudiantesPorDefecto;
     public decimal PorcentajeBecasDocentes { get; private set; } = PorcentajeBecasDocentesPorDefecto;
+
+    // KAN-40: parámetros Épica 11 (Análisis Financiero)
+    public decimal TasaInteresFinanciera { get; private set; } = TasaInteresFinancieraPorDefecto;
+    public decimal PremioRiesgo { get; private set; } = PremioRiesgoPorDefecto;
+    public decimal TmrManual { get; private set; } = TmrManualPorDefecto;
+    public bool UsarTmrManual { get; private set; } = UsarTmrManualPorDefecto;
 
     public DateTimeOffset FechaActualizacion { get; private set; }
     public int ActualizadoPorUsuarioId { get; private set; }
@@ -199,6 +213,19 @@ public sealed class DatosInstitucionales : EntidadDominioBase
         PorcentajeVinculacion = GuardiaDominio.Porcentaje(porcentajeVinculacion, "Porcentaje vinculación");
         PorcentajeBecasEstudiantes = GuardiaDominio.Porcentaje(porcentajeBecasEstudiantes, "Porcentaje becas estudiantes");
         PorcentajeBecasDocentes = GuardiaDominio.Porcentaje(porcentajeBecasDocentes, "Porcentaje becas docentes");
+    }
+
+    /// <summary>KAN-40: parámetros globales para módulo Análisis Financiero (TMR/VAN/TIR).</summary>
+    public void CambiarParametrosAnalisisFinanciero(
+        decimal tasaInteresFinanciera,
+        decimal premioRiesgo,
+        decimal tmrManual,
+        bool usarTmrManual)
+    {
+        TasaInteresFinanciera = GuardiaDominio.Porcentaje(tasaInteresFinanciera, "Tasa interés financiera");
+        PremioRiesgo = GuardiaDominio.Porcentaje(premioRiesgo, "Premio al riesgo");
+        TmrManual = GuardiaDominio.Porcentaje(tmrManual, "TMR manual");
+        UsarTmrManual = usarTmrManual;
     }
 
     public void RehidratarFechaActualizacion(DateTimeOffset fecha)

@@ -214,10 +214,77 @@
             </TabItem>
 
             <TabItem Header="3. TIR / VAN / TMR">
-                <TextBlock Text="Pendiente"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           Foreground="#546E7A"/>
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,8">
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="TMR" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding IndicadoresFinancieros.TmrDisplay, FallbackValue='0.00 %'}"
+                                           FontWeight="Bold" FontSize="16" Foreground="#1B5E20"/>
+                                <TextBlock Text="{Binding IndicadoresFinancieros.FuenteTmrDisplay, FallbackValue=''}"
+                                           FontSize="10" Foreground="#546E7A"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="VAN" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding IndicadoresFinancieros.VanDisplay, FallbackValue='$ 0.00'}"
+                                           FontWeight="Bold" FontSize="16" Foreground="#1B5E20"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="TIR" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding IndicadoresFinancieros.TirDisplay, FallbackValue='No calculable'}"
+                                           FontWeight="Bold" FontSize="16" Foreground="#1B5E20"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="Estado de viabilidad" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding IndicadoresFinancieros.EstadoViabilidad, FallbackValue='Sin datos'}"
+                                           FontWeight="Bold" FontSize="16" Foreground="#1B5E20"/>
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <Border Grid.Row="1" Style="{StaticResource PanelResumen}" Margin="0,0,0,8">
+                        <StackPanel>
+                            <TextBlock Text="Cálculo de la TMR" FontWeight="SemiBold" Foreground="#1B5E20" Margin="0,0,0,4"/>
+                            <TextBlock Text="{Binding IndicadoresFinancieros.TmrFormulaDisplay, FallbackValue=''}"
+                                       TextWrapping="Wrap" Foreground="#37474F"/>
+                            <TextBlock Margin="0,4,0,0" FontSize="11" Foreground="#546E7A" TextWrapping="Wrap">
+                                <Run Text="Inflación promedio tomada del módulo Inflación (años "/>
+                                <Run Text="{Binding IndicadoresFinancieros.RangoInflacionDisplay, Mode=OneWay, FallbackValue='-'}"/>
+                                <Run Text="). VAN descontado con TMR = "/>
+                                <Run Text="{Binding IndicadoresFinancieros.TmrDisplay, Mode=OneWay, FallbackValue='0.00 %'}"/>
+                                <Run Text="."/>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <DataGrid Grid.Row="2"
+                              ItemsSource="{Binding DetalleVanFinanciero}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F7FAF7"
+                              BorderBrush="#C8E6C9">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Período" Binding="{Binding EtiquetaPeriodo}" Width="*"/>
+                            <DataGridTextColumn Header="Flujo neto" Binding="{Binding FlujoNetoDisplay}" Width="170"/>
+                            <DataGridTextColumn Header="Factor descuento" Binding="{Binding FactorDescuentoDisplay}" Width="130"/>
+                            <DataGridTextColumn Header="Valor presente" Binding="{Binding ValorPresenteDisplay}" Width="170"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
             </TabItem>
 
             <TabItem Header="4. Periodo de Recuperación">

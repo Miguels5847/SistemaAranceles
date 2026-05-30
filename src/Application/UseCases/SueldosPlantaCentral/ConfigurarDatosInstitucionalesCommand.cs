@@ -58,6 +58,11 @@ public sealed class ConfigurarDatosInstitucionalesCommand(
                 dto.PorcentajeVinculacion,
                 dto.PorcentajeBecasEstudiantes,
                 dto.PorcentajeBecasDocentes);
+            datos.CambiarParametrosAnalisisFinanciero(
+                dto.TasaInteresFinanciera,
+                dto.PremioRiesgo,
+                dto.TmrManual,
+                dto.UsarTmrManual);
             repositorio.Agregar(datos);
         }
         else
@@ -95,6 +100,11 @@ public sealed class ConfigurarDatosInstitucionalesCommand(
                 dto.PorcentajeVinculacion,
                 dto.PorcentajeBecasEstudiantes,
                 dto.PorcentajeBecasDocentes);
+            existente.CambiarParametrosAnalisisFinanciero(
+                dto.TasaInteresFinanciera,
+                dto.PremioRiesgo,
+                dto.TmrManual,
+                dto.UsarTmrManual);
             existente.RegistrarActualizacion(usuarioId, dto.FuenteNotas);
             repositorio.Actualizar(existente);
             datos = existente;

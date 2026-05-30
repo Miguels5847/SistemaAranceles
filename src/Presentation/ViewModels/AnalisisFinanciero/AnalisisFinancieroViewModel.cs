@@ -35,6 +35,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     [ObservableProperty] private EscenarioAnalisisFinancieroOpcion? _escenarioSeleccionado;
     [ObservableProperty] private EstadoPerdidasGananciasDto? _estadoPerdidasGanancias;
     [ObservableProperty] private FlujoFondosDto? _flujoFondos;
+    [ObservableProperty] private IndicadoresFinancierosDto? _indicadoresFinancieros;
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
     [ObservableProperty] private bool _estaCargando;
@@ -45,6 +46,8 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     public IReadOnlyList<string> EtiquetasFlujoFondos => FlujoFondos?.EtiquetasPeriodos ?? [];
     public IReadOnlyList<FlujoFondosRubroDto> FilasFlujoFondos => FlujoFondos?.Filas ?? [];
     public bool TieneFlujoFondos => FlujoFondos?.TieneDatos == true;
+    public IReadOnlyList<IndicadorVanPeriodoDto> DetalleVanFinanciero => IndicadoresFinancieros?.DetalleVan ?? [];
+    public bool TieneIndicadoresFinancieros => IndicadoresFinancieros?.TieneDatos == true;
 
     partial void OnCarreraSeleccionadaChanged(Carrera? value)
     {
@@ -78,6 +81,13 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         OnPropertyChanged(nameof(EtiquetasFlujoFondos));
         OnPropertyChanged(nameof(FilasFlujoFondos));
         OnPropertyChanged(nameof(TieneFlujoFondos));
+    }
+
+    partial void OnIndicadoresFinancierosChanged(IndicadoresFinancierosDto? value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(DetalleVanFinanciero));
+        OnPropertyChanged(nameof(TieneIndicadoresFinancieros));
     }
 
     [RelayCommand]
@@ -213,17 +223,23 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             using var scope = _serviceProvider.CreateScope();
             var queryEstado = scope.ServiceProvider.GetRequiredService<ObtenerEstadoPerdidasGananciasQuery>();
             var queryFlujo = scope.ServiceProvider.GetRequiredService<ObtenerFlujoFondosQuery>();
+            var queryIndicadores = scope.ServiceProvider.GetRequiredService<ObtenerIndicadoresFinancierosQuery>();
 
             EstadoPerdidasGanancias = await queryEstado.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
             FlujoFondos = await queryFlujo.EjecutarAsync(
                 CarreraSeleccionada.Id,
                 EscenarioSeleccionado.Id,
                 estadoPrecalculado: EstadoPerdidasGanancias);
+            IndicadoresFinancieros = await queryIndicadores.EjecutarAsync(
+                CarreraSeleccionada.Id,
+                EscenarioSeleccionado.Id,
+                flujoPrecalculado: FlujoFondos);
 
             var advertencias = new[]
             {
                 EstadoPerdidasGanancias.MensajeAdvertencia,
-                FlujoFondos.MensajeAdvertencia
+                FlujoFondos.MensajeAdvertencia,
+                IndicadoresFinancieros.MensajeAdvertencia
             }
             .Where(m => !string.IsNullOrWhiteSpace(m))
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -253,6 +269,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     {
         EstadoPerdidasGanancias = null;
         FlujoFondos = null;
+        IndicadoresFinancieros = null;
     }
 
     private static string Detalle(Exception ex) => ex.InnerException?.Message ?? ex.Message;
