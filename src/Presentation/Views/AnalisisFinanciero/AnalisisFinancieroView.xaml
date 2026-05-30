@@ -139,9 +139,9 @@
                             <StackPanel>
                                 <TextBlock Text="Participación / impuesto" FontSize="11" Foreground="#546E7A"/>
                                 <TextBlock FontWeight="Bold">
-                                    <Run Text="{Binding EstadoPerdidasGanancias.PorcentajeParticipacionDisplay, FallbackValue='15%'}"/>
+                                    <Run Text="{Binding EstadoPerdidasGanancias.PorcentajeParticipacionDisplay, Mode=OneWay, FallbackValue='15%'}"/>
                                     <Run Text=" / "/>
-                                    <Run Text="{Binding EstadoPerdidasGanancias.PorcentajeImpuestoRentaDisplay, FallbackValue='25%'}"/>
+                                    <Run Text="{Binding EstadoPerdidasGanancias.PorcentajeImpuestoRentaDisplay, Mode=OneWay, FallbackValue='25%'}"/>
                                 </TextBlock>
                             </StackPanel>
                         </Border>
