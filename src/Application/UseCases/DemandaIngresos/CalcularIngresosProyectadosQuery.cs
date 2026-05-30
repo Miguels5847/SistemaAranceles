@@ -8,7 +8,7 @@ namespace SistemaAranceles.Application.UseCases.DemandaIngresos;
 /// Bruto = estudiantes × (arancel + matrícula)
 /// Becas = bruto × % becas institucionales
 /// Neto  = bruto − becas
-/// Salida pivotada: filas = ciclos, columnas = periodos académicos.
+/// Salida pivotada: filas = ciclos, columnas = períodos académicos.
 /// </summary>
 public sealed class CalcularIngresosProyectadosQuery(
     IRepositorioProyeccionEstudiantes repositorioProyeccion,
@@ -33,7 +33,7 @@ public sealed class CalcularIngresosProyectadosQuery(
         var advertencias = new List<string>();
 
         if (escenarioProyeccionId is null or <= 0)
-            advertencias.Add("Selecciona un escenario para ver ingresos por periodo.");
+            advertencias.Add("Selecciona un escenario para ver ingresos por período.");
 
         var arancel = await obtenerArancelEfectivoQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
         var arancelValor = arancel.ArancelEfectivo ?? 0m;
@@ -68,7 +68,7 @@ public sealed class CalcularIngresosProyectadosQuery(
             carreraId, escenarioProyeccionId.Value, ct);
         if (proyeccionId is null or <= 0)
         {
-            advertencias.Add("No hay proyeccion de estudiantes para esta carrera/escenario. Genere la proyeccion primero en Proyeccion de Estudiantes.");
+            advertencias.Add("No hay proyección de estudiantes para esta carrera/escenario. Genere la proyección primero en Proyección de Estudiantes.");
             return ConstruirVacio();
         }
 

@@ -1,18 +1,20 @@
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.Interfaces.Persistencia;
+using SistemaAranceles.Application.UseCases.CostosGastos;
+using SistemaAranceles.Domain.Entities;
 using SistemaAranceles.Domain.Enums;
 
 namespace SistemaAranceles.Application.UseCases.DemandaIngresos;
 
 /// <summary>
 /// Resuelve el arancel y matrícula efectivos por carrera+escenario.
-/// Si Modo=AutomaticoCostoCarrera y no hay costo (Épica 10 pendiente),
-/// devuelve ArancelEfectivo=null con mensaje de advertencia.
+/// En modo AutomaticoCostoCarrera toma el arancel sugerido del módulo Costos y Gastos.
 /// </summary>
 public sealed class ObtenerArancelEfectivoQuery(
     IRepositorioConfiguracionArancelCarrera repositorioArancel,
     IRepositorioCarrera repositorioCarrera,
-    IRepositorioDatosInstitucionales repositorioDatos)
+    IRepositorioDatosInstitucionales repositorioDatos,
+    ObtenerArancelOptimoCarreraQuery? obtenerArancelOptimoCarreraQuery = null)
 {
     public async Task<ArancelEfectivoDto> EjecutarAsync(
         int carreraId,
@@ -58,15 +60,31 @@ public sealed class ObtenerArancelEfectivoQuery(
             arancel = configuracion.ArancelManual;
             fuente = "Manual";
             if (arancel is null or <= 0m)
-            {
                 advertencia = "Arancel manual no definido.";
-            }
         }
         else
         {
-            arancel = null;
-            fuente = "Automatico (Costo Carrera)";
-            advertencia = "Cálculo automático pendiente — requiere Épica 10 (Costo de Carrera).";
+            if (obtenerArancelOptimoCarreraQuery is null)
+            {
+                arancel = null;
+                fuente = "Automático (Costo Carrera)";
+                advertencia = "Costo de Carrera pendiente; no se puede resolver el arancel automático.";
+            }
+            else
+            {
+                var optimo = await obtenerArancelOptimoCarreraQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+                fuente = "Automático (Costo Carrera)";
+                if (optimo.Disponible)
+                {
+                    arancel = optimo.ArancelSugeridoSemestre;
+                    advertencia = optimo.MensajeAdvertencia;
+                }
+                else
+                {
+                    arancel = null;
+                    advertencia = optimo.MensajeAdvertencia ?? "Costo de Carrera pendiente; no se puede resolver el arancel automático.";
+                }
+            }
         }
 
         var porcentajeAplicado = configuracion.UsaPorcentajeMatriculaInstitucional
@@ -90,6 +108,6 @@ public sealed class ObtenerArancelEfectivoQuery(
         };
     }
 
-    private static decimal ObtenerPorcentajeMatriculaInstitucional(SistemaAranceles.Domain.Entities.DatosInstitucionales? datos)
-        => datos?.PorcentajeMatriculaDefault ?? SistemaAranceles.Domain.Entities.DatosInstitucionales.PorcentajeMatriculaDefaultPorDefecto;
+    private static decimal ObtenerPorcentajeMatriculaInstitucional(DatosInstitucionales? datos)
+        => datos?.PorcentajeMatriculaDefault ?? DatosInstitucionales.PorcentajeMatriculaDefaultPorDefecto;
 }

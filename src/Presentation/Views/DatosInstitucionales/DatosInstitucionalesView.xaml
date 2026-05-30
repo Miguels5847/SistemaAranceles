@@ -16,6 +16,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Row="0"
@@ -66,7 +67,7 @@
 
                                         <TextBlock Grid.Row="0"
                                                    Grid.ColumnSpan="4"
-                                                   Text="Poblacion institucional y periodo"
+                                                   Text="Población institucional y período"
                                                    FontWeight="SemiBold"
                                                    Foreground="#1A237E"
                                                    Margin="0,0,0,6"/>
@@ -74,7 +75,7 @@
                                         <StackPanel Grid.Row="1"
                                                     Grid.Column="0"
                                                     Margin="0,0,6,0">
-                                                <TextBlock Text="Periodo"
+                                                <TextBlock Text="Período"
                                                            FontSize="11"/>
                                                 <TextBox Text="{Binding Periodo, UpdateSourceTrigger=PropertyChanged}"
                                                          IsEnabled="{Binding CamposEditables}"
@@ -83,7 +84,7 @@
                                         <StackPanel Grid.Row="1"
                                                     Grid.Column="1"
                                                     Margin="0,0,6,0">
-                                                <TextBlock Text="N. estudiantes universidad"
+                                                <TextBlock Text="Nº estudiantes universidad"
                                                            FontSize="11"/>
                                                 <TextBox Text="{Binding NumeroEstudiantesUniversidad, UpdateSourceTrigger=PropertyChanged}"
                                                          IsEnabled="{Binding CamposEditables}"
@@ -92,7 +93,7 @@
                                         <StackPanel Grid.Row="1"
                                                     Grid.Column="2"
                                                     Margin="0,0,6,0">
-                                                <TextBlock Text="N. docentes universidad"
+                                                <TextBlock Text="Nº docentes universidad"
                                                            FontSize="11"/>
                                                 <TextBox Text="{Binding NumeroDocentesUniversidad, UpdateSourceTrigger=PropertyChanged}"
                                                          IsEnabled="{Binding CamposEditables}"
@@ -100,7 +101,7 @@
                                         </StackPanel>
                                         <StackPanel Grid.Row="1"
                                                     Grid.Column="3">
-                                                <TextBlock Text="N. personas planta central"
+                                                <TextBlock Text="Nº personas planta central"
                                                            FontSize="11"/>
                                                 <TextBox Text="{Binding NumeroPersonasPlantaCentral, UpdateSourceTrigger=PropertyChanged}"
                                                          IsEnabled="{Binding CamposEditables}"
@@ -142,7 +143,7 @@
                                         <StackPanel Grid.Row="1"
                                                     Grid.Column="0"
                                                     Margin="0,0,6,4">
-                                                <TextBlock Text="Sueldo basico"
+                                                <TextBlock Text="Sueldo básico"
                                                            FontSize="11"/>
                                                 <TextBox Text="{Binding SueldoBasico, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
                                                          IsEnabled="{Binding CamposEditables}"
@@ -216,7 +217,7 @@
                                         <StackPanel Grid.Row="3"
                                                     Grid.Column="1"
                                                     Margin="0,4,6,4">
-                                                <TextBlock Text="% imprevistos inversion"
+                                                <TextBlock Text="% imprevistos inversión"
                                                            FontSize="11"/>
                                                 <TextBox Text="{Binding PorcentajeImprevistosInversion, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
                                                          IsEnabled="{Binding CamposEditables}"
@@ -382,7 +383,7 @@
                                                         </StackPanel>
 
                                                         <TextBlock Grid.Row="3" Grid.ColumnSpan="3"
-                                                                   Text="El seguro por estudiante se calcula como valor por semestre dividido para N. estudiantes universidad."
+                                                                   Text="El seguro por estudiante se calcula como valor por semestre dividido para Nº estudiantes universidad."
                                                                    FontSize="11" Foreground="#546E7A" FontStyle="Italic"
                                                                    TextWrapping="Wrap" Margin="0,8,0,0"/>
                                                 </Grid>
@@ -390,8 +391,73 @@
                                 </Grid>
                         </Border>
 
-                        <!-- Metricas calculadas -->
+                        <!-- KAN-36: Parametros Costos y Gastos -->
                         <Border Grid.Row="7"
+                                BorderBrush="#7986CB"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="10,8"
+                                Margin="0,0,0,8">
+                                <Grid>
+                                        <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.ColumnSpan="4"
+                                                   Text="Parámetros Costos y Gastos (Épica 10)"
+                                                   FontWeight="SemiBold" Foreground="#1A237E"
+                                                   Margin="0,0,0,6"/>
+
+                                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,6,4">
+                                                <TextBlock Text="Presupuesto base universidad" FontSize="11"/>
+                                                <TextBox Text="{Binding PresupuestoBaseUniversidad, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,6,4">
+                                                <TextBlock Text="Presupuesto gobierno becas" FontSize="11"/>
+                                                <TextBox Text="{Binding PresupuestoGobiernoBecas, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,6,4">
+                                                <TextBlock Text="% Investigación" FontSize="11"/>
+                                                <TextBox Text="{Binding PorcentajeInvestigacion, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="3" Margin="0,0,0,4">
+                                                <TextBlock Text="% Vinculación" FontSize="11"/>
+                                                <TextBox Text="{Binding PorcentajeVinculacion, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,6,4">
+                                                <TextBlock Text="% Becas estudiantes" FontSize="11"/>
+                                                <TextBox Text="{Binding PorcentajeBecasEstudiantes, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,6,4">
+                                                <TextBlock Text="% Becas docentes" FontSize="11"/>
+                                                <TextBox Text="{Binding PorcentajeBecasDocentes, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+
+                                        <TextBlock Grid.Row="3" Grid.ColumnSpan="4"
+                                                   Text="Estos valores alimentan las pestañas Inv. Vin. Becas y Costo de la Carrera."
+                                                   FontSize="11" Foreground="#546E7A" FontStyle="Italic"
+                                                   TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                </Grid>
+                        </Border>
+
+                        <!-- Métricas calculadas -->
+                        <Border Grid.Row="8"
                                 BorderBrush="#C5CAE9"
                                 BorderThickness="1"
                                 CornerRadius="4"
@@ -411,7 +477,7 @@
 
                                         <TextBlock Grid.Row="0"
                                                    Grid.ColumnSpan="4"
-                                                   Text="Metricas calculadas"
+                                                   Text="Métricas calculadas"
                                                    FontWeight="SemiBold"
                                                    Foreground="#1A237E"
                                                    Margin="0,0,0,6"/>
