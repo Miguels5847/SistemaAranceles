@@ -483,10 +483,139 @@
             </TabItem>
 
             <TabItem Header="6. Arancel Óptimo">
-                <TextBlock Text="Pendiente"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           Foreground="#546E7A"/>
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,8">
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="Arancel óptimo" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding ArancelOptimoBiseccion.ArancelOptimoDisplay, FallbackValue='No calculable'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                                <TextBlock Text="{Binding ArancelOptimoBiseccion.Estado, FallbackValue='Sin datos'}"
+                                           FontSize="10"
+                                           Foreground="#546E7A"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="Matrícula óptima" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding ArancelOptimoBiseccion.MatriculaOptimaDisplay, FallbackValue='No calculable'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                                <TextBlock Text="{Binding ArancelOptimoBiseccion.TotalPorSemestreDisplay, FallbackValue='No calculable'}"
+                                           FontSize="10"
+                                           Foreground="#546E7A"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="VAN objetivo" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding ArancelOptimoBiseccion.VanDisplay, FallbackValue='$ 0.00'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                                <TextBlock Text="{Binding ArancelOptimoBiseccion.ToleranciaDisplay, FallbackValue='± $ 1.00'}"
+                                           FontSize="10"
+                                           Foreground="#546E7A"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="TIR / TMR" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock FontWeight="Bold" FontSize="16" Foreground="#1B5E20">
+                                    <Run Text="{Binding ArancelOptimoBiseccion.TirDisplay, Mode=OneWay, FallbackValue='No calculable'}"/>
+                                    <Run Text=" / "/>
+                                    <Run Text="{Binding ArancelOptimoBiseccion.TmrDisplay, Mode=OneWay, FallbackValue='0.00 %'}"/>
+                                </TextBlock>
+                                <TextBlock Text="{Binding ArancelOptimoBiseccion.FuenteTmrDisplay, FallbackValue=''}"
+                                           FontSize="10"
+                                           Foreground="#546E7A"/>
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <Border Grid.Row="1" Style="{StaticResource PanelResumen}" Margin="0,0,0,8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Bisección VAN = 0" FontWeight="SemiBold" Foreground="#1B5E20"/>
+                                <TextBlock FontSize="11" Foreground="#546E7A" TextWrapping="Wrap">
+                                    <Run Text="Rango "/>
+                                    <Run Text="{Binding ArancelOptimoBiseccion.RangoArancelDisplay, Mode=OneWay, FallbackValue='$ 500.00 - $ 5,000.00'}"/>
+                                    <Run Text=", iteraciones "/>
+                                    <Run Text="{Binding ArancelOptimoBiseccion.IteracionesUsadas, Mode=OneWay, FallbackValue='0'}"/>
+                                    <Run Text=". VAN en mínimo "/>
+                                    <Run Text="{Binding ArancelOptimoBiseccion.VanArancelMinimoDisplay, Mode=OneWay, FallbackValue='$ 0.00'}"/>
+                                    <Run Text=", VAN en máximo "/>
+                                    <Run Text="{Binding ArancelOptimoBiseccion.VanArancelMaximoDisplay, Mode=OneWay, FallbackValue='$ 0.00'}"/>
+                                    <Run Text="."/>
+                                </TextBlock>
+                            </StackPanel>
+                            <Button Grid.Column="1"
+                                    Content="Usar arancel óptimo"
+                                    Padding="10,4"
+                                    Margin="12,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Command="{Binding UsarArancelOptimoCommand}"
+                                    IsEnabled="{Binding PuedeUsarArancelOptimo}"/>
+                        </Grid>
+                    </Border>
+
+                    <DataGrid Grid.Row="2"
+                              ItemsSource="{Binding DetalleArancelOptimo}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              RowStyle="{StaticResource EstadoPgRowStyle}"
+                              CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F7FAF7"
+                              BorderBrush="#C8E6C9"
+                              Margin="0,0,0,8"
+                              ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Período" Binding="{Binding EtiquetaPeriodo}" Width="130"/>
+                            <DataGridTextColumn Header="Estudiantes" Binding="{Binding EstudiantesDisplay}" Width="110"/>
+                            <DataGridTextColumn Header="Ingresos" Binding="{Binding IngresosDisplay}" Width="150"/>
+                            <DataGridTextColumn Header="Becas" Binding="{Binding BecasInstitucionalesDisplay}" Width="140"/>
+                            <DataGridTextColumn Header="Costos y gastos" Binding="{Binding CostosYGastosDisplay}" Width="150"/>
+                            <DataGridTextColumn Header="Utilidad / pérdida" Binding="{Binding UtilidadPerdidaEjercicioDisplay}" Width="160"/>
+                            <DataGridTextColumn Header="Flujo neto" Binding="{Binding FlujoNetoDisplay}" Width="150"/>
+                            <DataGridTextColumn Header="Flujo acumulado" Binding="{Binding FlujoAcumuladoDisplay}" Width="160"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <DataGrid Grid.Row="3"
+                              ItemsSource="{Binding IteracionesArancelOptimo}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              RowStyle="{StaticResource EstadoPgRowStyle}"
+                              CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F7FAF7"
+                              BorderBrush="#C8E6C9">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="#" Binding="{Binding Numero}" Width="60"/>
+                            <DataGridTextColumn Header="Arancel mínimo" Binding="{Binding ArancelMinimoDisplay}" Width="160"/>
+                            <DataGridTextColumn Header="Arancel máximo" Binding="{Binding ArancelMaximoDisplay}" Width="160"/>
+                            <DataGridTextColumn Header="Arancel medio" Binding="{Binding ArancelMedioDisplay}" Width="160"/>
+                            <DataGridTextColumn Header="VAN" Binding="{Binding VanDisplay}" Width="170"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
             </TabItem>
 
             <TabItem Header="7. Dashboard Financiero">

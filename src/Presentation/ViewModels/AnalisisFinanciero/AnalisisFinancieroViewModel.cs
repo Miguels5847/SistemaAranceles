@@ -3,9 +3,12 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.DTOs.AnalisisFinanciero;
+using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.AnalisisFinanciero;
+using SistemaAranceles.Application.UseCases.DemandaIngresos;
 using SistemaAranceles.Domain.Entities;
+using SistemaAranceles.Presentation.State;
 
 namespace SistemaAranceles.Presentation.ViewModels.AnalisisFinanciero;
 
@@ -22,11 +25,13 @@ public sealed class EscenarioAnalisisFinancieroOpcion
 public sealed partial class AnalisisFinancieroViewModel : ObservableObject
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly SesionActual _sesionActual;
     private bool _suprimirCambios;
 
-    public AnalisisFinancieroViewModel(IServiceProvider serviceProvider)
+    public AnalisisFinancieroViewModel(IServiceProvider serviceProvider, SesionActual sesionActual)
     {
         _serviceProvider = serviceProvider;
+        _sesionActual = sesionActual;
     }
 
     [ObservableProperty] private ObservableCollection<Carrera> _carreras = [];
@@ -38,6 +43,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     [ObservableProperty] private IndicadoresFinancierosDto? _indicadoresFinancieros;
     [ObservableProperty] private PeriodoRecuperacionDto? _periodoRecuperacion;
     [ObservableProperty] private PuntoEquilibrioDto? _puntoEquilibrio;
+    [ObservableProperty] private ArancelOptimoBiseccionDto? _arancelOptimoBiseccion;
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
     [ObservableProperty] private bool _estaCargando;
@@ -54,6 +60,15 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     public bool TienePeriodoRecuperacion => PeriodoRecuperacion?.TieneDatos == true;
     public IReadOnlyList<PuntoEquilibrioPeriodoDto> DetallePuntoEquilibrio => PuntoEquilibrio?.Periodos ?? [];
     public bool TienePuntoEquilibrio => PuntoEquilibrio?.TieneDatos == true;
+    public IReadOnlyList<ArancelOptimoBiseccionIteracionDto> IteracionesArancelOptimo => ArancelOptimoBiseccion?.Iteraciones ?? [];
+    public IReadOnlyList<ArancelOptimoBiseccionPeriodoDto> DetalleArancelOptimo => ArancelOptimoBiseccion?.Periodos ?? [];
+    public bool TieneArancelOptimoBiseccion => ArancelOptimoBiseccion?.TieneDatos == true;
+    public bool PuedeUsarArancelOptimo => PuedeEditar
+                                           && !EstaCargando
+                                           && ArancelOptimoBiseccion?.Disponible == true
+                                           && CarreraSeleccionada is not null
+                                           && EscenarioSeleccionado is not null;
+    public bool PuedeEditar => _sesionActual.EsAdministrador || _sesionActual.TienePermiso("DI_NG.EDITAR");
 
     partial void OnCarreraSeleccionadaChanged(Carrera? value)
     {
@@ -108,6 +123,21 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         _ = value;
         OnPropertyChanged(nameof(DetallePuntoEquilibrio));
         OnPropertyChanged(nameof(TienePuntoEquilibrio));
+    }
+
+    partial void OnArancelOptimoBiseccionChanged(ArancelOptimoBiseccionDto? value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(IteracionesArancelOptimo));
+        OnPropertyChanged(nameof(DetalleArancelOptimo));
+        OnPropertyChanged(nameof(TieneArancelOptimoBiseccion));
+        OnPropertyChanged(nameof(PuedeUsarArancelOptimo));
+    }
+
+    partial void OnEstaCargandoChanged(bool value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(PuedeUsarArancelOptimo));
     }
 
     [RelayCommand]
@@ -246,6 +276,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             var queryIndicadores = scope.ServiceProvider.GetRequiredService<ObtenerIndicadoresFinancierosQuery>();
             var queryPeriodoRecuperacion = scope.ServiceProvider.GetRequiredService<ObtenerPeriodoRecuperacionQuery>();
             var queryPuntoEquilibrio = scope.ServiceProvider.GetRequiredService<ObtenerPuntoEquilibrioQuery>();
+            var queryArancelOptimo = scope.ServiceProvider.GetRequiredService<ObtenerArancelOptimoBiseccionQuery>();
 
             EstadoPerdidasGanancias = await queryEstado.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
             FlujoFondos = await queryFlujo.EjecutarAsync(
@@ -264,6 +295,9 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                 CarreraSeleccionada.Id,
                 EscenarioSeleccionado.Id,
                 estadoPrecalculado: EstadoPerdidasGanancias);
+            ArancelOptimoBiseccion = await queryArancelOptimo.EjecutarAsync(
+                CarreraSeleccionada.Id,
+                EscenarioSeleccionado.Id);
 
             var advertencias = new[]
             {
@@ -271,7 +305,8 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                 FlujoFondos.MensajeAdvertencia,
                 IndicadoresFinancieros.MensajeAdvertencia,
                 PeriodoRecuperacion.MensajeAdvertencia,
-                PuntoEquilibrio.MensajeAdvertencia
+                PuntoEquilibrio.MensajeAdvertencia,
+                ArancelOptimoBiseccion.MensajeAdvertencia
             }
             .Where(m => !string.IsNullOrWhiteSpace(m))
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -297,6 +332,72 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         }
     }
 
+    [RelayCommand]
+    private async Task UsarArancelOptimoAsync()
+    {
+        if (!PuedeEditar)
+        {
+            MensajeError = "No tienes permiso para editar.";
+            return;
+        }
+
+        if (CarreraSeleccionada is null || EscenarioSeleccionado is null)
+        {
+            MensajeError = "Selecciona carrera y escenario.";
+            return;
+        }
+
+        EstaCargando = true;
+        MensajeError = string.Empty;
+        MensajeExito = string.Empty;
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var queryArancelOptimo = scope.ServiceProvider.GetRequiredService<ObtenerArancelOptimoBiseccionQuery>();
+            var optimo = ArancelOptimoBiseccion?.Disponible == true
+                ? ArancelOptimoBiseccion
+                : await queryArancelOptimo.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
+
+            if (!optimo.Disponible || optimo.ArancelOptimo <= 0m)
+            {
+                MensajeError = optimo.MensajeAdvertencia ?? "No hay arancel óptimo disponible para aplicar.";
+                return;
+            }
+
+            var listarConfigs = scope.ServiceProvider.GetRequiredService<ListarConfiguracionesArancelCarreraQuery>();
+            var configuraciones = await listarConfigs.EjecutarAsync(CarreraSeleccionada.Id);
+            var configExacta = configuraciones.FirstOrDefault(c => c.EscenarioProyeccionId == EscenarioSeleccionado.Id);
+            var usaPorcentajeInstitucional = configExacta?.UsaPorcentajeMatriculaInstitucional ?? true;
+
+            var dto = new GuardarConfiguracionArancelCarreraDto
+            {
+                Id = configExacta?.Id,
+                CarreraId = CarreraSeleccionada.Id,
+                EscenarioProyeccionId = EscenarioSeleccionado.Id,
+                ModoCalculoArancel = "Manual",
+                ArancelManual = optimo.ArancelOptimo,
+                UsaPorcentajeMatriculaInstitucional = usaPorcentajeInstitucional,
+                PorcentajeMatricula = usaPorcentajeInstitucional
+                    ? null
+                    : configExacta?.PorcentajeMatricula
+            };
+
+            var command = scope.ServiceProvider.GetRequiredService<GuardarConfiguracionArancelCarreraCommand>();
+            await command.EjecutarAsync(dto, _sesionActual.UsuarioId);
+
+            await RefrescarAsync();
+            MensajeExito = "Arancel óptimo aplicado como configuración manual del escenario.";
+        }
+        catch (Exception ex)
+        {
+            MensajeError = Detalle(ex);
+        }
+        finally
+        {
+            EstaCargando = false;
+        }
+    }
+
     private void LimpiarResultados()
     {
         EstadoPerdidasGanancias = null;
@@ -304,6 +405,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         IndicadoresFinancieros = null;
         PeriodoRecuperacion = null;
         PuntoEquilibrio = null;
+        ArancelOptimoBiseccion = null;
     }
 
     private static string Detalle(Exception ex) => ex.InnerException?.Message ?? ex.Message;
