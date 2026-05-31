@@ -1,4 +1,6 @@
 using SistemaAranceles.Application.DTOs.AnalisisFinanciero;
+using SistemaAranceles.Application.DTOs.CapitalTrabajo;
+using SistemaAranceles.Application.DTOs.RecursosFisicosDepreciacion;
 using SistemaAranceles.Application.UseCases.ActivoDiferido;
 using SistemaAranceles.Application.UseCases.CapitalTrabajo;
 using SistemaAranceles.Application.UseCases.InversionInicial;
@@ -23,7 +25,9 @@ public sealed class ObtenerFlujoFondosQuery(
         int carreraId,
         int? escenarioProyeccionId,
         CancellationToken ct = default,
-        EstadoPerdidasGananciasDto? estadoPrecalculado = null)
+        EstadoPerdidasGananciasDto? estadoPrecalculado = null,
+        MatrizInversionesDto? inversionesPrecalculada = null,
+        ResumenCapitalTrabajoDto? capitalTrabajoPrecalculado = null)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -60,26 +64,30 @@ public sealed class ObtenerFlujoFondosQuery(
             ? datos.SemestresPorAnio
             : DatosInstitucionales.SemestresPorAnioPorDefecto;
 
+        var capitalTrabajo = capitalTrabajoPrecalculado
+            ?? await obtenerResumenCapitalTrabajoQuery.EjecutarAsync(
+                carreraId,
+                escenarioProyeccionId,
+                ct);
         var inversionInicial = await obtenerInversionInicialTotalQuery.EjecutarAsync(
             carreraId,
             escenarioProyeccionId,
-            ct);
-        var inversiones = await obtenerMatrizInversionesQuery.EjecutarAsync(
-            carreraId,
-            escenarioProyeccionId.Value,
-            null,
-            ct);
+            ct,
+            capitalTrabajoPrecalculado: capitalTrabajo);
+        var inversiones = inversionesPrecalculada
+            ?? await obtenerMatrizInversionesQuery.EjecutarAsync(
+                carreraId,
+                escenarioProyeccionId.Value,
+                null,
+                ct);
         var depreciacion = await obtenerMatrizDepreciacionQuery.EjecutarAsync(
             carreraId,
             escenarioProyeccionId.Value,
             null,
-            ct);
+            ct,
+            inversionesPrecalculada: inversiones);
         var anioBase = estado.ValoresPorPeriodo.Min(p => p.Anio);
         var amortizacion = await obtenerTablaAmortizacionQuery.EjecutarAsync(carreraId, anioBase, ct);
-        var capitalTrabajo = await obtenerResumenCapitalTrabajoQuery.EjecutarAsync(
-            carreraId,
-            escenarioProyeccionId,
-            ct);
 
         var inversionesFuturasPorPeriodo = inversiones.TotalesPorPeriodo
             .Where(p => p.NumeroPeriodo > 1)

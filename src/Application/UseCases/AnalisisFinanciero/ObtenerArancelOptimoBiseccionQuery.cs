@@ -1,6 +1,8 @@
 using SistemaAranceles.Application.DTOs.AnalisisFinanciero;
+using SistemaAranceles.Application.DTOs.CapitalTrabajo;
 using SistemaAranceles.Application.DTOs.CostosGastos;
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
+using SistemaAranceles.Application.DTOs.RecursosFisicosDepreciacion;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.Services.Financieros;
 using SistemaAranceles.Application.UseCases.ActivoDiferido;
@@ -39,7 +41,9 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
         int? escenarioProyeccionId,
         CancellationToken ct = default,
         MatrizCostosGastosDto? costosPrecalculados = null,
-        DemandaProyectadaDto? demandaPrecalculada = null)
+        DemandaProyectadaDto? demandaPrecalculada = null,
+        MatrizInversionesDto? inversionesPrecalculada = null,
+        ResumenCapitalTrabajoDto? capitalTrabajoPrecalculado = null)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -97,26 +101,30 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             ? datos.SemestresPorAnio
             : DatosInstitucionales.SemestresPorAnioPorDefecto;
 
+        var capitalTrabajo = capitalTrabajoPrecalculado
+            ?? await obtenerResumenCapitalTrabajoQuery.EjecutarAsync(
+                carreraId,
+                escenarioProyeccionId,
+                ct);
         var inversionInicial = await obtenerInversionInicialTotalQuery.EjecutarAsync(
             carreraId,
             escenarioProyeccionId,
-            ct);
-        var inversiones = await obtenerMatrizInversionesQuery.EjecutarAsync(
-            carreraId,
-            escenarioProyeccionId.Value,
-            null,
-            ct);
+            ct,
+            capitalTrabajoPrecalculado: capitalTrabajo);
+        var inversiones = inversionesPrecalculada
+            ?? await obtenerMatrizInversionesQuery.EjecutarAsync(
+                carreraId,
+                escenarioProyeccionId.Value,
+                null,
+                ct);
         var depreciacion = await obtenerMatrizDepreciacionQuery.EjecutarAsync(
             carreraId,
             escenarioProyeccionId.Value,
             null,
-            ct);
+            ct,
+            inversionesPrecalculada: inversiones);
         var anioBase = costos.ValoresPorPeriodo.Min(p => p.Anio);
         var amortizacion = await obtenerTablaAmortizacionQuery.EjecutarAsync(carreraId, anioBase, ct);
-        var capitalTrabajo = await obtenerResumenCapitalTrabajoQuery.EjecutarAsync(
-            carreraId,
-            escenarioProyeccionId,
-            ct);
 
         var tmr = await ObtenerTmrAsync(costos, datos, advertencias, ct);
         var contexto = ConstruirContextoEvaluacion(

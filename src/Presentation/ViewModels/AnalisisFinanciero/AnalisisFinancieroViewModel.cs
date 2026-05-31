@@ -9,8 +9,10 @@ using SistemaAranceles.Application.DTOs.AnalisisFinanciero;
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.AnalisisFinanciero;
+using SistemaAranceles.Application.UseCases.CapitalTrabajo;
 using SistemaAranceles.Application.UseCases.CostosGastos;
 using SistemaAranceles.Application.UseCases.DemandaIngresos;
+using SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion;
 using SistemaAranceles.Domain.Entities;
 using SistemaAranceles.Presentation.State;
 
@@ -302,6 +304,8 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             var queryPuntoEquilibrio = scope.ServiceProvider.GetRequiredService<ObtenerPuntoEquilibrioQuery>();
             var queryArancelOptimo = scope.ServiceProvider.GetRequiredService<ObtenerArancelOptimoBiseccionQuery>();
             var queryDashboard = scope.ServiceProvider.GetRequiredService<ObtenerDashboardFinancieroQuery>();
+            var queryInversiones = scope.ServiceProvider.GetRequiredService<ObtenerMatrizInversionesQuery>();
+            var queryCapitalTrabajo = scope.ServiceProvider.GetRequiredService<ObtenerResumenCapitalTrabajoQuery>();
 
             var carreraId = CarreraSeleccionada.Id;
             var escenarioId = EscenarioSeleccionado.Id;
@@ -311,6 +315,12 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             var demanda = await queryDemanda.EjecutarAsync(carreraId, escenarioId);
             var matriz = await queryMatriz.EjecutarAsync(carreraId, escenarioId, demandaPrecalculada: demanda);
 
+            // Inversiones y capital de trabajo se recalculaban ~5x y ~4x por refresco (Flujo,
+            // ArancelOptimo y sus inversión inicial/depreciación). Se calculan una vez y se propagan.
+            var hayMatriz = matriz.TieneDatos && matriz.ValoresPorPeriodo.Count > 0;
+            var inversiones = hayMatriz ? await queryInversiones.EjecutarAsync(carreraId, escenarioId, null) : null;
+            var capitalTrabajo = hayMatriz ? await queryCapitalTrabajo.EjecutarAsync(carreraId, escenarioId) : null;
+
             EstadoPerdidasGanancias = await queryEstado.EjecutarAsync(
                 carreraId,
                 escenarioId,
@@ -318,7 +328,9 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             FlujoFondos = await queryFlujo.EjecutarAsync(
                 carreraId,
                 escenarioId,
-                estadoPrecalculado: EstadoPerdidasGanancias);
+                estadoPrecalculado: EstadoPerdidasGanancias,
+                inversionesPrecalculada: inversiones,
+                capitalTrabajoPrecalculado: capitalTrabajo);
             IndicadoresFinancieros = await queryIndicadores.EjecutarAsync(
                 carreraId,
                 escenarioId,
@@ -337,7 +349,9 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                 carreraId,
                 escenarioId,
                 costosPrecalculados: matriz,
-                demandaPrecalculada: demanda);
+                demandaPrecalculada: demanda,
+                inversionesPrecalculada: inversiones,
+                capitalTrabajoPrecalculado: capitalTrabajo);
             DashboardFinanciero = await queryDashboard.EjecutarAsync(
                 carreraId,
                 escenarioId,
