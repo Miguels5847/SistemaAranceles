@@ -5,7 +5,9 @@
     <UserControl.Resources>
         <conv:DecimalStringConverter x:Key="DecimalStringConverter"/>
         <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="White"/>
             <Setter Property="Foreground" Value="#263238"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#EEF2FF"/>
@@ -27,7 +29,26 @@
                 <DataTrigger Binding="{Binding EsTotal}" Value="True">
                     <Setter Property="FontWeight" Value="Bold"/>
                     <Setter Property="Background" Value="#EEF2FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
                 </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="MatrizCellStyle" TargetType="DataGridCell">
+            <Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=DataGridRow}}"/>
+            <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=DataGridRow}}"/>
+            <Setter Property="BorderBrush" Value="#D8DCE8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#EEF2FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#E0E7FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                    <Setter Property="BorderBrush" Value="#C5CAE9"/>
+                </Trigger>
             </Style.Triggers>
         </Style>
         <Style x:Key="PanelResumen" TargetType="Border">
@@ -140,6 +161,7 @@
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
                               RowStyle="{StaticResource MatrizRowStyle}"
+                              CellStyle="{StaticResource MatrizCellStyle}"
                               HeadersVisibility="Column"
                               GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F8F9FF"
@@ -187,6 +209,7 @@
                                   AutoGenerateColumns="False"
                                   IsReadOnly="True"
                                   RowStyle="{StaticResource MatrizRowStyle}"
+                                  CellStyle="{StaticResource MatrizCellStyle}"
                                   HeadersVisibility="Column"
                                   GridLinesVisibility="Horizontal"
                                   AlternatingRowBackground="#F8F9FF"
@@ -203,6 +226,7 @@
                                   AutoGenerateColumns="False"
                                   IsReadOnly="True"
                                   RowStyle="{StaticResource MatrizRowStyle}"
+                                  CellStyle="{StaticResource MatrizCellStyle}"
                                   HeadersVisibility="Column"
                                   GridLinesVisibility="Horizontal"
                                   AlternatingRowBackground="#F8F9FF"
@@ -219,6 +243,7 @@
                                   AutoGenerateColumns="False"
                                   IsReadOnly="True"
                                   RowStyle="{StaticResource MatrizRowStyle}"
+                                  CellStyle="{StaticResource MatrizCellStyle}"
                                   HeadersVisibility="Column"
                                   GridLinesVisibility="Horizontal"
                                   AlternatingRowBackground="#F8F9FF"
@@ -272,6 +297,7 @@
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
                               RowStyle="{StaticResource MatrizRowStyle}"
+                              CellStyle="{StaticResource MatrizCellStyle}"
                               HeadersVisibility="Column"
                               GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F8F9FF"

@@ -37,12 +37,10 @@ public sealed class CostoGastoRubroDto
     public string FormatoValor { get; init; } = FormatoMatrizCostosGastos.Moneda;
 
     public IReadOnlyList<string> PeriodosDisplay => Periodos
-        .Select(v => EsEncabezadoGrupo ? string.Empty : FormatoMatrizCostosGastos.Formatear(v, FormatoValor))
+        .Select(v => FormatoMatrizCostosGastos.Formatear(v, FormatoValor))
         .ToList();
 
-    public string TotalDisplay => EsEncabezadoGrupo
-        ? string.Empty
-        : FormatoMatrizCostosGastos.Formatear(Total, FormatoValor);
+    public string TotalDisplay => FormatoMatrizCostosGastos.Formatear(Total, FormatoValor);
 }
 
 public sealed class PonderacionCostoGastoDto
@@ -55,12 +53,10 @@ public sealed class PonderacionCostoGastoDto
     public bool EsTotal { get; init; }
 
     public IReadOnlyList<string> PeriodosDisplay => Periodos
-        .Select(v => EsEncabezadoGrupo ? string.Empty : FormatoMatrizCostosGastos.Formatear(v, FormatoMatrizCostosGastos.Porcentaje))
+        .Select(v => FormatoMatrizCostosGastos.Formatear(v, FormatoMatrizCostosGastos.Porcentaje))
         .ToList();
 
-    public string TotalDisplay => EsEncabezadoGrupo
-        ? string.Empty
-        : FormatoMatrizCostosGastos.Formatear(Total, FormatoMatrizCostosGastos.Porcentaje);
+    public string TotalDisplay => FormatoMatrizCostosGastos.Formatear(Total, FormatoMatrizCostosGastos.Porcentaje);
 }
 
 public sealed class InvVinBecasPeriodoDto

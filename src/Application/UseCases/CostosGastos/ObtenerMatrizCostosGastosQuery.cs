@@ -437,16 +437,13 @@ public sealed class ObtenerMatrizCostosGastosQuery(
         IReadOnlyList<decimal> totales)
     {
         var filas = new List<CostoGastoRubroDto>();
-        string? grupoActual = null;
-        foreach (var rubro in rubros)
+        foreach (var grupo in rubros.GroupBy(r => r.Grupo))
         {
-            if (!string.Equals(grupoActual, rubro.Grupo, StringComparison.Ordinal))
-            {
-                grupoActual = rubro.Grupo;
-                filas.Add(CrearEncabezado(grupoActual, totales.Count));
-            }
+            var rubrosGrupo = grupo.ToList();
+            filas.Add(CrearFilaGrupo(grupo.Key, SumarPorPeriodo(rubrosGrupo.Select(r => r.Valores), totales.Count)));
 
-            filas.Add(CrearFila(rubro.Grupo, rubro.Concepto, rubro.Valores));
+            foreach (var rubro in rubrosGrupo)
+                filas.Add(CrearFila(rubro.Grupo, rubro.Concepto, rubro.Valores));
         }
 
         filas.Add(CrearFila("6. Total Costos y Gastos", "Total Costos y Gastos", totales, esTotal: true));
@@ -459,31 +456,34 @@ public sealed class ObtenerMatrizCostosGastosQuery(
     {
         var filas = new List<PonderacionCostoGastoDto>();
         var totalGeneral = totales.Sum();
-        string? grupoActual = null;
-        foreach (var rubro in rubros)
+        foreach (var grupo in rubros.GroupBy(r => r.Grupo))
         {
-            if (!string.Equals(grupoActual, rubro.Grupo, StringComparison.Ordinal))
-            {
-                grupoActual = rubro.Grupo;
-                filas.Add(new PonderacionCostoGastoDto
-                {
-                    Grupo = grupoActual,
-                    Concepto = grupoActual,
-                    Periodos = Enumerable.Repeat(0m, totales.Count).ToList(),
-                    EsEncabezadoGrupo = true
-                });
-            }
-
-            var valores = rubro.Valores
-                .Select((valor, i) => totales[i] > 0m ? decimal.Round(valor / totales[i], 6) : 0m)
-                .ToList();
+            var rubrosGrupo = grupo.ToList();
+            var subtotalesGrupo = SumarPorPeriodo(rubrosGrupo.Select(r => r.Valores), totales.Count);
             filas.Add(new PonderacionCostoGastoDto
             {
-                Grupo = rubro.Grupo,
-                Concepto = rubro.Concepto,
-                Periodos = valores,
-                Total = totalGeneral > 0m ? decimal.Round(rubro.Valores.Sum() / totalGeneral, 6) : 0m
+                Grupo = grupo.Key,
+                Concepto = grupo.Key,
+                Periodos = subtotalesGrupo
+                    .Select((valor, i) => totales[i] > 0m ? decimal.Round(valor / totales[i], 6) : 0m)
+                    .ToList(),
+                Total = totalGeneral > 0m ? decimal.Round(subtotalesGrupo.Sum() / totalGeneral, 6) : 0m,
+                EsEncabezadoGrupo = true
             });
+
+            foreach (var rubro in rubrosGrupo)
+            {
+                var valores = rubro.Valores
+                    .Select((valor, i) => totales[i] > 0m ? decimal.Round(valor / totales[i], 6) : 0m)
+                    .ToList();
+                filas.Add(new PonderacionCostoGastoDto
+                {
+                    Grupo = rubro.Grupo,
+                    Concepto = rubro.Concepto,
+                    Periodos = valores,
+                    Total = totalGeneral > 0m ? decimal.Round(rubro.Valores.Sum() / totalGeneral, 6) : 0m
+                });
+            }
         }
 
         filas.Add(new PonderacionCostoGastoDto
@@ -505,38 +505,41 @@ public sealed class ObtenerMatrizCostosGastosQuery(
         var becasGobierno = valoresPeriodo.Select(v => v.TotalBecasGobierno).ToList();
         var filas = new List<CostoGastoRubroDto>();
         var totalesDescontados = Enumerable.Repeat(0m, valoresPeriodo.Count).ToArray();
-        string? grupoActual = null;
 
-        foreach (var rubro in rubros)
+        foreach (var grupo in rubros.GroupBy(r => r.Grupo))
         {
-            if (!string.Equals(grupoActual, rubro.Grupo, StringComparison.Ordinal))
+            var rubrosGrupo = grupo.ToList();
+            var filasGrupo = new List<CostoGastoRubroDto>(rubrosGrupo.Count);
+
+            foreach (var rubro in rubrosGrupo)
             {
-                grupoActual = rubro.Grupo;
-                filas.Add(CrearEncabezado(grupoActual, valoresPeriodo.Count));
+                var descontados = rubro.Valores
+                    .Select((valor, i) =>
+                    {
+                        var ponderacion = totales[i] > 0m ? valor / totales[i] : 0m;
+                        var descontado = decimal.Round(valor - becasGobierno[i] * ponderacion, 2);
+                        totalesDescontados[i] += descontado;
+                        return descontado;
+                    })
+                    .ToList();
+                filasGrupo.Add(CrearFila(rubro.Grupo, rubro.Concepto, descontados));
             }
 
-            var descontados = rubro.Valores
-                .Select((valor, i) =>
-                {
-                    var ponderacion = totales[i] > 0m ? valor / totales[i] : 0m;
-                    var descontado = decimal.Round(valor - becasGobierno[i] * ponderacion, 2);
-                    totalesDescontados[i] += descontado;
-                    return descontado;
-                })
-                .ToList();
-            filas.Add(CrearFila(rubro.Grupo, rubro.Concepto, descontados));
+            filas.Add(CrearFilaGrupo(grupo.Key, SumarPorPeriodo(filasGrupo.Select(f => f.Periodos), valoresPeriodo.Count)));
+            filas.AddRange(filasGrupo);
         }
 
         filas.Add(CrearFila("6. Total Costos y Gastos", "Total descontado becas gobierno", totalesDescontados, esTotal: true));
         return filas;
     }
 
-    private static CostoGastoRubroDto CrearEncabezado(string grupo, int periodos)
+    private static CostoGastoRubroDto CrearFilaGrupo(string grupo, IReadOnlyList<decimal> valores)
         => new()
         {
             Grupo = grupo,
             Concepto = grupo,
-            Periodos = Enumerable.Repeat(0m, periodos).ToList(),
+            Periodos = valores.Select(v => decimal.Round(v, 2)).ToList(),
+            Total = decimal.Round(valores.Sum(), 2),
             EsEncabezadoGrupo = true
         };
 
@@ -553,6 +556,18 @@ public sealed class ObtenerMatrizCostosGastosQuery(
             Total = decimal.Round(valores.Sum(), 2),
             EsTotal = esTotal
         };
+
+    private static IReadOnlyList<decimal> SumarPorPeriodo(IEnumerable<IReadOnlyList<decimal>> filas, int cantidadPeriodos)
+    {
+        var totales = new decimal[cantidadPeriodos];
+        foreach (var fila in filas)
+        {
+            for (var i = 0; i < cantidadPeriodos; i++)
+                totales[i] += i < fila.Count ? fila[i] : 0m;
+        }
+
+        return totales.Select(v => decimal.Round(v, 2)).ToList();
+    }
 
     private static void AgregarAdvertencia(List<string> advertencias, string? mensaje)
     {

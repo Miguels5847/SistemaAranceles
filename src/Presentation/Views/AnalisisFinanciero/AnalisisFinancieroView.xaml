@@ -43,9 +43,10 @@
             </Style.Triggers>
         </Style>
         <Style x:Key="AnalisisDataGridCellStyle" TargetType="DataGridCell">
-            <Setter Property="Foreground" Value="#263238"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=DataGridRow}}"/>
+            <Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=DataGridRow}}"/>
+            <Setter Property="BorderBrush" Value="#C8E6C9"/>
+            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding EsTotal}" Value="True">
