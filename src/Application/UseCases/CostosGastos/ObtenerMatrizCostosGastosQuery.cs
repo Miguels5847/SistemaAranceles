@@ -23,6 +23,7 @@ public sealed class ObtenerMatrizCostosGastosQuery(
     ObtenerMatrizDepreciacionQuery obtenerMatrizDepreciacionQuery,
     ObtenerTablaAmortizacionQuery obtenerTablaAmortizacionQuery,
     GenerarTablaSueldosPeriodoQuery generarTablaSueldosPeriodoQuery,
+    GenerarResumenSueldosQuery generarResumenSueldosQuery,
     CalcularMaterialesPorPeriodoQuery calcularMaterialesPorPeriodoQuery,
     CalcularAportePlantaCentralCarreraQuery calcularAportePlantaCentralCarreraQuery,
     IRepositorioDatosInstitucionales repositorioDatos,
@@ -109,6 +110,14 @@ public sealed class ObtenerMatrizCostosGastosQuery(
             ? null
             : await ObtenerConsolidadoAsync(proyeccion, carreraId, escenarioProyeccionId.Value, ct);
 
+        var estudiantesUnidadAcademicaSueldos = ConfiguracionSueldosCarrera.EstudiantesUnidadAcademicaPorDefecto;
+        var resumenSueldos = await generarResumenSueldosQuery.EjecutarAsync(
+            carreraId,
+            escenarioProyeccionId.Value,
+            estudiantesUnidadAcademicaSueldos,
+            consolidado,
+            ct);
+
         // Contexto de sueldos cargado una sola vez (proyección, cargos, inflación) para calcular
         // cada período en memoria y evitar N+1 de consultas dentro del bucle de períodos.
         var contextoSueldos = await generarTablaSueldosPeriodoQuery.PrepararContextoAsync(
@@ -133,7 +142,7 @@ public sealed class ObtenerMatrizCostosGastosQuery(
                     contextoSueldos,
                     carreraId,
                     periodo.PeriodoAcademicoId,
-                    estudiantesUniversidad,
+                    estudiantesUnidadAcademicaSueldos,
                     consolidado);
             var tiempoCompletoPhd = AplicarFactor(ObtenerTotalSueldoPorConcepto(sueldos.Filas, true, "Tiempo Completo PhD", "TC PhD"), factorImprevisto);
             var tiempoCompletoMgs = AplicarFactor(ObtenerTotalSueldoPorConcepto(sueldos.Filas, true, "Tiempo Completo Mgs", "TC Mgs", "TC Mgs."), factorImprevisto);
@@ -143,16 +152,16 @@ public sealed class ObtenerMatrizCostosGastosQuery(
             var sueldosDocentes = tiempoCompletoPhd + tiempoCompletoMgs + medioTiempo + tiempoParcial + ocasionalTipo2;
 
             aportePlantaCentralPorPeriodo.TryGetValue(periodo.PeriodoAcademicoId, out var administracionCentral);
-            var decano = ObtenerTotalSueldoPorConcepto(sueldos.Filas, false, "Decano");
-            var subdecano = ObtenerTotalSueldoPorConcepto(sueldos.Filas, false, "Subdecano");
-            var directorCarrera = ObtenerTotalSueldoPorConcepto(sueldos.Filas, false, "Director de Carrera", "Director Carrera");
-            var secretario = ObtenerTotalSueldoPorConcepto(sueldos.Filas, false, "Secretario");
-            var auxiliarSecretaria = ObtenerTotalSueldoPorConcepto(sueldos.Filas, false, "Auxiliar de Secretaria", "Auxiliar de Secretaría");
-            var coordinador = ObtenerTotalSueldoPorConcepto(sueldos.Filas, false, "Coordinador");
-            var bienestarEstudiantil = ObtenerTotalSueldoPorConcepto(sueldos.Filas, false, "Bienestar Estudiantil");
-            var bibliotecario = ObtenerTotalSueldoPorConcepto(sueldos.Filas, false, "Bibliotecario");
-            var auxiliarServicio = ObtenerTotalSueldoPorConcepto(sueldos.Filas, false, "Auxiliar de Servicio");
-            var guardia = ObtenerTotalSueldoPorConcepto(sueldos.Filas, false, "Guardia");
+            var decano = ObtenerValorResumenSueldo(resumenSueldos, "Decano", i, advertencias);
+            var subdecano = ObtenerValorResumenSueldo(resumenSueldos, "Subdecano", i, advertencias);
+            var directorCarrera = ObtenerValorResumenSueldo(resumenSueldos, "Director de Carrera", i, advertencias);
+            var secretario = ObtenerValorResumenSueldo(resumenSueldos, "Secretario", i, advertencias);
+            var auxiliarSecretaria = ObtenerValorResumenSueldo(resumenSueldos, "Auxiliar de Secretaria", i, advertencias);
+            var coordinador = ObtenerValorResumenSueldo(resumenSueldos, "Coordinador", i, advertencias);
+            var bienestarEstudiantil = ObtenerValorResumenSueldo(resumenSueldos, "Bienestar Estudiantil", i, advertencias);
+            var bibliotecario = ObtenerValorResumenSueldo(resumenSueldos, "Bibliotecario", i, advertencias);
+            var auxiliarServicio = ObtenerValorResumenSueldo(resumenSueldos, "Auxiliar de Servicio", i, advertencias);
+            var guardia = ObtenerValorResumenSueldo(resumenSueldos, "Guardia", i, advertencias);
 
             var capacitacion = datos is not null && docentesUniversidad > 0
                 ? decimal.Round((datos.PresupuestoAnualCapacitacion / semestresPorAnio) * factores[i] / docentesUniversidad * docentes[i], 2)
@@ -372,7 +381,57 @@ public sealed class ObtenerMatrizCostosGastosQuery(
         return decimal.Round(total, 2);
     }
 
+    private static decimal ObtenerValorResumenSueldo(
+        ResumenSueldosVistaDto resumen,
+        string nombreCargo,
+        int periodoIndex,
+        List<string> advertencias)
+    {
+        var fila = resumen.Filas.FirstOrDefault(f => CoincideNombreCargo(f.NombreCargo, nombreCargo));
+        if (fila is null)
+        {
+            advertencias.Add($"No se encontr\u00f3 el cargo '{nombreCargo}' en Resumen Sueldos Personal; se usar\u00e1 0 en Costos y Gastos.");
+            return 0m;
+        }
+
+        if (periodoIndex < 0 || fila.ValoresPorPeriodo.Length <= periodoIndex)
+        {
+            advertencias.Add($"Resumen Sueldos Personal no tiene valor de per\u00edodo para '{nombreCargo}'; se usar\u00e1 0 en Costos y Gastos.");
+            return 0m;
+        }
+
+        return decimal.Round(fila.ValoresPorPeriodo[periodoIndex], 2);
+    }
+
+    private static bool CoincideNombreCargo(string nombreA, string nombreB)
+    {
+        var normalizadoA = NormalizarTexto(nombreA);
+        var normalizadoB = NormalizarTexto(nombreB);
+
+        if (normalizadoA.Length == 0 || normalizadoB.Length == 0)
+            return false;
+
+        if (string.Equals(normalizadoA, normalizadoB, StringComparison.Ordinal))
+            return true;
+
+        if (EsOcasionalTipo2(normalizadoA) && EsOcasionalTipo2(normalizadoB))
+            return true;
+
+        var tokensA = NormalizarTokens(normalizadoA);
+        var tokensB = NormalizarTokens(normalizadoB);
+        return tokensA.IsSubsetOf(tokensB) || tokensB.IsSubsetOf(tokensA);
+    }
+
+    private static bool EsOcasionalTipo2(string textoNormalizado)
+        => textoNormalizado.Contains("ocasional tipo 2", StringComparison.Ordinal)
+           || textoNormalizado.Contains("tecnico docente", StringComparison.Ordinal);
+
     private static HashSet<string> NormalizarTokens(string texto)
+        => NormalizarTexto(texto)
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    private static string NormalizarTexto(string texto)
     {
         var normalizado = texto.Normalize(NormalizationForm.FormD);
         var sb = new StringBuilder(normalizado.Length);
@@ -386,10 +445,7 @@ public sealed class ObtenerMatrizCostosGastosQuery(
             sb.Append(char.IsLetterOrDigit(c) ? char.ToLowerInvariant(c) : ' ');
         }
 
-        return sb
-            .ToString()
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return sb.ToString().Normalize(NormalizationForm.FormC).Trim();
     }
 
     private static IReadOnlyList<RubroBase> ConstruirRubrosBase(IReadOnlyList<CostoGastoPeriodoDto> valores)

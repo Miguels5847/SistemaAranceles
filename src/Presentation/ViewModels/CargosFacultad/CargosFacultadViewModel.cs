@@ -54,7 +54,7 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
     private ObservableCollection<FilaSueldoPeriodoDto> _filas = [];
 
     [ObservableProperty]
-    private string _estudiantesUAInput = "285";
+    private string _estudiantesUAInput = ConfiguracionSueldosCarrera.EstudiantesUnidadAcademicaPorDefecto.ToString(CultureInfo.InvariantCulture);
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(TextoEstudiantesCarrera))]
