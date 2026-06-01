@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using SistemaAranceles.Application.DTOs.AnalisisFinanciero;
@@ -57,9 +58,12 @@ public partial class AnalisisFinancieroView : UserControl
         {
             Header = "Concepto",
             Binding = new Binding(nameof(EstadoPerdidasGananciasRubroDto.Concepto)),
-            Width = new DataGridLength(280)
+            Width = new DataGridLength(320),
+            CellStyle = TryFindResource("PerdidasGananciasConceptoCellStyle") as Style,
+            ElementStyle = TryFindResource("PerdidasGananciasConceptoTextStyle") as Style
         });
 
+        var estiloNumero = TryFindResource("PerdidasGananciasNumeroTextStyle") as Style;
         var etiquetas = ObtenerEtiquetasPerdidasGanancias();
         for (var i = 0; i < etiquetas.Count; i++)
         {
@@ -67,7 +71,8 @@ public partial class AnalisisFinancieroView : UserControl
             {
                 Header = etiquetas[i],
                 Binding = new Binding($"PeriodosDisplay[{i}]"),
-                Width = new DataGridLength(130)
+                Width = new DataGridLength(130),
+                ElementStyle = estiloNumero
             });
         }
 
@@ -75,7 +80,8 @@ public partial class AnalisisFinancieroView : UserControl
         {
             Header = "Total",
             Binding = new Binding(nameof(EstadoPerdidasGananciasRubroDto.TotalDisplay)),
-            Width = new DataGridLength(140)
+            Width = new DataGridLength(140),
+            ElementStyle = estiloNumero
         });
     }
 

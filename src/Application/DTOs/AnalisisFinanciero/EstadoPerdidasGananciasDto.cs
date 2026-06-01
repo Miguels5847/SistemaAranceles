@@ -43,6 +43,11 @@ public sealed class EstadoPerdidasGananciasRubroDto
     public decimal Total { get; init; }
     public string FormatoValor { get; init; } = FormatoMatrizAnalisisFinanciero.Moneda;
     public bool EsTotal { get; init; }
+    public string TipoFila { get; init; } = "detalle";
+    public int Nivel { get; init; }
+    public bool EsSeccion => string.Equals(TipoFila, "seccion", StringComparison.OrdinalIgnoreCase);
+    public bool EsDetalle => string.Equals(TipoFila, "detalle", StringComparison.OrdinalIgnoreCase);
+    public bool EsResultado => string.Equals(TipoFila, "resultado", StringComparison.OrdinalIgnoreCase);
 
     public IReadOnlyList<string> PeriodosDisplay => Periodos
         .Select(v => FormatoMatrizAnalisisFinanciero.Formatear(v, FormatoValor))

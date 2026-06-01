@@ -25,6 +25,21 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="PerdidasGananciasRowStyle" TargetType="DataGridRow" BasedOn="{StaticResource EstadoPgRowStyle}">
+            <Setter Property="MinHeight" Value="28"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsSeccion}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Background" Value="#EEF7F0"/>
+                    <Setter Property="Foreground" Value="#1B5E20"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsResultado}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Background" Value="#DDEFE2"/>
+                    <Setter Property="Foreground" Value="#0D4726"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
         <Style x:Key="PeriodoRecuperacionRowStyle" TargetType="DataGridRow" BasedOn="{StaticResource EstadoPgRowStyle}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding EsPeriodoRecuperacion}" Value="True">
@@ -70,6 +85,66 @@
                     <Setter Property="Background" Value="#C8E6C9"/>
                     <Setter Property="BorderBrush" Value="#A5D6A7"/>
                 </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="PerdidasGananciasCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource AnalisisDataGridCellStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsSeccion}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Foreground" Value="#1B5E20"/>
+                    <Setter Property="Background" Value="#EEF7F0"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsResultado}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Foreground" Value="#0D4726"/>
+                    <Setter Property="Background" Value="#DDEFE2"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="PerdidasGananciasConceptoCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource PerdidasGananciasCellStyle}">
+            <Setter Property="BorderBrush" Value="#B7D7BC"/>
+            <Setter Property="BorderThickness" Value="0,0,1,0"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsDetalle}" Value="True">
+                    <Setter Property="Background" Value="#FAFCFA"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="PerdidasGananciasConceptoTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#263238"/>
+            <Setter Property="Margin" Value="8,0,8,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Nivel}" Value="1">
+                    <Setter Property="Margin" Value="22,0,8,0"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsSeccion}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Foreground" Value="#1B5E20"/>
+                    <Setter Property="Margin" Value="8,0,8,0"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsResultado}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Foreground" Value="#0D4726"/>
+                    <Setter Property="Margin" Value="8,0,8,0"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="PerdidasGananciasNumeroTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#263238"/>
+            <Setter Property="Margin" Value="8,0,8,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextAlignment" Value="Right"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsSeccion}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Foreground" Value="#1B5E20"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsResultado}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Foreground" Value="#0D4726"/>
+                </DataTrigger>
             </Style.Triggers>
         </Style>
         <Style x:Key="PanelResumen" TargetType="Border">
@@ -188,57 +263,21 @@
             <TabItem Header="1. Pérdidas y Ganancias">
                 <Grid Margin="8">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,8">
-                        <Border Style="{StaticResource PanelResumen}">
-                            <StackPanel>
-                                <TextBlock Text="Ingresos netos" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding EstadoPerdidasGanancias.TotalIngresosDisplay, FallbackValue='$ 0.00'}"
-                                           FontWeight="Bold"
-                                           Foreground="#1B5E20"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Style="{StaticResource PanelResumen}">
-                            <StackPanel>
-                                <TextBlock Text="Costos y gastos" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding EstadoPerdidasGanancias.TotalCostosYGastosDisplay, FallbackValue='$ 0.00'}"
-                                           FontWeight="Bold"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Style="{StaticResource PanelResumen}">
-                            <StackPanel>
-                                <TextBlock Text="Utilidad o pérdida" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding EstadoPerdidasGanancias.TotalUtilidadPerdidaEjercicioDisplay, FallbackValue='$ 0.00'}"
-                                           FontWeight="Bold"
-                                           Foreground="#1B5E20"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Style="{StaticResource PanelResumen}">
-                            <StackPanel>
-                                <TextBlock Text="Participación / impuesto" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock FontWeight="Bold">
-                                    <Run Text="{Binding EstadoPerdidasGanancias.PorcentajeParticipacionDisplay, Mode=OneWay, FallbackValue='15%'}"/>
-                                    <Run Text=" / "/>
-                                    <Run Text="{Binding EstadoPerdidasGanancias.PorcentajeImpuestoRentaDisplay, Mode=OneWay, FallbackValue='25%'}"/>
-                                </TextBlock>
-                            </StackPanel>
-                        </Border>
-                    </UniformGrid>
-
                     <DataGrid x:Name="PerdidasGananciasGrid"
-                              Grid.Row="1"
+                              Grid.Row="0"
                               ItemsSource="{Binding FilasPerdidasGanancias}"
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
-                              RowStyle="{StaticResource EstadoPgRowStyle}"
-                              CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                              RowStyle="{StaticResource PerdidasGananciasRowStyle}"
+                              CellStyle="{StaticResource PerdidasGananciasCellStyle}"
                               HeadersVisibility="Column"
                               GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F7FAF7"
-                              BorderBrush="#C8E6C9"/>
+                              BorderBrush="#C8E6C9"
+                              ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
                 </Grid>
             </TabItem>
 
