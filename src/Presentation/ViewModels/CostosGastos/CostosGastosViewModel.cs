@@ -37,6 +37,7 @@ public sealed class CostoCarreraMatrizFilaView
 
 public sealed partial class CostosGastosViewModel : ObservableObject
 {
+    private const decimal FactorImprevistoPorDefecto = 1.05m;
     private readonly IServiceProvider _serviceProvider;
     private bool _suprimirCambios;
 
@@ -54,6 +55,7 @@ public sealed partial class CostosGastosViewModel : ObservableObject
     [ObservableProperty] private MatrizCostosGastosDto? _matrizCostosGastos;
     [ObservableProperty] private CostoCarreraResultadoDto? _resultadoCostoCarrera;
     [ObservableProperty] private ObservableCollection<CostoCarreraMatrizFilaView> _costoCarreraFilas = [];
+    [ObservableProperty] private decimal _factorImprevisto = FactorImprevistoPorDefecto;
 
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
@@ -237,6 +239,13 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             return;
         }
 
+        if (FactorImprevisto <= 0m)
+        {
+            MensajeExito = string.Empty;
+            MensajeError = "El factor imprevisto debe ser mayor a 0.";
+            return;
+        }
+
         EstaCargando = true;
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
@@ -255,7 +264,12 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             var demanda = await queryDemanda.EjecutarAsync(carreraId, escenarioId);
             var invVinBecas = await queryInv.EjecutarAsync(carreraId, escenarioId, demandaPrecalculada: demanda);
             MatrizInvVinBecas = invVinBecas;
-            var costosGastos = await queryCostos.EjecutarAsync(carreraId, escenarioId, invVinBecasPrecalculado: invVinBecas, demandaPrecalculada: demanda);
+            var costosGastos = await queryCostos.EjecutarAsync(
+                carreraId,
+                escenarioId,
+                invVinBecasPrecalculado: invVinBecas,
+                demandaPrecalculada: demanda,
+                factorImprevisto: FactorImprevisto);
             MatrizCostosGastos = costosGastos;
             ResultadoCostoCarrera = await queryCostoCarrera.EjecutarAsync(carreraId, escenarioId, matrizPrecalculada: costosGastos);
 

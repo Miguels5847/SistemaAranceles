@@ -34,7 +34,8 @@ public sealed class ObtenerMatrizCostosGastosQuery(
         int? escenarioProyeccionId,
         CancellationToken ct = default,
         MatrizInvVinBecasDto? invVinBecasPrecalculado = null,
-        DemandaProyectadaDto? demandaPrecalculada = null)
+        DemandaProyectadaDto? demandaPrecalculada = null,
+        decimal factorImprevisto = 1.05m)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -44,6 +45,8 @@ public sealed class ObtenerMatrizCostosGastosQuery(
 
         if (escenarioProyeccionId is null or <= 0)
             return Vacia(carreraId, carrera?.Nombre ?? string.Empty, escenarioProyeccionId, escenario?.Nombre ?? string.Empty, "Selecciona un escenario para consolidar Costos y Gastos.");
+        if (factorImprevisto <= 0m)
+            return Vacia(carreraId, carrera?.Nombre ?? string.Empty, escenarioProyeccionId, escenario?.Nombre ?? string.Empty, "El factor imprevisto debe ser mayor a 0.");
 
         var demanda = demandaPrecalculada
             ?? await obtenerDemandaProyectadaQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
@@ -100,7 +103,6 @@ public sealed class ObtenerMatrizCostosGastosQuery(
         var semestresPorAnio = datos?.SemestresPorAnio is > 0 ? datos.SemestresPorAnio : DatosInstitucionales.SemestresPorAnioPorDefecto;
         var estudiantesUniversidad = datos?.NumeroEstudiantesUniversidad ?? 0;
         var docentesUniversidad = datos?.NumeroDocentesUniversidad ?? 0;
-        var porcentajeImprevistos = datos?.PorcentajeImprevistosInversion ?? DatosInstitucionales.PorcentajeImprevistosInversionPorDefecto;
 
         for (var i = 0; i < periodos.Count; i++)
         {
@@ -116,7 +118,7 @@ public sealed class ObtenerMatrizCostosGastosQuery(
                     periodo.PeriodoAcademicoId,
                     estudiantesUniversidad,
                     consolidado);
-            var sueldosDocentes = decimal.Round(sueldos.Filas.Where(f => f.EsCargoDocente).Sum(f => f.TotalSemestre), 2);
+            var sueldosDocentes = decimal.Round(sueldos.Filas.Where(f => f.EsCargoDocente).Sum(f => f.TotalSemestre) * factorImprevisto, 2);
             var sueldosAdministrativos = decimal.Round(sueldos.Filas.Where(f => !f.EsCargoDocente).Sum(f => f.TotalSemestre), 2);
 
             var capacitacion = datos is not null && docentesUniversidad > 0
@@ -134,21 +136,9 @@ public sealed class ObtenerMatrizCostosGastosQuery(
             var invPeriodo = invVinBecas.ValoresPorPeriodo.FirstOrDefault(v => v.PeriodoAcademicoId == periodo.PeriodoAcademicoId);
             // Becas Institucionales = misma serie que 9 Inv. Vin. Becas (origen Demanda/Ingresos Proyectados).
             var becasInstitucionales = decimal.Round(invPeriodo?.BecasInstitucionales ?? 0m, 2);
-
-            var subtotalSinImprevistos =
-                (mant?.CostoMantenimiento ?? 0m)
-                + capacitacion
-                + sueldosDocentes
-                + seguro
-                + becasInstitucionales
-                + (invPeriodo?.Investigacion ?? 0m)
-                + (invPeriodo?.Vinculacion ?? 0m)
-                + (dep?.DepreciacionPeriodo ?? 0m)
-                + sueldosAdministrativos
-                + marketing
-                + (mant?.CostoServiciosBasicos ?? 0m)
-                + amortizacionPeriodo;
-            var imprevistos = decimal.Round(subtotalSinImprevistos * porcentajeImprevistos / 100m, 2);
+            var investigacion = decimal.Round((invPeriodo?.Investigacion ?? 0m) * factorImprevisto, 2);
+            var vinculacion = decimal.Round((invPeriodo?.Vinculacion ?? 0m) * factorImprevisto, 2);
+            var gastoFinanciero = decimal.Round(0m * factorImprevisto, 2);
 
             valores.Add(new CostoGastoPeriodoDto
             {
@@ -161,15 +151,15 @@ public sealed class ObtenerMatrizCostosGastosQuery(
                 SueldosDocentes = sueldosDocentes,
                 SeguroEstudiantil = seguro,
                 BecasInstitucionales = becasInstitucionales,
-                Investigacion = invPeriodo?.Investigacion ?? 0m,
-                Vinculacion = invPeriodo?.Vinculacion ?? 0m,
+                Investigacion = investigacion,
+                Vinculacion = vinculacion,
                 Depreciacion = dep?.DepreciacionPeriodo ?? 0m,
                 GastosAdministracion = sueldosAdministrativos,
                 MarketingComunicacion = marketing,
                 ServiciosBasicos = decimal.Round(mant?.CostoServiciosBasicos ?? 0m, 2),
                 AmortizacionActivosDiferidos = amortizacionPeriodo,
-                ImprevistosRecargo = imprevistos,
-                GastoFinanciero = 0m,
+                ImprevistosRecargo = 0m,
+                GastoFinanciero = gastoFinanciero,
                 TotalBecasGobierno = invPeriodo?.TotalBecasGobierno ?? 0m
             });
         }
@@ -284,7 +274,6 @@ public sealed class ObtenerMatrizCostosGastosQuery(
             new("3. Gastos de ventas", "Marketing y comunicación", V(x => x.MarketingComunicacion)),
             new("4. Otros gastos", "Servicios básicos", V(x => x.ServiciosBasicos)),
             new("4. Otros gastos", "Amortización activos diferidos", V(x => x.AmortizacionActivosDiferidos)),
-            new("4. Otros gastos", "Imprevistos / recargo", V(x => x.ImprevistosRecargo)),
             new("5. Gasto financiero", "Intereses préstamo", V(x => x.GastoFinanciero))
         ];
     }

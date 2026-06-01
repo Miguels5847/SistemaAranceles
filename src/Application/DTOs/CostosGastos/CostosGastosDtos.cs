@@ -128,7 +128,7 @@ public sealed class CostoGastoPeriodoDto
     public decimal CostosServicios => Mantenimiento + CapacitacionDocente + SueldosDocentes + SeguroEstudiantil
         + BecasInstitucionales + Investigacion + Vinculacion + Depreciacion;
     public decimal GastosVentas => MarketingComunicacion;
-    public decimal OtrosGastos => ServiciosBasicos + AmortizacionActivosDiferidos + ImprevistosRecargo;
+    public decimal OtrosGastos => ServiciosBasicos + AmortizacionActivosDiferidos;
     public decimal TotalCostosGastos => CostosServicios + GastosAdministracion + GastosVentas + OtrosGastos + GastoFinanciero;
     public decimal TotalDescontadoBecasGobierno => TotalCostosGastos - TotalBecasGobierno;
 }
