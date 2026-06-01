@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using SistemaAranceles.Application.DTOs.CargosFacultad;
 using SistemaAranceles.Application.DTOs.CostosGastos;
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
@@ -9,6 +11,7 @@ using SistemaAranceles.Application.UseCases.DemandaIngresos;
 using SistemaAranceles.Application.UseCases.Estudiantes;
 using SistemaAranceles.Application.UseCases.Mantenimiento;
 using SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion;
+using SistemaAranceles.Application.UseCases.SueldosPlantaCentral;
 using SistemaAranceles.Domain.Entities;
 
 namespace SistemaAranceles.Application.UseCases.CostosGastos;
@@ -20,6 +23,8 @@ public sealed class ObtenerMatrizCostosGastosQuery(
     ObtenerMatrizDepreciacionQuery obtenerMatrizDepreciacionQuery,
     ObtenerTablaAmortizacionQuery obtenerTablaAmortizacionQuery,
     GenerarTablaSueldosPeriodoQuery generarTablaSueldosPeriodoQuery,
+    CalcularMaterialesPorPeriodoQuery calcularMaterialesPorPeriodoQuery,
+    CalcularAportePlantaCentralCarreraQuery calcularAportePlantaCentralCarreraQuery,
     IRepositorioDatosInstitucionales repositorioDatos,
     IRepositorioCarrera repositorioCarrera,
     IRepositorioEscenarioProyeccion repositorioEscenario,
@@ -77,6 +82,18 @@ public sealed class ObtenerMatrizCostosGastosQuery(
         var depreciacion = await obtenerMatrizDepreciacionQuery.EjecutarAsync(carreraId, escenarioProyeccionId.Value, null, ct);
         var depreciacionPorPeriodo = depreciacion.TotalesPorPeriodo.ToDictionary(p => p.NumeroPeriodo);
 
+        var materiales = await calcularMaterialesPorPeriodoQuery.EjecutarAsync(carreraId, escenarioProyeccionId.Value, ct);
+        AgregarAdvertencia(advertencias, materiales.MensajeAdvertencia);
+        var materialesPorPeriodo = materiales.Monetarios
+            .GroupBy(m => m.PeriodoAcademicoId)
+            .ToDictionary(g => g.Key, g => decimal.Round(g.Sum(m => m.Costo), 2));
+
+        var aportePlantaCentralPorPeriodo = await ObtenerAportePlantaCentralPorPeriodoAsync(
+            carreraId,
+            escenarioProyeccionId.Value,
+            advertencias,
+            ct);
+
         var anioBase = periodos.Min(p => p.Anio);
         var amortizacion = await obtenerTablaAmortizacionQuery.EjecutarAsync(carreraId, anioBase, ct);
         var amortizacionPorAnio = amortizacion.Anios
@@ -118,11 +135,30 @@ public sealed class ObtenerMatrizCostosGastosQuery(
                     periodo.PeriodoAcademicoId,
                     estudiantesUniversidad,
                     consolidado);
-            var sueldosDocentes = decimal.Round(sueldos.Filas.Where(f => f.EsCargoDocente).Sum(f => f.TotalSemestre) * factorImprevisto, 2);
-            var sueldosAdministrativos = decimal.Round(sueldos.Filas.Where(f => !f.EsCargoDocente).Sum(f => f.TotalSemestre), 2);
+            var tiempoCompletoPhd = AplicarFactor(ObtenerTotalSueldoPorConcepto(sueldos.Filas, true, "Tiempo Completo PhD", "TC PhD"), factorImprevisto);
+            var tiempoCompletoMgs = AplicarFactor(ObtenerTotalSueldoPorConcepto(sueldos.Filas, true, "Tiempo Completo Mgs", "TC Mgs", "TC Mgs."), factorImprevisto);
+            var medioTiempo = AplicarFactor(ObtenerTotalSueldoPorConcepto(sueldos.Filas, true, "Medio Tiempo"), factorImprevisto);
+            var tiempoParcial = AplicarFactor(ObtenerTotalSueldoPorConcepto(sueldos.Filas, true, "Tiempo Parcial", "Docente Tiempo Parcial"), factorImprevisto);
+            var ocasionalTipo2 = AplicarFactor(ObtenerTotalSueldoPorConcepto(sueldos.Filas, true, "Ocasional Tipo 2", "Técnico Docente", "Tecnico Docente"), factorImprevisto);
+            var sueldosDocentes = tiempoCompletoPhd + tiempoCompletoMgs + medioTiempo + tiempoParcial + ocasionalTipo2;
+
+            aportePlantaCentralPorPeriodo.TryGetValue(periodo.PeriodoAcademicoId, out var administracionCentral);
+            var decano = ObtenerTotalSueldoPorConcepto(sueldos.Filas, false, "Decano");
+            var subdecano = ObtenerTotalSueldoPorConcepto(sueldos.Filas, false, "Subdecano");
+            var directorCarrera = ObtenerTotalSueldoPorConcepto(sueldos.Filas, false, "Director de Carrera", "Director Carrera");
+            var secretario = ObtenerTotalSueldoPorConcepto(sueldos.Filas, false, "Secretario");
+            var auxiliarSecretaria = ObtenerTotalSueldoPorConcepto(sueldos.Filas, false, "Auxiliar de Secretaria", "Auxiliar de Secretaría");
+            var coordinador = ObtenerTotalSueldoPorConcepto(sueldos.Filas, false, "Coordinador");
+            var bienestarEstudiantil = ObtenerTotalSueldoPorConcepto(sueldos.Filas, false, "Bienestar Estudiantil");
+            var bibliotecario = ObtenerTotalSueldoPorConcepto(sueldos.Filas, false, "Bibliotecario");
+            var auxiliarServicio = ObtenerTotalSueldoPorConcepto(sueldos.Filas, false, "Auxiliar de Servicio");
+            var guardia = ObtenerTotalSueldoPorConcepto(sueldos.Filas, false, "Guardia");
 
             var capacitacion = datos is not null && docentesUniversidad > 0
                 ? decimal.Round((datos.PresupuestoAnualCapacitacion / semestresPorAnio) * factores[i] / docentesUniversidad * docentes[i], 2)
+                : 0m;
+            var internacionalizacion = datos is not null && estudiantesUniversidad > 0
+                ? decimal.Round((datos.PresupuestoAnualInternacionalizacion / semestresPorAnio) * factores[i] / estudiantesUniversidad * estudiantes[i], 2)
                 : 0m;
             var seguro = datos is not null && estudiantesUniversidad > 0
                 ? decimal.Round((datos.PolizaSeguroEstudiantilAnual / semestresPorAnio) * factores[i] / estudiantesUniversidad * estudiantes[i], 2)
@@ -138,7 +174,12 @@ public sealed class ObtenerMatrizCostosGastosQuery(
             var becasInstitucionales = decimal.Round(invPeriodo?.BecasInstitucionales ?? 0m, 2);
             var investigacion = decimal.Round((invPeriodo?.Investigacion ?? 0m) * factorImprevisto, 2);
             var vinculacion = decimal.Round((invPeriodo?.Vinculacion ?? 0m) * factorImprevisto, 2);
+            materialesPorPeriodo.TryGetValue(periodo.PeriodoAcademicoId, out var materialesPeriodo);
+            materialesPeriodo = AplicarFactor(materialesPeriodo, factorImprevisto);
             var gastoFinanciero = decimal.Round(0m * factorImprevisto, 2);
+            var mantenimientoEdificio = decimal.Round(mant?.CostoMantenimiento ?? 0m, 2);
+            var serviciosBasicos = decimal.Round(mant?.CostoServiciosBasicos ?? 0m, 2);
+            var depreciacionPeriodo = decimal.Round(dep?.DepreciacionPeriodo ?? 0m, 2);
 
             valores.Add(new CostoGastoPeriodoDto
             {
@@ -146,20 +187,41 @@ public sealed class ObtenerMatrizCostosGastosQuery(
                 Anio = periodo.Anio,
                 NumeroPeriodo = periodo.NumeroPeriodo,
                 EtiquetaPeriodo = periodo.Etiqueta,
-                Mantenimiento = decimal.Round(mant?.CostoMantenimiento ?? 0m, 2),
+                Mantenimiento = mantenimientoEdificio,
+                MantenimientoEdificio = mantenimientoEdificio,
                 CapacitacionDocente = capacitacion,
+                Internacionalizacion = internacionalizacion,
+                InsumosPracticasLaboratorios = 0m,
                 SueldosDocentes = sueldosDocentes,
+                TiempoCompletoPhd = tiempoCompletoPhd,
+                TiempoCompletoMgs = tiempoCompletoMgs,
+                MedioTiempo = medioTiempo,
+                TiempoParcial = tiempoParcial,
+                OcasionalTipo2TecnicoDocente = ocasionalTipo2,
                 SeguroEstudiantil = seguro,
+                CostoSeguroEstudiantil = seguro,
                 BecasInstitucionales = becasInstitucionales,
                 Investigacion = investigacion,
                 Vinculacion = vinculacion,
-                Depreciacion = dep?.DepreciacionPeriodo ?? 0m,
-                GastosAdministracion = sueldosAdministrativos,
+                MaterialesSuministros = materialesPeriodo,
+                Depreciacion = depreciacionPeriodo,
+                AdministracionCentral = decimal.Round(administracionCentral, 2),
+                Decano = decano,
+                Subdecano = subdecano,
+                DirectorCarrera = directorCarrera,
+                Secretario = secretario,
+                AuxiliarSecretaria = auxiliarSecretaria,
+                Coordinador = coordinador,
+                BienestarEstudiantil = bienestarEstudiantil,
+                Bibliotecario = bibliotecario,
+                AuxiliarServicio = auxiliarServicio,
+                Guardia = guardia,
                 MarketingComunicacion = marketing,
-                ServiciosBasicos = decimal.Round(mant?.CostoServiciosBasicos ?? 0m, 2),
+                ServiciosBasicos = serviciosBasicos,
                 AmortizacionActivosDiferidos = amortizacionPeriodo,
+                Amortizacion = amortizacionPeriodo,
                 ImprevistosRecargo = 0m,
-                GastoFinanciero = gastoFinanciero,
+                Interes = gastoFinanciero,
                 TotalBecasGobierno = invPeriodo?.TotalBecasGobierno ?? 0m
             });
         }
@@ -255,6 +317,81 @@ public sealed class ObtenerMatrizCostosGastosQuery(
         return (hayDoc ? doc : null, hayPrac ? prac : null);
     }
 
+    private async Task<IReadOnlyDictionary<int, decimal>> ObtenerAportePlantaCentralPorPeriodoAsync(
+        int carreraId,
+        int escenarioProyeccionId,
+        List<string> advertencias,
+        CancellationToken ct)
+    {
+        try
+        {
+            var aporte = await calcularAportePlantaCentralCarreraQuery.EjecutarAsync(
+                carreraId,
+                escenarioProyeccionId,
+                ct);
+
+            return aporte.Periodos
+                .GroupBy(p => p.PeriodoAcademicoId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => decimal.Round(g.Sum(p => p.AporteSemestral), 2));
+        }
+        catch (Exception ex)
+        {
+            advertencias.Add($"No se pudo calcular Administración Central; se mostrará 0. {Detalle(ex)}");
+            return new Dictionary<int, decimal>();
+        }
+    }
+
+    private static decimal AplicarFactor(decimal valor, decimal factor)
+        => decimal.Round(valor * factor, 2);
+
+    private static decimal ObtenerTotalSueldoPorConcepto(
+        IReadOnlyList<FilaSueldoPeriodoDto> filas,
+        bool? esCargoDocente,
+        params string[] nombres)
+    {
+        var busquedas = nombres
+            .Where(n => !string.IsNullOrWhiteSpace(n))
+            .Select(NormalizarTokens)
+            .Where(t => t.Count > 0)
+            .ToList();
+
+        if (busquedas.Count == 0)
+            return 0m;
+
+        var total = filas
+            .Where(f => esCargoDocente is null || f.EsCargoDocente == esCargoDocente.Value)
+            .Where(f =>
+            {
+                var tokensCargo = NormalizarTokens(f.NombreCargo);
+                return busquedas.Any(busqueda => busqueda.All(tokensCargo.Contains));
+            })
+            .Sum(f => f.TotalSemestre);
+
+        return decimal.Round(total, 2);
+    }
+
+    private static HashSet<string> NormalizarTokens(string texto)
+    {
+        var normalizado = texto.Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder(normalizado.Length);
+
+        foreach (var c in normalizado)
+        {
+            var categoria = CharUnicodeInfo.GetUnicodeCategory(c);
+            if (categoria == UnicodeCategory.NonSpacingMark)
+                continue;
+
+            sb.Append(char.IsLetterOrDigit(c) ? char.ToLowerInvariant(c) : ' ');
+        }
+
+        return sb
+            .ToString()
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
     private static IReadOnlyList<RubroBase> ConstruirRubrosBase(IReadOnlyList<CostoGastoPeriodoDto> valores)
     {
         IReadOnlyList<decimal> V(Func<CostoGastoPeriodoDto, decimal> selector)
@@ -262,19 +399,36 @@ public sealed class ObtenerMatrizCostosGastosQuery(
 
         return
         [
-            new("1. Costos por servicios", "Mantenimiento", V(x => x.Mantenimiento)),
-            new("1. Costos por servicios", "Capacitación docente", V(x => x.CapacitacionDocente)),
-            new("1. Costos por servicios", "Sueldos docentes", V(x => x.SueldosDocentes)),
-            new("1. Costos por servicios", "Seguro estudiantil", V(x => x.SeguroEstudiantil)),
-            new("1. Costos por servicios", "Becas institucionales", V(x => x.BecasInstitucionales)),
-            new("1. Costos por servicios", "Investigación", V(x => x.Investigacion)),
-            new("1. Costos por servicios", "Vinculación", V(x => x.Vinculacion)),
+            new("1. Costos por servicios", "Mantenimiento Edificio", V(x => x.MantenimientoEdificio)),
+            new("1. Costos por servicios", "Capacitación Docente", V(x => x.CapacitacionDocente)),
+            new("1. Costos por servicios", "Internacionalización", V(x => x.Internacionalizacion)),
+            new("1. Costos por servicios", "Insumos Prácticas y Laboratorios", V(x => x.InsumosPracticasLaboratorios)),
+            new("1. Costos por servicios", "Tiempo Completo PhD (18 horas)", V(x => x.TiempoCompletoPhd)),
+            new("1. Costos por servicios", "Tiempo Completo Mgs. (18 horas)", V(x => x.TiempoCompletoMgs)),
+            new("1. Costos por servicios", "Medio Tiempo(12 horas)", V(x => x.MedioTiempo)),
+            new("1. Costos por servicios", "Tiempo Parcial (6 h)", V(x => x.TiempoParcial)),
+            new("1. Costos por servicios", "Ocasional Tipo 2 (Técnico Docente)", V(x => x.OcasionalTipo2TecnicoDocente)),
+            new("1. Costos por servicios", "Costo del Seguro Estudiantil", V(x => x.CostoSeguroEstudiantil)),
+            new("1. Costos por servicios", "Becas Institucionales 10 % estudiantes", V(x => x.BecasInstitucionales)),
+            new("1. Costos por servicios", "Investigación 5%", V(x => x.Investigacion)),
+            new("1. Costos por servicios", "Vinculación 1%", V(x => x.Vinculacion)),
+            new("1. Costos por servicios", "Materiales y Suministros", V(x => x.MaterialesSuministros)),
             new("1. Costos por servicios", "Depreciación", V(x => x.Depreciacion)),
-            new("2. Gastos de administración", "Sueldos administrativos", V(x => x.GastosAdministracion)),
-            new("3. Gastos de ventas", "Marketing y comunicación", V(x => x.MarketingComunicacion)),
-            new("4. Otros gastos", "Servicios básicos", V(x => x.ServiciosBasicos)),
-            new("4. Otros gastos", "Amortización activos diferidos", V(x => x.AmortizacionActivosDiferidos)),
-            new("5. Gasto financiero", "Intereses préstamo", V(x => x.GastoFinanciero))
+            new("2. Gastos de administración", "Administración Central", V(x => x.AdministracionCentral)),
+            new("2. Gastos de administración", "Decano", V(x => x.Decano)),
+            new("2. Gastos de administración", "Subdecano", V(x => x.Subdecano)),
+            new("2. Gastos de administración", "Director de Carrera", V(x => x.DirectorCarrera)),
+            new("2. Gastos de administración", "Secretario", V(x => x.Secretario)),
+            new("2. Gastos de administración", "Auxiliar de Secretaria", V(x => x.AuxiliarSecretaria)),
+            new("2. Gastos de administración", "Coordinador", V(x => x.Coordinador)),
+            new("2. Gastos de administración", "Bienestar Estudiantil", V(x => x.BienestarEstudiantil)),
+            new("2. Gastos de administración", "Bibliotecario", V(x => x.Bibliotecario)),
+            new("2. Gastos de administración", "Auxiliar de Servicio", V(x => x.AuxiliarServicio)),
+            new("2. Gastos de administración", "Guardia", V(x => x.Guardia)),
+            new("3. Gastos de ventas", "Marketing y Comunicación", V(x => x.MarketingComunicacion)),
+            new("4. Otros gastos", "Servicios Básicos", V(x => x.ServiciosBasicos)),
+            new("4. Otros gastos", "Amortizacion", V(x => x.Amortizacion)),
+            new("5. Gasto financiero", "Interes", V(x => x.Interes))
         ];
     }
 
@@ -415,6 +569,9 @@ public sealed class ObtenerMatrizCostosGastosQuery(
             ? null
             : string.Join(" ", advertencias.Distinct(StringComparer.OrdinalIgnoreCase));
     }
+
+    private static string Detalle(Exception ex)
+        => ex.InnerException?.Message ?? ex.Message;
 
     private static MatrizCostosGastosDto Vacia(
         int carreraId,
