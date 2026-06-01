@@ -35,6 +35,64 @@ public class GenerarResumenSueldosPlantaCentralIntegrationTests
         Assert.Equal(resultado.TotalSueldosMasPlantaCentral, Math.Round(resultado.GranTotal + aporte.AporteAcumulado, 2));
     }
 
+    [Fact]
+    public async Task Ejecutar_UsaElMismoTotalPeriodoQueTablaNormalParaOcasionalTipo2()
+    {
+        var datos = NuevoDatos(totalMensual: 100000m, estudiantesUniv: 10000);
+        var proyeccion = NuevaProyeccion((2023, 2, 100m));
+        var cargo = new CargoFacultad(1, "Ocasional Tipo 2 (Técnico Docente)", "Docente", 1350m, true);
+        cargo.CambiarTipoContrato(TipoContrato.Tecnico);
+
+        var repoCargo = new RepositorioCargoFacultadFake([cargo]);
+        var repoInflacion = new RepositorioInflacionAnualFake();
+        var repoProyeccion = new RepositorioProyeccionEstudiantesFake(proyeccion);
+        var repoCarrera = new RepositorioCarreraFake();
+
+        var consolidado = new ProyeccionConsolidadaDto
+        {
+            DocentesPorPeriodo =
+            [
+                new FilaDocentePeriodoDto
+                {
+                    Tipo = "Ocasional Tipo 2 (Técnico)",
+                    Periodos = [7, 1],
+                    Total = 1
+                }
+            ]
+        };
+
+        var tablaNormalQuery = new GenerarTablaSueldosPeriodoQuery(
+            repoCargo,
+            repoInflacion,
+            repoProyeccion,
+            repoCarrera);
+        var tablaNormal = await tablaNormalQuery.EjecutarAsync(
+            carreraId: 1,
+            escenarioProyeccionId: 1,
+            periodoAcademicoId: proyeccion.Detalles[0].PeriodoAcademicoId,
+            estudiantesUA: 0m,
+            consolidado);
+
+        var resumenQuery = new GenerarResumenSueldosQuery(
+            repoCargo,
+            repoInflacion,
+            repoProyeccion,
+            repoCarrera,
+            new RepositorioDatosInstitucionalesFake(datos));
+        var resumen = await resumenQuery.EjecutarAsync(
+            carreraId: 1,
+            escenarioProyeccionId: 1,
+            estudiantesUA: 0m,
+            consolidado);
+
+        var esperado = tablaNormal.Filas.Single(f => f.CargoId == cargo.Id);
+        var filaResumen = resumen.Filas.Single(f => f.CargoId == cargo.Id);
+
+        Assert.Equal(esperado.TotalSemestre, filaResumen.ValoresPorPeriodo[0]);
+        Assert.Equal(esperado.NumeroPersonas, filaResumen.NumeroPersonas);
+        Assert.Equal(1m, filaResumen.NumeroPersonas);
+    }
+
     private static DatosInstitucionales NuevoDatos(decimal totalMensual = 100000m, int estudiantesUniv = 10000)
     {
         return new DatosInstitucionales(
