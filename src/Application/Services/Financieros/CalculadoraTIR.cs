@@ -6,6 +6,11 @@ public sealed class ResultadoTir
     /// <summary>TIR como fracción (0.18 = 18%). Sólo válida si <see cref="EsCalculable"/>.</summary>
     public decimal Tir { get; init; }
     public int Iteraciones { get; init; }
+    /// <summary>Cambios de signo de la serie de flujos (ignorando ceros).</summary>
+    public int CambiosSigno { get; init; }
+    /// <summary>True si hay más de un cambio de signo: la TIR puede no ser única (Descartes).</summary>
+    public bool PosibleTirNoUnica { get; init; }
+    /// <summary>Diagnóstico o advertencia para mostrar; se prioriza el VAN para la viabilidad.</summary>
     public string? Mensaje { get; init; }
 }
 
@@ -13,6 +18,9 @@ public sealed class ResultadoTir
 /// Tasa Interna de Retorno sin depender de Excel.
 /// Estrategia robusta: búsqueda incremental para hallar un cambio de signo del VAN,
 /// luego bisección. Si no hay cambio de signo, devuelve "No calculable" sin lanzar errores (#NUM).
+///
+/// La TIR es un indicador complementario: la viabilidad se decide con el VAN, porque los flujos
+/// con inversiones futuras pueden tener múltiples cambios de signo y por tanto múltiples raíces.
 /// </summary>
 public static class CalculadoraTIR
 {
@@ -22,15 +30,48 @@ public static class CalculadoraTIR
     private const double Tolerancia = 1e-7d;
     private const int MaxIteracionesBiseccion = 200;
 
+    /// <summary>
+    /// Cuenta los cambios de signo de la serie de flujos ignorando los ceros.
+    /// Por la regla de Descartes, el número de raíces reales positivas (TIR) no supera este valor.
+    /// </summary>
+    public static int ContarCambiosSigno(IReadOnlyList<decimal> flujos)
+    {
+        if (flujos is null || flujos.Count == 0)
+            return 0;
+
+        var cambios = 0;
+        var signoAnterior = 0;
+        foreach (var flujo in flujos)
+        {
+            var signo = Math.Sign(flujo);
+            if (signo == 0)
+                continue;
+
+            if (signoAnterior != 0 && signo != signoAnterior)
+                cambios++;
+
+            signoAnterior = signo;
+        }
+
+        return cambios;
+    }
+
     public static ResultadoTir Calcular(IReadOnlyList<decimal> flujos)
     {
         if (flujos is null || flujos.Count < 2)
             return NoCalculable("Se requieren al menos dos períodos para calcular la TIR.");
 
+        var cambiosSigno = ContarCambiosSigno(flujos);
         var hayPositivo = flujos.Any(f => f > 0m);
         var hayNegativo = flujos.Any(f => f < 0m);
         if (!hayPositivo || !hayNegativo)
-            return NoCalculable("El flujo de fondos no cambia de signo; la TIR no es calculable.");
+            return NoCalculable(
+                "La TIR no es calculable porque el flujo no cambia de signo. Con el arancel vigente no existen flujos positivos suficientes para recuperar la inversión.",
+                cambiosSigno);
+
+        var advertenciaMultiple = cambiosSigno > 1
+            ? "El flujo presenta múltiples cambios de signo por inversiones futuras; la TIR puede no ser única. Se prioriza el VAN para evaluar la viabilidad."
+            : null;
 
         var tasaAnterior = TasaMinima;
         var npvAnterior = CalculadoraVAN.ValorActualNeto(flujos, tasaAnterior);
@@ -40,19 +81,24 @@ public static class CalculadoraTIR
             var npv = CalculadoraVAN.ValorActualNeto(flujos, tasa);
 
             if (npv == 0d)
-                return Calculable((decimal)tasa, 0);
+                return Calculable((decimal)tasa, 0, cambiosSigno, advertenciaMultiple);
 
             if (Math.Sign(npv) != Math.Sign(npvAnterior))
-                return Biseccion(flujos, tasaAnterior, tasa);
+                return Biseccion(flujos, tasaAnterior, tasa, cambiosSigno, advertenciaMultiple);
 
             tasaAnterior = tasa;
             npvAnterior = npv;
         }
 
-        return NoCalculable("No se encontró un cambio de signo del VAN en el rango evaluado.");
+        return NoCalculable("No se encontró un cambio de signo del VAN en el rango evaluado.", cambiosSigno);
     }
 
-    private static ResultadoTir Biseccion(IReadOnlyList<decimal> flujos, double a, double b)
+    private static ResultadoTir Biseccion(
+        IReadOnlyList<decimal> flujos,
+        double a,
+        double b,
+        int cambiosSigno,
+        string? advertencia)
     {
         var fa = CalculadoraVAN.ValorActualNeto(flujos, a);
 
@@ -62,7 +108,7 @@ public static class CalculadoraTIR
             var fm = CalculadoraVAN.ValorActualNeto(flujos, medio);
 
             if (Math.Abs(fm) < Tolerancia || (b - a) / 2d < 1e-8d)
-                return Calculable((decimal)medio, i);
+                return Calculable((decimal)medio, i, cambiosSigno, advertencia);
 
             if (Math.Sign(fm) == Math.Sign(fa))
             {
@@ -75,19 +121,24 @@ public static class CalculadoraTIR
             }
         }
 
-        return Calculable((decimal)((a + b) / 2d), MaxIteracionesBiseccion);
+        return Calculable((decimal)((a + b) / 2d), MaxIteracionesBiseccion, cambiosSigno, advertencia);
     }
 
-    private static ResultadoTir Calculable(decimal tasa, int iteraciones) => new()
+    private static ResultadoTir Calculable(decimal tasa, int iteraciones, int cambiosSigno, string? advertencia) => new()
     {
         EsCalculable = true,
         Tir = decimal.Round(tasa, 6),
-        Iteraciones = iteraciones
+        Iteraciones = iteraciones,
+        CambiosSigno = cambiosSigno,
+        PosibleTirNoUnica = cambiosSigno > 1,
+        Mensaje = advertencia
     };
 
-    private static ResultadoTir NoCalculable(string mensaje) => new()
+    private static ResultadoTir NoCalculable(string mensaje, int cambiosSigno = 0) => new()
     {
         EsCalculable = false,
+        CambiosSigno = cambiosSigno,
+        PosibleTirNoUnica = cambiosSigno > 1,
         Mensaje = mensaje
     };
 }

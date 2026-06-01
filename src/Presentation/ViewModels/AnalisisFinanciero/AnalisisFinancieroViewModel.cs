@@ -506,6 +506,9 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             var configExacta = configuraciones.FirstOrDefault(c => c.EscenarioProyeccionId == EscenarioSeleccionado.Id);
             var usaPorcentajeInstitucional = configExacta?.UsaPorcentajeMatriculaInstitucional ?? true;
 
+            // El arancel financiero sugerido (VAN=0) se confirma como arancel vigente. Se persiste
+            // como "Manual" porque queda como valor fijo del escenario; el valor fue calculado por
+            // bisección y confirmado explícitamente por el usuario con este botón (no es automático).
             var dto = new GuardarConfiguracionArancelCarreraDto
             {
                 Id = configExacta?.Id,
@@ -523,7 +526,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             await command.EjecutarAsync(dto, _sesionActual.UsuarioId);
 
             await RefrescarAsync();
-            MensajeExito = "Arancel óptimo aplicado como configuración manual del escenario.";
+            MensajeExito = "Arancel financiero sugerido aplicado como arancel vigente del escenario.";
         }
         catch (Exception ex)
         {

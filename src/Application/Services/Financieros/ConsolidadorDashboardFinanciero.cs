@@ -145,7 +145,9 @@ public static class ConsolidadorDashboardFinanciero
         var recomendaciones = new List<DashboardRecomendacionFinancieraDto>();
 
         if (indicadores?.Van < 0m)
-            recomendaciones.Add(CrearRecomendacion("Alta", "VAN", "Revisar costos, ingresos o inversión inicial: el VAN proyectado es negativo."));
+            recomendaciones.Add(CrearRecomendacion("Alta", "VAN", "El arancel vigente no cubre la sostenibilidad financiera (VAN negativo): revisar costos, ingresos o inversión inicial."));
+        if (indicadores?.TirPosibleNoUnica == true)
+            recomendaciones.Add(CrearRecomendacion("Media", "TIR", "El flujo presenta múltiples cambios de signo; la TIR puede no ser única. Evalúe la viabilidad principalmente con el VAN."));
         if (indicadores?.TieneDatos == true && (!indicadores.EsTirCalculable || indicadores.TirPorcentaje < indicadores.TmrPorcentaje))
             recomendaciones.Add(CrearRecomendacion("Alta", "TIR", "La TIR no cubre la TMR; validar precio, demanda y estructura de costos."));
         if (puntoEquilibrio?.TienePeriodosNoCalculables == true)

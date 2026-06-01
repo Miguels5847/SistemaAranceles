@@ -40,6 +40,8 @@ public sealed class IndicadoresFinancierosDto
     public bool EsTirCalculable { get; init; }
     public decimal TirPorcentaje { get; init; }
     public int TirIteraciones { get; init; }
+    public int TirCambiosSigno { get; init; }
+    public bool TirPosibleNoUnica { get; init; }
 
     // ----- Estado -----
     public string EstadoViabilidad { get; init; } = "Sin datos";
@@ -51,13 +53,24 @@ public sealed class IndicadoresFinancierosDto
     public string FuenteTmrDisplay => EsTmrManual ? "Manual" : "Calculada";
     public string TmrFormulaDisplay => EsTmrManual
         ? "TMR manual configurada en Datos Institucionales."
-        : $"Tasa interés {TasaInteresFinancieraPorcentaje:N2}% + Inflación prom. {InflacionPromedioPorcentaje:N2}% + Premio riesgo {PremioRiesgoPorcentaje:N2}%";
+        : $"TMR = (Tasa interés {TasaInteresFinancieraPorcentaje:N2}% × Inflación prom. {InflacionPromedioPorcentaje:N2}% / 100) + Premio riesgo {PremioRiesgoPorcentaje:N2}%";
     public string RangoInflacionDisplay => TieneDatosInflacion
         ? $"{AnioInflacionDesde}–{AnioInflacionHasta}"
         : "Sin datos";
 
     public string VanDisplay => FormatoMatrizAnalisisFinanciero.Formatear(Van, FormatoMatrizAnalisisFinanciero.Moneda);
     public string TirDisplay => EsTirCalculable ? $"{TirPorcentaje:N2} %" : "No calculable";
+    public string TirDiagnosticoDisplay
+    {
+        get
+        {
+            if (!EsTirCalculable)
+                return "No calculable: el flujo no cambia de signo.";
+            return TirPosibleNoUnica
+                ? "TIR posiblemente no única (múltiples cambios de signo); se prioriza el VAN."
+                : "Calculable.";
+        }
+    }
     public string TasaInteresFinancieraDisplay => $"{TasaInteresFinancieraPorcentaje:N2} %";
     public string InflacionPromedioDisplay => $"{InflacionPromedioPorcentaje:N2} %";
     public string PremioRiesgoDisplay => $"{PremioRiesgoPorcentaje:N2} %";

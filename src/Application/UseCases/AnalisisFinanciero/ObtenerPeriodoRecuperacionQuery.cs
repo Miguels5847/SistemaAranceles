@@ -65,7 +65,12 @@ public sealed class ObtenerPeriodoRecuperacionQuery(
             })
             .ToList();
         var resultado = CalculadoraPeriodoRecuperacion.Calcular(entradas, mesesPorPeriodo);
-        AgregarAdvertencia(advertencias, resultado.Mensaje);
+        // El período de recuperación se calcula con el arancel vigente del escenario; si no recupera,
+        // se aclara para que el usuario revise el arancel financiero sugerido por VAN=0.
+        if (!resultado.Recuperado)
+            advertencias.Add("No recuperado dentro del horizonte proyectado con el arancel vigente. Revise el arancel financiero sugerido por VAN=0.");
+        else
+            AgregarAdvertencia(advertencias, resultado.Mensaje);
 
         var detalle = entradas
             .Select(p => new PeriodoRecuperacionDetalleDto

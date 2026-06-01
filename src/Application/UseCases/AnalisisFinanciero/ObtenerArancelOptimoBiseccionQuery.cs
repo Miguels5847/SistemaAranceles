@@ -352,11 +352,10 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
     {
         var matricula = decimal.Round(arancel * contexto.PorcentajeMatricula / 100m, 2);
         var precioPorEstudiante = arancel + matricula;
-        var flujos = new List<decimal>();
+        var operativosAnuales = new List<(int Anio, decimal FlujoNeto)>();
         var periodos = new List<ArancelOptimoBiseccionPeriodoDto>();
         var acumulado = decimal.Round(-contexto.InversionInicial, 2);
 
-        flujos.Add(-contexto.InversionInicial);
         periodos.Add(new ArancelOptimoBiseccionPeriodoDto
         {
             PeriodoOrden = 0,
@@ -374,6 +373,11 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             contexto.AmortizacionPorAnio.TryGetValue(costo.Anio, out var amortizacion);
             var recuperacionCapitalTrabajo = i == contexto.Costos.Count - 1 ? contexto.CapitalTrabajo : 0m;
 
+            // Modelo de becas idéntico al de P&G/Flujo de Fondos (la fuente que valida el VAN):
+            // Ingresos Proyectados reporta el neto (bruto − becas) y Costos y Gastos incluye las
+            // mismas becas como rubro institucional (BecasInstitucionales). Aquí se recalculan las
+            // becas con el arancel candidato y se reemplaza el rubro original por el recalculado, de
+            // modo que el VAN de la bisección coincide con el flujo real ya recalculado a ese arancel.
             var ingresoBruto = decimal.Round(estudiantes * precioPorEstudiante, 2);
             var becas = decimal.Round(ingresoBruto * contexto.PorcentajeBecas / 100m, 2);
             var ingresosNetos = decimal.Round(ingresoBruto - becas, 2);
@@ -395,7 +399,7 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
                 + recuperacionCapitalTrabajo,
                 2);
             acumulado = decimal.Round(acumulado + flujoNeto, 2);
-            flujos.Add(flujoNeto);
+            operativosAnuales.Add((costo.Anio, flujoNeto));
 
             periodos.Add(new ArancelOptimoBiseccionPeriodoDto
             {
@@ -412,12 +416,19 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             });
         }
 
+        // VAN/TIR del candidato con flujo ANUAL consolidado (período 0 + suma de semestres por año),
+        // igual que ObtenerIndicadoresFinancierosQuery, para que el arancel hallado por VAN=0 coincida
+        // con el VAN del dashboard. El detalle semestral se mantiene en periodos para la tabla.
+        var flujosAnuales = ConsolidadorFlujosFinancieros.ConstruirFlujosAnuales(
+            -contexto.InversionInicial,
+            operativosAnuales);
+
         return new EvaluacionArancel
         {
             Matricula = matricula,
-            Flujos = flujos,
+            Flujos = flujosAnuales,
             Periodos = periodos,
-            Van = CalculadoraVAN.Calcular(flujos, contexto.TmrTasa)
+            Van = CalculadoraVAN.Calcular(flujosAnuales, contexto.TmrTasa)
         };
     }
 

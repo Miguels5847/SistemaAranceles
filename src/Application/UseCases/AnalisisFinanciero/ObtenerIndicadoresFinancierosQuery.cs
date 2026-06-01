@@ -71,20 +71,22 @@ public sealed class ObtenerIndicadoresFinancierosQuery(
             TmrManualPorcentaje = tmrManual
         });
 
-        var flujos = flujo.ValoresPorPeriodo.Select(p => p.FlujoNeto).ToList();
+        // VAN/TIR se calculan con flujo ANUAL consolidado (no semestral): la TMR es anual y el
+        // detalle semestral se mantiene en la tabla de Flujo de Fondos.
+        var detalleAnual = ConsolidadorFlujosFinancieros.ConstruirDetalleAnual(flujo.ValoresPorPeriodo);
+        var flujos = detalleAnual.Select(f => f.FlujoNeto).ToList();
         var van = CalculadoraVAN.Calcular(flujos, tmr.TmrTasa);
         var tir = CalculadoraTIR.Calcular(flujos);
-        if (!tir.EsCalculable)
-            AgregarAdvertencia(advertencias, tir.Mensaje);
+        AgregarAdvertencia(advertencias, tir.Mensaje);
 
-        var detalleVan = flujo.ValoresPorPeriodo
-            .Select((p, t) => new IndicadorVanPeriodoDto
+        var detalleVan = detalleAnual
+            .Select((f, t) => new IndicadorVanPeriodoDto
             {
-                PeriodoOrden = p.PeriodoOrden,
-                EtiquetaPeriodo = p.EtiquetaPeriodo,
-                FlujoNeto = p.FlujoNeto,
+                PeriodoOrden = f.Orden,
+                EtiquetaPeriodo = f.Etiqueta,
+                FlujoNeto = f.FlujoNeto,
                 FactorDescuento = CalculadoraVAN.FactorDescuento(tmr.TmrTasa, t),
-                ValorPresente = CalculadoraVAN.ValorPresente(p.FlujoNeto, tmr.TmrTasa, t)
+                ValorPresente = CalculadoraVAN.ValorPresente(f.FlujoNeto, tmr.TmrTasa, t)
             })
             .ToList();
 
@@ -108,6 +110,8 @@ public sealed class ObtenerIndicadoresFinancierosQuery(
             EsTirCalculable = tir.EsCalculable,
             TirPorcentaje = tir.EsCalculable ? decimal.Round(tir.Tir * 100m, 2) : 0m,
             TirIteraciones = tir.Iteraciones,
+            TirCambiosSigno = tir.CambiosSigno,
+            TirPosibleNoUnica = tir.PosibleTirNoUnica,
             EstadoViabilidad = DeterminarEstado(van),
             TieneDatos = true,
             MensajeAdvertencia = ConstruirMensaje(advertencias)

@@ -26,8 +26,8 @@ public sealed class ResultadoTmr
 /// Tasa Mínima de Rendimiento (TMR). Encapsulada para poder cambiar la fórmula
 /// si el docente confirma otra: sólo se ajusta <see cref="CalcularFormula"/>.
 ///
-/// Si hay TMR manual activa se usa ese valor; si no, se calcula con
-/// tasa de interés + inflación promedio + premio al riesgo.
+/// Si hay TMR manual activa se usa ese valor; si no, se calcula con la fórmula del
+/// Excel del docente: TMR = (tasaInterés × inflaciónPromedio / 100) + premioRiesgo.
 /// La inflación promedio proviene del módulo Inflación, nunca se escribe aquí.
 /// </summary>
 public static class CalculadoraTMR
@@ -62,12 +62,18 @@ public static class CalculadoraTMR
     }
 
     /// <summary>
-    /// Fórmula inicial: TMR = tasaInterés + inflaciónPromedio + premioRiesgo (todos en %).
+    /// Fórmula del Excel del docente:
+    /// TMR = (tasaInterésFinanciera × inflaciónPromedio / 100) + premioRiesgo.
+    /// Todos los argumentos entran en porcentaje y el resultado sale en porcentaje
+    /// (p. ej. 9.50, 2.20, 9.33 ⇒ 9.5390). La tasa lista para descontar el VAN es
+    /// <see cref="ResultadoTmr.TmrTasa"/> = TmrPorcentaje / 100.
     /// Punto único de cambio si se confirma otra fórmula.
     /// </summary>
     public static decimal CalcularFormula(
         decimal tasaInteresPorcentaje,
         decimal inflacionPromedioPorcentaje,
         decimal premioRiesgoPorcentaje)
-        => decimal.Round(tasaInteresPorcentaje + inflacionPromedioPorcentaje + premioRiesgoPorcentaje, 4);
+        => decimal.Round(
+            (tasaInteresPorcentaje * inflacionPromedioPorcentaje / 100m) + premioRiesgoPorcentaje,
+            4);
 }

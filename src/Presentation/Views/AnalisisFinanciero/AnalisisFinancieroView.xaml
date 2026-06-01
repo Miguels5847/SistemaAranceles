@@ -365,6 +365,8 @@
                                 <TextBlock Text="TIR" FontSize="11" Foreground="#546E7A"/>
                                 <TextBlock Text="{Binding IndicadoresFinancieros.TirDisplay, FallbackValue='No calculable'}"
                                            FontWeight="Bold" FontSize="16" Foreground="#1B5E20"/>
+                                <TextBlock Text="{Binding IndicadoresFinancieros.TirDiagnosticoDisplay, FallbackValue=''}"
+                                           FontSize="10" Foreground="#546E7A" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource PanelResumen}">
