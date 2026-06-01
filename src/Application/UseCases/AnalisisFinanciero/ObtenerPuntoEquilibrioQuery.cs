@@ -23,7 +23,8 @@ public sealed class ObtenerPuntoEquilibrioQuery(
         EstadoPerdidasGananciasDto? estadoPrecalculado = null,
         MatrizCostosGastosDto? costosPrecalculados = null,
         DemandaProyectadaDto? demandaPrecalculada = null,
-        MaterialesProyectadosDto? materialesPrecalculados = null)
+        MaterialesProyectadosDto? materialesPrecalculados = null,
+        decimal factorImprevisto = 1.05m)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -42,7 +43,7 @@ public sealed class ObtenerPuntoEquilibrioQuery(
         }
 
         var costos = costosPrecalculados
-            ?? await obtenerMatrizCostosGastosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+            ?? await obtenerMatrizCostosGastosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, factorImprevisto: factorImprevisto);
         AgregarAdvertencia(advertencias, costos.MensajeAdvertencia);
 
         if (!costos.TieneDatos || costos.ValoresPorPeriodo.Count == 0)
@@ -71,7 +72,7 @@ public sealed class ObtenerPuntoEquilibrioQuery(
         }
 
         var estado = estadoPrecalculado
-            ?? await obtenerEstadoPerdidasGananciasQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+            ?? await obtenerEstadoPerdidasGananciasQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, costosPrecalculados: costos, factorImprevisto: factorImprevisto);
         AgregarAdvertencia(advertencias, estado.MensajeAdvertencia);
         if (!estado.TieneDatos)
             advertencias.Add("No hay Estado P&G calculado; los ingresos del Punto de Equilibrio se tomaron en 0.");

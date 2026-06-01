@@ -27,7 +27,8 @@ public sealed class ObtenerFlujoFondosQuery(
         CancellationToken ct = default,
         EstadoPerdidasGananciasDto? estadoPrecalculado = null,
         MatrizInversionesDto? inversionesPrecalculada = null,
-        ResumenCapitalTrabajoDto? capitalTrabajoPrecalculado = null)
+        ResumenCapitalTrabajoDto? capitalTrabajoPrecalculado = null,
+        decimal factorImprevisto = 1.05m)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -46,7 +47,7 @@ public sealed class ObtenerFlujoFondosQuery(
         }
 
         var estado = estadoPrecalculado
-            ?? await obtenerEstadoPerdidasGananciasQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+            ?? await obtenerEstadoPerdidasGananciasQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, factorImprevisto: factorImprevisto);
         AgregarAdvertencia(advertencias, estado.MensajeAdvertencia);
 
         if (!estado.TieneDatos || estado.ValoresPorPeriodo.Count == 0)

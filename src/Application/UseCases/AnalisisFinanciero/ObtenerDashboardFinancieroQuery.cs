@@ -23,7 +23,8 @@ public sealed class ObtenerDashboardFinancieroQuery(
         IndicadoresFinancierosDto? indicadoresPrecalculados = null,
         PeriodoRecuperacionDto? periodoRecuperacionPrecalculado = null,
         PuntoEquilibrioDto? puntoEquilibrioPrecalculado = null,
-        ArancelOptimoBiseccionDto? arancelOptimoPrecalculado = null)
+        ArancelOptimoBiseccionDto? arancelOptimoPrecalculado = null,
+        decimal factorImprevisto = 1.05m)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -44,27 +45,27 @@ public sealed class ObtenerDashboardFinancieroQuery(
 
         var advertencias = new List<string>();
         var estado = estadoPrecalculado
-            ?? await obtenerEstadoPerdidasGananciasQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+            ?? await obtenerEstadoPerdidasGananciasQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, factorImprevisto: factorImprevisto);
         AgregarAdvertencia(advertencias, estado.MensajeAdvertencia);
 
         var flujo = flujoPrecalculado
-            ?? await obtenerFlujoFondosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, estado);
+            ?? await obtenerFlujoFondosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, estado, factorImprevisto: factorImprevisto);
         AgregarAdvertencia(advertencias, flujo.MensajeAdvertencia);
 
         var indicadores = indicadoresPrecalculados
-            ?? await obtenerIndicadoresFinancierosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, flujo);
+            ?? await obtenerIndicadoresFinancierosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, flujo, factorImprevisto: factorImprevisto);
         AgregarAdvertencia(advertencias, indicadores.MensajeAdvertencia);
 
         var recuperacion = periodoRecuperacionPrecalculado
-            ?? await obtenerPeriodoRecuperacionQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, flujo);
+            ?? await obtenerPeriodoRecuperacionQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, flujo, factorImprevisto: factorImprevisto);
         AgregarAdvertencia(advertencias, recuperacion.MensajeAdvertencia);
 
         var puntoEquilibrio = puntoEquilibrioPrecalculado
-            ?? await obtenerPuntoEquilibrioQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, estadoPrecalculado: estado);
+            ?? await obtenerPuntoEquilibrioQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, estadoPrecalculado: estado, factorImprevisto: factorImprevisto);
         AgregarAdvertencia(advertencias, puntoEquilibrio.MensajeAdvertencia);
 
         var arancelOptimo = arancelOptimoPrecalculado
-            ?? await obtenerArancelOptimoBiseccionQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+            ?? await obtenerArancelOptimoBiseccionQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, factorImprevisto: factorImprevisto);
         AgregarAdvertencia(advertencias, arancelOptimo.MensajeAdvertencia);
 
         return ConsolidadorDashboardFinanciero.Construir(

@@ -19,7 +19,8 @@ public sealed class ObtenerEstadoPerdidasGananciasQuery(
         int carreraId,
         int? escenarioProyeccionId,
         CancellationToken ct = default,
-        MatrizCostosGastosDto? costosPrecalculados = null)
+        MatrizCostosGastosDto? costosPrecalculados = null,
+        decimal factorImprevisto = 1.05m)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -41,7 +42,7 @@ public sealed class ObtenerEstadoPerdidasGananciasQuery(
         AgregarAdvertencia(advertencias, ingresos.MensajeAdvertencia);
 
         var costos = costosPrecalculados
-            ?? await obtenerMatrizCostosGastosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+            ?? await obtenerMatrizCostosGastosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, factorImprevisto: factorImprevisto);
         AgregarAdvertencia(advertencias, costos.MensajeAdvertencia);
 
         if (!costos.TieneDatos || costos.ValoresPorPeriodo.Count == 0)

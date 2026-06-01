@@ -33,6 +33,7 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
     private const decimal ArancelMaximo = 5000m;
     private const decimal ToleranciaVan = 1m;
     private const int MaxIteraciones = 60;
+    private const int MaxExpansionesRango = 10;
     private const decimal PorcentajeParticipacionTrabajadores = 15m;
     private const decimal PorcentajeImpuestoRenta = 25m;
 
@@ -43,7 +44,8 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
         MatrizCostosGastosDto? costosPrecalculados = null,
         DemandaProyectadaDto? demandaPrecalculada = null,
         MatrizInversionesDto? inversionesPrecalculada = null,
-        ResumenCapitalTrabajoDto? capitalTrabajoPrecalculado = null)
+        ResumenCapitalTrabajoDto? capitalTrabajoPrecalculado = null,
+        decimal factorImprevisto = 1.05m)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -62,7 +64,7 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
         }
 
         var costos = costosPrecalculados
-            ?? await obtenerMatrizCostosGastosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+            ?? await obtenerMatrizCostosGastosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, factorImprevisto: factorImprevisto);
         AgregarAdvertencia(advertencias, costos.MensajeAdvertencia);
 
         if (!costos.TieneDatos || costos.ValoresPorPeriodo.Count == 0)
@@ -158,6 +160,7 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             ArancelMaximo = ArancelMaximo,
             ToleranciaVan = ToleranciaVan,
             MaxIteraciones = MaxIteraciones,
+            MaxExpansionesRango = MaxExpansionesRango,
             EvaluarVan = arancel => EvaluarArancel(contexto, arancel).Van
         });
         AgregarAdvertencia(advertencias, resultado.Mensaje);
@@ -171,15 +174,30 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
                 EscenarioProyeccionId = escenarioProyeccionId,
                 EscenarioNombre = escenario?.Nombre ?? costos.EscenarioNombre,
                 Disponible = false,
-                Estado = "No calculable",
+                Estado = resultado.Estado,
                 ArancelMinimo = ArancelMinimo,
                 ArancelMaximo = ArancelMaximo,
+                ArancelMaximoEvaluado = resultado.ArancelMaximoEvaluado,
                 ToleranciaVan = ToleranciaVan,
+                IteracionesUsadas = resultado.IteracionesUsadas,
+                ExpansionesRango = resultado.ExpansionesRango,
                 TmrPorcentaje = tmr.TmrPorcentaje,
                 EsTmrManual = tmr.EsManual,
+                Van = resultado.Van,
                 VanArancelMinimo = resultado.VanMinimo,
                 VanArancelMaximo = resultado.VanMaximo,
-                MensajeAdvertencia = ConstruirMensaje(advertencias, "No se encontró un arancel que lleve el VAN a cero dentro del rango configurado.")
+                MejorArancelEncontrado = resultado.MejorArancel,
+                MejorVanEncontrado = resultado.MejorVan,
+                EstadoConvergencia = resultado.EstadoConvergencia,
+                Iteraciones = resultado.Iteraciones.Select(i => new ArancelOptimoBiseccionIteracionDto
+                {
+                    Numero = i.Numero,
+                    ArancelMinimo = i.ArancelMinimo,
+                    ArancelMaximo = i.ArancelMaximo,
+                    ArancelMedio = i.ArancelMedio,
+                    Van = i.Van
+                }).ToList(),
+                MensajeAdvertencia = ConstruirMensaje(advertencias)
             };
         }
 
@@ -197,8 +215,10 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             Estado = resultado.Estado,
             ArancelMinimo = ArancelMinimo,
             ArancelMaximo = ArancelMaximo,
+            ArancelMaximoEvaluado = resultado.ArancelMaximoEvaluado,
             ToleranciaVan = ToleranciaVan,
             IteracionesUsadas = resultado.IteracionesUsadas,
+            ExpansionesRango = resultado.ExpansionesRango,
             TmrPorcentaje = tmr.TmrPorcentaje,
             EsTmrManual = tmr.EsManual,
             ArancelOptimo = resultado.ArancelOptimo,
@@ -207,6 +227,9 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             Van = evaluacion.Van,
             VanArancelMinimo = resultado.VanMinimo,
             VanArancelMaximo = resultado.VanMaximo,
+            MejorArancelEncontrado = resultado.MejorArancel,
+            MejorVanEncontrado = resultado.MejorVan,
+            EstadoConvergencia = resultado.EstadoConvergencia,
             EsTirCalculable = tir.EsCalculable,
             TirPorcentaje = tir.EsCalculable ? decimal.Round(tir.Tir * 100m, 2) : 0m,
             Iteraciones = resultado.Iteraciones.Select(i => new ArancelOptimoBiseccionIteracionDto
@@ -429,6 +452,7 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             Estado = "Sin datos",
             ArancelMinimo = ArancelMinimo,
             ArancelMaximo = ArancelMaximo,
+            ArancelMaximoEvaluado = ArancelMaximo,
             ToleranciaVan = ToleranciaVan,
             MensajeAdvertencia = mensaje
         };

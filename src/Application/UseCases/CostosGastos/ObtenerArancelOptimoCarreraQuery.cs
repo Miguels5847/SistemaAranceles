@@ -7,9 +7,10 @@ public sealed class ObtenerArancelOptimoCarreraQuery(ObtenerCostoCarreraQuery ob
     public async Task<ArancelOptimoCarreraDto> EjecutarAsync(
         int carreraId,
         int? escenarioProyeccionId,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        decimal factorImprevisto = 1.05m)
     {
-        var costoCarrera = await obtenerCostoCarreraQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+        var costoCarrera = await obtenerCostoCarreraQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, factorImprevisto: factorImprevisto);
         if (!costoCarrera.TieneDatos || costoCarrera.ArancelSugeridoSemestre <= 0m)
         {
             return new ArancelOptimoCarreraDto

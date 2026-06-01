@@ -18,7 +18,8 @@ public sealed class ObtenerIndicadoresFinancierosQuery(
         int carreraId,
         int? escenarioProyeccionId,
         CancellationToken ct = default,
-        FlujoFondosDto? flujoPrecalculado = null)
+        FlujoFondosDto? flujoPrecalculado = null,
+        decimal factorImprevisto = 1.05m)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -37,7 +38,7 @@ public sealed class ObtenerIndicadoresFinancierosQuery(
         }
 
         var flujo = flujoPrecalculado
-            ?? await obtenerFlujoFondosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+            ?? await obtenerFlujoFondosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, factorImprevisto: factorImprevisto);
         AgregarAdvertencia(advertencias, flujo.MensajeAdvertencia);
 
         if (!flujo.TieneDatos || flujo.ValoresPorPeriodo.Count == 0)

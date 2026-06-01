@@ -120,6 +120,7 @@ public partial class App
 
         servicios.AddSingleton<SesionActual>();
         servicios.AddSingleton<ServicioInactividad>();
+        servicios.AddSingleton<FactorImprevistoCostosGastosState>();
 
         servicios.AddTransient<LoginUseCase>();
         servicios.AddTransient<CerrarSesionUseCase>();

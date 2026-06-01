@@ -592,6 +592,16 @@
                                     <Run Text="{Binding ArancelOptimoBiseccion.VanArancelMinimoDisplay, Mode=OneWay, FallbackValue='$ 0.00'}"/>
                                     <Run Text=", VAN en máximo "/>
                                     <Run Text="{Binding ArancelOptimoBiseccion.VanArancelMaximoDisplay, Mode=OneWay, FallbackValue='$ 0.00'}"/>
+                                    <Run Text=", máximo evaluado "/>
+                                    <Run Text="{Binding ArancelOptimoBiseccion.ArancelMaximoEvaluadoDisplay, Mode=OneWay, FallbackValue='$ 5,000.00'}"/>
+                                    <Run Text=", expansiones "/>
+                                    <Run Text="{Binding ArancelOptimoBiseccion.ExpansionesRango, Mode=OneWay, FallbackValue='0'}"/>
+                                    <Run Text=", mejor arancel "/>
+                                    <Run Text="{Binding ArancelOptimoBiseccion.MejorArancelEncontradoDisplay, Mode=OneWay, FallbackValue='Sin datos'}"/>
+                                    <Run Text=", mejor VAN "/>
+                                    <Run Text="{Binding ArancelOptimoBiseccion.MejorVanEncontradoDisplay, Mode=OneWay, FallbackValue='$ 0.00'}"/>
+                                    <Run Text=", estado "/>
+                                    <Run Text="{Binding ArancelOptimoBiseccion.EstadoConvergencia, Mode=OneWay, FallbackValue='Sin datos'}"/>
                                     <Run Text="."/>
                                 </TextBlock>
                             </StackPanel>

@@ -32,12 +32,18 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
+    private readonly FactorImprevistoCostosGastosState _factorImprevistoState;
     private bool _suprimirCambios;
 
-    public AnalisisFinancieroViewModel(IServiceProvider serviceProvider, SesionActual sesionActual)
+    public AnalisisFinancieroViewModel(
+        IServiceProvider serviceProvider,
+        SesionActual sesionActual,
+        FactorImprevistoCostosGastosState factorImprevistoState)
     {
         _serviceProvider = serviceProvider;
         _sesionActual = sesionActual;
+        _factorImprevistoState = factorImprevistoState;
+        FactorImprevisto = _factorImprevistoState.FactorImprevisto;
     }
 
     [ObservableProperty] private ObservableCollection<Carrera> _carreras = [];
@@ -51,6 +57,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     [ObservableProperty] private PuntoEquilibrioDto? _puntoEquilibrio;
     [ObservableProperty] private ArancelOptimoBiseccionDto? _arancelOptimoBiseccion;
     [ObservableProperty] private DashboardFinancieroDto? _dashboardFinanciero;
+    [ObservableProperty] private decimal _factorImprevisto = FactorImprevistoCostosGastosState.FactorPorDefecto;
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
     [ObservableProperty] private bool _estaCargando;
@@ -155,6 +162,12 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         OnPropertyChanged(nameof(RecomendacionesDashboard));
         OnPropertyChanged(nameof(TieneDashboardFinanciero));
         OnPropertyChanged(nameof(PuedeExportarDashboard));
+    }
+
+    partial void OnFactorImprevistoChanged(decimal value)
+    {
+        if (value > 0m)
+            _factorImprevistoState.Establecer(value);
     }
 
     partial void OnEstaCargandoChanged(bool value)
@@ -289,6 +302,14 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             return;
         }
 
+        if (FactorImprevisto <= 0m)
+        {
+            LimpiarResultados();
+            MensajeExito = string.Empty;
+            MensajeError = "El factor imprevisto debe ser mayor a 0.";
+            return;
+        }
+
         EstaCargando = true;
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
@@ -309,11 +330,17 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
 
             var carreraId = CarreraSeleccionada.Id;
             var escenarioId = EscenarioSeleccionado.Id;
+            var factorImprevisto = FactorImprevisto;
+            _factorImprevistoState.Establecer(factorImprevisto);
 
             // Calcula una sola vez la demanda y la matriz de Costos y Gastos (lo más pesado) y las
             // propaga a cada query que las acepta, evitando recomputarlas 3 veces por refresco.
             var demanda = await queryDemanda.EjecutarAsync(carreraId, escenarioId);
-            var matriz = await queryMatriz.EjecutarAsync(carreraId, escenarioId, demandaPrecalculada: demanda);
+            var matriz = await queryMatriz.EjecutarAsync(
+                carreraId,
+                escenarioId,
+                demandaPrecalculada: demanda,
+                factorImprevisto: factorImprevisto);
 
             // Inversiones y capital de trabajo se recalculaban ~5x y ~4x por refresco (Flujo,
             // ArancelOptimo y sus inversión inicial/depreciación). Se calculan una vez y se propagan.
@@ -334,24 +361,28 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             IndicadoresFinancieros = await queryIndicadores.EjecutarAsync(
                 carreraId,
                 escenarioId,
-                flujoPrecalculado: FlujoFondos);
+                flujoPrecalculado: FlujoFondos,
+                factorImprevisto: factorImprevisto);
             PeriodoRecuperacion = await queryPeriodoRecuperacion.EjecutarAsync(
                 carreraId,
                 escenarioId,
-                flujoPrecalculado: FlujoFondos);
+                flujoPrecalculado: FlujoFondos,
+                factorImprevisto: factorImprevisto);
             PuntoEquilibrio = await queryPuntoEquilibrio.EjecutarAsync(
                 carreraId,
                 escenarioId,
                 estadoPrecalculado: EstadoPerdidasGanancias,
                 costosPrecalculados: matriz,
-                demandaPrecalculada: demanda);
+                demandaPrecalculada: demanda,
+                factorImprevisto: factorImprevisto);
             ArancelOptimoBiseccion = await queryArancelOptimo.EjecutarAsync(
                 carreraId,
                 escenarioId,
                 costosPrecalculados: matriz,
                 demandaPrecalculada: demanda,
                 inversionesPrecalculada: inversiones,
-                capitalTrabajoPrecalculado: capitalTrabajo);
+                capitalTrabajoPrecalculado: capitalTrabajo,
+                factorImprevisto: factorImprevisto);
             DashboardFinanciero = await queryDashboard.EjecutarAsync(
                 carreraId,
                 escenarioId,
@@ -360,7 +391,8 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                 indicadoresPrecalculados: IndicadoresFinancieros,
                 periodoRecuperacionPrecalculado: PeriodoRecuperacion,
                 puntoEquilibrioPrecalculado: PuntoEquilibrio,
-                arancelOptimoPrecalculado: ArancelOptimoBiseccion);
+                arancelOptimoPrecalculado: ArancelOptimoBiseccion,
+                factorImprevisto: factorImprevisto);
 
             var advertencias = new[]
             {
@@ -458,7 +490,10 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             var queryArancelOptimo = scope.ServiceProvider.GetRequiredService<ObtenerArancelOptimoBiseccionQuery>();
             var optimo = ArancelOptimoBiseccion?.Disponible == true
                 ? ArancelOptimoBiseccion
-                : await queryArancelOptimo.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
+                : await queryArancelOptimo.EjecutarAsync(
+                    CarreraSeleccionada.Id,
+                    EscenarioSeleccionado.Id,
+                    factorImprevisto: FactorImprevisto);
 
             if (!optimo.Disponible || optimo.ArancelOptimo <= 0m)
             {

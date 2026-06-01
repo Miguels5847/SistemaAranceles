@@ -24,7 +24,7 @@ public sealed class CalculadoraArancelOptimoBiseccionTests
     }
 
     [Fact]
-    public void RetornaNoCalculableSiElVanSigueNegativoEnElMaximo()
+    public void ExpandeRangoSiElVanSigueNegativoEnElMaximoInicial()
     {
         var resultado = CalculadoraArancelOptimoBiseccion.Calcular(new EntradaBiseccionArancel
         {
@@ -33,9 +33,29 @@ public sealed class CalculadoraArancelOptimoBiseccionTests
             EvaluarVan = arancel => arancel - 7000m
         });
 
+        Assert.True(resultado.EsCalculable);
+        Assert.Equal("Calculado", resultado.Estado);
+        Assert.Equal(1, resultado.ExpansionesRango);
+        Assert.Equal(10000m, resultado.ArancelMaximoEvaluado);
+        Assert.InRange(resultado.ArancelOptimo, 6999m, 7001m);
+    }
+
+    [Fact]
+    public void RetornaNoCalculableSiElVanSigueNegativoDespuesDeExpandir()
+    {
+        var resultado = CalculadoraArancelOptimoBiseccion.Calcular(new EntradaBiseccionArancel
+        {
+            ArancelMinimo = 500m,
+            ArancelMaximo = 5000m,
+            MaxExpansionesRango = 2,
+            EvaluarVan = arancel => arancel - 50000m
+        });
+
         Assert.False(resultado.EsCalculable);
-        Assert.Equal(-6500m, resultado.VanMinimo);
-        Assert.Equal(-2000m, resultado.VanMaximo);
+        Assert.Equal("Rango insuficiente", resultado.Estado);
+        Assert.Equal(-49500m, resultado.VanMinimo);
+        Assert.Equal(-30000m, resultado.VanMaximo);
+        Assert.Equal(20000m, resultado.ArancelMaximoEvaluado);
         Assert.Contains("sigue negativo", resultado.Mensaje);
     }
 
@@ -52,6 +72,6 @@ public sealed class CalculadoraArancelOptimoBiseccionTests
         Assert.False(resultado.EsCalculable);
         Assert.Equal(600m, resultado.VanMinimo);
         Assert.Equal(5100m, resultado.VanMaximo);
-        Assert.Contains("por debajo", resultado.Mensaje);
+        Assert.Contains("positivo incluso", resultado.Mensaje);
     }
 }

@@ -46,8 +46,10 @@ public sealed class ArancelOptimoBiseccionDto
     public string Estado { get; init; } = "Sin datos";
     public decimal ArancelMinimo { get; init; }
     public decimal ArancelMaximo { get; init; }
+    public decimal ArancelMaximoEvaluado { get; init; }
     public decimal ToleranciaVan { get; init; }
     public int IteracionesUsadas { get; init; }
+    public int ExpansionesRango { get; init; }
     public decimal TmrPorcentaje { get; init; }
     public bool EsTmrManual { get; init; }
     public decimal ArancelOptimo { get; init; }
@@ -56,6 +58,9 @@ public sealed class ArancelOptimoBiseccionDto
     public decimal Van { get; init; }
     public decimal VanArancelMinimo { get; init; }
     public decimal VanArancelMaximo { get; init; }
+    public decimal MejorArancelEncontrado { get; init; }
+    public decimal MejorVanEncontrado { get; init; }
+    public string EstadoConvergencia { get; init; } = "Sin datos";
     public bool EsTirCalculable { get; init; }
     public decimal TirPorcentaje { get; init; }
     public string? MensajeAdvertencia { get; init; }
@@ -77,7 +82,13 @@ public sealed class ArancelOptimoBiseccionDto
     public string VanDisplay => FormatoMatrizAnalisisFinanciero.Formatear(Van, FormatoMatrizAnalisisFinanciero.Moneda);
     public string VanArancelMinimoDisplay => FormatoMatrizAnalisisFinanciero.Formatear(VanArancelMinimo, FormatoMatrizAnalisisFinanciero.Moneda);
     public string VanArancelMaximoDisplay => FormatoMatrizAnalisisFinanciero.Formatear(VanArancelMaximo, FormatoMatrizAnalisisFinanciero.Moneda);
+    public string ArancelMaximoEvaluadoDisplay => FormatoMatrizAnalisisFinanciero.Formatear(ArancelMaximoEvaluado > 0m ? ArancelMaximoEvaluado : ArancelMaximo, FormatoMatrizAnalisisFinanciero.Moneda);
+    public string MejorArancelEncontradoDisplay => MejorArancelEncontrado > 0m
+        ? FormatoMatrizAnalisisFinanciero.Formatear(MejorArancelEncontrado, FormatoMatrizAnalisisFinanciero.Moneda)
+        : "Sin datos";
+    public string MejorVanEncontradoDisplay => FormatoMatrizAnalisisFinanciero.Formatear(MejorVanEncontrado, FormatoMatrizAnalisisFinanciero.Moneda);
     public string TirDisplay => EsTirCalculable ? $"{TirPorcentaje:N2} %" : "No calculable";
     public string RangoArancelDisplay => $"{FormatoMatrizAnalisisFinanciero.Formatear(ArancelMinimo, FormatoMatrizAnalisisFinanciero.Moneda)} - {FormatoMatrizAnalisisFinanciero.Formatear(ArancelMaximo, FormatoMatrizAnalisisFinanciero.Moneda)}";
+    public string RangoEvaluadoDisplay => $"{FormatoMatrizAnalisisFinanciero.Formatear(ArancelMinimo, FormatoMatrizAnalisisFinanciero.Moneda)} - {ArancelMaximoEvaluadoDisplay}";
     public string ToleranciaDisplay => $"± {FormatoMatrizAnalisisFinanciero.Formatear(ToleranciaVan, FormatoMatrizAnalisisFinanciero.Moneda)}";
 }

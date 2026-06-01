@@ -7,6 +7,7 @@ using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.CostosGastos;
 using SistemaAranceles.Application.UseCases.DemandaIngresos;
 using SistemaAranceles.Domain.Entities;
+using SistemaAranceles.Presentation.State;
 
 namespace SistemaAranceles.Presentation.ViewModels.CostosGastos;
 
@@ -37,13 +38,17 @@ public sealed class CostoCarreraMatrizFilaView
 
 public sealed partial class CostosGastosViewModel : ObservableObject
 {
-    private const decimal FactorImprevistoPorDefecto = 1.05m;
     private readonly IServiceProvider _serviceProvider;
+    private readonly FactorImprevistoCostosGastosState _factorImprevistoState;
     private bool _suprimirCambios;
 
-    public CostosGastosViewModel(IServiceProvider serviceProvider)
+    public CostosGastosViewModel(
+        IServiceProvider serviceProvider,
+        FactorImprevistoCostosGastosState factorImprevistoState)
     {
         _serviceProvider = serviceProvider;
+        _factorImprevistoState = factorImprevistoState;
+        FactorImprevisto = _factorImprevistoState.FactorImprevisto;
     }
 
     [ObservableProperty] private ObservableCollection<Carrera> _carreras = [];
@@ -55,7 +60,7 @@ public sealed partial class CostosGastosViewModel : ObservableObject
     [ObservableProperty] private MatrizCostosGastosDto? _matrizCostosGastos;
     [ObservableProperty] private CostoCarreraResultadoDto? _resultadoCostoCarrera;
     [ObservableProperty] private ObservableCollection<CostoCarreraMatrizFilaView> _costoCarreraFilas = [];
-    [ObservableProperty] private decimal _factorImprevisto = FactorImprevistoPorDefecto;
+    [ObservableProperty] private decimal _factorImprevisto = FactorImprevistoCostosGastosState.FactorPorDefecto;
 
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
@@ -109,6 +114,12 @@ public sealed partial class CostosGastosViewModel : ObservableObject
         CostoCarreraFilas = ConstruirFilasCostoCarrera(value);
         OnPropertyChanged(nameof(EtiquetasCostoCarrera));
         OnPropertyChanged(nameof(TieneResultadoCostoCarrera));
+    }
+
+    partial void OnFactorImprevistoChanged(decimal value)
+    {
+        if (value > 0m)
+            _factorImprevistoState.Establecer(value);
     }
 
     [RelayCommand]
