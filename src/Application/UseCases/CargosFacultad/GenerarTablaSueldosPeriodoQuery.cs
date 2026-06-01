@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using SistemaAranceles.Application.DTOs.CargosFacultad;
 using SistemaAranceles.Application.DTOs.Estudiantes;
 using SistemaAranceles.Application.Interfaces.Persistencia;
@@ -274,6 +276,9 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
             if (periodoIndex < 0 || consolidadoActual is null)
                 return 0m;
 
+            if (cargo.TipoContrato == TipoContrato.Tecnico || EsOcasionalTipo2(cargo.NombreCargo))
+                return ObtenerEquivalenteTecnicoPeriodo(consolidadoActual, periodoIndex);
+
             var tipoFila = ObtenerTipoFilaDocente(cargo);
             if (tipoFila is null)
                 return 0m;
@@ -306,4 +311,70 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
             TipoContrato.Tecnico => "Ocasional Tipo 2 (Técnico)",
             _ => null,
         };
+
+    private static decimal ObtenerEquivalenteTecnicoPeriodo(
+        ProyeccionConsolidadaDto consolidadoActual,
+        int periodoIndex)
+    {
+        if (periodoIndex < 0)
+            return 0m;
+
+        var horasTecnico = consolidadoActual.HorasTecnicoSemana > 0m
+            ? consolidadoActual.HorasTecnicoSemana
+            : 40m;
+
+        var filaHorasPractica = consolidadoActual.TablaHoras.FirstOrDefault(f =>
+        {
+            var etiqueta = NormalizarTexto(f.Etiqueta);
+            return etiqueta.Contains("practica", StringComparison.Ordinal)
+                   && etiqueta.Contains("acumuladas", StringComparison.Ordinal);
+        });
+
+        if (filaHorasPractica is null || filaHorasPractica.Valores.Length <= periodoIndex)
+            return 0m;
+
+        var horasPracticaAcumuladas = filaHorasPractica.Valores[periodoIndex];
+        return horasPracticaAcumuladas <= 0m
+            ? 0m
+            : Math.Round(horasPracticaAcumuladas / horasTecnico, 4);
+    }
+
+    private static bool EsOcasionalTipo2(string nombreCargo)
+    {
+        var normalizado = NormalizarTexto(nombreCargo);
+        return normalizado.Contains("ocasional tipo 2", StringComparison.Ordinal)
+               || normalizado.Contains("tecnico docente", StringComparison.Ordinal);
+    }
+
+    private static string NormalizarTexto(string texto)
+    {
+        if (string.IsNullOrWhiteSpace(texto))
+            return string.Empty;
+
+        var descompuesto = texto.ToLowerInvariant().Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder(descompuesto.Length);
+        var separadorPendiente = false;
+
+        foreach (var c in descompuesto)
+        {
+            var categoria = CharUnicodeInfo.GetUnicodeCategory(c);
+            if (categoria == UnicodeCategory.NonSpacingMark)
+                continue;
+
+            if (char.IsLetterOrDigit(c))
+            {
+                if (separadorPendiente && sb.Length > 0)
+                    sb.Append(' ');
+
+                sb.Append(c);
+                separadorPendiente = false;
+            }
+            else
+            {
+                separadorPendiente = true;
+            }
+        }
+
+        return sb.ToString().Normalize(NormalizationForm.FormC);
+    }
 }

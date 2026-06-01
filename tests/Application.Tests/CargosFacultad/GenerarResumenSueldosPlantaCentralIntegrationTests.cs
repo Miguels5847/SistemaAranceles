@@ -50,6 +50,15 @@ public class GenerarResumenSueldosPlantaCentralIntegrationTests
 
         var consolidado = new ProyeccionConsolidadaDto
         {
+            HorasTecnicoSemana = 40m,
+            TablaHoras =
+            [
+                new FilaHorasDto
+                {
+                    Etiqueta = "Nº Horas Clase Aplicac. Práctica x semana Acumuladas",
+                    Valores = [0m, 10m]
+                }
+            ],
             DocentesPorPeriodo =
             [
                 new FilaDocentePeriodoDto
@@ -90,7 +99,7 @@ public class GenerarResumenSueldosPlantaCentralIntegrationTests
 
         Assert.Equal(esperado.TotalSemestre, filaResumen.ValoresPorPeriodo[0]);
         Assert.Equal(esperado.NumeroPersonas, filaResumen.NumeroPersonas);
-        Assert.Equal(1m, filaResumen.NumeroPersonas);
+        Assert.Equal(0.25m, filaResumen.NumeroPersonas);
     }
 
     private static DatosInstitucionales NuevoDatos(decimal totalMensual = 100000m, int estudiantesUniv = 10000)
