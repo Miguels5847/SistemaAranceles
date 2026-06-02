@@ -35,7 +35,10 @@ public sealed class FlujoFondosRubroDto
     public IReadOnlyList<decimal> Periodos { get; init; } = [];
     public decimal Total { get; init; }
     public bool EsTotal { get; init; }
+    public string TipoFila { get; init; } = "normal";
     public string FormatoValor { get; init; } = FormatoMatrizAnalisisFinanciero.Moneda;
+    public bool EsSeccion => string.Equals(TipoFila, "seccion", StringComparison.OrdinalIgnoreCase);
+    public bool EsResultado => string.Equals(TipoFila, "resultado", StringComparison.OrdinalIgnoreCase);
 
     public IReadOnlyList<string> PeriodosDisplay => Periodos
         .Select(v => FormatoMatrizAnalisisFinanciero.Formatear(v, FormatoValor))

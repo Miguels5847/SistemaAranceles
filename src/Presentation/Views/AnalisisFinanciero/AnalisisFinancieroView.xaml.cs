@@ -95,9 +95,11 @@ public partial class AnalisisFinancieroView : UserControl
         {
             Header = "Concepto",
             Binding = new Binding(nameof(FlujoFondosRubroDto.Concepto)),
-            Width = new DataGridLength(280)
+            Width = new DataGridLength(320),
+            ElementStyle = TryFindResource("FlujoFondosConceptoTextStyle") as Style
         });
 
+        var estiloNumero = TryFindResource("FlujoFondosNumeroTextStyle") as Style;
         var etiquetas = ObtenerEtiquetasFlujoFondos();
         for (var i = 0; i < etiquetas.Count; i++)
         {
@@ -105,7 +107,8 @@ public partial class AnalisisFinancieroView : UserControl
             {
                 Header = etiquetas[i],
                 Binding = new Binding($"PeriodosDisplay[{i}]"),
-                Width = new DataGridLength(130)
+                Width = new DataGridLength(130),
+                ElementStyle = estiloNumero
             });
         }
 
@@ -113,7 +116,8 @@ public partial class AnalisisFinancieroView : UserControl
         {
             Header = "Total",
             Binding = new Binding(nameof(FlujoFondosRubroDto.TotalDisplay)),
-            Width = new DataGridLength(140)
+            Width = new DataGridLength(140),
+            ElementStyle = estiloNumero
         });
     }
 

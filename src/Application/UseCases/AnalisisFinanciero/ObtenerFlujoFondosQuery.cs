@@ -190,23 +190,23 @@ public sealed class ObtenerFlujoFondosQuery(
 
         return
         [
-            CrearFila("INGRESOS", V(x => x.Ingresos), esTotal: true),
-            CrearFila("COSTOS POR SERVICIOS", V(x => x.CostosServicios), esTotal: true),
-            CrearFila("GASTOS DE ADMINISTRACION", V(x => x.GastosAdministracion), esTotal: true),
-            CrearFila("GASTOS DE VENTAS", V(x => x.GastosVentas), esTotal: true),
-            CrearFila("OTROS GASTOS", V(x => x.OtrosGastos), esTotal: true),
-            CrearFila("GASTOS FINANCIEROS", V(x => x.GastosFinancieros), esTotal: true),
-            CrearFila("UTILIDAD ANTES DE IMPUESTOS Y PARTICIPACION A TRABAJADORES", V(x => x.UtilidadAntesParticipacionImpuestos), esTotal: true),
+            CrearFila("INGRESOS", V(x => x.Ingresos), esTotal: true, tipoFila: "seccion"),
+            CrearFila("COSTOS POR SERVICIOS", V(x => x.CostosServicios), esTotal: true, tipoFila: "seccion"),
+            CrearFila("GASTOS DE ADMINISTRACION", V(x => x.GastosAdministracion), esTotal: true, tipoFila: "seccion"),
+            CrearFila("GASTOS DE VENTAS", V(x => x.GastosVentas), esTotal: true, tipoFila: "seccion"),
+            CrearFila("OTROS GASTOS", V(x => x.OtrosGastos), esTotal: true, tipoFila: "seccion"),
+            CrearFila("GASTOS FINANCIEROS", V(x => x.GastosFinancieros), esTotal: true, tipoFila: "seccion"),
+            CrearFila("UTILIDAD ANTES DE IMPUESTOS Y PARTICIPACION A TRABAJADORES", V(x => x.UtilidadAntesParticipacionImpuestos), esTotal: true, tipoFila: "resultado"),
             CrearFila("PARTICIPACION A TRABAJADORES 15%", V(x => x.ParticipacionTrabajadores)),
-            CrearFila("UTILIDAD ANTES DE IMPUESTOS", V(x => x.UtilidadAntesImpuestos), esTotal: true),
+            CrearFila("UTILIDAD ANTES DE IMPUESTOS", V(x => x.UtilidadAntesImpuestos), esTotal: true, tipoFila: "resultado"),
             CrearFila("IMPUESTO A LA RENTA 25%", V(x => x.ImpuestoRenta)),
-            CrearFila("UTILIDAD O PERDIDA DEL EJERCICIO", V(x => x.UtilidadPerdidaEjercicio), esTotal: true),
+            CrearFila("UTILIDAD O PERDIDA DEL EJERCICIO", V(x => x.UtilidadPerdidaEjercicio), esTotal: true, tipoFila: "resultado"),
             CrearFila("INVERSION", V(x => x.PeriodoOrden == 0 ? -x.InversionInicial : -x.InversionesFuturas)),
             CrearFila("DEPRECIACION", V(x => x.Depreciacion)),
             CrearFila("AMORTIZACION DE ACTIVOS DIFERIDOS", V(x => x.AmortizacionActivosDiferidos)),
             CrearFila("RECUPERACION DEL CAPITAL DE TRABAJO", V(x => x.RecuperacionCapitalTrabajo)),
             CrearFila("PAGO DEL CREDITO", V(x => x.PagoCredito)),
-            CrearFila("FLUJO DE FONDOS NETO EN USO", V(x => x.FlujoNeto), esTotal: true)
+            CrearFila("FLUJO DE FONDOS NETO EN USO", V(x => x.FlujoNeto), esTotal: true, tipoFila: "resultado")
         ];
     }
 
@@ -214,13 +214,15 @@ public sealed class ObtenerFlujoFondosQuery(
         string concepto,
         IReadOnlyList<decimal> valores,
         decimal? totalOverride = null,
-        bool esTotal = false)
+        bool esTotal = false,
+        string tipoFila = "normal")
         => new()
         {
             Concepto = concepto,
             Periodos = valores.Select(v => decimal.Round(v, 2)).ToList(),
             Total = decimal.Round(totalOverride ?? valores.Sum(), 2),
-            EsTotal = esTotal
+            EsTotal = esTotal,
+            TipoFila = tipoFila
         };
 
     private static void AgregarAdvertencia(List<string> advertencias, string? mensaje)
