@@ -284,45 +284,11 @@
             <TabItem Header="2. Flujo de Fondos">
                 <Grid Margin="8">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,8">
-                        <Border Style="{StaticResource PanelResumen}">
-                            <StackPanel>
-                                <TextBlock Text="Inversión inicial" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding FlujoFondos.TotalInversionInicialDisplay, FallbackValue='$ 0.00'}"
-                                           FontWeight="Bold"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Style="{StaticResource PanelResumen}">
-                            <StackPanel>
-                                <TextBlock Text="Recuperación capital trabajo" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding FlujoFondos.TotalRecuperacionCapitalTrabajoDisplay, FallbackValue='$ 0.00'}"
-                                           FontWeight="Bold"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Style="{StaticResource PanelResumen}">
-                            <StackPanel>
-                                <TextBlock Text="Flujo neto total" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding FlujoFondos.TotalFlujoNetoDisplay, FallbackValue='$ 0.00'}"
-                                           FontWeight="Bold"
-                                           Foreground="#1B5E20"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Style="{StaticResource PanelResumen}">
-                            <StackPanel>
-                                <TextBlock Text="Flujo acumulado final" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding FlujoFondos.FlujoAcumuladoFinalDisplay, FallbackValue='$ 0.00'}"
-                                           FontWeight="Bold"
-                                           Foreground="#1B5E20"/>
-                            </StackPanel>
-                        </Border>
-                    </UniformGrid>
-
                     <DataGrid x:Name="FlujoFondosGrid"
-                              Grid.Row="1"
+                              Grid.Row="0"
                               ItemsSource="{Binding FilasFlujoFondos}"
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
@@ -331,7 +297,8 @@
                               HeadersVisibility="Column"
                               GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F7FAF7"
-                              BorderBrush="#C8E6C9"/>
+                              BorderBrush="#C8E6C9"
+                              ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
                 </Grid>
             </TabItem>
 

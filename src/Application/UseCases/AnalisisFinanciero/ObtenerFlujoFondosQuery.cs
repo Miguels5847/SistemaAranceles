@@ -1,11 +1,11 @@
 using SistemaAranceles.Application.DTOs.AnalisisFinanciero;
 using SistemaAranceles.Application.DTOs.CapitalTrabajo;
 using SistemaAranceles.Application.DTOs.RecursosFisicosDepreciacion;
+using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.ActivoDiferido;
 using SistemaAranceles.Application.UseCases.CapitalTrabajo;
 using SistemaAranceles.Application.UseCases.InversionInicial;
 using SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion;
-using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Domain.Entities;
 
 namespace SistemaAranceles.Application.UseCases.AnalisisFinanciero;
@@ -175,7 +175,7 @@ public sealed class ObtenerFlujoFondosQuery(
             CarreraNombre = carrera?.Nombre ?? estado.CarreraNombre,
             EscenarioProyeccionId = escenarioProyeccionId,
             EscenarioNombre = escenario?.Nombre ?? estado.EscenarioNombre,
-            EtiquetasPeriodos = valores.Select(v => v.EtiquetaPeriodo).ToList(),
+            EtiquetasPeriodos = valores.Select(v => v.PeriodoOrden == 0 ? "0" : v.EtiquetaPeriodo).ToList(),
             ValoresPorPeriodo = valores,
             Filas = ConstruirFilas(valores),
             MensajeAdvertencia = ConstruirMensaje(advertencias)
@@ -190,26 +190,23 @@ public sealed class ObtenerFlujoFondosQuery(
 
         return
         [
-            CrearFila("Ingresos", V(x => x.Ingresos)),
-            CrearFila("Costos por servicios", V(x => x.CostosServicios)),
-            CrearFila("Gastos de administración", V(x => x.GastosAdministracion)),
-            CrearFila("Gastos de ventas", V(x => x.GastosVentas)),
-            CrearFila("Otros gastos", V(x => x.OtrosGastos)),
-            CrearFila("Gastos financieros", V(x => x.GastosFinancieros)),
-            CrearFila("Utilidad antes de participación e impuestos", V(x => x.UtilidadAntesParticipacionImpuestos), esTotal: true),
-            CrearFila("Participación trabajadores", V(x => x.ParticipacionTrabajadores)),
-            CrearFila("Utilidad antes de impuestos", V(x => x.UtilidadAntesImpuestos), esTotal: true),
-            CrearFila("Impuesto a la renta", V(x => x.ImpuestoRenta)),
-            CrearFila("Utilidad o pérdida del ejercicio", V(x => x.UtilidadPerdidaEjercicio), esTotal: true),
-            CrearFila("Inversión inicial", V(x => x.InversionInicial)),
-            CrearFila("Inversiones futuras", V(x => x.InversionesFuturas)),
-            CrearFila("Depreciación", V(x => x.Depreciacion)),
-            CrearFila("Amortización activos diferidos", V(x => x.AmortizacionActivosDiferidos)),
-            CrearFila("Capital de trabajo", V(x => x.CapitalTrabajo)),
-            CrearFila("Recuperación capital trabajo", V(x => x.RecuperacionCapitalTrabajo)),
-            CrearFila("Pago crédito", V(x => x.PagoCredito)),
-            CrearFila("Flujo de fondos neto", V(x => x.FlujoNeto), esTotal: true),
-            CrearFila("Flujo acumulado", V(x => x.FlujoAcumulado), totalOverride: valores.LastOrDefault()?.FlujoAcumulado ?? 0m, esTotal: true)
+            CrearFila("INGRESOS", V(x => x.Ingresos), esTotal: true),
+            CrearFila("COSTOS POR SERVICIOS", V(x => x.CostosServicios), esTotal: true),
+            CrearFila("GASTOS DE ADMINISTRACION", V(x => x.GastosAdministracion), esTotal: true),
+            CrearFila("GASTOS DE VENTAS", V(x => x.GastosVentas), esTotal: true),
+            CrearFila("OTROS GASTOS", V(x => x.OtrosGastos), esTotal: true),
+            CrearFila("GASTOS FINANCIEROS", V(x => x.GastosFinancieros), esTotal: true),
+            CrearFila("UTILIDAD ANTES DE IMPUESTOS Y PARTICIPACION A TRABAJADORES", V(x => x.UtilidadAntesParticipacionImpuestos), esTotal: true),
+            CrearFila("PARTICIPACION A TRABAJADORES 15%", V(x => x.ParticipacionTrabajadores)),
+            CrearFila("UTILIDAD ANTES DE IMPUESTOS", V(x => x.UtilidadAntesImpuestos), esTotal: true),
+            CrearFila("IMPUESTO A LA RENTA 25%", V(x => x.ImpuestoRenta)),
+            CrearFila("UTILIDAD O PERDIDA DEL EJERCICIO", V(x => x.UtilidadPerdidaEjercicio), esTotal: true),
+            CrearFila("INVERSION", V(x => x.PeriodoOrden == 0 ? -x.InversionInicial : -x.InversionesFuturas)),
+            CrearFila("DEPRECIACION", V(x => x.Depreciacion)),
+            CrearFila("AMORTIZACION DE ACTIVOS DIFERIDOS", V(x => x.AmortizacionActivosDiferidos)),
+            CrearFila("RECUPERACION DEL CAPITAL DE TRABAJO", V(x => x.RecuperacionCapitalTrabajo)),
+            CrearFila("PAGO DEL CREDITO", V(x => x.PagoCredito)),
+            CrearFila("FLUJO DE FONDOS NETO EN USO", V(x => x.FlujoNeto), esTotal: true)
         ];
     }
 
