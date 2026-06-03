@@ -56,12 +56,14 @@ public sealed class DashboardFinancieroDto
     public string UtilidadPerdidaDisplay => FormatoMatrizAnalisisFinanciero.Formatear(UtilidadPerdida, FormatoMatrizAnalisisFinanciero.Moneda);
     public string FlujoAcumuladoFinalDisplay => FormatoMatrizAnalisisFinanciero.Formatear(FlujoAcumuladoFinal, FormatoMatrizAnalisisFinanciero.Moneda);
     public string VanDisplay => FormatoMatrizAnalisisFinanciero.Formatear(Van, FormatoMatrizAnalisisFinanciero.Moneda);
-    public string TmrDisplay => $"{TmrPorcentaje:N2} %";
-    public string TirDisplay => EsTirCalculable ? $"{TirPorcentaje:N2} %" : "No calculable";
+    public string TmrDisplay => FormatoMatrizAnalisisFinanciero.FormatearPorcentajeValor(TmrPorcentaje);
+    public string TirDisplay => EsTirCalculable
+        ? FormatoMatrizAnalisisFinanciero.FormatearPorcentajeValor(TirPorcentaje)
+        : "No calculable";
     public string ArancelOptimoDisplay => ArancelOptimo > 0m
         ? FormatoMatrizAnalisisFinanciero.Formatear(ArancelOptimo, FormatoMatrizAnalisisFinanciero.Moneda)
         : "No calculable";
     public string ViabilidadDisplay => $"{IndicadoresViables}/{TotalIndicadores} indicadores";
-    public string PorcentajeViabilidadDisplay => $"{PorcentajeViabilidad:N2} %";
+    public string PorcentajeViabilidadDisplay => FormatoMatrizAnalisisFinanciero.FormatearPorcentajeValor(PorcentajeViabilidad);
     public string FechaCalculoDisplay => FechaCalculo.ToString("dd/MM/yyyy HH:mm");
 }

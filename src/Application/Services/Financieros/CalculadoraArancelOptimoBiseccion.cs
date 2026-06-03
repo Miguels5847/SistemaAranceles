@@ -168,6 +168,9 @@ public static class CalculadoraArancelOptimoBiseccion
             }
         }
 
+        var convergePorTolerancia = Math.Abs(mejorVan) <= tolerancia;
+        var equilibrioAproximado = Math.Abs(mejorVan) <= tolerancia * 10m;
+
         return new ResultadoBiseccionArancel
         {
             EsCalculable = true,
@@ -182,11 +185,17 @@ public static class CalculadoraArancelOptimoBiseccion
             MejorVan = mejorVan,
             IteracionesUsadas = iteraciones.Count,
             ExpansionesRango = expansiones,
-            Estado = Math.Abs(mejorVan) <= tolerancia ? "Calculado" : "Aproximado",
-            EstadoConvergencia = Math.Abs(mejorVan) <= tolerancia ? "Convergio" : "Maximo de iteraciones",
-            Mensaje = Math.Abs(mejorVan) <= tolerancia
+            Estado = convergePorTolerancia ? "Calculado" : "Aproximado",
+            EstadoConvergencia = convergePorTolerancia
+                ? "Convergió"
+                : equilibrioAproximado
+                    ? "VAN cercano a 0"
+                    : "Máximo de iteraciones",
+            Mensaje = convergePorTolerancia
                 ? null
-                : "Se alcanzo el maximo de iteraciones; se muestra la mejor aproximacion encontrada.",
+                : equilibrioAproximado
+                    ? "Equilibrio aproximado por redondeo monetario. VAN cercano a 0."
+                    : "Se alcanzó el máximo de iteraciones; se muestra la mejor aproximación encontrada.",
             Iteraciones = iteraciones
         };
     }
@@ -219,7 +228,7 @@ public static class CalculadoraArancelOptimoBiseccion
             IteracionesUsadas = iteraciones.Count,
             ExpansionesRango = expansiones,
             Estado = "Calculado",
-            EstadoConvergencia = "Convergio",
+            EstadoConvergencia = "Convergió",
             Iteraciones = iteraciones
         };
 }

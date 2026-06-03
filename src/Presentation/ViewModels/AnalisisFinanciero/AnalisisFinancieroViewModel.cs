@@ -59,6 +59,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     [ObservableProperty] private DashboardFinancieroDto? _dashboardFinanciero;
     [ObservableProperty] private decimal _factorImprevisto = FactorImprevistoCostosGastosState.FactorPorDefecto;
     [ObservableProperty] private string _mensajeError = string.Empty;
+    [ObservableProperty] private string _mensajeAdvertencia = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
     [ObservableProperty] private bool _estaCargando;
 
@@ -185,6 +186,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
 
         EstaCargando = true;
         MensajeError = string.Empty;
+        MensajeAdvertencia = string.Empty;
         MensajeExito = string.Empty;
         try
         {
@@ -291,6 +293,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         if (CarreraSeleccionada is null)
         {
             LimpiarResultados();
+            MensajeAdvertencia = string.Empty;
             MensajeError = "Selecciona una carrera.";
             return;
         }
@@ -298,6 +301,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         if (EscenarioSeleccionado is null)
         {
             LimpiarResultados();
+            MensajeAdvertencia = string.Empty;
             MensajeError = "Selecciona un escenario.";
             return;
         }
@@ -305,6 +309,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         if (FactorImprevisto <= 0m)
         {
             LimpiarResultados();
+            MensajeAdvertencia = string.Empty;
             MensajeExito = string.Empty;
             MensajeError = "El factor imprevisto debe ser mayor a 0.";
             return;
@@ -312,6 +317,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
 
         EstaCargando = true;
         MensajeError = string.Empty;
+        MensajeAdvertencia = string.Empty;
         MensajeExito = string.Empty;
         try
         {
@@ -404,16 +410,27 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                 ArancelOptimoBiseccion.MensajeAdvertencia
             }
             .Where(m => !string.IsNullOrWhiteSpace(m))
+            .Select(m => m!.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-            if (advertencias.Count == 0)
+            var advertenciasSuaves = advertencias
+                .Where(EsAdvertenciaSuave)
+                .ToList();
+            var erroresCriticos = advertencias
+                .Where(m => !EsAdvertenciaSuave(m))
+                .ToList();
+
+            if (advertenciasSuaves.Count > 0)
+                MensajeAdvertencia = string.Join(Environment.NewLine, advertenciasSuaves);
+
+            if (erroresCriticos.Count == 0)
             {
                 MensajeExito = "Análisis financiero calculado correctamente.";
             }
             else
             {
-                MensajeError = string.Join(Environment.NewLine, advertencias);
+                MensajeError = string.Join(Environment.NewLine, erroresCriticos);
             }
         }
         catch (Exception ex)
@@ -432,12 +449,14 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     {
         if (!PuedeVerExportarDashboard)
         {
+            MensajeAdvertencia = string.Empty;
             MensajeError = "Solo un administrador puede exportar el dashboard.";
             return;
         }
 
         if (DashboardFinanciero is null || !DashboardFinanciero.TieneDatos)
         {
+            MensajeAdvertencia = string.Empty;
             MensajeError = "No hay dashboard financiero para exportar.";
             return;
         }
@@ -458,6 +477,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         {
             await File.WriteAllTextAsync(dialog.FileName, ConstruirCsvDashboard(DashboardFinanciero), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
             MensajeError = string.Empty;
+            MensajeAdvertencia = string.Empty;
             MensajeExito = "Dashboard financiero exportado correctamente.";
         }
         catch (Exception ex)
@@ -471,18 +491,21 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     {
         if (!PuedeEditar)
         {
+            MensajeAdvertencia = string.Empty;
             MensajeError = "No tienes permiso para editar.";
             return;
         }
 
         if (CarreraSeleccionada is null || EscenarioSeleccionado is null)
         {
+            MensajeAdvertencia = string.Empty;
             MensajeError = "Selecciona carrera y escenario.";
             return;
         }
 
         EstaCargando = true;
         MensajeError = string.Empty;
+        MensajeAdvertencia = string.Empty;
         MensajeExito = string.Empty;
         try
         {
@@ -497,6 +520,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
 
             if (!optimo.Disponible || optimo.ArancelOptimo <= 0m)
             {
+                MensajeAdvertencia = string.Empty;
                 MensajeError = optimo.MensajeAdvertencia ?? "No hay arancel óptimo disponible para aplicar.";
                 return;
             }
@@ -577,6 +601,36 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
 
     private static string Csv(string? value)
         => "\"" + (value ?? string.Empty).Replace("\"", "\"\"") + "\"";
+
+    private static bool EsAdvertenciaSuave(string mensaje)
+    {
+        if (string.IsNullOrWhiteSpace(mensaje))
+            return false;
+
+        var patrones = new[]
+        {
+            "múltiples cambios de signo",
+            "multiples cambios de signo",
+            "TIR puede no ser única",
+            "TIR puede no ser unica",
+            "TIR posiblemente no única",
+            "TIR posiblemente no unica",
+            "VAN cercano a 0",
+            "máximo de iteraciones",
+            "maximo de iteraciones",
+            "mejor aproximación",
+            "mejor aproximacion",
+            "redondeo monetario",
+            "inversiones futuras",
+            "inflación promedio se tomó como 0%",
+            "inflacion promedio se tomo como 0%",
+            "No recuperado dentro del horizonte proyectado",
+            "periodos sin margen positivo",
+            "periodos no calculables"
+        };
+
+        return patrones.Any(p => mensaje.Contains(p, StringComparison.OrdinalIgnoreCase));
+    }
 
     private static string NormalizarNombreArchivo(string value)
     {

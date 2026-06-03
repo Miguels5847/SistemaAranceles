@@ -101,4 +101,35 @@ public sealed class ConsolidadorDashboardFinancieroTests
         Assert.Contains(dashboard.Indicadores, i => i.Nombre == "VAN" && !i.EsViable);
         Assert.Contains(dashboard.Recomendaciones, r => r.Origen == "VAN" && r.Prioridad == "Alta");
     }
+
+    [Fact]
+    public void TIRConMultiplesCambiosDeSigno_SeTrataComoAdvertenciaSiVanEsViable()
+    {
+        var dashboard = ConsolidadorDashboardFinanciero.Construir(
+            carreraId: 1,
+            carreraNombre: "Sistemas",
+            escenarioProyeccionId: 2,
+            escenarioNombre: "Base",
+            estado: null,
+            flujo: null,
+            indicadores: new IndicadoresFinancierosDto
+            {
+                TieneDatos = true,
+                Van = 1500m,
+                EsTirCalculable = true,
+                TirPorcentaje = 8m,
+                TmrPorcentaje = 16m,
+                TirPosibleNoUnica = true,
+                EstadoViabilidad = "Viable"
+            },
+            periodoRecuperacion: null,
+            puntoEquilibrio: null,
+            arancelOptimo: null);
+
+        var indicadorTir = Assert.Single(dashboard.Indicadores, i => i.Nombre == "TIR");
+        Assert.True(indicadorTir.EsViable);
+        Assert.Contains("Advertencia", indicadorTir.Estado);
+        Assert.DoesNotContain(dashboard.Recomendaciones, r => r.Origen == "TIR" && r.Prioridad == "Alta");
+        Assert.Contains(dashboard.Recomendaciones, r => r.Origen == "TIR" && r.Prioridad == "Media");
+    }
 }

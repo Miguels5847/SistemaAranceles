@@ -49,17 +49,21 @@ public sealed class IndicadoresFinancierosDto
     public string? MensajeAdvertencia { get; init; }
 
     // ----- Displays -----
-    public string TmrDisplay => $"{TmrPorcentaje:N2} %";
-    public string FuenteTmrDisplay => EsTmrManual ? "Manual" : "Calculada";
+    public string TmrDisplay => FormatoMatrizAnalisisFinanciero.FormatearPorcentajeValor(TmrPorcentaje);
+    public string FuenteTmrDisplay => EsTmrManual
+        ? "Manual / tasa mínima de rendimiento"
+        : "Calculada / tasa mínima de rendimiento";
     public string TmrFormulaDisplay => EsTmrManual
-        ? "TMR manual configurada en Datos Institucionales."
-        : $"TMR = (Tasa interés {TasaInteresFinancieraPorcentaje:N2}% × Inflación prom. {InflacionPromedioPorcentaje:N2}% / 100) + Premio riesgo {PremioRiesgoPorcentaje:N2}%";
+        ? "TMR manual configurada en Datos Institucionales. Se usa como tasa de descuento para VAN."
+        : $"TMR / tasa mínima de rendimiento usada para VAN = (Tasa interés {FormatoMatrizAnalisisFinanciero.FormatearPorcentajeValor(TasaInteresFinancieraPorcentaje)} × Inflación prom. {FormatoMatrizAnalisisFinanciero.FormatearPorcentajeValor(InflacionPromedioPorcentaje)} / 100) + Premio riesgo {FormatoMatrizAnalisisFinanciero.FormatearPorcentajeValor(PremioRiesgoPorcentaje)}";
     public string RangoInflacionDisplay => TieneDatosInflacion
         ? $"{AnioInflacionDesde}–{AnioInflacionHasta}"
         : "Sin datos";
 
     public string VanDisplay => FormatoMatrizAnalisisFinanciero.Formatear(Van, FormatoMatrizAnalisisFinanciero.Moneda);
-    public string TirDisplay => EsTirCalculable ? $"{TirPorcentaje:N2} %" : "No calculable";
+    public string TirDisplay => EsTirCalculable
+        ? FormatoMatrizAnalisisFinanciero.FormatearPorcentajeValor(TirPorcentaje)
+        : "No calculable";
     public string TirDiagnosticoDisplay
     {
         get
@@ -67,11 +71,11 @@ public sealed class IndicadoresFinancierosDto
             if (!EsTirCalculable)
                 return "No calculable: el flujo no cambia de signo.";
             return TirPosibleNoUnica
-                ? "TIR posiblemente no única (múltiples cambios de signo); se prioriza el VAN."
+                ? "El flujo presenta múltiples cambios de signo. La TIR puede no ser única. Se muestra la TIR normal calculada para mantener compatibilidad con el Excel. La viabilidad financiera debe evaluarse principalmente con el VAN."
                 : "Calculable.";
         }
     }
-    public string TasaInteresFinancieraDisplay => $"{TasaInteresFinancieraPorcentaje:N2} %";
-    public string InflacionPromedioDisplay => $"{InflacionPromedioPorcentaje:N2} %";
-    public string PremioRiesgoDisplay => $"{PremioRiesgoPorcentaje:N2} %";
+    public string TasaInteresFinancieraDisplay => FormatoMatrizAnalisisFinanciero.FormatearPorcentajeValor(TasaInteresFinancieraPorcentaje);
+    public string InflacionPromedioDisplay => FormatoMatrizAnalisisFinanciero.FormatearPorcentajeValor(InflacionPromedioPorcentaje);
+    public string PremioRiesgoDisplay => FormatoMatrizAnalisisFinanciero.FormatearPorcentajeValor(PremioRiesgoPorcentaje);
 }

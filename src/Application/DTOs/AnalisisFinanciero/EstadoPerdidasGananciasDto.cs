@@ -10,11 +10,28 @@ public static class FormatoMatrizAnalisisFinanciero
     public static string Formatear(decimal valor, string formato)
         => formato switch
         {
-            Porcentaje => valor.ToString("P2"),
+            Porcentaje => FormatearPorcentajeFraccion(valor),
             Entero => valor.ToString("N0"),
             Decimal => valor.ToString("N2"),
-            _ => $"$ {valor:N2}"
+            _ => FormatearMoneda(valor)
         };
+
+    public static string FormatearMoneda(decimal valor)
+    {
+        var absoluto = Math.Abs(valor);
+        return valor < 0m
+            ? $"$ ({absoluto:N2})"
+            : $"$ {absoluto:N2}";
+    }
+
+    public static string FormatearPorcentajeFraccion(decimal valor)
+        => QuitarEspaciosPorcentaje(valor.ToString("P2"));
+
+    public static string FormatearPorcentajeValor(decimal porcentaje)
+        => QuitarEspaciosPorcentaje($"{porcentaje:N2}%");
+
+    private static string QuitarEspaciosPorcentaje(string valor)
+        => valor.Replace(" ", string.Empty).Replace("\u00A0", string.Empty);
 }
 
 public sealed class EstadoPerdidasGananciasPeriodoDto
@@ -78,6 +95,6 @@ public sealed class EstadoPerdidasGananciasDto
     public string TotalIngresosDisplay => FormatoMatrizAnalisisFinanciero.Formatear(TotalIngresos, FormatoMatrizAnalisisFinanciero.Moneda);
     public string TotalCostosYGastosDisplay => FormatoMatrizAnalisisFinanciero.Formatear(TotalCostosYGastos, FormatoMatrizAnalisisFinanciero.Moneda);
     public string TotalUtilidadPerdidaEjercicioDisplay => FormatoMatrizAnalisisFinanciero.Formatear(TotalUtilidadPerdidaEjercicio, FormatoMatrizAnalisisFinanciero.Moneda);
-    public string PorcentajeParticipacionDisplay => $"{PorcentajeParticipacionTrabajadoresAplicado:0.##}%";
-    public string PorcentajeImpuestoRentaDisplay => $"{PorcentajeImpuestoRentaAplicado:0.##}%";
+    public string PorcentajeParticipacionDisplay => FormatoMatrizAnalisisFinanciero.FormatearPorcentajeValor(PorcentajeParticipacionTrabajadoresAplicado);
+    public string PorcentajeImpuestoRentaDisplay => FormatoMatrizAnalisisFinanciero.FormatearPorcentajeValor(PorcentajeImpuestoRentaAplicado);
 }

@@ -336,6 +336,11 @@
                        Foreground="#2E7D32"
                        FontWeight="SemiBold"
                        Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding MensajeAdvertencia}"
+                       Foreground="#E65100"
+                       FontWeight="SemiBold"
+                       TextWrapping="Wrap"
+                       Visibility="{Binding MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}}"/>
             <TextBlock Text="{Binding MensajeError}"
                        Foreground="#C62828"
                        FontWeight="SemiBold"
@@ -398,8 +403,8 @@
                     <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,8">
                         <Border Style="{StaticResource PanelResumen}">
                             <StackPanel>
-                                <TextBlock Text="TMR" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding IndicadoresFinancieros.TmrDisplay, FallbackValue='0.00 %'}"
+                                <TextBlock Text="TMR / tasa mínima" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding IndicadoresFinancieros.TmrDisplay, FallbackValue='0,00%'}"
                                            FontWeight="Bold" FontSize="16" Foreground="#1B5E20"/>
                                 <TextBlock Text="{Binding IndicadoresFinancieros.FuenteTmrDisplay, FallbackValue=''}"
                                            FontSize="10" Foreground="#546E7A"/>
@@ -432,14 +437,14 @@
 
                     <Border Grid.Row="1" Style="{StaticResource PanelResumen}" Margin="0,0,0,8">
                         <StackPanel>
-                            <TextBlock Text="Cálculo de la TMR" FontWeight="SemiBold" Foreground="#1B5E20" Margin="0,0,0,4"/>
+                            <TextBlock Text="TMR / tasa mínima de rendimiento" FontWeight="SemiBold" Foreground="#1B5E20" Margin="0,0,0,4"/>
                             <TextBlock Text="{Binding IndicadoresFinancieros.TmrFormulaDisplay, FallbackValue=''}"
                                        TextWrapping="Wrap" Foreground="#37474F"/>
                             <TextBlock Margin="0,4,0,0" FontSize="11" Foreground="#546E7A" TextWrapping="Wrap">
                                 <Run Text="Inflación promedio tomada del módulo Inflación (años "/>
                                 <Run Text="{Binding IndicadoresFinancieros.RangoInflacionDisplay, Mode=OneWay, FallbackValue='-'}"/>
-                                <Run Text="). VAN descontado con TMR = "/>
-                                <Run Text="{Binding IndicadoresFinancieros.TmrDisplay, Mode=OneWay, FallbackValue='0.00 %'}"/>
+                                <Run Text="). Tasa de descuento usada para VAN = "/>
+                                <Run Text="{Binding IndicadoresFinancieros.TmrDisplay, Mode=OneWay, FallbackValue='0,00%'}"/>
                                 <Run Text="."/>
                             </TextBlock>
                         </StackPanel>
@@ -656,11 +661,11 @@
                         </Border>
                         <Border Style="{StaticResource PanelResumen}">
                             <StackPanel>
-                                <TextBlock Text="TIR / TMR" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="TIR / TMR usada" FontSize="11" Foreground="#546E7A"/>
                                 <TextBlock FontWeight="Bold" FontSize="16" Foreground="#1B5E20">
                                     <Run Text="{Binding ArancelOptimoBiseccion.TirDisplay, Mode=OneWay, FallbackValue='No calculable'}"/>
                                     <Run Text=" / "/>
-                                    <Run Text="{Binding ArancelOptimoBiseccion.TmrDisplay, Mode=OneWay, FallbackValue='0.00 %'}"/>
+                                    <Run Text="{Binding ArancelOptimoBiseccion.TmrDisplay, Mode=OneWay, FallbackValue='0,00%'}"/>
                                 </TextBlock>
                                 <TextBlock Text="{Binding ArancelOptimoBiseccion.FuenteTmrDisplay, FallbackValue=''}"
                                            FontSize="10"
@@ -782,18 +787,18 @@
                                            FontWeight="Bold"
                                            FontSize="16"
                                            Foreground="#1B5E20"/>
-                                <TextBlock Text="{Binding DashboardFinanciero.PorcentajeViabilidadDisplay, FallbackValue='0.00 %'}"
+                                <TextBlock Text="{Binding DashboardFinanciero.PorcentajeViabilidadDisplay, FallbackValue='0,00%'}"
                                            FontSize="10"
                                            Foreground="#546E7A"/>
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource PanelResumen}">
                             <StackPanel>
-                                <TextBlock Text="TIR / TMR" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="TIR / TMR usada" FontSize="11" Foreground="#546E7A"/>
                                 <TextBlock FontWeight="Bold" FontSize="16" Foreground="#1B5E20">
                                     <Run Text="{Binding DashboardFinanciero.TirDisplay, Mode=OneWay, FallbackValue='No calculable'}"/>
                                     <Run Text=" / "/>
-                                    <Run Text="{Binding DashboardFinanciero.TmrDisplay, Mode=OneWay, FallbackValue='0.00 %'}"/>
+                                    <Run Text="{Binding DashboardFinanciero.TmrDisplay, Mode=OneWay, FallbackValue='0,00%'}"/>
                                 </TextBlock>
                                 <TextBlock Text="{Binding DashboardFinanciero.FechaCalculoDisplay, FallbackValue=''}"
                                            FontSize="10"

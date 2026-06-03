@@ -70,7 +70,7 @@ public static class CalculadoraTIR
                 cambiosSigno);
 
         var advertenciaMultiple = cambiosSigno > 1
-            ? "El flujo presenta múltiples cambios de signo por inversiones futuras; la TIR puede no ser única. Se prioriza el VAN para evaluar la viabilidad."
+            ? "El flujo presenta múltiples cambios de signo. La TIR puede no ser única. Se muestra la TIR normal calculada para mantener compatibilidad con el Excel. La viabilidad financiera debe evaluarse principalmente con el VAN."
             : null;
 
         var tasaAnterior = TasaMinima;

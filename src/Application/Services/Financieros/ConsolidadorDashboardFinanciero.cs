@@ -49,17 +49,36 @@ public static class ConsolidadorDashboardFinanciero
 
     private static DashboardIndicadorFinancieroDto ConstruirTir(IndicadoresFinancierosDto? indicadores)
     {
-        var disponible = indicadores?.TieneDatos == true;
-        var esViable = disponible
-            && indicadores!.EsTirCalculable
-            && indicadores.TirPorcentaje >= indicadores.TmrPorcentaje;
+        if (indicadores?.TieneDatos != true)
+        {
+            return new DashboardIndicadorFinancieroDto
+            {
+                Nombre = "TIR",
+                ValorDisplay = "No calculable",
+                Detalle = "No hay flujo de fondos suficiente.",
+                Estado = "Rojo: TIR no calculable",
+                Modulo = "TIR / VAN / TMR",
+                EsViable = false
+            };
+        }
+
+        var esNoUnica = indicadores.TirPosibleNoUnica;
+        var esViable = indicadores.EsTirCalculable
+            && (esNoUnica ? indicadores.Van >= 0m : indicadores.TirPorcentaje >= indicadores.TmrPorcentaje);
+        var estado = !indicadores.EsTirCalculable
+            ? "Rojo: TIR no calculable"
+            : esNoUnica
+                ? "Advertencia: TIR puede no ser única; priorizar VAN"
+                : esViable
+                    ? "Verde: TIR cubre la TMR"
+                    : "Rojo: TIR no cubre la TMR";
 
         return new DashboardIndicadorFinancieroDto
         {
             Nombre = "TIR",
-            ValorDisplay = disponible ? indicadores!.TirDisplay : "No calculable",
-            Detalle = disponible ? $"TMR referencia {indicadores!.TmrDisplay}" : "No hay flujo de fondos suficiente.",
-            Estado = esViable ? "Verde: TIR cubre la TMR" : "Rojo: TIR no cubre la TMR",
+            ValorDisplay = indicadores.TirDisplay,
+            Detalle = $"TMR / tasa mínima de rendimiento {indicadores.TmrDisplay}; TIR complementaria.",
+            Estado = estado,
             Modulo = "TIR / VAN / TMR",
             EsViable = esViable
         };
@@ -148,7 +167,9 @@ public static class ConsolidadorDashboardFinanciero
             recomendaciones.Add(CrearRecomendacion("Alta", "VAN", "El arancel vigente no cubre la sostenibilidad financiera (VAN negativo): revisar costos, ingresos o inversión inicial."));
         if (indicadores?.TirPosibleNoUnica == true)
             recomendaciones.Add(CrearRecomendacion("Media", "TIR", "El flujo presenta múltiples cambios de signo; la TIR puede no ser única. Evalúe la viabilidad principalmente con el VAN."));
-        if (indicadores?.TieneDatos == true && (!indicadores.EsTirCalculable || indicadores.TirPorcentaje < indicadores.TmrPorcentaje))
+        if (indicadores?.TieneDatos == true
+            && !indicadores.TirPosibleNoUnica
+            && (!indicadores.EsTirCalculable || indicadores.TirPorcentaje < indicadores.TmrPorcentaje))
             recomendaciones.Add(CrearRecomendacion("Alta", "TIR", "La TIR no cubre la TMR; validar precio, demanda y estructura de costos."));
         if (puntoEquilibrio?.TienePeriodosNoCalculables == true)
             recomendaciones.Add(CrearRecomendacion("Media", "Punto de Equilibrio", "Hay periodos sin margen positivo o sin estudiantes; revisar demanda e ingresos."));
