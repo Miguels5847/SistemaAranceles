@@ -104,7 +104,7 @@ public sealed class ObtenerPuntoEquilibrioQuery(
 
                 var variablesConsolidadas = CalcularCostosVariablesConsolidados(costo);
                 var costosVariables = decimal.Round(variablesConsolidadas + materialesVariables, 2);
-                var costosFijos = decimal.Round(Math.Max(costo.TotalCostosGastos - variablesConsolidadas, 0m), 2);
+                var costosFijos = decimal.Round(Math.Max(costo.TotalCostosGastos - costosVariables, 0m), 2);
 
                 return new EntradaPuntoEquilibrioPeriodo
                 {
@@ -141,6 +141,23 @@ public sealed class ObtenerPuntoEquilibrioQuery(
             })
             .ToList();
 
+        var periodoBase = periodos.LastOrDefault();
+        var costoBase = periodoBase is null
+            ? null
+            : costos.ValoresPorPeriodo.LastOrDefault(c => c.PeriodoAcademicoId == periodoBase.PeriodoAcademicoId);
+        var estadoBase = periodoBase is null
+            ? null
+            : estado.ValoresPorPeriodo.LastOrDefault(e => e.PeriodoAcademicoId == periodoBase.PeriodoAcademicoId);
+        var ciclos = (carrera?.TotalCiclos ?? 0) > 0 ? carrera!.TotalCiclos : 8;
+
+        var resumen = periodoBase is not null && costoBase is not null
+            ? CalculadoraPuntoEquilibrio.CalcularResumen(
+                costoBase,
+                estadoBase?.Ingresos ?? periodoBase.Ingresos,
+                periodoBase.Estudiantes,
+                ciclos)
+            : null;
+
         return new PuntoEquilibrioDto
         {
             CarreraId = carreraId,
@@ -148,6 +165,9 @@ public sealed class ObtenerPuntoEquilibrioQuery(
             EscenarioProyeccionId = escenarioProyeccionId,
             EscenarioNombre = escenario?.Nombre ?? costos.EscenarioNombre,
             Periodos = periodos,
+            PeriodoBaseEtiqueta = periodoBase?.EtiquetaPeriodo ?? string.Empty,
+            ProyeccionResultados = resumen is not null ? ConstruirProyeccionResultados(resumen) : [],
+            AnalisisPuntoEquilibrio = resumen is not null ? ConstruirAnalisisPuntoEquilibrio(resumen) : [],
             MensajeAdvertencia = ConstruirMensaje(advertencias)
         };
     }
@@ -164,6 +184,81 @@ public sealed class ObtenerPuntoEquilibrioQuery(
             + costo.MarketingComunicacion,
             2);
     }
+
+    private static IReadOnlyList<PuntoEquilibrioResultadoFilaDto> ConstruirProyeccionResultados(ResumenPuntoEquilibrio r)
+        =>
+        [
+            CrearResultado("Ingresos", r.Ingresos, r.Ingresos),
+            CrearResultado("(-) Costo por servicio", -r.CostoServicio, r.Ingresos),
+            CrearResultado("(=) Margen Bruto", r.MargenBruto, r.Ingresos, "resultado"),
+            CrearResultado("Gastos de Personal", r.GastosPersonal, r.Ingresos),
+            CrearResultado("Gastos Administrativos y Ventas", r.GastosAdminVentas, r.Ingresos),
+            CrearResultado("(-) Depreciación y Amortización", -r.DepreciacionAmortizacion, r.Ingresos),
+            CrearResultado("Intereses Pagados", r.Intereses, r.Ingresos),
+            CrearResultado("Total Gastos de la Carrera", r.TotalGastos, r.Ingresos, "total"),
+            CrearResultado("Beneficio/Pérdida", r.Beneficio, r.Ingresos, "resultado")
+        ];
+
+    private static IReadOnlyList<PuntoEquilibrioAnalisisFilaDto> ConstruirAnalisisPuntoEquilibrio(ResumenPuntoEquilibrio r)
+        =>
+        [
+            CrearAnalisisMoneda("Costo Variable", r.CostoVariable),
+            CrearAnalisisMoneda("Costo Fijo", r.CostoFijo),
+            CrearAnalisisMoneda("Ingresos", r.Ingresos),
+            CrearAnalisisMoneda("Ingreso promedio", r.IngresoPromedio),
+            CrearAnalisisMoneda("Costos variables / fijos", r.CostoVariablePorEstudiante),
+            CrearAnalisisMoneda("Margen Contribución", r.MargenContribucion, "resultado"),
+            CrearAnalisisNumero("Número de estudiantes Total Carrera", r.PuntoEquilibrioEstudiantes, "resultado"),
+            CrearAnalisisNumero("Número de Ciclos", r.Ciclos, "resultado"),
+            CrearAnalisisNumero("Número de estudiantes por ciclo sin tasa de deserción", r.EstudiantesPorCiclo, "resultado"),
+            CrearAnalisisNumero("Número de estudiantes ciclo más tasa de deserción 35%", r.EstudiantesPorCicloDesercion35),
+            CrearAnalisisNumero("Número de estudiantes ciclo más tasa de deserción 17,5%", r.EstudiantesPorCicloDesercion175)
+        ];
+
+    private static PuntoEquilibrioResultadoFilaDto CrearResultado(
+        string concepto,
+        decimal valor,
+        decimal ingresos,
+        string tipoFila = "detalle")
+    {
+        var mensual = decimal.Round(valor / 6m, 2);
+        var porcentaje = ingresos != 0m
+            ? decimal.Round(valor / ingresos * 100m, 0, MidpointRounding.AwayFromZero)
+            : 0m;
+
+        return new PuntoEquilibrioResultadoFilaDto
+        {
+            Concepto = concepto,
+            ValorAnualDisplay = FormatoMatrizAnalisisFinanciero.FormatearMoneda(valor),
+            ValorMensualDisplay = FormatoMatrizAnalisisFinanciero.FormatearMoneda(mensual),
+            PorcentajeDisplay = $"{porcentaje:N0}%",
+            TipoFila = tipoFila
+        };
+    }
+
+    private static PuntoEquilibrioAnalisisFilaDto CrearAnalisisMoneda(
+        string concepto,
+        decimal valor,
+        string tipoFila = "detalle")
+        => new()
+        {
+            Concepto = concepto,
+            PeAnualDisplay = FormatoMatrizAnalisisFinanciero.FormatearMoneda(valor),
+            PeMensualDisplay = FormatoMatrizAnalisisFinanciero.FormatearMoneda(decimal.Round(valor / 6m, 2)),
+            TipoFila = tipoFila
+        };
+
+    private static PuntoEquilibrioAnalisisFilaDto CrearAnalisisNumero(
+        string concepto,
+        decimal valor,
+        string tipoFila = "detalle")
+        => new()
+        {
+            Concepto = concepto,
+            PeAnualDisplay = valor.ToString("N0"),
+            PeMensualDisplay = string.Empty,
+            TipoFila = tipoFila
+        };
 
     private static void AgregarAdvertencia(List<string> advertencias, string? mensaje)
     {

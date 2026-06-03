@@ -392,82 +392,100 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="3. TIR / VAN / TMR">
-                <Grid Margin="8">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,8">
-                        <Border Style="{StaticResource PanelResumen}">
+            <TabItem Header="3. TIR / VAN">
+                <ScrollViewer Margin="8" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <Border Style="{StaticResource PanelResumen}" Margin="0,0,0,10">
                             <StackPanel>
-                                <TextBlock Text="TMR / tasa mínima" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding IndicadoresFinancieros.TmrDisplay, FallbackValue='0,00%'}"
-                                           FontWeight="Bold" FontSize="16" Foreground="#1B5E20"/>
-                                <TextBlock Text="{Binding IndicadoresFinancieros.FuenteTmrDisplay, FallbackValue=''}"
-                                           FontSize="10" Foreground="#546E7A"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Style="{StaticResource PanelResumen}">
-                            <StackPanel>
-                                <TextBlock Text="VAN" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding IndicadoresFinancieros.VanDisplay, FallbackValue='$ 0.00'}"
-                                           FontWeight="Bold" FontSize="16" Foreground="#1B5E20"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Style="{StaticResource PanelResumen}">
-                            <StackPanel>
-                                <TextBlock Text="TIR" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding IndicadoresFinancieros.TirDisplay, FallbackValue='No calculable'}"
-                                           FontWeight="Bold" FontSize="16" Foreground="#1B5E20"/>
+                                <TextBlock Text="Cálculo de la Tasa Interna de Retorno"
+                                           FontWeight="SemiBold"
+                                           Foreground="#1B5E20"
+                                           Margin="0,0,0,6"/>
+                                <DataGrid x:Name="TirFlujosGrid"
+                                          ItemsSource="{Binding FilasFlujoTir}"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          RowStyle="{StaticResource FlujoFondosRowStyle}"
+                                          CellStyle="{StaticResource FlujoFondosCellStyle}"
+                                          HeadersVisibility="Column"
+                                          GridLinesVisibility="Horizontal"
+                                          AlternatingRowBackground="#F7FAF7"
+                                          BorderBrush="#C8E6C9"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
+                                <Grid Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="260"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Tasa Interna de Retorno"
+                                               FontWeight="SemiBold"
+                                               Foreground="#263238"/>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding IndicadoresFinancieros.TirDisplay, FallbackValue='No calculable'}"
+                                               FontWeight="Bold"
+                                               Foreground="#1B5E20"/>
+                                </Grid>
                                 <TextBlock Text="{Binding IndicadoresFinancieros.TirDiagnosticoDisplay, FallbackValue=''}"
-                                           FontSize="10" Foreground="#546E7A" TextWrapping="Wrap"/>
+                                           Margin="0,6,0,0"
+                                           Foreground="#E65100"
+                                           FontSize="11"
+                                           TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource PanelResumen}">
+
+                        <Border Style="{StaticResource PanelResumen}" Margin="0,0,0,0">
                             <StackPanel>
-                                <TextBlock Text="Estado de viabilidad" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding IndicadoresFinancieros.EstadoViabilidad, FallbackValue='Sin datos'}"
-                                           FontWeight="Bold" FontSize="16" Foreground="#1B5E20"/>
+                                <TextBlock Text="Tasa mínima de rendimiento"
+                                           FontWeight="SemiBold"
+                                           Foreground="#1B5E20"
+                                           Margin="0,0,0,6"/>
+                                <DataGrid ItemsSource="{Binding FilasTasaMinimaRendimiento}"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          RowStyle="{StaticResource EstadoPgRowStyle}"
+                                          CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                                          HeadersVisibility="Column"
+                                          GridLinesVisibility="Horizontal"
+                                          AlternatingRowBackground="#F7FAF7"
+                                          BorderBrush="#C8E6C9"
+                                          Margin="0,0,0,8">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Concepto" Binding="{Binding Concepto}" Width="260"/>
+                                        <DataGridTextColumn Header="Valor" Binding="{Binding ValorDisplay}" Width="160"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <TextBlock Text="Cálculo del VAN"
+                                           FontWeight="SemiBold"
+                                           Foreground="#1B5E20"
+                                           Margin="0,0,0,6"/>
+                                <DataGrid x:Name="VanFlujosGrid"
+                                          ItemsSource="{Binding FilasFlujoVan}"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          RowStyle="{StaticResource FlujoFondosRowStyle}"
+                                          CellStyle="{StaticResource FlujoFondosCellStyle}"
+                                          HeadersVisibility="Column"
+                                          GridLinesVisibility="Horizontal"
+                                          AlternatingRowBackground="#F7FAF7"
+                                          BorderBrush="#C8E6C9"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
+                                <Grid Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="260"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Valor Actual Neto"
+                                               FontWeight="SemiBold"
+                                               Foreground="#263238"/>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding IndicadoresFinancieros.VanDisplay, FallbackValue='$ 0.00'}"
+                                               FontWeight="Bold"
+                                               Foreground="#1B5E20"/>
+                                </Grid>
                             </StackPanel>
                         </Border>
-                    </UniformGrid>
-
-                    <Border Grid.Row="1" Style="{StaticResource PanelResumen}" Margin="0,0,0,8">
-                        <StackPanel>
-                            <TextBlock Text="TMR / tasa mínima de rendimiento" FontWeight="SemiBold" Foreground="#1B5E20" Margin="0,0,0,4"/>
-                            <TextBlock Text="{Binding IndicadoresFinancieros.TmrFormulaDisplay, FallbackValue=''}"
-                                       TextWrapping="Wrap" Foreground="#37474F"/>
-                            <TextBlock Margin="0,4,0,0" FontSize="11" Foreground="#546E7A" TextWrapping="Wrap">
-                                <Run Text="Inflación promedio tomada del módulo Inflación (años "/>
-                                <Run Text="{Binding IndicadoresFinancieros.RangoInflacionDisplay, Mode=OneWay, FallbackValue='-'}"/>
-                                <Run Text="). Tasa de descuento usada para VAN = "/>
-                                <Run Text="{Binding IndicadoresFinancieros.TmrDisplay, Mode=OneWay, FallbackValue='0,00%'}"/>
-                                <Run Text="."/>
-                            </TextBlock>
-                        </StackPanel>
-                    </Border>
-
-                    <DataGrid Grid.Row="2"
-                              ItemsSource="{Binding DetalleVanFinanciero}"
-                              AutoGenerateColumns="False"
-                              IsReadOnly="True"
-                              RowStyle="{StaticResource EstadoPgRowStyle}"
-                              CellStyle="{StaticResource AnalisisDataGridCellStyle}"
-                              HeadersVisibility="Column"
-                              GridLinesVisibility="Horizontal"
-                              AlternatingRowBackground="#F7FAF7"
-                              BorderBrush="#C8E6C9">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Período" Binding="{Binding EtiquetaPeriodo}" Width="*"/>
-                            <DataGridTextColumn Header="Flujo neto" Binding="{Binding FlujoNetoDisplay}" Width="170"/>
-                            <DataGridTextColumn Header="Factor descuento" Binding="{Binding FactorDescuentoDisplay}" Width="130"/>
-                            <DataGridTextColumn Header="Valor presente" Binding="{Binding ValorPresenteDisplay}" Width="170"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
 
             <TabItem Header="4. Periodo de Recuperación">
@@ -540,77 +558,62 @@
             </TabItem>
 
             <TabItem Header="5. Punto de Equilibrio">
-                <Grid Margin="8">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+                <ScrollViewer Margin="8" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <Border Style="{StaticResource PanelResumen}" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="Proyección de Resultados y Punto de Equilibrio"
+                                           FontWeight="SemiBold"
+                                           Foreground="#1B5E20"
+                                           Margin="0,0,0,2"/>
+                                <TextBlock Text="{Binding PuntoEquilibrio.PeriodoBaseEtiqueta, StringFormat=Periodo base: {0}, FallbackValue='Periodo base: -'}"
+                                           FontSize="11"
+                                           Foreground="#546E7A"
+                                           Margin="0,0,0,8"/>
+                                <DataGrid ItemsSource="{Binding ProyeccionResultadosPuntoEquilibrio}"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          RowStyle="{StaticResource PerdidasGananciasRowStyle}"
+                                          CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                                          HeadersVisibility="Column"
+                                          GridLinesVisibility="Horizontal"
+                                          AlternatingRowBackground="#F7FAF7"
+                                          BorderBrush="#C8E6C9">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Concepto" Binding="{Binding Concepto}" Width="260"/>
+                                        <DataGridTextColumn Header="Valor anual" Binding="{Binding ValorAnualDisplay}" Width="170"/>
+                                        <DataGridTextColumn Header="Valor mensual" Binding="{Binding ValorMensualDisplay}" Width="170"/>
+                                        <DataGridTextColumn Header="%" Binding="{Binding PorcentajeDisplay}" Width="100"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
 
-                    <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,8">
-                        <Border Style="{StaticResource PanelResumen}">
+                        <Border Style="{StaticResource PanelResumen}" Margin="0,0,0,0">
                             <StackPanel>
-                                <TextBlock Text="Estado" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding PuntoEquilibrio.EstadoGeneral, FallbackValue='Sin datos'}"
-                                           FontWeight="Bold"
-                                           FontSize="16"
-                                           Foreground="#1B5E20"/>
+                                <TextBlock Text="Análisis del Punto de Equilibrio"
+                                           FontWeight="SemiBold"
+                                           Foreground="#1B5E20"
+                                           Margin="0,0,0,8"/>
+                                <DataGrid ItemsSource="{Binding AnalisisPuntoEquilibrio}"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          RowStyle="{StaticResource PerdidasGananciasRowStyle}"
+                                          CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                                          HeadersVisibility="Column"
+                                          GridLinesVisibility="Horizontal"
+                                          AlternatingRowBackground="#F7FAF7"
+                                          BorderBrush="#C8E6C9">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Concepto" Binding="{Binding Concepto}" Width="360"/>
+                                        <DataGridTextColumn Header="PE Anual" Binding="{Binding PeAnualDisplay}" Width="180"/>
+                                        <DataGridTextColumn Header="PE Mensual" Binding="{Binding PeMensualDisplay}" Width="180"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource PanelResumen}">
-                            <StackPanel>
-                                <TextBlock Text="PE estudiantes promedio" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding PuntoEquilibrio.PuntoEquilibrioEstudiantesPromedioDisplay, FallbackValue='No calculable'}"
-                                           FontWeight="Bold"
-                                           FontSize="16"
-                                           Foreground="#1B5E20"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Style="{StaticResource PanelResumen}">
-                            <StackPanel>
-                                <TextBlock Text="PE monetario total" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding PuntoEquilibrio.PuntoEquilibrioMonetarioTotalDisplay, FallbackValue='No calculable'}"
-                                           FontWeight="Bold"
-                                           FontSize="16"
-                                           Foreground="#1B5E20"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Style="{StaticResource PanelResumen}">
-                            <StackPanel>
-                                <TextBlock Text="Margen promedio" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock Text="{Binding PuntoEquilibrio.MargenPromedioContribucionDisplay, FallbackValue='No calculable'}"
-                                           FontWeight="Bold"
-                                           FontSize="16"
-                                           Foreground="#1B5E20"/>
-                            </StackPanel>
-                        </Border>
-                    </UniformGrid>
-
-                    <DataGrid Grid.Row="1"
-                              ItemsSource="{Binding DetallePuntoEquilibrio}"
-                              AutoGenerateColumns="False"
-                              IsReadOnly="True"
-                              RowStyle="{StaticResource PuntoEquilibrioRowStyle}"
-                              CellStyle="{StaticResource AnalisisDataGridCellStyle}"
-                              HeadersVisibility="Column"
-                              GridLinesVisibility="Horizontal"
-                              AlternatingRowBackground="#F7FAF7"
-                              BorderBrush="#C8E6C9"
-                              ScrollViewer.HorizontalScrollBarVisibility="Auto">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Período" Binding="{Binding EtiquetaPeriodo}" Width="120"/>
-                            <DataGridTextColumn Header="Estudiantes" Binding="{Binding EstudiantesDisplay}" Width="110"/>
-                            <DataGridTextColumn Header="Ingresos" Binding="{Binding IngresosDisplay}" Width="150"/>
-                            <DataGridTextColumn Header="Costos variables" Binding="{Binding CostosVariablesDisplay}" Width="150"/>
-                            <DataGridTextColumn Header="Costos fijos" Binding="{Binding CostosFijosDisplay}" Width="150"/>
-                            <DataGridTextColumn Header="Ingreso prom. estudiante" Binding="{Binding IngresoPromedioEstudianteDisplay}" Width="170"/>
-                            <DataGridTextColumn Header="Costo variable estudiante" Binding="{Binding CostoVariablePorEstudianteDisplay}" Width="180"/>
-                            <DataGridTextColumn Header="Margen contribución" Binding="{Binding MargenContribucionDisplay}" Width="160"/>
-                            <DataGridTextColumn Header="PE estudiantes" Binding="{Binding PuntoEquilibrioEstudiantesDisplay}" Width="140"/>
-                            <DataGridTextColumn Header="PE monetario" Binding="{Binding PuntoEquilibrioMonetarioDisplay}" Width="150"/>
-                            <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="220"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
 
             <TabItem Header="6. Arancel Óptimo">
@@ -661,13 +664,12 @@
                         </Border>
                         <Border Style="{StaticResource PanelResumen}">
                             <StackPanel>
-                                <TextBlock Text="TIR / TMR usada" FontSize="11" Foreground="#546E7A"/>
-                                <TextBlock FontWeight="Bold" FontSize="16" Foreground="#1B5E20">
-                                    <Run Text="{Binding ArancelOptimoBiseccion.TirDisplay, Mode=OneWay, FallbackValue='No calculable'}"/>
-                                    <Run Text=" / "/>
-                                    <Run Text="{Binding ArancelOptimoBiseccion.TmrDisplay, Mode=OneWay, FallbackValue='0,00%'}"/>
-                                </TextBlock>
-                                <TextBlock Text="{Binding ArancelOptimoBiseccion.FuenteTmrDisplay, FallbackValue=''}"
+                                <TextBlock Text="TIR" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding ArancelOptimoBiseccion.TirDisplay, FallbackValue='No calculable'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                                <TextBlock Text="TIR normal calculada"
                                            FontSize="10"
                                            Foreground="#546E7A"/>
                             </StackPanel>
@@ -794,7 +796,7 @@
                         </Border>
                         <Border Style="{StaticResource PanelResumen}">
                             <StackPanel>
-                                <TextBlock Text="TIR / TMR usada" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="TIR / TMR" FontSize="11" Foreground="#546E7A"/>
                                 <TextBlock FontWeight="Bold" FontSize="16" Foreground="#1B5E20">
                                     <Run Text="{Binding DashboardFinanciero.TirDisplay, Mode=OneWay, FallbackValue='No calculable'}"/>
                                     <Run Text=" / "/>

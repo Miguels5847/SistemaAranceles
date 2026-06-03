@@ -33,8 +33,12 @@ public static class CalculadoraPeriodoRecuperacion
             return NoRecuperado("No hay flujo de fondos para calcular el periodo de recuperación.");
 
         var mesesPeriodo = mesesPorPeriodo > 0m ? mesesPorPeriodo : 6m;
+        var ultimo = periodos[^1];
+        if (ultimo.FlujoAcumulado < 0m)
+            return NoRecuperado("El flujo acumulado vuelve a ser negativo al final del horizonte proyectado. No se considera recuperación estable.");
+
         var primero = periodos.First();
-        if (primero.FlujoAcumulado >= 0m)
+        if (primero.FlujoAcumulado >= 0m && EsEstableDesde(periodos, 0))
         {
             return new ResultadoPeriodoRecuperacion
             {
@@ -50,6 +54,8 @@ public static class CalculadoraPeriodoRecuperacion
             var anterior = periodos[i - 1];
             var actual = periodos[i];
             if (anterior.FlujoAcumulado >= 0m || actual.FlujoAcumulado < 0m)
+                continue;
+            if (!EsEstableDesde(periodos, i))
                 continue;
 
             if (actual.FlujoNeto <= 0m)
@@ -77,6 +83,11 @@ public static class CalculadoraPeriodoRecuperacion
 
         return NoRecuperado("No recuperado dentro del horizonte proyectado.");
     }
+
+    private static bool EsEstableDesde(IReadOnlyList<EntradaPeriodoRecuperacion> periodos, int indice)
+        => periodos
+            .Skip(indice)
+            .All(p => p.FlujoAcumulado >= 0m);
 
     private static ResultadoPeriodoRecuperacion NoRecuperado(string mensaje) => new()
     {

@@ -28,6 +28,22 @@ public sealed class EscenarioAnalisisFinancieroOpcion
     public string NombreDisplay => TieneProyeccion ? $"{Nombre} (con proyección)" : $"{Nombre} (sin proyección)";
 }
 
+public sealed class MatrizAnalisisFinancieroFila
+{
+    public string Concepto { get; init; } = string.Empty;
+    public IReadOnlyList<string> ValoresDisplay { get; init; } = [];
+    public string TipoFila { get; init; } = "detalle";
+    public bool EsTotal => string.Equals(TipoFila, "total", StringComparison.OrdinalIgnoreCase);
+    public bool EsResultado => string.Equals(TipoFila, "resultado", StringComparison.OrdinalIgnoreCase);
+}
+
+public sealed class ParametroAnalisisFinancieroFila
+{
+    public string Concepto { get; init; } = string.Empty;
+    public string ValorDisplay { get; init; } = string.Empty;
+    public bool EsTotal { get; init; }
+}
+
 public sealed partial class AnalisisFinancieroViewModel : ObservableObject
 {
     private readonly IServiceProvider _serviceProvider;
@@ -69,11 +85,19 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     public IReadOnlyList<string> EtiquetasFlujoFondos => FlujoFondos?.EtiquetasPeriodos ?? [];
     public IReadOnlyList<FlujoFondosRubroDto> FilasFlujoFondos => FlujoFondos?.Filas ?? [];
     public bool TieneFlujoFondos => FlujoFondos?.TieneDatos == true;
+    public IReadOnlyList<string> EtiquetasTirVan => FlujoFondos?.ValoresPorPeriodo
+        .Select(p => p.PeriodoOrden == 0 ? "0" : p.Anio.ToString())
+        .ToList() ?? [];
+    public IReadOnlyList<MatrizAnalisisFinancieroFila> FilasFlujoTir => ConstruirFilasFlujoTirVan();
+    public IReadOnlyList<MatrizAnalisisFinancieroFila> FilasFlujoVan => ConstruirFilasFlujoTirVan();
+    public IReadOnlyList<ParametroAnalisisFinancieroFila> FilasTasaMinimaRendimiento => ConstruirFilasTasaMinimaRendimiento();
     public IReadOnlyList<IndicadorVanPeriodoDto> DetalleVanFinanciero => IndicadoresFinancieros?.DetalleVan ?? [];
     public bool TieneIndicadoresFinancieros => IndicadoresFinancieros?.TieneDatos == true;
     public IReadOnlyList<PeriodoRecuperacionDetalleDto> DetallePeriodoRecuperacion => PeriodoRecuperacion?.Detalle ?? [];
     public bool TienePeriodoRecuperacion => PeriodoRecuperacion?.TieneDatos == true;
     public IReadOnlyList<PuntoEquilibrioPeriodoDto> DetallePuntoEquilibrio => PuntoEquilibrio?.Periodos ?? [];
+    public IReadOnlyList<PuntoEquilibrioResultadoFilaDto> ProyeccionResultadosPuntoEquilibrio => PuntoEquilibrio?.ProyeccionResultados ?? [];
+    public IReadOnlyList<PuntoEquilibrioAnalisisFilaDto> AnalisisPuntoEquilibrio => PuntoEquilibrio?.AnalisisPuntoEquilibrio ?? [];
     public bool TienePuntoEquilibrio => PuntoEquilibrio?.TieneDatos == true;
     public IReadOnlyList<ArancelOptimoBiseccionIteracionDto> IteracionesArancelOptimo => ArancelOptimoBiseccion?.Iteraciones ?? [];
     public IReadOnlyList<ArancelOptimoBiseccionPeriodoDto> DetalleArancelOptimo => ArancelOptimoBiseccion?.Periodos ?? [];
@@ -124,6 +148,9 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         OnPropertyChanged(nameof(EtiquetasFlujoFondos));
         OnPropertyChanged(nameof(FilasFlujoFondos));
         OnPropertyChanged(nameof(TieneFlujoFondos));
+        OnPropertyChanged(nameof(EtiquetasTirVan));
+        OnPropertyChanged(nameof(FilasFlujoTir));
+        OnPropertyChanged(nameof(FilasFlujoVan));
     }
 
     partial void OnIndicadoresFinancierosChanged(IndicadoresFinancierosDto? value)
@@ -131,6 +158,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         _ = value;
         OnPropertyChanged(nameof(DetalleVanFinanciero));
         OnPropertyChanged(nameof(TieneIndicadoresFinancieros));
+        OnPropertyChanged(nameof(FilasTasaMinimaRendimiento));
     }
 
     partial void OnPeriodoRecuperacionChanged(PeriodoRecuperacionDto? value)
@@ -144,6 +172,8 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     {
         _ = value;
         OnPropertyChanged(nameof(DetallePuntoEquilibrio));
+        OnPropertyChanged(nameof(ProyeccionResultadosPuntoEquilibrio));
+        OnPropertyChanged(nameof(AnalisisPuntoEquilibrio));
         OnPropertyChanged(nameof(TienePuntoEquilibrio));
     }
 
@@ -602,6 +632,56 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     private static string Csv(string? value)
         => "\"" + (value ?? string.Empty).Replace("\"", "\"\"") + "\"";
 
+    private IReadOnlyList<MatrizAnalisisFinancieroFila> ConstruirFilasFlujoTirVan()
+    {
+        var valores = FlujoFondos?.ValoresPorPeriodo
+            .Select(p => FormatoMatrizAnalisisFinanciero.Formatear(p.FlujoNeto, FormatoMatrizAnalisisFinanciero.Moneda))
+            .ToList() ?? [];
+
+        return valores.Count == 0
+            ? []
+            :
+            [
+                new MatrizAnalisisFinancieroFila
+                {
+                    Concepto = "Flujo de Fondos Neto",
+                    ValoresDisplay = valores,
+                    TipoFila = "resultado"
+                }
+            ];
+    }
+
+    private IReadOnlyList<ParametroAnalisisFinancieroFila> ConstruirFilasTasaMinimaRendimiento()
+    {
+        if (IndicadoresFinancieros is null)
+            return [];
+
+        return
+        [
+            new ParametroAnalisisFinancieroFila
+            {
+                Concepto = "Tasa de interés",
+                ValorDisplay = IndicadoresFinancieros.TasaInteresFinancieraDisplay
+            },
+            new ParametroAnalisisFinancieroFila
+            {
+                Concepto = "Inflación anual / promedio",
+                ValorDisplay = IndicadoresFinancieros.InflacionPromedioDisplay
+            },
+            new ParametroAnalisisFinancieroFila
+            {
+                Concepto = "Premio al riesgo",
+                ValorDisplay = IndicadoresFinancieros.PremioRiesgoDisplay
+            },
+            new ParametroAnalisisFinancieroFila
+            {
+                Concepto = "Tasa mínima de rendimiento",
+                ValorDisplay = IndicadoresFinancieros.TmrDisplay,
+                EsTotal = true
+            }
+        ];
+    }
+
     private static bool EsAdvertenciaSuave(string mensaje)
     {
         if (string.IsNullOrWhiteSpace(mensaje))
@@ -625,6 +705,9 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             "inflación promedio se tomó como 0%",
             "inflacion promedio se tomo como 0%",
             "No recuperado dentro del horizonte proyectado",
+            "recuperación estable",
+            "recuperacion estable",
+            "vuelve a ser negativo",
             "periodos sin margen positivo",
             "periodos no calculables"
         };

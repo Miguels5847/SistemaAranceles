@@ -31,6 +31,27 @@ public sealed class PuntoEquilibrioPeriodoDto
         : "No calculable";
 }
 
+public sealed class PuntoEquilibrioResultadoFilaDto
+{
+    public string Concepto { get; init; } = string.Empty;
+    public string ValorAnualDisplay { get; init; } = string.Empty;
+    public string ValorMensualDisplay { get; init; } = string.Empty;
+    public string PorcentajeDisplay { get; init; } = string.Empty;
+    public string TipoFila { get; init; } = "detalle";
+    public bool EsTotal => string.Equals(TipoFila, "total", StringComparison.OrdinalIgnoreCase);
+    public bool EsResultado => string.Equals(TipoFila, "resultado", StringComparison.OrdinalIgnoreCase);
+}
+
+public sealed class PuntoEquilibrioAnalisisFilaDto
+{
+    public string Concepto { get; init; } = string.Empty;
+    public string PeAnualDisplay { get; init; } = string.Empty;
+    public string PeMensualDisplay { get; init; } = string.Empty;
+    public string TipoFila { get; init; } = "detalle";
+    public bool EsTotal => string.Equals(TipoFila, "total", StringComparison.OrdinalIgnoreCase);
+    public bool EsResultado => string.Equals(TipoFila, "resultado", StringComparison.OrdinalIgnoreCase);
+}
+
 public sealed class PuntoEquilibrioDto
 {
     public int CarreraId { get; init; }
@@ -38,9 +59,13 @@ public sealed class PuntoEquilibrioDto
     public int? EscenarioProyeccionId { get; init; }
     public string EscenarioNombre { get; init; } = string.Empty;
     public IReadOnlyList<PuntoEquilibrioPeriodoDto> Periodos { get; init; } = [];
+    public string PeriodoBaseEtiqueta { get; init; } = string.Empty;
+    public IReadOnlyList<PuntoEquilibrioResultadoFilaDto> ProyeccionResultados { get; init; } = [];
+    public IReadOnlyList<PuntoEquilibrioAnalisisFilaDto> AnalisisPuntoEquilibrio { get; init; } = [];
     public string? MensajeAdvertencia { get; init; }
 
     public bool TieneDatos => Periodos.Count > 0;
+    public bool TieneResumenExcel => ProyeccionResultados.Count > 0 || AnalisisPuntoEquilibrio.Count > 0;
     public bool TienePeriodosNoCalculables => Periodos.Any(p => !p.EsCalculable);
     public string EstadoGeneral => !TieneDatos
         ? "Sin datos"

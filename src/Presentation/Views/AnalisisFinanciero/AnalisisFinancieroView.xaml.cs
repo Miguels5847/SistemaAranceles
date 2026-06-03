@@ -39,6 +39,11 @@ public partial class AnalisisFinancieroView : UserControl
               || e.PropertyName == nameof(AnalisisFinancieroViewModel.EtiquetasFlujoFondos))
         {
             ActualizarColumnasFlujoFondos();
+            ActualizarColumnasTirVan();
+        }
+        else if (e.PropertyName == nameof(AnalisisFinancieroViewModel.EtiquetasTirVan))
+        {
+            ActualizarColumnasTirVan();
         }
     }
 
@@ -46,6 +51,7 @@ public partial class AnalisisFinancieroView : UserControl
     {
         ActualizarColumnasPerdidasGanancias();
         ActualizarColumnasFlujoFondos();
+        ActualizarColumnasTirVan();
     }
 
     private void ActualizarColumnasPerdidasGanancias()
@@ -121,9 +127,46 @@ public partial class AnalisisFinancieroView : UserControl
         });
     }
 
+    private void ActualizarColumnasTirVan()
+    {
+        ActualizarColumnasMatrizTirVan(TirFlujosGrid);
+        ActualizarColumnasMatrizTirVan(VanFlujosGrid);
+    }
+
+    private void ActualizarColumnasMatrizTirVan(DataGrid? grid)
+    {
+        if (grid is null)
+            return;
+
+        grid.Columns.Clear();
+        grid.Columns.Add(new DataGridTextColumn
+        {
+            Header = "Concepto",
+            Binding = new Binding(nameof(MatrizAnalisisFinancieroFila.Concepto)),
+            Width = new DataGridLength(260),
+            ElementStyle = TryFindResource("FlujoFondosConceptoTextStyle") as Style
+        });
+
+        var estiloNumero = TryFindResource("FlujoFondosNumeroTextStyle") as Style;
+        var etiquetas = ObtenerEtiquetasTirVan();
+        for (var i = 0; i < etiquetas.Count; i++)
+        {
+            grid.Columns.Add(new DataGridTextColumn
+            {
+                Header = etiquetas[i],
+                Binding = new Binding($"ValoresDisplay[{i}]"),
+                Width = new DataGridLength(130),
+                ElementStyle = estiloNumero
+            });
+        }
+    }
+
     private IReadOnlyList<string> ObtenerEtiquetasPerdidasGanancias()
         => DataContext is AnalisisFinancieroViewModel vm ? vm.EtiquetasPerdidasGanancias : [];
 
     private IReadOnlyList<string> ObtenerEtiquetasFlujoFondos()
         => DataContext is AnalisisFinancieroViewModel vm ? vm.EtiquetasFlujoFondos : [];
+
+    private IReadOnlyList<string> ObtenerEtiquetasTirVan()
+        => DataContext is AnalisisFinancieroViewModel vm ? vm.EtiquetasTirVan : [];
 }

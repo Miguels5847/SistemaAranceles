@@ -68,9 +68,14 @@ public sealed class ObtenerPeriodoRecuperacionQuery(
         // El período de recuperación se calcula con el arancel vigente del escenario; si no recupera,
         // se aclara para que el usuario revise el arancel financiero sugerido por VAN=0.
         if (!resultado.Recuperado)
-            advertencias.Add("No recuperado dentro del horizonte proyectado con el arancel vigente. Revise el arancel financiero sugerido por VAN=0.");
-        else
+        {
             AgregarAdvertencia(advertencias, resultado.Mensaje);
+            advertencias.Add("No recuperado dentro del horizonte proyectado con el arancel vigente. Revise el arancel financiero sugerido por VAN=0.");
+        }
+        else
+        {
+            AgregarAdvertencia(advertencias, resultado.Mensaje);
+        }
 
         var detalle = entradas
             .Select(p => new PeriodoRecuperacionDetalleDto
@@ -80,9 +85,7 @@ public sealed class ObtenerPeriodoRecuperacionQuery(
                 FlujoNeto = p.FlujoNeto,
                 FlujoAcumulado = p.FlujoAcumulado,
                 EsPeriodoRecuperacion = resultado.Recuperado && resultado.PeriodoOrdenRecuperacion == p.PeriodoOrden,
-                Estado = resultado.Recuperado && resultado.PeriodoOrdenRecuperacion == p.PeriodoOrden
-                    ? "Recuperación"
-                    : p.FlujoAcumulado < 0m ? "Pendiente" : "Recuperado"
+                Estado = DeterminarEstadoDetalle(p, resultado)
             })
             .ToList();
 
@@ -112,6 +115,19 @@ public sealed class ObtenerPeriodoRecuperacionQuery(
     {
         if (!string.IsNullOrWhiteSpace(mensaje))
             advertencias.Add(mensaje.Trim());
+    }
+
+    private static string DeterminarEstadoDetalle(
+        EntradaPeriodoRecuperacion periodo,
+        ResultadoPeriodoRecuperacion resultado)
+    {
+        if (!resultado.Recuperado)
+            return periodo.FlujoAcumulado < 0m ? "Pendiente" : "Cruce temporal";
+
+        if (resultado.PeriodoOrdenRecuperacion == periodo.PeriodoOrden)
+            return "Recuperación";
+
+        return periodo.FlujoAcumulado < 0m ? "Pendiente" : "Recuperado";
     }
 
     private static string? ConstruirMensaje(List<string> advertencias, string? adicional = null)

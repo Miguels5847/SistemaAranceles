@@ -57,7 +57,7 @@ public static class ConsolidadorDashboardFinanciero
                 ValorDisplay = "No calculable",
                 Detalle = "No hay flujo de fondos suficiente.",
                 Estado = "Rojo: TIR no calculable",
-                Modulo = "TIR / VAN / TMR",
+                Modulo = "TIR / VAN",
                 EsViable = false
             };
         }
@@ -79,7 +79,7 @@ public static class ConsolidadorDashboardFinanciero
             ValorDisplay = indicadores.TirDisplay,
             Detalle = $"TMR / tasa mínima de rendimiento {indicadores.TmrDisplay}; TIR complementaria.",
             Estado = estado,
-            Modulo = "TIR / VAN / TMR",
+            Modulo = "TIR / VAN",
             EsViable = esViable
         };
     }
@@ -95,7 +95,7 @@ public static class ConsolidadorDashboardFinanciero
             ValorDisplay = disponible ? indicadores!.VanDisplay : "$ 0.00",
             Detalle = disponible ? $"Estado {indicadores!.EstadoViabilidad}" : "No hay VAN calculado.",
             Estado = esViable ? "Verde: VAN no negativo" : "Rojo: VAN negativo",
-            Modulo = "TIR / VAN / TMR",
+            Modulo = "TIR / VAN",
             EsViable = esViable
         };
     }
