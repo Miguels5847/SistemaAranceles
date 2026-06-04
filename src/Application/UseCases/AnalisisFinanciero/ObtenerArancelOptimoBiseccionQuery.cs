@@ -12,6 +12,7 @@ using SistemaAranceles.Application.UseCases.DemandaIngresos;
 using SistemaAranceles.Application.UseCases.InversionInicial;
 using SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion;
 using SistemaAranceles.Domain.Entities;
+using SistemaAranceles.Domain.Enums;
 
 namespace SistemaAranceles.Application.UseCases.AnalisisFinanciero;
 
@@ -32,6 +33,7 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
     private const decimal ArancelMinimo = 500m;
     private const decimal ArancelMaximo = 5000m;
     private const decimal ToleranciaVan = 1m;
+    private const decimal MargenAproximacionVan = 2m;
     private const int MaxIteraciones = 60;
     private const int MaxExpansionesRango = 10;
     private const decimal PorcentajeParticipacionTrabajadores = 15m;
@@ -45,7 +47,8 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
         DemandaProyectadaDto? demandaPrecalculada = null,
         MatrizInversionesDto? inversionesPrecalculada = null,
         ResumenCapitalTrabajoDto? capitalTrabajoPrecalculado = null,
-        decimal factorImprevisto = 1.05m)
+        decimal factorImprevisto = 1.05m,
+        ModoCalculoFinanciero modo = ModoCalculoFinanciero.CompatibleExcel)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -95,6 +98,13 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
         var datos = await repositorioDatos.ObtenerVigenteAsync(ct);
         if (datos is null)
             advertencias.Add("No hay Datos Institucionales vigentes; se usaron defaults para matrícula, becas y TMR.");
+
+        // KAN-44: parámetros de la bisección desde Datos Institucionales (fallback a constantes).
+        var arancelMinimo = datos?.ArancelMinimoBusqueda ?? ArancelMinimo;
+        var arancelMaximo = datos?.ArancelMaximoBusqueda ?? ArancelMaximo;
+        var toleranciaVan = datos?.ToleranciaVanArancel ?? ToleranciaVan;
+        var margenAproximacionVan = datos?.MargenAproximacionVanArancel ?? MargenAproximacionVan;
+        var maxIteraciones = datos?.MaxIteracionesBiseccion ?? MaxIteraciones;
 
         var porcentajeMatricula = await ObtenerPorcentajeMatriculaAsync(carreraId, escenarioProyeccionId, datos, ct);
         var porcentajeBecas = datos?.PorcentajeBecasInstitucionales
@@ -152,14 +162,16 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             capitalTrabajo.TotalCapitalTrabajo,
             porcentajeMatricula,
             porcentajeBecas,
-            tmr.TmrTasa);
+            tmr.TmrTasa,
+            modo);
 
         var resultado = CalculadoraArancelOptimoBiseccion.Calcular(new EntradaBiseccionArancel
         {
-            ArancelMinimo = ArancelMinimo,
-            ArancelMaximo = ArancelMaximo,
-            ToleranciaVan = ToleranciaVan,
-            MaxIteraciones = MaxIteraciones,
+            ArancelMinimo = arancelMinimo,
+            ArancelMaximo = arancelMaximo,
+            ToleranciaVan = toleranciaVan,
+            MargenAproximacionVan = margenAproximacionVan,
+            MaxIteraciones = maxIteraciones,
             MaxExpansionesRango = MaxExpansionesRango,
             EvaluarVan = arancel => EvaluarArancel(contexto, arancel).Van
         });
@@ -175,10 +187,10 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
                 EscenarioNombre = escenario?.Nombre ?? costos.EscenarioNombre,
                 Disponible = false,
                 Estado = resultado.Estado,
-                ArancelMinimo = ArancelMinimo,
-                ArancelMaximo = ArancelMaximo,
+                ArancelMinimo = arancelMinimo,
+                ArancelMaximo = arancelMaximo,
                 ArancelMaximoEvaluado = resultado.ArancelMaximoEvaluado,
-                ToleranciaVan = ToleranciaVan,
+                ToleranciaVan = toleranciaVan,
                 IteracionesUsadas = resultado.IteracionesUsadas,
                 ExpansionesRango = resultado.ExpansionesRango,
                 TmrPorcentaje = tmr.TmrPorcentaje,
@@ -202,7 +214,7 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
         }
 
         var evaluacion = EvaluarArancel(contexto, resultado.ArancelOptimo);
-        var tir = CalculadoraTIR.Calcular(evaluacion.Flujos);
+        var tir = CalculadoraTIR.CalcularCercanaA(evaluacion.Flujos, tmr.TmrTasa);
         AgregarAdvertencia(advertencias, tir.Mensaje);
 
         return new ArancelOptimoBiseccionDto
@@ -213,10 +225,10 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             EscenarioNombre = escenario?.Nombre ?? costos.EscenarioNombre,
             Disponible = true,
             Estado = resultado.Estado,
-            ArancelMinimo = ArancelMinimo,
-            ArancelMaximo = ArancelMaximo,
+            ArancelMinimo = arancelMinimo,
+            ArancelMaximo = arancelMaximo,
             ArancelMaximoEvaluado = resultado.ArancelMaximoEvaluado,
-            ToleranciaVan = ToleranciaVan,
+            ToleranciaVan = toleranciaVan,
             IteracionesUsadas = resultado.IteracionesUsadas,
             ExpansionesRango = resultado.ExpansionesRango,
             TmrPorcentaje = tmr.TmrPorcentaje,
@@ -323,7 +335,8 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
         decimal capitalTrabajo,
         decimal porcentajeMatricula,
         decimal porcentajeBecas,
-        decimal tmrTasa)
+        decimal tmrTasa,
+        ModoCalculoFinanciero modo)
     {
         var estudiantesPorPeriodo = demanda.PeriodoAcademicoIds
             .Select((periodoId, index) => new
@@ -344,7 +357,8 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             CapitalTrabajo = decimal.Round(capitalTrabajo, 2),
             PorcentajeMatricula = porcentajeMatricula,
             PorcentajeBecas = porcentajeBecas,
-            TmrTasa = tmrTasa
+            TmrTasa = tmrTasa,
+            Modo = modo
         };
     }
 
@@ -371,17 +385,17 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             contexto.InversionesFuturasPorPeriodo.TryGetValue(costo.NumeroPeriodo, out var inversionFutura);
             contexto.DepreciacionPorPeriodo.TryGetValue(costo.NumeroPeriodo, out var depreciacion);
             contexto.AmortizacionPorAnio.TryGetValue(costo.Anio, out var amortizacion);
-            var recuperacionCapitalTrabajo = i == contexto.Costos.Count - 1 ? contexto.CapitalTrabajo : 0m;
+            var recuperacionCapitalTrabajo = contexto.Modo == ModoCalculoFinanciero.Tecnico && i == contexto.Costos.Count - 1
+                ? contexto.CapitalTrabajo
+                : 0m;
 
-            // Modelo de becas idéntico al de P&G/Flujo de Fondos (la fuente que valida el VAN):
-            // Ingresos Proyectados reporta el neto (bruto − becas) y Costos y Gastos incluye las
-            // mismas becas como rubro institucional (BecasInstitucionales). Aquí se recalculan las
-            // becas con el arancel candidato y se reemplaza el rubro original por el recalculado, de
-            // modo que el VAN de la bisección coincide con el flujo real ya recalculado a ese arancel.
+            // Becas = descuento al ingreso (neto = bruto − becas), NO costo. El rubro Becas en Costos
+            // y Gastos está en 0 (igual que el Excel), así que TotalCostosGastos no las incluye y NO se
+            // vuelven a sumar aquí: se evita el doble conteo y el VAN coincide con el flujo real.
             var ingresoBruto = decimal.Round(estudiantes * precioPorEstudiante, 2);
             var becas = decimal.Round(ingresoBruto * contexto.PorcentajeBecas / 100m, 2);
             var ingresosNetos = decimal.Round(ingresoBruto - becas, 2);
-            var costosYGastos = decimal.Round(costo.TotalCostosGastos - costo.BecasInstitucionales + becas, 2);
+            var costosYGastos = decimal.Round(costo.TotalCostosGastos, 2);
             var utilidadAntesParticipacion = decimal.Round(ingresosNetos - costosYGastos, 2);
             var participacion = utilidadAntesParticipacion > 0m
                 ? decimal.Round(utilidadAntesParticipacion * PorcentajeParticipacionTrabajadores / 100m, 2)
@@ -416,19 +430,21 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             });
         }
 
-        // VAN/TIR del candidato con flujo ANUAL consolidado (período 0 + suma de semestres por año),
-        // igual que ObtenerIndicadoresFinancierosQuery, para que el arancel hallado por VAN=0 coincida
-        // con el VAN del dashboard. El detalle semestral se mantiene en periodos para la tabla.
-        var flujosAnuales = ConsolidadorFlujosFinancieros.ConstruirFlujosAnuales(
-            -contexto.InversionInicial,
-            operativosAnuales);
+        // CompatibleExcel (tutor): VAN sobre flujos SEMESTRALES (período 0 + cada semestre) con
+        // convención Excel, igual que el dashboard. Técnico: flujo ANUAL consolidado.
+        var flujos = contexto.Modo == ModoCalculoFinanciero.CompatibleExcel
+            ? periodos.Select(p => p.FlujoNeto).ToList()
+            : ConsolidadorFlujosFinancieros.ConstruirFlujosAnuales(-contexto.InversionInicial, operativosAnuales);
+        var van = contexto.Modo == ModoCalculoFinanciero.CompatibleExcel
+            ? CalculadoraVAN.CalcularExcel(flujos, contexto.TmrTasa)
+            : CalculadoraVAN.Calcular(flujos, contexto.TmrTasa);
 
         return new EvaluacionArancel
         {
             Matricula = matricula,
-            Flujos = flujosAnuales,
+            Flujos = flujos,
             Periodos = periodos,
-            Van = CalculadoraVAN.Calcular(flujosAnuales, contexto.TmrTasa)
+            Van = van
         };
     }
 
@@ -480,6 +496,7 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
         public decimal PorcentajeMatricula { get; init; }
         public decimal PorcentajeBecas { get; init; }
         public decimal TmrTasa { get; init; }
+        public ModoCalculoFinanciero Modo { get; init; }
     }
 
     private sealed class EvaluacionArancel

@@ -24,6 +24,11 @@ public sealed class DatosInstitucionales : EntidadDominioBase
     public const decimal PremioRiesgoPorDefecto = 5m;
     public const decimal TmrManualPorDefecto = 0m;
     public const bool UsarTmrManualPorDefecto = false;
+    public const decimal ToleranciaVanArancelPorDefecto = 1m;
+    public const decimal MargenAproximacionVanArancelPorDefecto = 2m;
+    public const decimal ArancelMinimoBusquedaPorDefecto = 500m;
+    public const decimal ArancelMaximoBusquedaPorDefecto = 5000m;
+    public const int MaxIteracionesBiseccionPorDefecto = 60;
 
     private DatosInstitucionales()
     {
@@ -43,6 +48,11 @@ public sealed class DatosInstitucionales : EntidadDominioBase
         PremioRiesgo = PremioRiesgoPorDefecto;
         TmrManual = TmrManualPorDefecto;
         UsarTmrManual = UsarTmrManualPorDefecto;
+        ToleranciaVanArancel = ToleranciaVanArancelPorDefecto;
+        MargenAproximacionVanArancel = MargenAproximacionVanArancelPorDefecto;
+        ArancelMinimoBusqueda = ArancelMinimoBusquedaPorDefecto;
+        ArancelMaximoBusqueda = ArancelMaximoBusquedaPorDefecto;
+        MaxIteracionesBiseccion = MaxIteracionesBiseccionPorDefecto;
     }
 
     public DatosInstitucionales(
@@ -110,6 +120,13 @@ public sealed class DatosInstitucionales : EntidadDominioBase
     public decimal PremioRiesgo { get; private set; } = PremioRiesgoPorDefecto;
     public decimal TmrManual { get; private set; } = TmrManualPorDefecto;
     public bool UsarTmrManual { get; private set; } = UsarTmrManualPorDefecto;
+
+    // KAN-44: parámetros de la bisección del arancel óptimo (VAN=0)
+    public decimal ToleranciaVanArancel { get; private set; } = ToleranciaVanArancelPorDefecto;
+    public decimal MargenAproximacionVanArancel { get; private set; } = MargenAproximacionVanArancelPorDefecto;
+    public decimal ArancelMinimoBusqueda { get; private set; } = ArancelMinimoBusquedaPorDefecto;
+    public decimal ArancelMaximoBusqueda { get; private set; } = ArancelMaximoBusquedaPorDefecto;
+    public int MaxIteracionesBiseccion { get; private set; } = MaxIteracionesBiseccionPorDefecto;
 
     public DateTimeOffset FechaActualizacion { get; private set; }
     public int ActualizadoPorUsuarioId { get; private set; }
@@ -226,6 +243,32 @@ public sealed class DatosInstitucionales : EntidadDominioBase
         PremioRiesgo = GuardiaDominio.Porcentaje(premioRiesgo, "Premio al riesgo");
         TmrManual = GuardiaDominio.Porcentaje(tmrManual, "TMR manual");
         UsarTmrManual = usarTmrManual;
+    }
+
+    /// <summary>KAN-44: parámetros de la bisección del arancel óptimo (VAN=0).</summary>
+    public void CambiarParametrosArancelOptimo(
+        decimal toleranciaVan,
+        decimal margenAproximacionVan,
+        decimal arancelMinimoBusqueda,
+        decimal arancelMaximoBusqueda,
+        int maxIteracionesBiseccion)
+    {
+        if (toleranciaVan <= 0m)
+            throw new DominioException("Tolerancia VAN debe ser mayor a 0.");
+        if (margenAproximacionVan < toleranciaVan)
+            throw new DominioException("Margen de aproximación VAN debe ser mayor o igual a la tolerancia.");
+        if (arancelMinimoBusqueda <= 0m)
+            throw new DominioException("Arancel mínimo de búsqueda debe ser mayor a 0.");
+        if (arancelMaximoBusqueda <= arancelMinimoBusqueda)
+            throw new DominioException("Arancel máximo de búsqueda debe ser mayor al mínimo.");
+        if (maxIteracionesBiseccion is <= 0 or > 500)
+            throw new DominioException("Máximo de iteraciones de bisección debe estar entre 1 y 500.");
+
+        ToleranciaVanArancel = decimal.Round(toleranciaVan, 2);
+        MargenAproximacionVanArancel = decimal.Round(margenAproximacionVan, 2);
+        ArancelMinimoBusqueda = decimal.Round(arancelMinimoBusqueda, 2);
+        ArancelMaximoBusqueda = decimal.Round(arancelMaximoBusqueda, 2);
+        MaxIteracionesBiseccion = maxIteracionesBiseccion;
     }
 
     public void RehidratarFechaActualizacion(DateTimeOffset fecha)

@@ -74,4 +74,41 @@ public sealed class CalculadoraArancelOptimoBiseccionTests
         Assert.Equal(5100m, resultado.VanMaximo);
         Assert.Contains("positivo incluso", resultado.Mensaje);
     }
+
+    [Fact]
+    public void EquilibrioAproximadoCuandoVanQuedaDentroDelMargen()
+    {
+        // 1 iteración deja el mejor VAN ≈ -500.5 (no llega a tolerancia 1, pero entra en el margen).
+        var resultado = CalculadoraArancelOptimoBiseccion.Calcular(new EntradaBiseccionArancel
+        {
+            ArancelMinimo = 500m,
+            ArancelMaximo = 5000m,
+            ToleranciaVan = 1m,
+            MargenAproximacionVan = 600m,
+            MaxIteraciones = 1,
+            EvaluarVan = arancel => arancel - 1000.5m
+        });
+
+        Assert.True(resultado.EsCalculable);
+        Assert.Equal("Aproximado", resultado.Estado);
+        Assert.Equal("Equilibrio aproximado por redondeo monetario", resultado.EstadoConvergencia);
+    }
+
+    [Fact]
+    public void NoConvergioCuandoVanSuperaElMargen()
+    {
+        var resultado = CalculadoraArancelOptimoBiseccion.Calcular(new EntradaBiseccionArancel
+        {
+            ArancelMinimo = 500m,
+            ArancelMaximo = 5000m,
+            ToleranciaVan = 1m,
+            MargenAproximacionVan = 100m,
+            MaxIteraciones = 1,
+            EvaluarVan = arancel => arancel - 1000.5m
+        });
+
+        Assert.True(resultado.EsCalculable);
+        Assert.Equal("No convergió", resultado.Estado);
+        Assert.Equal("No convergió dentro del rango definido", resultado.EstadoConvergencia);
+    }
 }

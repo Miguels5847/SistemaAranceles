@@ -53,6 +53,13 @@ internal sealed class ConfiguracionDatosInstitucionales : IEntityTypeConfigurati
         builder.Property(x => x.TmrManual).HasColumnName("tmr_manual").HasColumnType("numeric(7,4)").HasDefaultValue(0m).IsRequired();
         builder.Property(x => x.UsarTmrManual).HasColumnName("usar_tmr_manual").HasDefaultValue(false).IsRequired();
 
+        // KAN-44
+        builder.Property(x => x.ToleranciaVanArancel).HasColumnName("tolerancia_van_arancel").HasColumnType("numeric(18,2)").HasDefaultValue(1m).IsRequired();
+        builder.Property(x => x.MargenAproximacionVanArancel).HasColumnName("margen_aproximacion_van_arancel").HasColumnType("numeric(18,2)").HasDefaultValue(2m).IsRequired();
+        builder.Property(x => x.ArancelMinimoBusqueda).HasColumnName("arancel_minimo_busqueda").HasColumnType("numeric(18,2)").HasDefaultValue(500m).IsRequired();
+        builder.Property(x => x.ArancelMaximoBusqueda).HasColumnName("arancel_maximo_busqueda").HasColumnType("numeric(18,2)").HasDefaultValue(5000m).IsRequired();
+        builder.Property(x => x.MaxIteracionesBiseccion).HasColumnName("max_iteraciones_biseccion").HasDefaultValue(60).IsRequired();
+
         builder.Property(x => x.FechaActualizacion).HasColumnName("fecha_actualizacion").IsRequired();
         builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id").IsRequired();
         builder.Property(x => x.FuenteNotas).HasColumnName("fuente_notas").HasMaxLength(500);

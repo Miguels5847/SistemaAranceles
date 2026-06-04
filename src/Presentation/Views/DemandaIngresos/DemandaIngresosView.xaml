@@ -210,6 +210,8 @@
                                 <StackPanel Grid.Column="0" Margin="0,0,8,0">
                                     <TextBlock Text="Modo de cálculo" FontSize="11"/>
                                     <ComboBox ItemsSource="{Binding ModosCalculo}" SelectedItem="{Binding FormModoCalculo, Mode=TwoWay}" Padding="4,2"/>
+                                    <TextBlock Text="'AutomaticoCostoCarrera' = arancel referencial por costo de carrera (no es el óptimo financiero). El óptimo VAN=0 se calcula y aplica en Análisis Financiero → Arancel Óptimo."
+                                               FontSize="10" Foreground="#546E7A" FontStyle="Italic" TextWrapping="Wrap" Margin="0,3,0,0"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1">
                                     <TextBlock Text="Aplicar a" FontSize="11"/>

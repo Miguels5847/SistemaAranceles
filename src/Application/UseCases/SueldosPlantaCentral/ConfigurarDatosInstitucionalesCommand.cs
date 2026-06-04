@@ -63,6 +63,12 @@ public sealed class ConfigurarDatosInstitucionalesCommand(
                 dto.PremioRiesgo,
                 dto.TmrManual,
                 dto.UsarTmrManual);
+            datos.CambiarParametrosArancelOptimo(
+                dto.ToleranciaVanArancel,
+                dto.MargenAproximacionVanArancel,
+                dto.ArancelMinimoBusqueda,
+                dto.ArancelMaximoBusqueda,
+                dto.MaxIteracionesBiseccion);
             repositorio.Agregar(datos);
         }
         else
@@ -105,6 +111,12 @@ public sealed class ConfigurarDatosInstitucionalesCommand(
                 dto.PremioRiesgo,
                 dto.TmrManual,
                 dto.UsarTmrManual);
+            existente.CambiarParametrosArancelOptimo(
+                dto.ToleranciaVanArancel,
+                dto.MargenAproximacionVanArancel,
+                dto.ArancelMinimoBusqueda,
+                dto.ArancelMaximoBusqueda,
+                dto.MaxIteracionesBiseccion);
             existente.RegistrarActualizacion(usuarioId, dto.FuenteNotas);
             repositorio.Actualizar(existente);
             datos = existente;

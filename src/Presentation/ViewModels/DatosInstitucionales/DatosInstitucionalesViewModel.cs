@@ -70,6 +70,13 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
     [ObservableProperty] private decimal _tmrManual = DatosInstitucionalesDominio.TmrManualPorDefecto;
     [ObservableProperty] private bool _usarTmrManual = DatosInstitucionalesDominio.UsarTmrManualPorDefecto;
 
+    // KAN-44: parámetros de la bisección del arancel óptimo (VAN=0)
+    [ObservableProperty] private decimal _toleranciaVanArancel = DatosInstitucionalesDominio.ToleranciaVanArancelPorDefecto;
+    [ObservableProperty] private decimal _margenAproximacionVanArancel = DatosInstitucionalesDominio.MargenAproximacionVanArancelPorDefecto;
+    [ObservableProperty] private decimal _arancelMinimoBusqueda = DatosInstitucionalesDominio.ArancelMinimoBusquedaPorDefecto;
+    [ObservableProperty] private decimal _arancelMaximoBusqueda = DatosInstitucionalesDominio.ArancelMaximoBusquedaPorDefecto;
+    [ObservableProperty] private int _maxIteracionesBiseccion = DatosInstitucionalesDominio.MaxIteracionesBiseccionPorDefecto;
+
     [ObservableProperty] private string? _fuenteNotas;
 
     [ObservableProperty] private decimal _masaSalarialMensual;
@@ -154,6 +161,11 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
                 PremioRiesgo = DatosInstitucionalesDominio.PremioRiesgoPorDefecto;
                 TmrManual = DatosInstitucionalesDominio.TmrManualPorDefecto;
                 UsarTmrManual = DatosInstitucionalesDominio.UsarTmrManualPorDefecto;
+                ToleranciaVanArancel = DatosInstitucionalesDominio.ToleranciaVanArancelPorDefecto;
+                MargenAproximacionVanArancel = DatosInstitucionalesDominio.MargenAproximacionVanArancelPorDefecto;
+                ArancelMinimoBusqueda = DatosInstitucionalesDominio.ArancelMinimoBusquedaPorDefecto;
+                ArancelMaximoBusqueda = DatosInstitucionalesDominio.ArancelMaximoBusquedaPorDefecto;
+                MaxIteracionesBiseccion = DatosInstitucionalesDominio.MaxIteracionesBiseccionPorDefecto;
                 UltimaActualizacionTexto = "Sin registros previos. Ingrese los datos iniciales.";
                 RecalcularMetricas();
                 return;
@@ -223,6 +235,11 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
                     PremioRiesgo = PremioRiesgo,
                     TmrManual = TmrManual,
                     UsarTmrManual = UsarTmrManual,
+                    ToleranciaVanArancel = ToleranciaVanArancel,
+                    MargenAproximacionVanArancel = MargenAproximacionVanArancel,
+                    ArancelMinimoBusqueda = ArancelMinimoBusqueda,
+                    ArancelMaximoBusqueda = ArancelMaximoBusqueda,
+                    MaxIteracionesBiseccion = MaxIteracionesBiseccion,
                     FuenteNotas = FuenteNotas,
                 },
                 _sesionActual.UsuarioId);
@@ -296,6 +313,11 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
         PremioRiesgo = dto.PremioRiesgo;
         TmrManual = dto.TmrManual;
         UsarTmrManual = dto.UsarTmrManual;
+        ToleranciaVanArancel = dto.ToleranciaVanArancel;
+        MargenAproximacionVanArancel = dto.MargenAproximacionVanArancel;
+        ArancelMinimoBusqueda = dto.ArancelMinimoBusqueda;
+        ArancelMaximoBusqueda = dto.ArancelMaximoBusqueda;
+        MaxIteracionesBiseccion = dto.MaxIteracionesBiseccion;
         FuenteNotas = dto.FuenteNotas;
         MasaSalarialMensual = dto.MasaSalarialMensual;
         TotalAnualPlantaCentral = dto.TotalAnualPlantaCentral;

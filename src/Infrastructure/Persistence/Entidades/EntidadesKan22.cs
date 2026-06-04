@@ -45,6 +45,13 @@ public sealed class DatosInstitucionales
     public decimal TmrManual { get; set; }
     public bool UsarTmrManual { get; set; }
 
+    // KAN-44: parámetros bisección arancel óptimo
+    public decimal ToleranciaVanArancel { get; set; } = 1m;
+    public decimal MargenAproximacionVanArancel { get; set; } = 2m;
+    public decimal ArancelMinimoBusqueda { get; set; } = 500m;
+    public decimal ArancelMaximoBusqueda { get; set; } = 5000m;
+    public int MaxIteracionesBiseccion { get; set; } = 60;
+
     public DateTimeOffset FechaActualizacion { get; set; } = DateTimeOffset.UtcNow;
     public int ActualizadoPorUsuarioId { get; set; }
     public string? FuenteNotas { get; set; }

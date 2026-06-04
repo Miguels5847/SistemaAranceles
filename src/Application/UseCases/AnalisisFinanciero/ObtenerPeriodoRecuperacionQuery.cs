@@ -2,6 +2,7 @@ using SistemaAranceles.Application.DTOs.AnalisisFinanciero;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.Services.Financieros;
 using SistemaAranceles.Domain.Entities;
+using SistemaAranceles.Domain.Enums;
 
 namespace SistemaAranceles.Application.UseCases.AnalisisFinanciero;
 
@@ -16,7 +17,8 @@ public sealed class ObtenerPeriodoRecuperacionQuery(
         int? escenarioProyeccionId,
         CancellationToken ct = default,
         FlujoFondosDto? flujoPrecalculado = null,
-        decimal factorImprevisto = 1.05m)
+        decimal factorImprevisto = 1.05m,
+        ModoCalculoFinanciero modo = ModoCalculoFinanciero.CompatibleExcel)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -35,7 +37,7 @@ public sealed class ObtenerPeriodoRecuperacionQuery(
         }
 
         var flujo = flujoPrecalculado
-            ?? await obtenerFlujoFondosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, factorImprevisto: factorImprevisto);
+            ?? await obtenerFlujoFondosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, factorImprevisto: factorImprevisto, modo: modo);
         AgregarAdvertencia(advertencias, flujo.MensajeAdvertencia);
 
         if (!flujo.TieneDatos || flujo.ValoresPorPeriodo.Count == 0)

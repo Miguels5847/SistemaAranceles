@@ -42,4 +42,30 @@ public sealed class CalculadoraTIRTests
         Assert.True(resultado.PosibleTirNoUnica);
         Assert.False(string.IsNullOrWhiteSpace(resultado.Mensaje));
     }
+
+    [Fact]
+    public void CalcularCercanaA_MultiplesRaices_DevuelveLaCercanaAlObjetivo()
+    {
+        // Flujo con raíces TIR ≈ 10% y ≈ 50%.
+        var flujos = new[] { -1000m, 2600m, -1650m };
+
+        var cercaBaja = CalculadoraTIR.CalcularCercanaA(flujos, 0.12m);
+        var cercaAlta = CalculadoraTIR.CalcularCercanaA(flujos, 0.45m);
+
+        Assert.True(cercaBaja.EsCalculable);
+        Assert.Equal(0.10m, decimal.Round(cercaBaja.Tir, 2));
+        Assert.True(cercaBaja.PosibleTirNoUnica);
+        Assert.Equal(0.50m, decimal.Round(cercaAlta.Tir, 2));
+    }
+
+    [Fact]
+    public void CalcularCercanaA_UnaRaiz_CoincideConCalcular()
+    {
+        var flujos = new[] { -1000m, 600m, 600m };
+
+        var cercana = CalculadoraTIR.CalcularCercanaA(flujos, 0.05m);
+
+        Assert.True(cercana.EsCalculable);
+        Assert.Equal(decimal.Round(CalculadoraTIR.Calcular(flujos).Tir, 4), decimal.Round(cercana.Tir, 4));
+    }
 }

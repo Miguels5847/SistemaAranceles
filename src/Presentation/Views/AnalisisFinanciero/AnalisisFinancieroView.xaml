@@ -303,6 +303,7 @@
                     <ColumnDefinition Width="2*"/>
                     <ColumnDefinition Width="2*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Margin="0,0,10,0">
                     <TextBlock Text="Carrera" FontSize="11" Foreground="#546E7A"/>
@@ -322,7 +323,16 @@
                               Padding="4,2"
                               IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}"/>
                 </StackPanel>
-                <Button Grid.Column="2"
+                <StackPanel Grid.Column="2" Margin="0,0,10,0">
+                    <TextBlock Text="Modo de cálculo" FontSize="11" Foreground="#546E7A"/>
+                    <ComboBox ItemsSource="{Binding ModosCalculo}"
+                              SelectedItem="{Binding ModoSeleccionado, Mode=TwoWay}"
+                              DisplayMemberPath="Nombre"
+                              MinWidth="170"
+                              Padding="4,2"
+                              IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}"/>
+                </StackPanel>
+                <Button Grid.Column="3"
                         Content="Refrescar"
                         Padding="10,4"
                         VerticalAlignment="Bottom"
@@ -332,20 +342,36 @@
         </Border>
 
         <StackPanel Grid.Row="2" Margin="0,0,0,8">
-            <TextBlock Text="{Binding MensajeExito}"
-                       Foreground="#2E7D32"
-                       FontWeight="SemiBold"
-                       Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
-            <TextBlock Text="{Binding MensajeAdvertencia}"
-                       Foreground="#E65100"
-                       FontWeight="SemiBold"
-                       TextWrapping="Wrap"
-                       Visibility="{Binding MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}}"/>
-            <TextBlock Text="{Binding MensajeError}"
-                       Foreground="#C62828"
-                       FontWeight="SemiBold"
-                       TextWrapping="Wrap"
-                       Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <Border Background="#E8F5E9" BorderBrush="#A5D6A7" BorderThickness="1" CornerRadius="4" Padding="10,6" Margin="0,0,0,6"
+                    Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding MensajeExito}" Foreground="#2E7D32" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Content="✕" ToolTip="Cerrar"
+                            Command="{Binding CerrarMensajeCommand}" CommandParameter="exito"
+                            Background="Transparent" BorderThickness="0" Foreground="#2E7D32" FontWeight="Bold" Padding="8,0" Cursor="Hand"/>
+                </Grid>
+            </Border>
+            <Border Background="#FFF3E0" BorderBrush="#FFCC80" BorderThickness="1" CornerRadius="4" Padding="10,6" Margin="0,0,0,6"
+                    Visibility="{Binding MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding MensajeAdvertencia}" Foreground="#E65100" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Content="✕" ToolTip="Cerrar"
+                            Command="{Binding CerrarMensajeCommand}" CommandParameter="advertencia"
+                            Background="Transparent" BorderThickness="0" Foreground="#E65100" FontWeight="Bold" Padding="8,0" Cursor="Hand"/>
+                </Grid>
+            </Border>
+            <Border Background="#FFEBEE" BorderBrush="#EF9A9A" BorderThickness="1" CornerRadius="4" Padding="10,6"
+                    Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding MensajeError}" Foreground="#C62828" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Content="✕" ToolTip="Cerrar"
+                            Command="{Binding CerrarMensajeCommand}" CommandParameter="error"
+                            Background="Transparent" BorderThickness="0" Foreground="#C62828" FontWeight="Bold" Padding="8,0" Cursor="Hand"/>
+                </Grid>
+            </Border>
         </StackPanel>
 
         <TabControl Grid.Row="3"
@@ -705,6 +731,42 @@
                                     <Run Text="{Binding ArancelOptimoBiseccion.EstadoConvergencia, Mode=OneWay, FallbackValue='Sin datos'}"/>
                                     <Run Text="."/>
                                 </TextBlock>
+                                <Border Background="#F1F8E9" BorderBrush="#C8E6C9" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,8,0,0"
+                                        Visibility="{Binding TieneComparativaArancel, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="130"/>
+                                            <ColumnDefinition Width="130"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Comparativa de arancel" FontWeight="SemiBold" Foreground="#1B5E20"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="Arancel" FontWeight="SemiBold" Foreground="#546E7A" TextAlignment="Right"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="2" Text="Total/sem." FontWeight="SemiBold" Foreground="#546E7A" TextAlignment="Right"/>
+
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Vigente (manual actual)" Foreground="#263238" Margin="0,3,0,0"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ArancelVigenteDisplay}" Foreground="#263238" TextAlignment="Right" Margin="0,3,0,0"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding TotalVigenteDisplay}" Foreground="#263238" TextAlignment="Right" Margin="0,3,0,0"/>
+
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Referencial por costo de carrera" Foreground="#263238" Margin="0,3,0,0"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ArancelReferencialDisplay}" Foreground="#263238" TextAlignment="Right" Margin="0,3,0,0"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding TotalReferencialDisplay}" Foreground="#263238" TextAlignment="Right" Margin="0,3,0,0"/>
+
+                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Óptimo financiero (VAN=0)" FontWeight="Bold" Foreground="#0D4726" Margin="0,3,0,0"/>
+                                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding ArancelOptimoComparativaDisplay}" FontWeight="Bold" Foreground="#0D4726" TextAlignment="Right" Margin="0,3,0,0"/>
+                                        <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding TotalOptimoComparativaDisplay}" FontWeight="Bold" Foreground="#0D4726" TextAlignment="Right" Margin="0,3,0,0"/>
+
+                                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Diferencia (vigente → óptimo)" Foreground="#546E7A" Margin="0,3,0,0"/>
+                                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding DiferenciaArancelDisplay}" Foreground="#546E7A" TextAlignment="Right" Margin="0,3,0,0"/>
+                                        <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding DiferenciaPorcentajeDisplay}" Foreground="#546E7A" TextAlignment="Right" Margin="0,3,0,0"/>
+                                    </Grid>
+                                </Border>
                             </StackPanel>
                             <Button Grid.Column="1"
                                     Content="Usar arancel óptimo"
@@ -832,14 +894,6 @@
                                            FontWeight="Bold"
                                            FontSize="16"
                                            Foreground="#1B5E20"/>
-                                <Button Grid.Row="2"
-                                        Content="Exportar CSV"
-                                        Margin="0,6,0,0"
-                                        Padding="8,3"
-                                        HorizontalAlignment="Left"
-                                        Command="{Binding ExportarDashboardCommand}"
-                                        IsEnabled="{Binding PuedeExportarDashboard}"
-                                        Visibility="{Binding PuedeVerExportarDashboard, Converter={StaticResource BoolToVisibilityConverter}}"/>
                             </Grid>
                         </Border>
                     </UniformGrid>

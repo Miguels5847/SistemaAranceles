@@ -2,6 +2,7 @@ using SistemaAranceles.Application.DTOs.AnalisisFinanciero;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.Services.Financieros;
 using SistemaAranceles.Domain.Entities;
+using SistemaAranceles.Domain.Enums;
 
 namespace SistemaAranceles.Application.UseCases.AnalisisFinanciero;
 
@@ -19,7 +20,8 @@ public sealed class ObtenerIndicadoresFinancierosQuery(
         int? escenarioProyeccionId,
         CancellationToken ct = default,
         FlujoFondosDto? flujoPrecalculado = null,
-        decimal factorImprevisto = 1.05m)
+        decimal factorImprevisto = 1.05m,
+        ModoCalculoFinanciero modo = ModoCalculoFinanciero.CompatibleExcel)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -71,22 +73,37 @@ public sealed class ObtenerIndicadoresFinancierosQuery(
             TmrManualPorcentaje = tmrManual
         });
 
-        // VAN/TIR se calculan con flujo ANUAL consolidado (no semestral): la TMR es anual y el
-        // detalle semestral se mantiene en la tabla de Flujo de Fondos.
-        var detalleAnual = ConsolidadorFlujosFinancieros.ConstruirDetalleAnual(flujo.ValoresPorPeriodo);
-        var flujos = detalleAnual.Select(f => f.FlujoNeto).ToList();
-        var van = CalculadoraVAN.Calcular(flujos, tmr.TmrTasa);
-        var tir = CalculadoraTIR.Calcular(flujos);
+        // CompatibleExcel (tutor): flujos SEMESTRALES y VAN con convención Excel (período 0 descontado).
+        // Técnico (ortodoxo): flujo ANUAL consolidado y período 0 sin descontar.
+        var detalle = modo == ModoCalculoFinanciero.CompatibleExcel
+            ? flujo.ValoresPorPeriodo
+                .OrderBy(p => p.PeriodoOrden)
+                .Select(p => new FlujoAnualFinancieroDto
+                {
+                    Orden = p.PeriodoOrden,
+                    Anio = p.Anio > 0 ? p.Anio : null,
+                    Etiqueta = p.PeriodoOrden == 0 ? "Periodo 0" : p.EtiquetaPeriodo,
+                    FlujoNeto = p.FlujoNeto
+                })
+                .ToList()
+            : ConsolidadorFlujosFinancieros.ConstruirDetalleAnual(flujo.ValoresPorPeriodo).ToList();
+        var flujos = detalle.Select(f => f.FlujoNeto).ToList();
+        var van = modo == ModoCalculoFinanciero.CompatibleExcel
+            ? CalculadoraVAN.CalcularExcel(flujos, tmr.TmrTasa)
+            : CalculadoraVAN.Calcular(flujos, tmr.TmrTasa);
+        var tir = CalculadoraTIR.CalcularCercanaA(flujos, tmr.TmrTasa);
         AgregarAdvertencia(advertencias, tir.Mensaje);
 
-        var detalleVan = detalleAnual
+        // En CompatibleExcel el período 0 también se descuenta un período (NPV de Excel).
+        var desfase = modo == ModoCalculoFinanciero.CompatibleExcel ? 1 : 0;
+        var detalleVan = detalle
             .Select((f, t) => new IndicadorVanPeriodoDto
             {
                 PeriodoOrden = f.Orden,
                 EtiquetaPeriodo = f.Etiqueta,
                 FlujoNeto = f.FlujoNeto,
-                FactorDescuento = CalculadoraVAN.FactorDescuento(tmr.TmrTasa, t),
-                ValorPresente = CalculadoraVAN.ValorPresente(f.FlujoNeto, tmr.TmrTasa, t)
+                FactorDescuento = CalculadoraVAN.FactorDescuento(tmr.TmrTasa, t + desfase),
+                ValorPresente = CalculadoraVAN.ValorPresente(f.FlujoNeto, tmr.TmrTasa, t + desfase)
             })
             .ToList();
 

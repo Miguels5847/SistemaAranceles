@@ -1,10 +1,7 @@
-using System.IO;
 using System.Collections.ObjectModel;
-using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Win32;
 using SistemaAranceles.Application.DTOs.AnalisisFinanciero;
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.Interfaces.Persistencia;
@@ -13,7 +10,9 @@ using SistemaAranceles.Application.UseCases.CapitalTrabajo;
 using SistemaAranceles.Application.UseCases.CostosGastos;
 using SistemaAranceles.Application.UseCases.DemandaIngresos;
 using SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion;
+using SistemaAranceles.Application.DTOs.CostosGastos;
 using SistemaAranceles.Domain.Entities;
+using SistemaAranceles.Domain.Enums;
 using SistemaAranceles.Presentation.State;
 
 namespace SistemaAranceles.Presentation.ViewModels.AnalisisFinanciero;
@@ -44,6 +43,12 @@ public sealed class ParametroAnalisisFinancieroFila
     public bool EsTotal { get; init; }
 }
 
+public sealed class ModoCalculoOpcion
+{
+    public ModoCalculoFinanciero Modo { get; init; }
+    public string Nombre { get; init; } = string.Empty;
+}
+
 public sealed partial class AnalisisFinancieroViewModel : ObservableObject
 {
     private readonly IServiceProvider _serviceProvider;
@@ -60,6 +65,12 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         _sesionActual = sesionActual;
         _factorImprevistoState = factorImprevistoState;
         FactorImprevisto = _factorImprevistoState.FactorImprevisto;
+        ModosCalculo = new ObservableCollection<ModoCalculoOpcion>
+        {
+            new() { Modo = ModoCalculoFinanciero.CompatibleExcel, Nombre = "Compatible Excel" },
+            new() { Modo = ModoCalculoFinanciero.Tecnico, Nombre = "Técnico" }
+        };
+        ModoSeleccionado = ModosCalculo[0];
     }
 
     [ObservableProperty] private ObservableCollection<Carrera> _carreras = [];
@@ -74,6 +85,10 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     [ObservableProperty] private ArancelOptimoBiseccionDto? _arancelOptimoBiseccion;
     [ObservableProperty] private DashboardFinancieroDto? _dashboardFinanciero;
     [ObservableProperty] private decimal _factorImprevisto = FactorImprevistoCostosGastosState.FactorPorDefecto;
+    [ObservableProperty] private ObservableCollection<ModoCalculoOpcion> _modosCalculo = [];
+    [ObservableProperty] private ModoCalculoOpcion? _modoSeleccionado;
+    [ObservableProperty] private ArancelEfectivoDto? _arancelVigente;
+    [ObservableProperty] private CostoCarreraResultadoDto? _arancelReferencial;
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeAdvertencia = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
@@ -110,11 +125,55 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                                            && ArancelOptimoBiseccion?.Disponible == true
                                            && CarreraSeleccionada is not null
                                            && EscenarioSeleccionado is not null;
-    public bool PuedeVerExportarDashboard => _sesionActual.EsAdministrador;
-    public bool PuedeExportarDashboard => PuedeVerExportarDashboard
-                                          && !EstaCargando
-                                          && DashboardFinanciero?.TieneDatos == true;
     public bool PuedeEditar => _sesionActual.EsAdministrador || _sesionActual.TienePermiso("DI_NG.EDITAR");
+
+    public ModoCalculoFinanciero ModoCalculo => ModoSeleccionado?.Modo ?? ModoCalculoFinanciero.CompatibleExcel;
+
+    // Comparativa arancel vigente vs propuesto (Fase 6).
+    public bool TieneComparativaArancel => ArancelVigente is not null
+                                           || ArancelReferencial is not null
+                                           || ArancelOptimoBiseccion?.Disponible == true;
+    public string ArancelVigenteDisplay => ArancelVigente?.ArancelDisplay ?? "—";
+    public string MatriculaVigenteDisplay => ArancelVigente?.MatriculaDisplay ?? "—";
+    public string TotalVigenteDisplay => ArancelVigente is { ArancelEfectivo: > 0m } v
+        ? FormatoMatrizAnalisisFinanciero.FormatearMoneda((v.ArancelEfectivo ?? 0m) + v.MatriculaEfectiva)
+        : "—";
+    public string ArancelReferencialDisplay => ArancelReferencial?.TieneDatos == true
+        ? ArancelReferencial.ArancelSugeridoDisplay
+        : "—";
+    public string TotalReferencialDisplay => ArancelReferencial?.TieneDatos == true
+        ? ArancelReferencial.TotalPorSemestreDisplay
+        : "—";
+    public string ArancelOptimoComparativaDisplay => ArancelOptimoBiseccion?.Disponible == true
+        ? ArancelOptimoBiseccion.ArancelOptimoDisplay
+        : "—";
+    public string TotalOptimoComparativaDisplay => ArancelOptimoBiseccion?.Disponible == true
+        ? FormatoMatrizAnalisisFinanciero.FormatearMoneda(ArancelOptimoBiseccion.TotalPorSemestre)
+        : "—";
+    public string DiferenciaArancelDisplay => DiferenciaArancel(out var dif)
+        ? FormatoMatrizAnalisisFinanciero.FormatearMoneda(dif)
+        : "—";
+    public string DiferenciaPorcentajeDisplay
+    {
+        get
+        {
+            var vigente = ArancelVigente?.ArancelEfectivo ?? 0m;
+            return DiferenciaArancel(out var dif) && vigente > 0m
+                ? $"{decimal.Round(dif / vigente * 100m, 1):N1}%"
+                : "—";
+        }
+    }
+
+    private bool DiferenciaArancel(out decimal diferencia)
+    {
+        diferencia = 0m;
+        var vigente = ArancelVigente?.ArancelEfectivo ?? 0m;
+        var optimo = ArancelOptimoBiseccion?.Disponible == true ? ArancelOptimoBiseccion.ArancelOptimo : 0m;
+        if (vigente <= 0m || optimo <= 0m)
+            return false;
+        diferencia = decimal.Round(optimo - vigente, 2);
+        return true;
+    }
 
     partial void OnCarreraSeleccionadaChanged(Carrera? value)
     {
@@ -184,6 +243,43 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         OnPropertyChanged(nameof(DetalleArancelOptimo));
         OnPropertyChanged(nameof(TieneArancelOptimoBiseccion));
         OnPropertyChanged(nameof(PuedeUsarArancelOptimo));
+        NotificarComparativaArancel();
+    }
+
+    partial void OnModoSeleccionadoChanged(ModoCalculoOpcion? value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(ModoCalculo));
+        if (_suprimirCambios || EstaCargando)
+            return;
+
+        _ = RefrescarAsync();
+    }
+
+    partial void OnArancelVigenteChanged(ArancelEfectivoDto? value)
+    {
+        _ = value;
+        NotificarComparativaArancel();
+    }
+
+    partial void OnArancelReferencialChanged(CostoCarreraResultadoDto? value)
+    {
+        _ = value;
+        NotificarComparativaArancel();
+    }
+
+    private void NotificarComparativaArancel()
+    {
+        OnPropertyChanged(nameof(TieneComparativaArancel));
+        OnPropertyChanged(nameof(ArancelVigenteDisplay));
+        OnPropertyChanged(nameof(MatriculaVigenteDisplay));
+        OnPropertyChanged(nameof(TotalVigenteDisplay));
+        OnPropertyChanged(nameof(ArancelReferencialDisplay));
+        OnPropertyChanged(nameof(TotalReferencialDisplay));
+        OnPropertyChanged(nameof(ArancelOptimoComparativaDisplay));
+        OnPropertyChanged(nameof(TotalOptimoComparativaDisplay));
+        OnPropertyChanged(nameof(DiferenciaArancelDisplay));
+        OnPropertyChanged(nameof(DiferenciaPorcentajeDisplay));
     }
 
     partial void OnDashboardFinancieroChanged(DashboardFinancieroDto? value)
@@ -192,7 +288,6 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         OnPropertyChanged(nameof(IndicadoresDashboard));
         OnPropertyChanged(nameof(RecomendacionesDashboard));
         OnPropertyChanged(nameof(TieneDashboardFinanciero));
-        OnPropertyChanged(nameof(PuedeExportarDashboard));
     }
 
     partial void OnFactorImprevistoChanged(decimal value)
@@ -205,7 +300,6 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     {
         _ = value;
         OnPropertyChanged(nameof(PuedeUsarArancelOptimo));
-        OnPropertyChanged(nameof(PuedeExportarDashboard));
     }
 
     [RelayCommand]
@@ -363,6 +457,8 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             var queryDashboard = scope.ServiceProvider.GetRequiredService<ObtenerDashboardFinancieroQuery>();
             var queryInversiones = scope.ServiceProvider.GetRequiredService<ObtenerMatrizInversionesQuery>();
             var queryCapitalTrabajo = scope.ServiceProvider.GetRequiredService<ObtenerResumenCapitalTrabajoQuery>();
+            var queryArancelEfectivo = scope.ServiceProvider.GetRequiredService<ObtenerArancelEfectivoQuery>();
+            var queryCostoCarrera = scope.ServiceProvider.GetRequiredService<ObtenerCostoCarreraQuery>();
 
             var carreraId = CarreraSeleccionada.Id;
             var escenarioId = EscenarioSeleccionado.Id;
@@ -393,17 +489,20 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                 escenarioId,
                 estadoPrecalculado: EstadoPerdidasGanancias,
                 inversionesPrecalculada: inversiones,
-                capitalTrabajoPrecalculado: capitalTrabajo);
+                capitalTrabajoPrecalculado: capitalTrabajo,
+                modo: ModoCalculo);
             IndicadoresFinancieros = await queryIndicadores.EjecutarAsync(
                 carreraId,
                 escenarioId,
                 flujoPrecalculado: FlujoFondos,
-                factorImprevisto: factorImprevisto);
+                factorImprevisto: factorImprevisto,
+                modo: ModoCalculo);
             PeriodoRecuperacion = await queryPeriodoRecuperacion.EjecutarAsync(
                 carreraId,
                 escenarioId,
                 flujoPrecalculado: FlujoFondos,
-                factorImprevisto: factorImprevisto);
+                factorImprevisto: factorImprevisto,
+                modo: ModoCalculo);
             PuntoEquilibrio = await queryPuntoEquilibrio.EjecutarAsync(
                 carreraId,
                 escenarioId,
@@ -418,6 +517,13 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                 demandaPrecalculada: demanda,
                 inversionesPrecalculada: inversiones,
                 capitalTrabajoPrecalculado: capitalTrabajo,
+                factorImprevisto: factorImprevisto,
+                modo: ModoCalculo);
+            ArancelVigente = await queryArancelEfectivo.EjecutarAsync(carreraId, escenarioId);
+            ArancelReferencial = await queryCostoCarrera.EjecutarAsync(
+                carreraId,
+                escenarioId,
+                matrizPrecalculada: matriz,
                 factorImprevisto: factorImprevisto);
             DashboardFinanciero = await queryDashboard.EjecutarAsync(
                 carreraId,
@@ -471,48 +577,6 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         finally
         {
             EstaCargando = false;
-        }
-    }
-
-    [RelayCommand]
-    private async Task ExportarDashboardAsync()
-    {
-        if (!PuedeVerExportarDashboard)
-        {
-            MensajeAdvertencia = string.Empty;
-            MensajeError = "Solo un administrador puede exportar el dashboard.";
-            return;
-        }
-
-        if (DashboardFinanciero is null || !DashboardFinanciero.TieneDatos)
-        {
-            MensajeAdvertencia = string.Empty;
-            MensajeError = "No hay dashboard financiero para exportar.";
-            return;
-        }
-
-        var nombreCarrera = NormalizarNombreArchivo(DashboardFinanciero.CarreraNombre);
-        var nombreEscenario = NormalizarNombreArchivo(DashboardFinanciero.EscenarioNombre);
-        var dialog = new SaveFileDialog
-        {
-            Title = "Exportar Dashboard Financiero",
-            Filter = "CSV UTF-8 (*.csv)|*.csv",
-            FileName = $"dashboard_financiero_{nombreCarrera}_{nombreEscenario}_{DateTime.Now:yyyyMMddHHmm}.csv"
-        };
-
-        if (dialog.ShowDialog() != true)
-            return;
-
-        try
-        {
-            await File.WriteAllTextAsync(dialog.FileName, ConstruirCsvDashboard(DashboardFinanciero), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
-            MensajeError = string.Empty;
-            MensajeAdvertencia = string.Empty;
-            MensajeExito = "Dashboard financiero exportado correctamente.";
-        }
-        catch (Exception ex)
-        {
-            MensajeError = Detalle(ex);
         }
     }
 
@@ -592,6 +656,17 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         }
     }
 
+    [RelayCommand]
+    private void CerrarMensaje(string? cual)
+    {
+        switch (cual)
+        {
+            case "exito": MensajeExito = string.Empty; break;
+            case "advertencia": MensajeAdvertencia = string.Empty; break;
+            case "error": MensajeError = string.Empty; break;
+        }
+    }
+
     private void LimpiarResultados()
     {
         EstadoPerdidasGanancias = null;
@@ -601,36 +676,9 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         PuntoEquilibrio = null;
         ArancelOptimoBiseccion = null;
         DashboardFinanciero = null;
+        ArancelVigente = null;
+        ArancelReferencial = null;
     }
-
-    private static string ConstruirCsvDashboard(DashboardFinancieroDto dashboard)
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine("Seccion;Campo;Valor;Detalle;Estado");
-        sb.AppendLine($"Resumen;Carrera;{Csv(dashboard.CarreraNombre)};;");
-        sb.AppendLine($"Resumen;Escenario;{Csv(dashboard.EscenarioNombre)};;");
-        sb.AppendLine($"Resumen;Estado general;{Csv(dashboard.EstadoGeneral)};{Csv(dashboard.ViabilidadDisplay)};");
-        sb.AppendLine($"Resumen;Fecha calculo;{Csv(dashboard.FechaCalculoDisplay)};;");
-        sb.AppendLine($"Resumen;Ingresos;{Csv(dashboard.TotalIngresosDisplay)};;");
-        sb.AppendLine($"Resumen;Costos y gastos;{Csv(dashboard.TotalCostosGastosDisplay)};;");
-        sb.AppendLine($"Resumen;Utilidad o perdida;{Csv(dashboard.UtilidadPerdidaDisplay)};;");
-        sb.AppendLine($"Resumen;Flujo acumulado final;{Csv(dashboard.FlujoAcumuladoFinalDisplay)};;");
-        sb.AppendLine($"Resumen;VAN;{Csv(dashboard.VanDisplay)};;");
-        sb.AppendLine($"Resumen;TIR;{Csv(dashboard.TirDisplay)};;");
-        sb.AppendLine($"Resumen;TMR;{Csv(dashboard.TmrDisplay)};;");
-        sb.AppendLine($"Resumen;Arancel optimo;{Csv(dashboard.ArancelOptimoDisplay)};;");
-
-        foreach (var indicador in dashboard.Indicadores)
-            sb.AppendLine($"Indicador;{Csv(indicador.Nombre)};{Csv(indicador.ValorDisplay)};{Csv(indicador.Detalle)};{Csv(indicador.Estado)}");
-
-        foreach (var recomendacion in dashboard.Recomendaciones)
-            sb.AppendLine($"Recomendacion;{Csv(recomendacion.Origen)};{Csv(recomendacion.Prioridad)};{Csv(recomendacion.Mensaje)};");
-
-        return sb.ToString();
-    }
-
-    private static string Csv(string? value)
-        => "\"" + (value ?? string.Empty).Replace("\"", "\"\"") + "\"";
 
     private IReadOnlyList<MatrizAnalisisFinancieroFila> ConstruirFilasFlujoTirVan()
     {
@@ -713,13 +761,6 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         };
 
         return patrones.Any(p => mensaje.Contains(p, StringComparison.OrdinalIgnoreCase));
-    }
-
-    private static string NormalizarNombreArchivo(string value)
-    {
-        var invalido = Path.GetInvalidFileNameChars().ToHashSet();
-        var normalizado = new string(value.Select(c => invalido.Contains(c) || char.IsWhiteSpace(c) ? '_' : c).ToArray());
-        return string.IsNullOrWhiteSpace(normalizado) ? "sin_nombre" : normalizado;
     }
 
     private static string Detalle(Exception ex) => ex.InnerException?.Message ?? ex.Message;

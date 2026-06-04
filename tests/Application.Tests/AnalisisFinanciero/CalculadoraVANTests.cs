@@ -17,6 +17,17 @@ public sealed class CalculadoraVANTests
     }
 
     [Fact]
+    public void CalcularExcel_DescuentaTambienElPeriodo0()
+    {
+        // ValorActualNeto = 41.3223; estilo Excel (NPV) = 41.3223 / 1.10 = 37.57
+        var flujos = new[] { -1000m, 600m, 600m };
+
+        var vanExcel = CalculadoraVAN.CalcularExcel(flujos, 0.10m);
+
+        Assert.Equal(37.57m, vanExcel);
+    }
+
+    [Fact]
     public void FactorDescuento_EnPeriodo0_EsUno()
     {
         Assert.Equal(1m, CalculadoraVAN.FactorDescuento(0.10m, 0));

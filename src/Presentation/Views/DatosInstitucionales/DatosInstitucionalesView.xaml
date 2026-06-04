@@ -511,6 +511,64 @@
                                 </Grid>
                         </Border>
 
+                        <Border Background="#F1F8E9"
+                                BorderBrush="#81C784"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="10,8"
+                                Margin="0,0,0,8">
+                                <Grid>
+                                        <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.ColumnSpan="4"
+                                                   Text="Parámetros Arancel Óptimo / Bisección VAN=0 (Épica 11)"
+                                                   FontWeight="SemiBold" Foreground="#1B5E20"
+                                                   Margin="0,0,0,6"/>
+
+                                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,6,4">
+                                                <TextBlock Text="Tolerancia VAN ($)" FontSize="11"/>
+                                                <TextBox Text="{Binding ToleranciaVanArancel, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,6,4">
+                                                <TextBlock Text="Margen aproximación VAN ($)" FontSize="11"/>
+                                                <TextBox Text="{Binding MargenAproximacionVanArancel, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,6,4">
+                                                <TextBlock Text="Arancel mínimo búsqueda ($)" FontSize="11"/>
+                                                <TextBox Text="{Binding ArancelMinimoBusqueda, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="3" Margin="0,0,0,4">
+                                                <TextBlock Text="Arancel máximo búsqueda ($)" FontSize="11"/>
+                                                <TextBox Text="{Binding ArancelMaximoBusqueda, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,4,6,4">
+                                                <TextBlock Text="Máx. iteraciones bisección" FontSize="11"/>
+                                                <TextBox Text="{Binding MaxIteracionesBiseccion, UpdateSourceTrigger=PropertyChanged}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+
+                                        <TextBlock Grid.Row="3" Grid.ColumnSpan="4"
+                                                   Text="Controlan la búsqueda del arancel financiero óptimo (VAN=0). |VAN| ≤ tolerancia = Calculado; ≤ margen = Equilibrio aproximado; mayor = No convergió."
+                                                   FontSize="11" Foreground="#546E7A" FontStyle="Italic"
+                                                   TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                </Grid>
+                        </Border>
+
                         <!-- Métricas calculadas -->
                         <Border Grid.Row="9"
                                 BorderBrush="#C5CAE9"

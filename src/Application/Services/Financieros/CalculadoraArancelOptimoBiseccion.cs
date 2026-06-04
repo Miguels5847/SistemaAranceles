@@ -5,6 +5,7 @@ public sealed class EntradaBiseccionArancel
     public decimal ArancelMinimo { get; init; } = 500m;
     public decimal ArancelMaximo { get; init; } = 5000m;
     public decimal ToleranciaVan { get; init; } = 1m;
+    public decimal MargenAproximacionVan { get; init; } = 2m;
     public int MaxIteraciones { get; init; } = 60;
     public int MaxExpansionesRango { get; init; } = 10;
     public Func<decimal, decimal> EvaluarVan { get; init; } = _ => 0m;
@@ -46,6 +47,7 @@ public static class CalculadoraArancelOptimoBiseccion
         var minimo = decimal.Round(entrada.ArancelMinimo, 2);
         var maximo = decimal.Round(entrada.ArancelMaximo, 2);
         var tolerancia = entrada.ToleranciaVan > 0m ? entrada.ToleranciaVan : 1m;
+        var margen = entrada.MargenAproximacionVan >= tolerancia ? entrada.MargenAproximacionVan : tolerancia * 2m;
         var maxIteraciones = entrada.MaxIteraciones > 0 ? entrada.MaxIteraciones : 60;
         var maxExpansiones = entrada.MaxExpansionesRango >= 0 ? entrada.MaxExpansionesRango : 10;
 
@@ -168,8 +170,9 @@ public static class CalculadoraArancelOptimoBiseccion
             }
         }
 
-        var convergePorTolerancia = Math.Abs(mejorVan) <= tolerancia;
-        var equilibrioAproximado = Math.Abs(mejorVan) <= tolerancia * 10m;
+        var absVan = Math.Abs(mejorVan);
+        var convergePorTolerancia = absVan <= tolerancia;
+        var equilibrioAproximado = absVan <= margen;
 
         return new ResultadoBiseccionArancel
         {
@@ -185,17 +188,17 @@ public static class CalculadoraArancelOptimoBiseccion
             MejorVan = mejorVan,
             IteracionesUsadas = iteraciones.Count,
             ExpansionesRango = expansiones,
-            Estado = convergePorTolerancia ? "Calculado" : "Aproximado",
+            Estado = convergePorTolerancia ? "Calculado" : equilibrioAproximado ? "Aproximado" : "No convergió",
             EstadoConvergencia = convergePorTolerancia
                 ? "Convergió"
                 : equilibrioAproximado
-                    ? "VAN cercano a 0"
-                    : "Máximo de iteraciones",
+                    ? "Equilibrio aproximado por redondeo monetario"
+                    : "No convergió dentro del rango definido",
             Mensaje = convergePorTolerancia
                 ? null
                 : equilibrioAproximado
-                    ? "Equilibrio aproximado por redondeo monetario. VAN cercano a 0."
-                    : "Se alcanzó el máximo de iteraciones; se muestra la mejor aproximación encontrada.",
+                    ? "Equilibrio aproximado por redondeo monetario."
+                    : "No convergió dentro del rango definido; se muestra la mejor aproximación encontrada.",
             Iteraciones = iteraciones
         };
     }

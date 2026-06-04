@@ -10,6 +10,18 @@ public static class CalculadoraVAN
     public static decimal Calcular(IReadOnlyList<decimal> flujos, decimal tasaDescuento)
         => decimal.Round((decimal)ValorActualNeto(flujos, (double)tasaDescuento), 2);
 
+    /// <summary>
+    /// VAN con la convención de Excel NPV: descuenta TAMBIÉN el período 0 un período
+    /// (equivale a ValorActualNeto / (1 + tasa)). Replica la hoja "14 VAN" del tutor.
+    /// </summary>
+    public static decimal CalcularExcel(IReadOnlyList<decimal> flujos, decimal tasaDescuento)
+    {
+        var baseFactor = 1d + (double)tasaDescuento;
+        if (baseFactor <= 0d)
+            baseFactor = 1e-6d;
+        return decimal.Round((decimal)(ValorActualNeto(flujos, (double)tasaDescuento) / baseFactor), 2);
+    }
+
     /// <summary>Núcleo en double para iteración robusta (lo usa <see cref="CalculadoraTIR"/>).</summary>
     internal static double ValorActualNeto(IReadOnlyList<decimal> flujos, double tasa)
     {

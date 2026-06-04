@@ -7,6 +7,7 @@ using SistemaAranceles.Application.UseCases.CapitalTrabajo;
 using SistemaAranceles.Application.UseCases.InversionInicial;
 using SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion;
 using SistemaAranceles.Domain.Entities;
+using SistemaAranceles.Domain.Enums;
 
 namespace SistemaAranceles.Application.UseCases.AnalisisFinanciero;
 
@@ -28,7 +29,8 @@ public sealed class ObtenerFlujoFondosQuery(
         EstadoPerdidasGananciasDto? estadoPrecalculado = null,
         MatrizInversionesDto? inversionesPrecalculada = null,
         ResumenCapitalTrabajoDto? capitalTrabajoPrecalculado = null,
-        decimal factorImprevisto = 1.05m)
+        decimal factorImprevisto = 1.05m,
+        ModoCalculoFinanciero modo = ModoCalculoFinanciero.CompatibleExcel)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -129,7 +131,10 @@ public sealed class ObtenerFlujoFondosQuery(
             inversionesFuturasPorPeriodo.TryGetValue(periodo.NumeroPeriodo, out var inversionFutura);
             depreciacionPorPeriodo.TryGetValue(periodo.NumeroPeriodo, out var depreciacionPeriodo);
             amortizacionPorAnio.TryGetValue(periodo.Anio, out var amortizacionPeriodo);
-            var recuperacionCapitalTrabajo = i == estado.ValoresPorPeriodo.Count - 1 ? totalCapitalTrabajo : 0m;
+            // CompatibleExcel (tutor) NO recupera capital de trabajo; Técnico (ortodoxo) sí, al cierre.
+            var recuperacionCapitalTrabajo = modo == ModoCalculoFinanciero.Tecnico && i == estado.ValoresPorPeriodo.Count - 1
+                ? totalCapitalTrabajo
+                : 0m;
             var pagoCredito = 0m;
             var flujoNeto = decimal.Round(
                 periodo.UtilidadPerdidaEjercicio

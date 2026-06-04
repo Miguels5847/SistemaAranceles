@@ -47,6 +47,13 @@ public sealed class DatosInstitucionalesDto
     public decimal TmrManual { get; init; } = DatosInstitucionales.TmrManualPorDefecto;
     public bool UsarTmrManual { get; init; } = DatosInstitucionales.UsarTmrManualPorDefecto;
 
+    // KAN-44
+    public decimal ToleranciaVanArancel { get; init; } = DatosInstitucionales.ToleranciaVanArancelPorDefecto;
+    public decimal MargenAproximacionVanArancel { get; init; } = DatosInstitucionales.MargenAproximacionVanArancelPorDefecto;
+    public decimal ArancelMinimoBusqueda { get; init; } = DatosInstitucionales.ArancelMinimoBusquedaPorDefecto;
+    public decimal ArancelMaximoBusqueda { get; init; } = DatosInstitucionales.ArancelMaximoBusquedaPorDefecto;
+    public int MaxIteracionesBiseccion { get; init; } = DatosInstitucionales.MaxIteracionesBiseccionPorDefecto;
+
     public decimal MasaSalarialMensual { get; init; }
     public decimal TotalMensualPlantaCentral { get; init; }
     public decimal TotalAnualPlantaCentral { get; init; }
@@ -108,6 +115,13 @@ public sealed class GuardarDatosInstitucionalesDto
     public decimal PremioRiesgo { get; init; } = DatosInstitucionales.PremioRiesgoPorDefecto;
     public decimal TmrManual { get; init; } = DatosInstitucionales.TmrManualPorDefecto;
     public bool UsarTmrManual { get; init; } = DatosInstitucionales.UsarTmrManualPorDefecto;
+
+    // KAN-44
+    public decimal ToleranciaVanArancel { get; init; } = DatosInstitucionales.ToleranciaVanArancelPorDefecto;
+    public decimal MargenAproximacionVanArancel { get; init; } = DatosInstitucionales.MargenAproximacionVanArancelPorDefecto;
+    public decimal ArancelMinimoBusqueda { get; init; } = DatosInstitucionales.ArancelMinimoBusquedaPorDefecto;
+    public decimal ArancelMaximoBusqueda { get; init; } = DatosInstitucionales.ArancelMaximoBusquedaPorDefecto;
+    public int MaxIteracionesBiseccion { get; init; } = DatosInstitucionales.MaxIteracionesBiseccionPorDefecto;
 
     public string? FuenteNotas { get; init; }
 }

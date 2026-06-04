@@ -93,12 +93,69 @@ public static class CalculadoraTIR
         return NoCalculable("No se encontró un cambio de signo del VAN en el rango evaluado.", cambiosSigno);
     }
 
+    /// <summary>
+    /// TIR normal (NO TIRM). Si el flujo tiene varias raíces (varios cambios de signo), devuelve la
+    /// más cercana a <paramref name="tasaObjetivo"/> (la TMR), para coincidir con el Excel del tutor.
+    /// La viabilidad principal se evalúa con el VAN.
+    /// </summary>
+    public static ResultadoTir CalcularCercanaA(IReadOnlyList<decimal> flujos, decimal tasaObjetivo)
+    {
+        if (flujos is null || flujos.Count < 2)
+            return NoCalculable("Se requieren al menos dos períodos para calcular la TIR.");
+
+        var cambiosSigno = ContarCambiosSigno(flujos);
+        if (!flujos.Any(f => f > 0m) || !flujos.Any(f => f < 0m))
+            return NoCalculable(
+                "La TIR no es calculable porque el flujo no cambia de signo. Con el arancel vigente no existen flujos positivos suficientes para recuperar la inversión.",
+                cambiosSigno);
+
+        var raices = EncontrarRaices(flujos);
+        if (raices.Count == 0)
+            return NoCalculable("No se encontró un cambio de signo del VAN en el rango evaluado.", cambiosSigno);
+
+        var advertencia = cambiosSigno > 1
+            ? "El flujo presenta múltiples cambios de signo: la TIR puede no ser única. Se muestra la TIR normal más cercana a la TMR; la viabilidad se evalúa principalmente con el VAN."
+            : null;
+
+        var objetivo = (double)tasaObjetivo;
+        var mejor = raices.OrderBy(r => Math.Abs(r.tasa - objetivo)).First();
+        return Calculable((decimal)mejor.tasa, mejor.iteraciones, cambiosSigno, advertencia);
+    }
+
+    private static List<(double tasa, int iteraciones)> EncontrarRaices(IReadOnlyList<decimal> flujos)
+    {
+        var raices = new List<(double, int)>();
+        var tasaAnterior = TasaMinima;
+        var npvAnterior = CalculadoraVAN.ValorActualNeto(flujos, tasaAnterior);
+
+        for (var tasa = TasaMinima + PasoIncremental; tasa <= TasaMaxima + 1e-9d; tasa += PasoIncremental)
+        {
+            var npv = CalculadoraVAN.ValorActualNeto(flujos, tasa);
+
+            if (npv == 0d)
+                raices.Add((tasa, 0));
+            else if (npvAnterior != 0d && Math.Sign(npv) != Math.Sign(npvAnterior))
+                raices.Add(BiseccionRaiz(flujos, tasaAnterior, tasa));
+
+            tasaAnterior = tasa;
+            npvAnterior = npv;
+        }
+
+        return raices;
+    }
+
     private static ResultadoTir Biseccion(
         IReadOnlyList<decimal> flujos,
         double a,
         double b,
         int cambiosSigno,
         string? advertencia)
+    {
+        var (tasa, iteraciones) = BiseccionRaiz(flujos, a, b);
+        return Calculable((decimal)tasa, iteraciones, cambiosSigno, advertencia);
+    }
+
+    private static (double tasa, int iteraciones) BiseccionRaiz(IReadOnlyList<decimal> flujos, double a, double b)
     {
         var fa = CalculadoraVAN.ValorActualNeto(flujos, a);
 
@@ -108,7 +165,7 @@ public static class CalculadoraTIR
             var fm = CalculadoraVAN.ValorActualNeto(flujos, medio);
 
             if (Math.Abs(fm) < Tolerancia || (b - a) / 2d < 1e-8d)
-                return Calculable((decimal)medio, i, cambiosSigno, advertencia);
+                return (medio, i);
 
             if (Math.Sign(fm) == Math.Sign(fa))
             {
@@ -121,7 +178,7 @@ public static class CalculadoraTIR
             }
         }
 
-        return Calculable((decimal)((a + b) / 2d), MaxIteracionesBiseccion, cambiosSigno, advertencia);
+        return ((a + b) / 2d, MaxIteracionesBiseccion);
     }
 
     private static ResultadoTir Calculable(decimal tasa, int iteraciones, int cambiosSigno, string? advertencia) => new()

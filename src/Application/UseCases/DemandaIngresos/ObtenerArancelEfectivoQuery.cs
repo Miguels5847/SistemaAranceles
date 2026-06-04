@@ -67,13 +67,13 @@ public sealed class ObtenerArancelEfectivoQuery(
             if (obtenerArancelOptimoCarreraQuery is null)
             {
                 arancel = null;
-                fuente = "Automático (Costo Carrera)";
+                fuente = "Referencial por costo de carrera";
                 advertencia = "Costo de Carrera pendiente; no se puede resolver el arancel automático.";
             }
             else
             {
                 var optimo = await obtenerArancelOptimoCarreraQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
-                fuente = "Automático (Costo Carrera)";
+                fuente = "Referencial por costo de carrera";
                 if (optimo.Disponible)
                 {
                     arancel = optimo.ArancelSugeridoSemestre;
