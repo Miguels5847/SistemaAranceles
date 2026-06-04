@@ -994,10 +994,101 @@
             </TabItem>
 
             <TabItem Header="8. CES / INF CES">
-                <TextBlock Text="Pendiente"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           Foreground="#546E7A"/>
+                <ScrollViewer Margin="8" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <Border Style="{StaticResource PanelResumen}" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="Distribución referencial de costos de la carrera"
+                                           FontWeight="SemiBold" Foreground="#1B5E20" Margin="0,0,0,2"/>
+                                <TextBlock Text="Cómo se reparte el 100% del costo de la carrera por categoría (información referencial)."
+                                           FontSize="11" Foreground="#546E7A" Margin="0,0,0,8" TextWrapping="Wrap"/>
+                                <DataGrid ItemsSource="{Binding DistribucionCes}"
+                                          AutoGenerateColumns="False" IsReadOnly="True"
+                                          RowStyle="{StaticResource EstadoPgRowStyle}"
+                                          CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                                          HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                                          AlternatingRowBackground="#F7FAF7" BorderBrush="#C8E6C9">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" Width="*"/>
+                                        <DataGridTextColumn Header="Monto" Binding="{Binding MontoDisplay}" Width="170"/>
+                                        <DataGridTextColumn Header="% del total" Binding="{Binding PorcentajeDisplay}" Width="120"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource PanelResumen}" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="INF CES — Presupuesto de la primera cohorte por función"
+                                           FontWeight="SemiBold" Foreground="#1B5E20" Margin="0,0,0,8"/>
+                                <DataGrid ItemsSource="{Binding InfCes}"
+                                          AutoGenerateColumns="False" IsReadOnly="True"
+                                          RowStyle="{StaticResource PerdidasGananciasRowStyle}"
+                                          CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                                          HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                                          AlternatingRowBackground="#F7FAF7" BorderBrush="#C8E6C9"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Concepto" Binding="{Binding Concepto}" Width="230"/>
+                                        <DataGridTextColumn Header="Provisión educación superior" Binding="{Binding ProvisionDisplay}" Width="150"/>
+                                        <DataGridTextColumn Header="Fomento científico y tecnológico" Binding="{Binding FomentoDisplay}" Width="150"/>
+                                        <DataGridTextColumn Header="Vinculación con la sociedad" Binding="{Binding VinculacionDisplay}" Width="150"/>
+                                        <DataGridTextColumn Header="Otros" Binding="{Binding OtrosDisplay}" Width="100"/>
+                                        <DataGridTextColumn Header="Total" Binding="{Binding TotalDisplay}" Width="150"/>
+                                        <DataGridTextColumn Header="% corriente" Binding="{Binding PorcentajeDisplay}" Width="100"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <Grid Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,24,0">
+                                        <TextBlock Text="Arancel por semestre" FontSize="11" Foreground="#546E7A"/>
+                                        <TextBlock Text="{Binding Ces.ArancelPorSemestreDisplay, FallbackValue='—'}" FontWeight="Bold" Foreground="#1B5E20"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Margin="0,0,24,0">
+                                        <TextBlock Text="Matrícula" FontSize="11" Foreground="#546E7A"/>
+                                        <TextBlock Text="{Binding Ces.MatriculaDisplay, FallbackValue='—'}" FontWeight="Bold" Foreground="#1B5E20"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Total por semestre" FontSize="11" Foreground="#546E7A"/>
+                                        <TextBlock Text="{Binding Ces.TotalPorSemestreDisplay, FallbackValue='—'}" FontWeight="Bold" Foreground="#1B5E20"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource PanelResumen}" Margin="0,0,0,0">
+                            <StackPanel>
+                                <TextBlock Text="CES — Parámetros de justificación del arancel"
+                                           FontWeight="SemiBold" Foreground="#1B5E20" Margin="0,0,0,8"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                    <TextBlock Text="Costo de carreras similares (referencial):" FontSize="11"
+                                               Foreground="#546E7A" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBox Text="{Binding CostoCarrerasSimilares, UpdateSourceTrigger=PropertyChanged}"
+                                             MinWidth="160" Padding="4,2"
+                                             IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}"/>
+                                    <TextBlock Text="(dato externo de la IES)" FontSize="10" FontStyle="Italic"
+                                               Foreground="#546E7A" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                </StackPanel>
+                                <DataGrid ItemsSource="{Binding ParametrosCes}"
+                                          AutoGenerateColumns="False" IsReadOnly="True"
+                                          RowStyle="{StaticResource PerdidasGananciasRowStyle}"
+                                          CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                                          HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                                          AlternatingRowBackground="#F7FAF7" BorderBrush="#C8E6C9">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Parámetro" Binding="{Binding Parametro}" Width="230"/>
+                                        <DataGridTextColumn Header="Criterio" Binding="{Binding Criterio}" Width="*"/>
+                                        <DataGridTextColumn Header="Valor" Binding="{Binding ValorDisplay}" Width="150"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
         </TabControl>
 

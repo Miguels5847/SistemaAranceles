@@ -84,6 +84,8 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     [ObservableProperty] private PuntoEquilibrioDto? _puntoEquilibrio;
     [ObservableProperty] private ArancelOptimoBiseccionDto? _arancelOptimoBiseccion;
     [ObservableProperty] private DashboardFinancieroDto? _dashboardFinanciero;
+    [ObservableProperty] private CesDto? _ces;
+    [ObservableProperty] private string _costoCarrerasSimilares = string.Empty;
     [ObservableProperty] private decimal _factorImprevisto = FactorImprevistoCostosGastosState.FactorPorDefecto;
     [ObservableProperty] private ObservableCollection<ModoCalculoOpcion> _modosCalculo = [];
     [ObservableProperty] private ModoCalculoOpcion? _modoSeleccionado;
@@ -120,6 +122,10 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     public IReadOnlyList<DashboardIndicadorFinancieroDto> IndicadoresDashboard => DashboardFinanciero?.Indicadores ?? [];
     public IReadOnlyList<DashboardRecomendacionFinancieraDto> RecomendacionesDashboard => DashboardFinanciero?.Recomendaciones ?? [];
     public bool TieneDashboardFinanciero => DashboardFinanciero?.TieneDatos == true;
+    public IReadOnlyList<CesInfFilaDto> InfCes => Ces?.InfCes ?? [];
+    public IReadOnlyList<CesParametroFilaDto> ParametrosCes => Ces?.Parametros ?? [];
+    public IReadOnlyList<CesDistribucionFilaDto> DistribucionCes => Ces?.Distribucion ?? [];
+    public bool TieneCes => Ces?.TieneDatos == true;
     public bool PuedeUsarArancelOptimo => PuedeEditar
                                            && !EstaCargando
                                            && ArancelOptimoBiseccion?.Disponible == true
@@ -290,6 +296,15 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         OnPropertyChanged(nameof(TieneDashboardFinanciero));
     }
 
+    partial void OnCesChanged(CesDto? value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(InfCes));
+        OnPropertyChanged(nameof(ParametrosCes));
+        OnPropertyChanged(nameof(DistribucionCes));
+        OnPropertyChanged(nameof(TieneCes));
+    }
+
     partial void OnFactorImprevistoChanged(decimal value)
     {
         if (value > 0m)
@@ -455,6 +470,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             var queryPuntoEquilibrio = scope.ServiceProvider.GetRequiredService<ObtenerPuntoEquilibrioQuery>();
             var queryArancelOptimo = scope.ServiceProvider.GetRequiredService<ObtenerArancelOptimoBiseccionQuery>();
             var queryDashboard = scope.ServiceProvider.GetRequiredService<ObtenerDashboardFinancieroQuery>();
+            var queryCes = scope.ServiceProvider.GetRequiredService<ObtenerCesQuery>();
             var queryInversiones = scope.ServiceProvider.GetRequiredService<ObtenerMatrizInversionesQuery>();
             var queryCapitalTrabajo = scope.ServiceProvider.GetRequiredService<ObtenerResumenCapitalTrabajoQuery>();
             var queryArancelEfectivo = scope.ServiceProvider.GetRequiredService<ObtenerArancelEfectivoQuery>();
@@ -534,6 +550,15 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                 periodoRecuperacionPrecalculado: PeriodoRecuperacion,
                 puntoEquilibrioPrecalculado: PuntoEquilibrio,
                 arancelOptimoPrecalculado: ArancelOptimoBiseccion,
+                factorImprevisto: factorImprevisto);
+            Ces = await queryCes.EjecutarAsync(
+                carreraId,
+                escenarioId,
+                costosPrecalculados: matriz,
+                demandaPrecalculada: demanda,
+                inversionesPrecalculada: inversiones,
+                costoCarreraPrecalculado: ArancelReferencial,
+                arancelVigentePrecalculado: ArancelVigente,
                 factorImprevisto: factorImprevisto);
 
             var advertencias = new[]
@@ -678,6 +703,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         DashboardFinanciero = null;
         ArancelVigente = null;
         ArancelReferencial = null;
+        Ces = null;
     }
 
     private IReadOnlyList<MatrizAnalisisFinancieroFila> ConstruirFilasFlujoTirVan()
