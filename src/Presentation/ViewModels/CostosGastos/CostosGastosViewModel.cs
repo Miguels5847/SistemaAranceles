@@ -120,6 +120,12 @@ public sealed partial class CostosGastosViewModel : ObservableObject
     {
         if (value > 0m)
             _factorImprevistoState.Establecer(value);
+
+        // Al cambiar el imprevisto se recalcula toda la matriz (Inv/Vin/Becas → Costos y Gastos → Costo Carrera).
+        if (_suprimirCambios || EstaCargando || EscenarioSeleccionado is null || value <= 0m)
+            return;
+
+        _ = RefrescarAsync();
     }
 
     [RelayCommand]

@@ -29,8 +29,7 @@ public sealed class ObtenerFlujoFondosQuery(
         EstadoPerdidasGananciasDto? estadoPrecalculado = null,
         MatrizInversionesDto? inversionesPrecalculada = null,
         ResumenCapitalTrabajoDto? capitalTrabajoPrecalculado = null,
-        decimal factorImprevisto = 1.05m,
-        ModoCalculoFinanciero modo = ModoCalculoFinanciero.CompatibleExcel)
+        decimal factorImprevisto = 1.05m)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -131,17 +130,13 @@ public sealed class ObtenerFlujoFondosQuery(
             inversionesFuturasPorPeriodo.TryGetValue(periodo.NumeroPeriodo, out var inversionFutura);
             depreciacionPorPeriodo.TryGetValue(periodo.NumeroPeriodo, out var depreciacionPeriodo);
             amortizacionPorAnio.TryGetValue(periodo.Anio, out var amortizacionPeriodo);
-            // CompatibleExcel (tutor) NO recupera capital de trabajo; Técnico (ortodoxo) sí, al cierre.
-            var recuperacionCapitalTrabajo = modo == ModoCalculoFinanciero.Tecnico && i == estado.ValoresPorPeriodo.Count - 1
-                ? totalCapitalTrabajo
-                : 0m;
+            // No se recupera capital de trabajo (convención del Excel).
             var pagoCredito = 0m;
             var flujoNeto = decimal.Round(
                 periodo.UtilidadPerdidaEjercicio
                 - inversionFutura
                 + depreciacionPeriodo
                 + amortizacionPeriodo
-                + recuperacionCapitalTrabajo
                 - pagoCredito,
                 2);
             acumulado = decimal.Round(acumulado + flujoNeto, 2);
@@ -167,7 +162,7 @@ public sealed class ObtenerFlujoFondosQuery(
                 InversionesFuturas = inversionFutura,
                 Depreciacion = depreciacionPeriodo,
                 AmortizacionActivosDiferidos = amortizacionPeriodo,
-                RecuperacionCapitalTrabajo = recuperacionCapitalTrabajo,
+                RecuperacionCapitalTrabajo = 0m,
                 PagoCredito = pagoCredito,
                 FlujoNeto = flujoNeto,
                 FlujoAcumulado = acumulado

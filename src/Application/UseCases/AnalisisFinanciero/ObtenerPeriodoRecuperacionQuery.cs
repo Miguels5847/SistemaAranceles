@@ -17,8 +17,7 @@ public sealed class ObtenerPeriodoRecuperacionQuery(
         int? escenarioProyeccionId,
         CancellationToken ct = default,
         FlujoFondosDto? flujoPrecalculado = null,
-        decimal factorImprevisto = 1.05m,
-        ModoCalculoFinanciero modo = ModoCalculoFinanciero.CompatibleExcel)
+        decimal factorImprevisto = 1.05m)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -37,7 +36,7 @@ public sealed class ObtenerPeriodoRecuperacionQuery(
         }
 
         var flujo = flujoPrecalculado
-            ?? await obtenerFlujoFondosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, factorImprevisto: factorImprevisto, modo: modo);
+            ?? await obtenerFlujoFondosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, factorImprevisto: factorImprevisto);
         AgregarAdvertencia(advertencias, flujo.MensajeAdvertencia);
 
         if (!flujo.TieneDatos || flujo.ValoresPorPeriodo.Count == 0)

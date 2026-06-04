@@ -440,12 +440,9 @@ Pestanas:
 7. Dashboard Financiero.
 8. CES / INF CES.
 
-### Modos de calculo
+### Modo de calculo
 
-ComboBox `ModosCalculo` / `ModoSeleccionado` en la fila de filtros:
-
-- **Compatible Excel**: reproduce el comportamiento del Excel del tutor (VAN ~= 0, TIR ~= 9.54%).
-- **Tecnico**: calculo financiero ortodoxo.
+Modo unico fijo: **Compatible Excel**, que reproduce el comportamiento del Excel del tutor (VAN ~= 0, TIR ~= 9.54%): flujos semestrales, VAN con la convencion `=VAN()` de Excel (periodo 0 tambien descontado) y sin recuperacion de capital de trabajo. El modo "Tecnico" (anual ortodoxo) se elimino porque la tesis se compara directamente contra el Excel.
 
 ### Reglas financieras criticas
 

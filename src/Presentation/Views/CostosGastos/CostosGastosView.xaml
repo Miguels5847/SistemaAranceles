@@ -191,11 +191,13 @@
                             <Border Style="{StaticResource PanelResumen}">
                                 <StackPanel>
                                     <TextBlock Text="Imprevisto / variable" FontSize="11" Foreground="#546E7A"/>
-                                    <TextBox Text="{Binding FactorImprevisto, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                    <TextBox Text="{Binding FactorImprevisto, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource DecimalStringConverter}}"
                                              Width="92"
                                              HorizontalAlignment="Left"
                                              HorizontalContentAlignment="Right"
-                                             Padding="4,2"/>
+                                             Padding="4,2"
+                                             IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}"
+                                             ToolTip="Factor de imprevisto/variable (ej. 1,05 = 5%). Al cambiarlo se recalcula todo Costos y Gastos."/>
                                 </StackPanel>
                             </Border>
                         </UniformGrid>

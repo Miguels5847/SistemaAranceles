@@ -20,8 +20,7 @@ public sealed class ObtenerIndicadoresFinancierosQuery(
         int? escenarioProyeccionId,
         CancellationToken ct = default,
         FlujoFondosDto? flujoPrecalculado = null,
-        decimal factorImprevisto = 1.05m,
-        ModoCalculoFinanciero modo = ModoCalculoFinanciero.CompatibleExcel)
+        decimal factorImprevisto = 1.05m)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -73,29 +72,22 @@ public sealed class ObtenerIndicadoresFinancierosQuery(
             TmrManualPorcentaje = tmrManual
         });
 
-        // CompatibleExcel (tutor): flujos SEMESTRALES y VAN con convención Excel (período 0 descontado).
-        // Técnico (ortodoxo): flujo ANUAL consolidado y período 0 sin descontar.
-        var detalle = modo == ModoCalculoFinanciero.CompatibleExcel
-            ? flujo.ValoresPorPeriodo
-                .OrderBy(p => p.PeriodoOrden)
-                .Select(p => new FlujoAnualFinancieroDto
-                {
-                    Orden = p.PeriodoOrden,
-                    Anio = p.Anio > 0 ? p.Anio : null,
-                    Etiqueta = p.PeriodoOrden == 0 ? "Periodo 0" : p.EtiquetaPeriodo,
-                    FlujoNeto = p.FlujoNeto
-                })
-                .ToList()
-            : ConsolidadorFlujosFinancieros.ConstruirDetalleAnual(flujo.ValoresPorPeriodo).ToList();
+        // Flujos SEMESTRALES y VAN con convención Excel (el período 0 también se descuenta un período, NPV de Excel).
+        var detalle = flujo.ValoresPorPeriodo
+            .OrderBy(p => p.PeriodoOrden)
+            .Select(p => new
+            {
+                Orden = p.PeriodoOrden,
+                Etiqueta = p.PeriodoOrden == 0 ? "Periodo 0" : p.EtiquetaPeriodo,
+                FlujoNeto = p.FlujoNeto
+            })
+            .ToList();
         var flujos = detalle.Select(f => f.FlujoNeto).ToList();
-        var van = modo == ModoCalculoFinanciero.CompatibleExcel
-            ? CalculadoraVAN.CalcularExcel(flujos, tmr.TmrTasa)
-            : CalculadoraVAN.Calcular(flujos, tmr.TmrTasa);
+        var van = CalculadoraVAN.CalcularExcel(flujos, tmr.TmrTasa);
         var tir = CalculadoraTIR.CalcularCercanaA(flujos, tmr.TmrTasa);
         AgregarAdvertencia(advertencias, tir.Mensaje);
 
-        // En CompatibleExcel el período 0 también se descuenta un período (NPV de Excel).
-        var desfase = modo == ModoCalculoFinanciero.CompatibleExcel ? 1 : 0;
+        const int desfase = 1;
         var detalleVan = detalle
             .Select((f, t) => new IndicadorVanPeriodoDto
             {

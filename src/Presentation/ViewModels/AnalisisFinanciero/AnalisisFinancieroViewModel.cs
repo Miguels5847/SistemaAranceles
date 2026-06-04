@@ -43,12 +43,6 @@ public sealed class ParametroAnalisisFinancieroFila
     public bool EsTotal { get; init; }
 }
 
-public sealed class ModoCalculoOpcion
-{
-    public ModoCalculoFinanciero Modo { get; init; }
-    public string Nombre { get; init; } = string.Empty;
-}
-
 public sealed partial class AnalisisFinancieroViewModel : ObservableObject
 {
     private readonly IServiceProvider _serviceProvider;
@@ -65,12 +59,6 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         _sesionActual = sesionActual;
         _factorImprevistoState = factorImprevistoState;
         FactorImprevisto = _factorImprevistoState.FactorImprevisto;
-        ModosCalculo = new ObservableCollection<ModoCalculoOpcion>
-        {
-            new() { Modo = ModoCalculoFinanciero.CompatibleExcel, Nombre = "Compatible Excel" },
-            new() { Modo = ModoCalculoFinanciero.Tecnico, Nombre = "Técnico" }
-        };
-        ModoSeleccionado = ModosCalculo[0];
     }
 
     [ObservableProperty] private ObservableCollection<Carrera> _carreras = [];
@@ -87,8 +75,6 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     [ObservableProperty] private CesDto? _ces;
     [ObservableProperty] private string _costoCarrerasSimilares = string.Empty;
     [ObservableProperty] private decimal _factorImprevisto = FactorImprevistoCostosGastosState.FactorPorDefecto;
-    [ObservableProperty] private ObservableCollection<ModoCalculoOpcion> _modosCalculo = [];
-    [ObservableProperty] private ModoCalculoOpcion? _modoSeleccionado;
     [ObservableProperty] private ArancelEfectivoDto? _arancelVigente;
     [ObservableProperty] private CostoCarreraResultadoDto? _arancelReferencial;
     [ObservableProperty] private string _mensajeError = string.Empty;
@@ -132,8 +118,6 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                                            && CarreraSeleccionada is not null
                                            && EscenarioSeleccionado is not null;
     public bool PuedeEditar => _sesionActual.EsAdministrador || _sesionActual.TienePermiso("DI_NG.EDITAR");
-
-    public ModoCalculoFinanciero ModoCalculo => ModoSeleccionado?.Modo ?? ModoCalculoFinanciero.CompatibleExcel;
 
     // Comparativa arancel vigente vs propuesto (Fase 6).
     public bool TieneComparativaArancel => ArancelVigente is not null
@@ -250,16 +234,6 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         OnPropertyChanged(nameof(TieneArancelOptimoBiseccion));
         OnPropertyChanged(nameof(PuedeUsarArancelOptimo));
         NotificarComparativaArancel();
-    }
-
-    partial void OnModoSeleccionadoChanged(ModoCalculoOpcion? value)
-    {
-        _ = value;
-        OnPropertyChanged(nameof(ModoCalculo));
-        if (_suprimirCambios || EstaCargando)
-            return;
-
-        _ = RefrescarAsync();
     }
 
     partial void OnArancelVigenteChanged(ArancelEfectivoDto? value)
@@ -505,20 +479,17 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                 escenarioId,
                 estadoPrecalculado: EstadoPerdidasGanancias,
                 inversionesPrecalculada: inversiones,
-                capitalTrabajoPrecalculado: capitalTrabajo,
-                modo: ModoCalculo);
+                capitalTrabajoPrecalculado: capitalTrabajo);
             IndicadoresFinancieros = await queryIndicadores.EjecutarAsync(
                 carreraId,
                 escenarioId,
                 flujoPrecalculado: FlujoFondos,
-                factorImprevisto: factorImprevisto,
-                modo: ModoCalculo);
+                factorImprevisto: factorImprevisto);
             PeriodoRecuperacion = await queryPeriodoRecuperacion.EjecutarAsync(
                 carreraId,
                 escenarioId,
                 flujoPrecalculado: FlujoFondos,
-                factorImprevisto: factorImprevisto,
-                modo: ModoCalculo);
+                factorImprevisto: factorImprevisto);
             PuntoEquilibrio = await queryPuntoEquilibrio.EjecutarAsync(
                 carreraId,
                 escenarioId,
@@ -533,8 +504,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                 demandaPrecalculada: demanda,
                 inversionesPrecalculada: inversiones,
                 capitalTrabajoPrecalculado: capitalTrabajo,
-                factorImprevisto: factorImprevisto,
-                modo: ModoCalculo);
+                factorImprevisto: factorImprevisto);
             ArancelVigente = await queryArancelEfectivo.EjecutarAsync(carreraId, escenarioId);
             ArancelReferencial = await queryCostoCarrera.EjecutarAsync(
                 carreraId,

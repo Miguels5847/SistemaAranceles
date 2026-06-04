@@ -47,8 +47,7 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
         DemandaProyectadaDto? demandaPrecalculada = null,
         MatrizInversionesDto? inversionesPrecalculada = null,
         ResumenCapitalTrabajoDto? capitalTrabajoPrecalculado = null,
-        decimal factorImprevisto = 1.05m,
-        ModoCalculoFinanciero modo = ModoCalculoFinanciero.CompatibleExcel)
+        decimal factorImprevisto = 1.05m)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -162,8 +161,7 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             capitalTrabajo.TotalCapitalTrabajo,
             porcentajeMatricula,
             porcentajeBecas,
-            tmr.TmrTasa,
-            modo);
+            tmr.TmrTasa);
 
         var resultado = CalculadoraArancelOptimoBiseccion.Calcular(new EntradaBiseccionArancel
         {
@@ -335,8 +333,7 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
         decimal capitalTrabajo,
         decimal porcentajeMatricula,
         decimal porcentajeBecas,
-        decimal tmrTasa,
-        ModoCalculoFinanciero modo)
+        decimal tmrTasa)
     {
         var estudiantesPorPeriodo = demanda.PeriodoAcademicoIds
             .Select((periodoId, index) => new
@@ -357,8 +354,7 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             CapitalTrabajo = decimal.Round(capitalTrabajo, 2),
             PorcentajeMatricula = porcentajeMatricula,
             PorcentajeBecas = porcentajeBecas,
-            TmrTasa = tmrTasa,
-            Modo = modo
+            TmrTasa = tmrTasa
         };
     }
 
@@ -366,7 +362,6 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
     {
         var matricula = decimal.Round(arancel * contexto.PorcentajeMatricula / 100m, 2);
         var precioPorEstudiante = arancel + matricula;
-        var operativosAnuales = new List<(int Anio, decimal FlujoNeto)>();
         var periodos = new List<ArancelOptimoBiseccionPeriodoDto>();
         var acumulado = decimal.Round(-contexto.InversionInicial, 2);
 
@@ -385,9 +380,6 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             contexto.InversionesFuturasPorPeriodo.TryGetValue(costo.NumeroPeriodo, out var inversionFutura);
             contexto.DepreciacionPorPeriodo.TryGetValue(costo.NumeroPeriodo, out var depreciacion);
             contexto.AmortizacionPorAnio.TryGetValue(costo.Anio, out var amortizacion);
-            var recuperacionCapitalTrabajo = contexto.Modo == ModoCalculoFinanciero.Tecnico && i == contexto.Costos.Count - 1
-                ? contexto.CapitalTrabajo
-                : 0m;
 
             // Becas = descuento al ingreso (neto = bruto − becas), NO costo. El rubro Becas en Costos
             // y Gastos está en 0 (igual que el Excel), así que TotalCostosGastos no las incluye y NO se
@@ -409,11 +401,9 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
                 utilidadEjercicio
                 - inversionFutura
                 + depreciacion
-                + amortizacion
-                + recuperacionCapitalTrabajo,
+                + amortizacion,
                 2);
             acumulado = decimal.Round(acumulado + flujoNeto, 2);
-            operativosAnuales.Add((costo.Anio, flujoNeto));
 
             periodos.Add(new ArancelOptimoBiseccionPeriodoDto
             {
@@ -430,14 +420,9 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             });
         }
 
-        // CompatibleExcel (tutor): VAN sobre flujos SEMESTRALES (período 0 + cada semestre) con
-        // convención Excel, igual que el dashboard. Técnico: flujo ANUAL consolidado.
-        var flujos = contexto.Modo == ModoCalculoFinanciero.CompatibleExcel
-            ? periodos.Select(p => p.FlujoNeto).ToList()
-            : ConsolidadorFlujosFinancieros.ConstruirFlujosAnuales(-contexto.InversionInicial, operativosAnuales);
-        var van = contexto.Modo == ModoCalculoFinanciero.CompatibleExcel
-            ? CalculadoraVAN.CalcularExcel(flujos, contexto.TmrTasa)
-            : CalculadoraVAN.Calcular(flujos, contexto.TmrTasa);
+        // VAN sobre flujos SEMESTRALES (período 0 + cada semestre) con convención Excel.
+        var flujos = periodos.Select(p => p.FlujoNeto).ToList();
+        var van = CalculadoraVAN.CalcularExcel(flujos, contexto.TmrTasa);
 
         return new EvaluacionArancel
         {
@@ -496,7 +481,6 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
         public decimal PorcentajeMatricula { get; init; }
         public decimal PorcentajeBecas { get; init; }
         public decimal TmrTasa { get; init; }
-        public ModoCalculoFinanciero Modo { get; init; }
     }
 
     private sealed class EvaluacionArancel
