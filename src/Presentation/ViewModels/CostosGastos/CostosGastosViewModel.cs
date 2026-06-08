@@ -64,6 +64,7 @@ public sealed partial class CostosGastosViewModel : ObservableObject
 
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
+    [ObservableProperty] private string _mensajeInfo = string.Empty;
     [ObservableProperty] private bool _estaCargando;
 
     public IReadOnlyList<string> EtiquetasInvVinBecas => MatrizInvVinBecas?.EtiquetasPeriodos ?? [];
@@ -74,10 +75,12 @@ public sealed partial class CostosGastosViewModel : ObservableObject
     public IReadOnlyList<CostoGastoRubroDto> FilasDescontadas => MatrizCostosGastos?.DescontadoBecasGobierno ?? [];
     public IReadOnlyList<string> EtiquetasCostoCarrera => ResultadoCostoCarrera?.EtiquetasPeriodos ?? [];
     public bool TieneResultadoCostoCarrera => ResultadoCostoCarrera?.TieneDatos == true;
+    public bool PuedeTrabajar => CarreraSeleccionada is not null && !EstaCargando;
 
     partial void OnCarreraSeleccionadaChanged(Carrera? value)
     {
         _ = value;
+        OnPropertyChanged(nameof(PuedeTrabajar));
         if (_suprimirCambios || EstaCargando)
             return;
 
@@ -91,6 +94,12 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             return;
 
         _ = RefrescarAsync();
+    }
+
+    partial void OnEstaCargandoChanged(bool value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(PuedeTrabajar));
     }
 
     partial void OnMatrizInvVinBecasChanged(MatrizInvVinBecasDto? value)
@@ -137,6 +146,7 @@ public sealed partial class CostosGastosViewModel : ObservableObject
         EstaCargando = true;
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
+        MensajeInfo = string.Empty;
         try
         {
             using var scope = _serviceProvider.CreateScope();
@@ -148,8 +158,9 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             try
             {
                 Carreras = new ObservableCollection<Carrera>(carreras);
-                CarreraSeleccionada = Carreras.FirstOrDefault(c => c.Id == carreraActualId)
-                    ?? Carreras.FirstOrDefault();
+                CarreraSeleccionada = carreraActualId is > 0
+                    ? Carreras.FirstOrDefault(c => c.Id == carreraActualId.Value)
+                    : null;
             }
             finally
             {
@@ -159,7 +170,9 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             if (CarreraSeleccionada is null)
             {
                 LimpiarMatrices();
-                MensajeError = "No hay carreras registradas.";
+                MensajeInfo = Carreras.Count == 0
+                    ? "No hay carreras registradas."
+                    : "Selecciona una carrera para cargar Costos y Gastos.";
                 return;
             }
 
@@ -182,11 +195,13 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             Escenarios = [];
             EscenarioSeleccionado = null;
             LimpiarMatrices();
+            MensajeInfo = "Selecciona una carrera para cargar Costos y Gastos.";
             return;
         }
 
         try
         {
+            MensajeInfo = string.Empty;
             using var scope = _serviceProvider.CreateScope();
             var repoEscenario = scope.ServiceProvider.GetRequiredService<IRepositorioEscenarioProyeccion>();
             var repoProyeccion = scope.ServiceProvider.GetRequiredService<IRepositorioProyeccionEstudiantes>();
@@ -245,7 +260,9 @@ public sealed partial class CostosGastosViewModel : ObservableObject
         if (CarreraSeleccionada is null)
         {
             LimpiarMatrices();
-            MensajeError = "Selecciona una carrera.";
+            MensajeError = string.Empty;
+            MensajeExito = string.Empty;
+            MensajeInfo = "Selecciona una carrera para refrescar la información.";
             return;
         }
 
@@ -266,6 +283,7 @@ public sealed partial class CostosGastosViewModel : ObservableObject
         EstaCargando = true;
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
+        MensajeInfo = string.Empty;
         try
         {
             using var scope = _serviceProvider.CreateScope();

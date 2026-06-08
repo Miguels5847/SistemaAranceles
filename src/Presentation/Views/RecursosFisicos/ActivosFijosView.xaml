@@ -76,11 +76,12 @@
         <StackPanel Grid.Row="2" Margin="0,0,0,10">
             <TextBlock Text="{Binding MensajeError}" Foreground="#C62828" FontSize="12" Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
             <TextBlock Text="{Binding MensajeExito}" Foreground="#2E7D32" FontSize="12" Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding MensajeInfo}" Foreground="#1A237E" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap" Visibility="{Binding MensajeInfo, Converter={StaticResource StringToVisibilityConverter}}"/>
             <TextBlock Text="{Binding MensajeInversiones}" Foreground="#3949AB" FontSize="12" Visibility="{Binding MensajeInversiones, Converter={StaticResource StringToVisibilityConverter}}"/>
             <TextBlock Text="{Binding MensajeDepreciacion}" Foreground="#3949AB" FontSize="12" Visibility="{Binding MensajeDepreciacion, Converter={StaticResource StringToVisibilityConverter}}"/>
         </StackPanel>
 
-        <TabControl Grid.Row="3">
+        <TabControl Grid.Row="3" IsEnabled="{Binding PuedeTrabajar}">
             <TabItem Header="Activos Fijos">
                 <Grid Margin="0,8,0,0">
                     <Grid.ColumnDefinitions>

@@ -85,6 +85,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeAdvertencia = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
+    [ObservableProperty] private string _mensajeInfo = string.Empty;
     [ObservableProperty] private bool _estaCargando;
 
     public IReadOnlyList<string> EtiquetasPerdidasGanancias => EstadoPerdidasGanancias?.EtiquetasPeriodos ?? [];
@@ -137,6 +138,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                                            && CarreraSeleccionada is not null
                                            && EscenarioSeleccionado is not null
                                            && !ArancelOptimoYaAplicado;
+    public bool PuedeTrabajar => CarreraSeleccionada is not null && !EstaCargando;
     public bool PuedeEditar => _sesionActual.EsAdministrador || _sesionActual.TienePermiso("DI_NG.EDITAR");
 
     // Comparativa arancel vigente vs propuesto (Fase 6).
@@ -188,6 +190,8 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     partial void OnCarreraSeleccionadaChanged(Carrera? value)
     {
         _ = value;
+        OnPropertyChanged(nameof(PuedeTrabajar));
+        OnPropertyChanged(nameof(PuedeUsarArancelOptimo));
         if (_suprimirCambios || EstaCargando)
             return;
 
@@ -197,6 +201,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     partial void OnEscenarioSeleccionadoChanged(EscenarioAnalisisFinancieroOpcion? value)
     {
         _ = value;
+        OnPropertyChanged(nameof(PuedeUsarArancelOptimo));
         if (_suprimirCambios || EstaCargando)
             return;
 
@@ -329,6 +334,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     partial void OnEstaCargandoChanged(bool value)
     {
         _ = value;
+        OnPropertyChanged(nameof(PuedeTrabajar));
         OnPropertyChanged(nameof(PuedeUsarArancelOptimo));
     }
 
@@ -342,6 +348,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         MensajeError = string.Empty;
         MensajeAdvertencia = string.Empty;
         MensajeExito = string.Empty;
+        MensajeInfo = string.Empty;
         try
         {
             using var scope = _serviceProvider.CreateScope();
@@ -353,8 +360,9 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             try
             {
                 Carreras = new ObservableCollection<Carrera>(carreras);
-                CarreraSeleccionada = Carreras.FirstOrDefault(c => c.Id == carreraActualId)
-                    ?? Carreras.FirstOrDefault();
+                CarreraSeleccionada = carreraActualId is > 0
+                    ? Carreras.FirstOrDefault(c => c.Id == carreraActualId.Value)
+                    : null;
             }
             finally
             {
@@ -364,7 +372,9 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             if (CarreraSeleccionada is null)
             {
                 LimpiarResultados();
-                MensajeError = "No hay carreras registradas.";
+                MensajeInfo = Carreras.Count == 0
+                    ? "No hay carreras registradas."
+                    : "Selecciona una carrera para cargar el Análisis Financiero.";
                 return;
             }
 
@@ -387,11 +397,13 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             Escenarios = [];
             EscenarioSeleccionado = null;
             LimpiarResultados();
+            MensajeInfo = "Selecciona una carrera para cargar el Análisis Financiero.";
             return;
         }
 
         try
         {
+            MensajeInfo = string.Empty;
             using var scope = _serviceProvider.CreateScope();
             var repoEscenario = scope.ServiceProvider.GetRequiredService<IRepositorioEscenarioProyeccion>();
             var repoProyeccion = scope.ServiceProvider.GetRequiredService<IRepositorioProyeccionEstudiantes>();
@@ -448,7 +460,9 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         {
             LimpiarResultados();
             MensajeAdvertencia = string.Empty;
-            MensajeError = "Selecciona una carrera.";
+            MensajeError = string.Empty;
+            MensajeExito = string.Empty;
+            MensajeInfo = "Selecciona una carrera para refrescar la información.";
             return;
         }
 
@@ -473,6 +487,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         MensajeError = string.Empty;
         MensajeAdvertencia = string.Empty;
         MensajeExito = string.Empty;
+        MensajeInfo = string.Empty;
         try
         {
             using var scope = _serviceProvider.CreateScope();
@@ -732,6 +747,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         switch (cual)
         {
             case "exito": MensajeExito = string.Empty; break;
+            case "info": MensajeInfo = string.Empty; break;
             case "advertencia": MensajeAdvertencia = string.Empty; break;
             case "error": MensajeError = string.Empty; break;
         }

@@ -98,6 +98,7 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
     [ObservableProperty] private bool _estaEliminando;
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
+    [ObservableProperty] private string _mensajeInfo = string.Empty;
 
     public bool PuedeVer => _sesionActual.TienePermiso("RD.VER") || _sesionActual.EsAdministrador;
     public bool PuedeCrear => _sesionActual.TienePermiso("RD.CREAR") || _sesionActual.EsAdministrador;
@@ -106,12 +107,14 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
 
     public string TituloFormulario => EstaEditando ? "Editar activo fijo" : "Nuevo activo fijo";
     public string TotalGeneralDisplay => TotalGeneral.ToString("C2");
+    public bool PuedeTrabajar => CarreraSeleccionada is not null && !EstaCargando;
 
     partial void OnTotalGeneralChanged(decimal value) => OnPropertyChanged(nameof(TotalGeneralDisplay));
 
     partial void OnCarreraSeleccionadaChanged(CarreraOpcion? value)
     {
         _ = value;
+        OnPropertyChanged(nameof(PuedeTrabajar));
         if (_suprimirRecargaAutomatica || EstaCargando)
             return;
 
@@ -125,6 +128,12 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
             return;
 
         _ = RecargarActivosAsync();
+    }
+
+    partial void OnEstaCargandoChanged(bool value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(PuedeTrabajar));
     }
 
     partial void OnCategoriaFormChanged(CategoriaOpcion? value)
@@ -149,9 +158,11 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
         EstaCargando = true;
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
+        MensajeInfo = string.Empty;
 
         try
         {
+            var teniaCarrerasCargadas = Carreras.Count > 0;
             var carreraIdActual = CarreraSeleccionada?.Id;
             var escenarioIdActual = EscenarioSeleccionado?.Id;
 
@@ -166,7 +177,9 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
                     lista.OrderBy(x => x.Codigo)
                         .Select(x => new CarreraOpcion { Id = x.Id, Etiqueta = $"{x.Codigo} - {x.Nombre}" }));
 
-                CarreraSeleccionada = Carreras.FirstOrDefault(x => x.Id == carreraIdActual) ?? Carreras.FirstOrDefault();
+                CarreraSeleccionada = carreraIdActual is > 0
+                    ? Carreras.FirstOrDefault(x => x.Id == carreraIdActual.Value)
+                    : null;
             }
             finally
             {
@@ -178,7 +191,11 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
                 Escenarios = [];
                 EscenarioSeleccionado = null;
                 LimpiarActivos();
-                MensajeError = "No hay carreras registradas. Cree una carrera antes de registrar activos.";
+                MensajeInfo = Carreras.Count == 0
+                    ? "No hay carreras registradas. Cree una carrera antes de registrar activos."
+                    : teniaCarrerasCargadas
+                        ? "Selecciona una carrera para refrescar la información."
+                        : "Selecciona una carrera para cargar Recursos y Depreciación.";
                 return;
             }
 
@@ -209,12 +226,14 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
                 _suprimirRecargaAutomatica = false;
             }
 
-            await RecargarActivosAsync();
+            LimpiarActivos();
+            MensajeInfo = "Selecciona una carrera para cargar Recursos y Depreciación.";
             return;
         }
 
         try
         {
+            MensajeInfo = string.Empty;
             using var scope = _serviceProvider.CreateScope();
             var query = scope.ServiceProvider.GetRequiredService<SistemaAranceles.Application.UseCases.CargosFacultad.ListarEscenariosConProyeccionPorCarreraQuery>();
             var lista = await query.EjecutarAsync(CarreraSeleccionada.Id);
@@ -254,11 +273,13 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
         if (CarreraSeleccionada is null)
         {
             LimpiarActivos();
+            MensajeInfo = "Selecciona una carrera para refrescar la información.";
             return;
         }
 
         EstaCargando = true;
         MensajeError = string.Empty;
+        MensajeInfo = string.Empty;
         try
         {
             using var scope = _serviceProvider.CreateScope();

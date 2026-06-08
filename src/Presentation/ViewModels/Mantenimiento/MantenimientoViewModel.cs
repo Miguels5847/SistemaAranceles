@@ -59,6 +59,7 @@ public sealed partial class MantenimientoViewModel : ObservableObject
     [ObservableProperty] private bool _estaGuardando;
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
+    [ObservableProperty] private string _mensajeInfo = string.Empty;
 
     [ObservableProperty] private bool _formVisible;
     [ObservableProperty] private bool _formEsEdicion;
@@ -73,10 +74,12 @@ public sealed partial class MantenimientoViewModel : ObservableObject
     public bool PuedeCrear => _sesion.EsAdministrador || _sesion.TienePermiso("MI.CREAR");
     public bool PuedeEditar => _sesion.EsAdministrador || _sesion.TienePermiso("MI.EDITAR");
     public bool PuedeEliminar => _sesion.EsAdministrador || _sesion.TienePermiso("MI.ELIMINAR");
+    public bool PuedeTrabajar => CarreraSeleccionada is not null && !EstaCargando;
 
     partial void OnCarreraSeleccionadaChanged(CarreraMantenimientoOpcion? value)
     {
         _ = value;
+        OnPropertyChanged(nameof(PuedeTrabajar));
         if (_suprimirRecarga || EstaCargando)
             return;
 
@@ -92,6 +95,12 @@ public sealed partial class MantenimientoViewModel : ObservableObject
         _ = RecargarDatosAsync();
     }
 
+    partial void OnEstaCargandoChanged(bool value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(PuedeTrabajar));
+    }
+
     [RelayCommand]
     private async Task CargarAsync()
     {
@@ -99,9 +108,11 @@ public sealed partial class MantenimientoViewModel : ObservableObject
         EstaCargando = true;
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
+        MensajeInfo = string.Empty;
 
         try
         {
+            var teniaCarrerasCargadas = Carreras.Count > 0;
             var carreraIdActual = CarreraSeleccionada?.Id;
             var escenarioIdActual = EscenarioSeleccionado?.Id;
 
@@ -120,7 +131,9 @@ public sealed partial class MantenimientoViewModel : ObservableObject
                             Etiqueta = $"{x.Codigo} - {x.Nombre}"
                         }));
 
-                CarreraSeleccionada = Carreras.FirstOrDefault(x => x.Id == carreraIdActual) ?? Carreras.FirstOrDefault();
+                CarreraSeleccionada = carreraIdActual is > 0
+                    ? Carreras.FirstOrDefault(x => x.Id == carreraIdActual.Value)
+                    : null;
             }
             finally
             {
@@ -130,7 +143,11 @@ public sealed partial class MantenimientoViewModel : ObservableObject
             if (CarreraSeleccionada is null)
             {
                 LimpiarDatos();
-                MensajeError = "No hay carreras registradas para configurar servicios y mantenimiento.";
+                MensajeInfo = Carreras.Count == 0
+                    ? "No hay carreras registradas para configurar servicios y mantenimiento."
+                    : teniaCarrerasCargadas
+                        ? "Selecciona una carrera para refrescar la información."
+                        : "Selecciona una carrera para cargar Mantenimiento e Inversión.";
                 return;
             }
 
@@ -152,11 +169,13 @@ public sealed partial class MantenimientoViewModel : ObservableObject
         if (CarreraSeleccionada is null)
         {
             LimpiarDatos();
+            MensajeInfo = "Selecciona una carrera para cargar Mantenimiento e Inversión.";
             return;
         }
 
         try
         {
+            MensajeInfo = string.Empty;
             using var scope = _sp.CreateScope();
             var query = scope.ServiceProvider.GetRequiredService<ListarEscenariosConProyeccionPorCarreraQuery>();
             var lista = await query.EjecutarAsync(CarreraSeleccionada.Id);
@@ -196,9 +215,11 @@ public sealed partial class MantenimientoViewModel : ObservableObject
         if (CarreraSeleccionada is null)
         {
             LimpiarDatos();
+            MensajeInfo = "Selecciona una carrera para refrescar la información.";
             return;
         }
 
+        MensajeInfo = string.Empty;
         await RefrescarListasAsync();
         await CargarResumenAsync();
     }

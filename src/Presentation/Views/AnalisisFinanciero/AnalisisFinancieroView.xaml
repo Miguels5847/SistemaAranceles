@@ -343,6 +343,16 @@
                             Background="Transparent" BorderThickness="0" Foreground="#2E7D32" FontWeight="Bold" Padding="8,0" Cursor="Hand"/>
                 </Grid>
             </Border>
+            <Border Background="#EEF2FF" BorderBrush="#C5CAE9" BorderThickness="1" CornerRadius="4" Padding="10,6" Margin="0,0,0,6"
+                    Visibility="{Binding MensajeInfo, Converter={StaticResource StringToVisibilityConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding MensajeInfo}" Foreground="#1A237E" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Content="✕" ToolTip="Cerrar"
+                            Command="{Binding CerrarMensajeCommand}" CommandParameter="info"
+                            Background="Transparent" BorderThickness="0" Foreground="#1A237E" FontWeight="Bold" Padding="8,0" Cursor="Hand"/>
+                </Grid>
+            </Border>
             <Border Background="#FFF3E0" BorderBrush="#FFCC80" BorderThickness="1" CornerRadius="4" Padding="10,6" Margin="0,0,0,6"
                     Visibility="{Binding MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}}">
                 <Grid>
@@ -366,7 +376,7 @@
         </StackPanel>
 
         <TabControl Grid.Row="3"
-                    IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}">
+                    IsEnabled="{Binding PuedeTrabajar}">
             <TabItem Header="1. Pérdidas y Ganancias">
                 <Grid Margin="8">
                     <Grid.RowDefinitions>

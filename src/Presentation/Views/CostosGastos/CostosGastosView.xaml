@@ -123,6 +123,11 @@
                        Foreground="#2E7D32"
                        FontWeight="SemiBold"
                        Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding MensajeInfo}"
+                       Foreground="#1A237E"
+                       FontWeight="SemiBold"
+                       TextWrapping="Wrap"
+                       Visibility="{Binding MensajeInfo, Converter={StaticResource StringToVisibilityConverter}}"/>
             <TextBlock Text="{Binding MensajeError}"
                        Foreground="#C62828"
                        FontWeight="SemiBold"
@@ -131,7 +136,7 @@
         </StackPanel>
 
         <TabControl Grid.Row="3"
-                    IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}">
+                    IsEnabled="{Binding PuedeTrabajar}">
             <TabItem Header="1. Inv. Vin. Becas">
                 <Grid Margin="8">
                     <Grid.RowDefinitions>

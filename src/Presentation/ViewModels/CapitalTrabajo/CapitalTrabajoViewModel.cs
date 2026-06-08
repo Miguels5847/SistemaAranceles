@@ -33,6 +33,7 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
 
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
+    [ObservableProperty] private string _mensajeInfo = string.Empty;
     [ObservableProperty] private bool _estaCargando;
     [ObservableProperty] private bool _estaGuardando;
     [ObservableProperty] private ResumenCapitalTrabajoDto? _resumen;
@@ -49,6 +50,7 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
     public bool FormMaterialesVisible => FormMatVisible && FormMatCategoria == ObtenerCapitalTrabajoPorCarreraQuery.CategoriaMateriales;
     public bool FormAseoVisible => FormMatVisible && FormMatCategoria == ObtenerCapitalTrabajoPorCarreraQuery.CategoriaAseo;
     public bool FormAccesoriosVisible => FormMatVisible && FormMatCategoria == ObtenerCapitalTrabajoPorCarreraQuery.CategoriaAccesorios;
+    public bool PuedeTrabajar => CarreraSeleccionada is not null && !EstaCargando;
 
     partial void OnFormMatEsEdicionChanged(bool value)
     {
@@ -71,6 +73,7 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
     partial void OnCarreraSeleccionadaChanged(Carrera? value)
     {
         _ = value;
+        OnPropertyChanged(nameof(PuedeTrabajar));
         if (_suprimirRecargaAutomatica || EstaCargando)
             return;
 
@@ -86,6 +89,12 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
         _ = RefrescarCapitalTrabajoAsync();
     }
 
+    partial void OnEstaCargandoChanged(bool value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(PuedeTrabajar));
+    }
+
     [RelayCommand]
     private async Task CargarAsync(int? carreraId = null)
     {
@@ -95,9 +104,11 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
         EstaCargando = true;
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
+        MensajeInfo = string.Empty;
 
         try
         {
+            var teniaCarrerasCargadas = Carreras.Count > 0;
             var carreraActualId = carreraId ?? CarreraSeleccionada?.Id;
             using var scope = _serviceProvider.CreateScope();
             var queryCarreras = scope.ServiceProvider.GetRequiredService<ListarCarrerasConProyeccionQuery>();
@@ -107,8 +118,9 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
             try
             {
                 Carreras = new ObservableCollection<Carrera>(carreras);
-                CarreraSeleccionada = Carreras.FirstOrDefault(c => c.Id == carreraActualId)
-                    ?? Carreras.FirstOrDefault();
+                CarreraSeleccionada = carreraActualId is > 0
+                    ? Carreras.FirstOrDefault(c => c.Id == carreraActualId.Value)
+                    : null;
             }
             finally
             {
@@ -118,7 +130,11 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
             if (CarreraSeleccionada is null)
             {
                 LimpiarVista();
-                MensajeError = "No hay carreras con proyeccion de estudiantes para calcular Capital de Trabajo.";
+                MensajeInfo = Carreras.Count == 0
+                    ? "No hay carreras con proyección de estudiantes para calcular Capital de Trabajo."
+                    : teniaCarrerasCargadas
+                        ? "Selecciona una carrera para refrescar la información."
+                        : "Selecciona una carrera para cargar Capital de Trabajo.";
                 return;
             }
 
@@ -140,12 +156,14 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
         if (CarreraSeleccionada is null)
         {
             LimpiarVista();
+            MensajeInfo = "Selecciona una carrera para cargar Capital de Trabajo.";
             return;
         }
 
         var escenarioActualId = EscenarioSeleccionado?.Id;
         try
         {
+            MensajeInfo = string.Empty;
             using var scope = _serviceProvider.CreateScope();
             var query = scope.ServiceProvider.GetRequiredService<ListarEscenariosConProyeccionPorCarreraQuery>();
             var escenarios = await query.EjecutarAsync(CarreraSeleccionada.Id);
@@ -178,10 +196,12 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
         if (CarreraSeleccionada is null)
         {
             LimpiarVista();
+            MensajeInfo = "Selecciona una carrera para refrescar la información.";
             return;
         }
 
         MensajeError = string.Empty;
+        MensajeInfo = string.Empty;
         try
         {
             using var scope = _serviceProvider.CreateScope();
