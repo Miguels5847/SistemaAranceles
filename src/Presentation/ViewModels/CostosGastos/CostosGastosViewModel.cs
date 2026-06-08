@@ -298,7 +298,7 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             // Encadena resultados ya calculados: Demanda → InvVinBecas → CostosGastos → CostoCarrera
             // para no recomputar las matrices anidadas (ni reconsultar demanda/arancel) varias veces.
             var demanda = await queryDemanda.EjecutarAsync(carreraId, escenarioId);
-            // KAN-44: becas reales (de Ingresos, ya con descuentos) para mostrar en Inv. Vin. Becas como
+            // Becas reales (de Ingresos, ya con descuentos) para mostrar en Inv. Vin. Becas como
             // dato referencial. No suman como costo (CostosPorServicios/PE las excluyen).
             var ingresos = await queryIngresos.EjecutarAsync(carreraId, escenarioId);
             var becasPorPeriodo = ingresos.CeldasPlanas

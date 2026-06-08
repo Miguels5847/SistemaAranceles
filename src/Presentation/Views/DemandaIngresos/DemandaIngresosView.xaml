@@ -252,16 +252,20 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Descuentos por ciclo" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                            <Button Grid.Column="1" Content="Guardar descuentos" Margin="12,0,4,0" Padding="8,3" Style="{StaticResource BtnPrimario}" Command="{Binding GuardarDescuentosCommand}" IsEnabled="{Binding NoEstaGuardando}"/>
-                            <TextBlock Grid.Column="2" VerticalAlignment="Center" Margin="8,0,0,0" TextWrapping="Wrap"
+                            <Button Grid.Column="1" Content="Editar descuentos" Margin="12,0,4,0" Padding="8,3" Command="{Binding EditarDescuentosCommand}" IsEnabled="{Binding PuedeEditarDescuentos}"/>
+                            <Button Grid.Column="2" Content="Guardar descuentos" Margin="4,0,4,0" Padding="8,3" Style="{StaticResource BtnPrimario}" Command="{Binding GuardarDescuentosCommand}" IsEnabled="{Binding PuedeGuardarDescuentos}"/>
+                            <Button Grid.Column="3" Content="Cancelar" Margin="4,0,4,0" Padding="8,3" Command="{Binding CancelarEdicionDescuentosCommand}" IsEnabled="{Binding PuedeCancelarDescuentos}" Visibility="{Binding DescuentosEditables, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                            <TextBlock Grid.Column="4" VerticalAlignment="Center" Margin="8,0,0,0" TextWrapping="Wrap"
                                        FontSize="10" FontStyle="Italic" Foreground="#546E7A"
                                        Text="Se listan todos los ciclos de la carrera/escenario. Edita solo la columna % (0% = sin descuento) y presiona Guardar. El arancel base se mantiene; el descuento solo afecta el valor cobrado por ciclo. Ej.: 1-2: 25%, 3-4: 20%, 5-6: 15%."/>
                         </Grid>
                         <DataGrid ItemsSource="{Binding DescuentosPorCiclo}" AutoGenerateColumns="False"
-                                  IsReadOnly="False"
+                                  IsReadOnly="{Binding DescuentosEditables, Converter={StaticResource InverseBoolConverter}}"
                                   CanUserAddRows="False" CanUserDeleteRows="False" CanUserResizeColumns="False" CanUserReorderColumns="False"
                                   SelectionMode="Single" HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                                   AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9" MaxHeight="240">

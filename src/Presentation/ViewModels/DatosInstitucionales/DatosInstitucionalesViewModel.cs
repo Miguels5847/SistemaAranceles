@@ -33,7 +33,7 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
     [ObservableProperty] private int _mesesCapitalTrabajo = DatosInstitucionalesDominio.MesesCapitalTrabajoPorDefecto;
     [ObservableProperty] private decimal _porcentajeImprevistosInversion = DatosInstitucionalesDominio.PorcentajeImprevistosInversionPorDefecto;
 
-    // KAN-35
+    // Parámetros de Demanda e Ingresos
     [ObservableProperty] private decimal _porcentajeMatriculaDefault = DatosInstitucionalesDominio.PorcentajeMatriculaDefaultPorDefecto;
     [ObservableProperty] private decimal _porcentajeBecasInstitucionales = DatosInstitucionalesDominio.PorcentajeBecasInstitucionalesPorDefecto;
     [ObservableProperty]
@@ -56,7 +56,7 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
     [ObservableProperty] private string? _fuenteInflacion;
     [ObservableProperty] private int? _anioBaseProyeccion;
 
-    // KAN-36
+    // Parámetros de Costos y Gastos
     [ObservableProperty] private decimal _presupuestoBaseUniversidad = DatosInstitucionalesDominio.PresupuestoBaseUniversidadPorDefecto;
     [ObservableProperty] private decimal _presupuestoGobiernoBecas = DatosInstitucionalesDominio.PresupuestoGobiernoBecasPorDefecto;
     [ObservableProperty] private decimal _porcentajeInvestigacion = DatosInstitucionalesDominio.PorcentajeInvestigacionPorDefecto;
@@ -64,13 +64,13 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
     [ObservableProperty] private decimal _porcentajeBecasEstudiantes = DatosInstitucionalesDominio.PorcentajeBecasEstudiantesPorDefecto;
     [ObservableProperty] private decimal _porcentajeBecasDocentes = DatosInstitucionalesDominio.PorcentajeBecasDocentesPorDefecto;
 
-    // KAN-40
+    // Parámetros de Análisis Financiero
     [ObservableProperty] private decimal _tasaInteresFinanciera = DatosInstitucionalesDominio.TasaInteresFinancieraPorDefecto;
     [ObservableProperty] private decimal _premioRiesgo = DatosInstitucionalesDominio.PremioRiesgoPorDefecto;
     [ObservableProperty] private decimal _tmrManual = DatosInstitucionalesDominio.TmrManualPorDefecto;
     [ObservableProperty] private bool _usarTmrManual = DatosInstitucionalesDominio.UsarTmrManualPorDefecto;
 
-    // KAN-44: parámetros de la bisección del arancel óptimo (VAN=0)
+    // Parámetros de la bisección del arancel óptimo (VAN=0)
     [ObservableProperty] private decimal _toleranciaVanArancel = DatosInstitucionalesDominio.ToleranciaVanArancelPorDefecto;
     [ObservableProperty] private decimal _margenAproximacionVanArancel = DatosInstitucionalesDominio.MargenAproximacionVanArancelPorDefecto;
     [ObservableProperty] private decimal _arancelMinimoBusqueda = DatosInstitucionalesDominio.ArancelMinimoBusquedaPorDefecto;
