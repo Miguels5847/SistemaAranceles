@@ -60,6 +60,8 @@ public sealed class PuntoEquilibrioDto
     public string EscenarioNombre { get; init; } = string.Empty;
     public IReadOnlyList<PuntoEquilibrioPeriodoDto> Periodos { get; init; } = [];
     public string PeriodoBaseEtiqueta { get; init; } = string.Empty;
+    // Estudiantes por ciclo del punto de equilibrio (sin deserción), base para la simulación de tasas.
+    public decimal EstudiantesPorCicloBase { get; init; }
     public IReadOnlyList<PuntoEquilibrioResultadoFilaDto> ProyeccionResultados { get; init; } = [];
     public IReadOnlyList<PuntoEquilibrioAnalisisFilaDto> AnalisisPuntoEquilibrio { get; init; } = [];
     public string? MensajeAdvertencia { get; init; }

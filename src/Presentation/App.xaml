@@ -15,6 +15,7 @@
             <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
             <conv:InverseBoolConverter x:Key="InverseBoolConverter"/>
             <conv:UtcToEcuadorDateTimeConverter x:Key="UtcToEcuadorDateTimeConverter"/>
+            <conv:ModoArancelDisplayConverter x:Key="ModoArancelDisplayConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -96,8 +96,14 @@
                     <TextBlock Text="{Binding PeriodoBaseDisplay}" FontWeight="SemiBold" Foreground="#263238" VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <Button Grid.Column="3" Content="Refrescar" Padding="10,4" VerticalAlignment="Bottom"
-                        Command="{Binding CargarCommand}"/>
+                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Bottom">
+                    <Button Content="Generar materiales por defecto" Padding="10,4" Margin="0,0,6,0"
+                            Style="{StaticResource BtnPrimario}"
+                            ToolTip="Inserta los materiales y suministros estándar (B/C/D) para la carrera seleccionada. No duplica."
+                            Command="{Binding GenerarMaterialesPorDefectoCommand}"/>
+                    <Button Content="Refrescar" Padding="10,4"
+                            Command="{Binding CargarCommand}"/>
+                </StackPanel>
             </Grid>
         </Border>
 

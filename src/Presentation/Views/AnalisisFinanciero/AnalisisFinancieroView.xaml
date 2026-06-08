@@ -583,7 +583,7 @@
                                            FontWeight="SemiBold"
                                            Foreground="#1B5E20"
                                            Margin="0,0,0,2"/>
-                                <TextBlock Text="{Binding PuntoEquilibrio.PeriodoBaseEtiqueta, StringFormat=Periodo base: {0}, FallbackValue='Periodo base: -'}"
+                                <TextBlock Text="{Binding PuntoEquilibrio.PeriodoBaseEtiqueta, StringFormat=Período del punto de equilibrio (período base): {0}, FallbackValue='Período del punto de equilibrio: -'}"
                                            FontSize="11"
                                            Foreground="#546E7A"
                                            Margin="0,0,0,8"/>
@@ -627,6 +627,45 @@
                                         <DataGridTextColumn Header="PE Mensual" Binding="{Binding PeMensualDisplay}" Width="180"/>
                                     </DataGrid.Columns>
                                 </DataGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource PanelResumen}" Margin="0,8,0,0"
+                                Visibility="{Binding TieneSimulacionDesercion, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <StackPanel>
+                                <TextBlock Text="Simulación de tasa de deserción (riesgo)"
+                                           FontWeight="SemiBold" Foreground="#1B5E20" Margin="0,0,0,4"/>
+                                <TextBlock Text="Edita las tasas para ver cuántos estudiantes por ciclo se necesitan si hay retiro. Solo afecta esta simulación; no cambia el resto del análisis."
+                                           FontSize="11" Foreground="#546E7A" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="160"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Concepto" FontWeight="SemiBold" Foreground="#546E7A"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Tasa (%)" FontWeight="SemiBold" Foreground="#546E7A" TextAlignment="Right"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="2" Text="Estudiantes/ciclo" FontWeight="SemiBold" Foreground="#546E7A" TextAlignment="Right"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Sin tasa de deserción" Margin="0,4,0,0"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="—" TextAlignment="Right" Margin="0,4,0,0"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding EstudiantesPorCicloBaseDisplay}" FontWeight="SemiBold" TextAlignment="Right" Margin="0,4,0,0"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Con tasa de deserción alta" Margin="0,4,0,0"/>
+                                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding TasaDesercionAltaPe, UpdateSourceTrigger=PropertyChanged}" Padding="4,2" Margin="6,4,0,0" HorizontalContentAlignment="Right"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding EstudiantesDesercionAltaDisplay}" FontWeight="Bold" Foreground="#0D4726" TextAlignment="Right" Margin="0,4,0,0"/>
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Con tasa de deserción media" Margin="0,4,0,0"/>
+                                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding TasaDesercionMediaPe, UpdateSourceTrigger=PropertyChanged}" Padding="4,2" Margin="6,4,0,0" HorizontalContentAlignment="Right"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding EstudiantesDesercionMediaDisplay}" FontWeight="Bold" Foreground="#0D4726" TextAlignment="Right" Margin="0,4,0,0"/>
+                                </Grid>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -741,7 +780,7 @@
                                         <TextBlock Grid.Row="0" Grid.Column="1" Text="Arancel" FontWeight="SemiBold" Foreground="#546E7A" TextAlignment="Right"/>
                                         <TextBlock Grid.Row="0" Grid.Column="2" Text="Total/sem." FontWeight="SemiBold" Foreground="#546E7A" TextAlignment="Right"/>
 
-                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Vigente (manual actual)" Foreground="#263238" Margin="0,3,0,0"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Vigente (arancel deseado aplicado)" Foreground="#263238" Margin="0,3,0,0"/>
                                         <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ArancelVigenteDisplay}" Foreground="#263238" TextAlignment="Right" Margin="0,3,0,0"/>
                                         <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding TotalVigenteDisplay}" Foreground="#263238" TextAlignment="Right" Margin="0,3,0,0"/>
 
@@ -760,7 +799,7 @@
                                 </Border>
                             </StackPanel>
                             <Button Grid.Column="1"
-                                    Content="Usar arancel óptimo"
+                                    Content="{Binding TextoBotonArancelOptimo}"
                                     Padding="10,4"
                                     Margin="12,0,0,0"
                                     VerticalAlignment="Center"

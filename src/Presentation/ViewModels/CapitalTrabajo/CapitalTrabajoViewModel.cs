@@ -203,6 +203,38 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task GenerarMaterialesPorDefectoAsync()
+    {
+        if (CarreraSeleccionada is null)
+        {
+            MensajeError = "Seleccione una carrera antes de generar materiales.";
+            return;
+        }
+
+        EstaGuardando = true;
+        MensajeError = string.Empty;
+        MensajeExito = string.Empty;
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var command = scope.ServiceProvider.GetRequiredService<GenerarMaterialesPorDefectoCarreraCommand>();
+            var insertados = await command.EjecutarAsync(CarreraSeleccionada.Id);
+            MensajeExito = insertados > 0
+                ? $"Se generaron {insertados} materiales por defecto."
+                : "La carrera ya tiene los materiales por defecto.";
+            await RefrescarCapitalTrabajoAsync();
+        }
+        catch (Exception ex)
+        {
+            MensajeError = Detalle(ex);
+        }
+        finally
+        {
+            EstaGuardando = false;
+        }
+    }
+
+    [RelayCommand]
     private void AbrirNuevoMaterial(string categoria)
     {
         if (CarreraSeleccionada is null)

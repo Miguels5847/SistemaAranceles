@@ -42,6 +42,14 @@ public sealed class ArancelCicloResumenView
     public string MatriculaCicloDisplay { get; init; } = string.Empty;
 }
 
+// KAN-44: fila editable de la tabla de descuentos por ciclo (una por ciclo; el usuario edita el %).
+public sealed class DescuentoCicloEditableView
+{
+    public int NumeroCiclo { get; init; }
+    public string CicloDisplay => $"Ciclo {NumeroCiclo}";
+    public decimal Porcentaje { get; set; }
+}
+
 public sealed class MaterialCantidadMatrizFilaView
 {
     public string Categoria { get; init; } = string.Empty;
@@ -146,14 +154,9 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     [ObservableProperty] private bool _ratioFormAplicaInflacion = true;
     [ObservableProperty] private int? _ratioFormItemMaterialId;
 
-    // KAN-44: descuentos de arancel por ciclo (CRUD por carrera+escenario).
-    [ObservableProperty] private ObservableCollection<DescuentoArancelCicloDto> _descuentos = [];
-    [ObservableProperty] private bool _descuentoFormVisible;
-    [ObservableProperty] private bool _descuentoFormEsEdicion;
-    [ObservableProperty] private int _descuentoFormId;
-    [ObservableProperty] private string _descuentoFormCicloDesde = "1";
-    [ObservableProperty] private string _descuentoFormCicloHasta = "1";
-    [ObservableProperty] private string _descuentoFormPorcentaje = "0";
+    // KAN-44: descuentos de arancel por ciclo. Tabla autogenerada con una fila por ciclo (1..N de la
+    // carrera); el usuario edita solo el % y se guarda en bloque.
+    [ObservableProperty] private ObservableCollection<DescuentoCicloEditableView> _descuentosPorCiclo = [];
 
     [ObservableProperty] private bool _formVisible;
     [ObservableProperty] private bool _formEsEdicion;
@@ -464,7 +467,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             Ingresos = null;
             Materiales = null;
             Ratios = [];
-            Descuentos = [];
+            DescuentosPorCiclo = [];
             ActualizarResumen();
             MensajeError = "Selecciona un escenario para calcular Demanda e Ingresos.";
             return;
@@ -524,7 +527,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             Materiales = materiales;
             Configuraciones = new ObservableCollection<ConfiguracionArancelCarreraDto>(configs);
             Ratios = new ObservableCollection<RatioMaterialDemandaDto>(ratios);
-            Descuentos = new ObservableCollection<DescuentoArancelCicloDto>(descuentos.Descuentos);
+            ConstruirDescuentosPorCiclo(descuentos);
 
             ActualizarResumen();
         }
@@ -541,7 +544,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             Ingresos = null;
             Materiales = null;
             Ratios = [];
-            Descuentos = [];
+            DescuentosPorCiclo = [];
             ActualizarResumen();
         }
         finally
@@ -697,73 +700,22 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void AbrirNuevoDescuento()
+    private async Task GenerarConsumosPorDefectoAsync()
     {
         if (!PuedeEditar) { MensajeError = "No tienes permiso para editar."; return; }
         if (CarreraSeleccionada is null) { MensajeError = "Selecciona una carrera."; return; }
-        if (EscenarioSeleccionado is null) { MensajeError = "Selecciona un escenario."; return; }
-        DescuentoFormId = 0;
-        DescuentoFormCicloDesde = "1";
-        DescuentoFormCicloHasta = "1";
-        DescuentoFormPorcentaje = "0";
-        DescuentoFormEsEdicion = false;
-        DescuentoFormVisible = true;
-        MensajeError = string.Empty;
-        MensajeExito = string.Empty;
-    }
-
-    [RelayCommand]
-    private void AbrirEditarDescuento(DescuentoArancelCicloDto? dto)
-    {
-        if (dto is null) return;
-        if (!PuedeEditar) { MensajeError = "No tienes permiso para editar."; return; }
-        DescuentoFormId = dto.Id;
-        DescuentoFormCicloDesde = dto.CicloDesde.ToString(CultureInfo.InvariantCulture);
-        DescuentoFormCicloHasta = dto.CicloHasta.ToString(CultureInfo.InvariantCulture);
-        DescuentoFormPorcentaje = dto.PorcentajeDescuento.ToString("0.##", CultureInfo.InvariantCulture);
-        DescuentoFormEsEdicion = true;
-        DescuentoFormVisible = true;
-        MensajeError = string.Empty;
-        MensajeExito = string.Empty;
-    }
-
-    [RelayCommand]
-    private void CancelarDescuento()
-    {
-        DescuentoFormVisible = false;
-        MensajeError = string.Empty;
-    }
-
-    [RelayCommand]
-    private async Task GuardarDescuentoAsync()
-    {
-        if (CarreraSeleccionada is null) { MensajeError = "Selecciona una carrera."; return; }
-        if (EscenarioSeleccionado is null) { MensajeError = "Selecciona un escenario."; return; }
-        if (!int.TryParse(DescuentoFormCicloDesde, NumberStyles.Integer, CultureInfo.InvariantCulture, out var desde) || desde < 1)
-        { MensajeError = "Ciclo desde inválido (≥ 1)."; return; }
-        if (!int.TryParse(DescuentoFormCicloHasta, NumberStyles.Integer, CultureInfo.InvariantCulture, out var hasta) || hasta < desde)
-        { MensajeError = "Ciclo hasta debe ser ≥ ciclo desde."; return; }
-        if (!TryDecimal(DescuentoFormPorcentaje, out var pct) || pct < 0m || pct > 100m)
-        { MensajeError = "Descuento inválido (0 a 100)."; return; }
 
         EstaGuardando = true;
         MensajeError = string.Empty;
+        MensajeExito = string.Empty;
         try
         {
-            var dto = new GuardarDescuentoArancelCicloDto
-            {
-                Id = DescuentoFormEsEdicion ? DescuentoFormId : null,
-                CarreraId = CarreraSeleccionada.Id,
-                EscenarioProyeccionId = EscenarioSeleccionado.Id,
-                CicloDesde = desde,
-                CicloHasta = hasta,
-                PorcentajeDescuento = pct
-            };
             using var scope = _serviceProvider.CreateScope();
-            var command = scope.ServiceProvider.GetRequiredService<GuardarDescuentoArancelCicloCommand>();
-            await command.EjecutarAsync(dto, _sesionActual.UsuarioId);
-            DescuentoFormVisible = false;
-            MensajeExito = DescuentoFormEsEdicion ? "Descuento actualizado." : "Descuento creado.";
+            var command = scope.ServiceProvider.GetRequiredService<GenerarRatiosPorDefectoCarreraCommand>();
+            var insertados = await command.EjecutarAsync(CarreraSeleccionada.Id);
+            MensajeExito = insertados > 0
+                ? $"Se generaron {insertados} consumos por defecto."
+                : "La carrera ya tiene los consumos por defecto.";
             await RefrescarArancelEfectivoAsync();
         }
         catch (Exception ex)
@@ -776,20 +728,44 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
-    private async Task EliminarDescuentoAsync(DescuentoArancelCicloDto? dto)
+    private void ConstruirDescuentosPorCiclo(MatrizDescuentosArancelDto matriz)
     {
-        if (dto is null) return;
-        if (!PuedeEditar) { MensajeError = "No tienes permiso para eliminar."; return; }
+        var totalCiclos = (CarreraSeleccionada?.TotalCiclos ?? 0) > 0 ? CarreraSeleccionada!.TotalCiclos : 8;
+
+        // Cada ciclo cubierto por un descuento activo (rango o por-ciclo) hereda su %; el resto queda en 0.
+        var porCiclo = new Dictionary<int, decimal>();
+        foreach (var d in matriz.Descuentos.Where(x => x.EstaActivo))
+            for (var c = d.CicloDesde; c <= d.CicloHasta; c++)
+                porCiclo[c] = d.PorcentajeDescuento;
+
+        var filas = Enumerable.Range(1, totalCiclos)
+            .Select(c => new DescuentoCicloEditableView
+            {
+                NumeroCiclo = c,
+                Porcentaje = porCiclo.TryGetValue(c, out var p) ? p : 0m
+            });
+        DescuentosPorCiclo = new ObservableCollection<DescuentoCicloEditableView>(filas);
+    }
+
+    [RelayCommand]
+    private async Task GuardarDescuentosAsync()
+    {
+        if (!PuedeEditar) { MensajeError = "No tienes permiso para editar."; return; }
+        if (CarreraSeleccionada is null) { MensajeError = "Selecciona una carrera."; return; }
+        if (EscenarioSeleccionado is null) { MensajeError = "Selecciona un escenario."; return; }
 
         EstaGuardando = true;
         MensajeError = string.Empty;
+        MensajeExito = string.Empty;
         try
         {
+            var filas = DescuentosPorCiclo
+                .Select(d => (d.NumeroCiclo, d.Porcentaje))
+                .ToList();
             using var scope = _serviceProvider.CreateScope();
-            var command = scope.ServiceProvider.GetRequiredService<EliminarDescuentoArancelCicloCommand>();
-            await command.EjecutarAsync(dto.Id, _sesionActual.UsuarioId);
-            MensajeExito = "Descuento eliminado.";
+            var command = scope.ServiceProvider.GetRequiredService<GuardarMatrizDescuentosArancelCommand>();
+            await command.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id, filas, _sesionActual.UsuarioId);
+            MensajeExito = "Descuentos por ciclo guardados.";
             await RefrescarArancelEfectivoAsync();
         }
         catch (Exception ex)
@@ -1028,7 +1004,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         MaterialesMonetariosMatrizFilas = [];
         MaterialesEtiquetasPeriodos = [];
         Ratios = [];
-        Descuentos = [];
+        DescuentosPorCiclo = [];
         ItemsCapitalTrabajo = [];
         RatioFormItemSeleccionado = null;
         ActualizarResumen();

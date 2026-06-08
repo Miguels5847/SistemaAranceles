@@ -165,6 +165,8 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Application.UseCases.CapitalTrabajo.ObtenerResumenCapitalTrabajoQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.CapitalTrabajo.GuardarItemCapitalTrabajoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.CapitalTrabajo.EliminarItemCapitalTrabajoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.CapitalTrabajo.GenerarMaterialesPorDefectoCarreraCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.GenerarRatiosPorDefectoCarreraCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.CrearActivoDiferidoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.ActualizarActivoDiferidoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.EliminarActivoDiferidoCommand>();
@@ -182,6 +184,7 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ObtenerDescuentosArancelCicloQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.GuardarDescuentoArancelCicloCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.EliminarDescuentoArancelCicloCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.GuardarMatrizDescuentosArancelCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.GuardarRatioMaterialDemandaCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.EliminarRatioMaterialDemandaCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ListarRatiosMaterialDemandaQuery>();

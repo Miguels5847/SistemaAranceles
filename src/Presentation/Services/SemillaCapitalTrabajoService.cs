@@ -60,28 +60,19 @@ public sealed class SemillaCapitalTrabajoService
 
         await ctx.CargosFacultad.AddRangeAsync(cargos);
 
-        var materiales = new[]
-        {
-            // Secci\u00f3n B: Materiales y Suministros (7 \u00edtems)
-            new ItemMaterialInsumo { CarreraId = 1, NombreItem = "Resma de papel bond de 75 gramos",                        CategoriaNombre = "MATERIALES_SUMINISTROS", UnidadNombre = "Resma",   CantidadBase = 6.0m,   PrecioUnitario = 3.25m,  EsCantidadFija = false },
-            new ItemMaterialInsumo { CarreraId = 1, NombreItem = "Cartuchos de impresora (Color)",                          CategoriaNombre = "MATERIALES_SUMINISTROS", UnidadNombre = "Unidad",  CantidadBase = 0.6m,   PrecioUnitario = 50.00m, EsCantidadFija = false },
-            new ItemMaterialInsumo { CarreraId = 1, NombreItem = "Cartuchos de impresora (Negro)",                          CategoriaNombre = "MATERIALES_SUMINISTROS", UnidadNombre = "Unidad",  CantidadBase = 0.6m,   PrecioUnitario = 40.00m, EsCantidadFija = false },
-            new ItemMaterialInsumo { CarreraId = 1, NombreItem = "Carpetas de cart\u00f3n",                                 CategoriaNombre = "MATERIALES_SUMINISTROS", UnidadNombre = "Unidad",  CantidadBase = 60.0m,  PrecioUnitario = 1.00m,  EsCantidadFija = false },
-            new ItemMaterialInsumo { CarreraId = 1, NombreItem = "Porta files",                                             CategoriaNombre = "MATERIALES_SUMINISTROS", UnidadNombre = "Unidad",  CantidadBase = 30.0m,  PrecioUnitario = 2.00m,  EsCantidadFija = false },
-            new ItemMaterialInsumo { CarreraId = 1, NombreItem = "Esferos, micro minas, l\u00e1piz, borradores, correctores", CategoriaNombre = "MATERIALES_SUMINISTROS", UnidadNombre = "Unidad",  CantidadBase = 30.0m,  PrecioUnitario = 0.25m,  EsCantidadFija = false },
-            new ItemMaterialInsumo { CarreraId = 1, NombreItem = "Grapas, clips (CAJA)",                                    CategoriaNombre = "MATERIALES_SUMINISTROS", UnidadNombre = "Caja",    CantidadBase = 0.6m,   PrecioUnitario = 1.00m,  EsCantidadFija = false },
-            // Secci\u00f3n C: Suministros de Aseo y Limpieza (7 \u00edtems)
-            new ItemMaterialInsumo { CarreraId = 1, NombreItem = "Desinfectante (Gal\u00f3n)",                              CategoriaNombre = "ASEO_LIMPIEZA",           UnidadNombre = "Gal\u00f3n",  CantidadBase = 0.9m,   PrecioUnitario = 4.00m,  EsCantidadFija = false },
-            new ItemMaterialInsumo { CarreraId = 1, NombreItem = "Jab\u00f3n L\u00edquido (Gal\u00f3n)",                    CategoriaNombre = "ASEO_LIMPIEZA",           UnidadNombre = "Gal\u00f3n",  CantidadBase = 1.08m,  PrecioUnitario = 3.00m,  EsCantidadFija = false },
-            new ItemMaterialInsumo { CarreraId = 1, NombreItem = "Papel Higi\u00e9nico (Rollo Grande)",                    CategoriaNombre = "ASEO_LIMPIEZA",           UnidadNombre = "Rollo",   CantidadBase = 23.4m,  PrecioUnitario = 10.50m, EsCantidadFija = false },
-            new ItemMaterialInsumo { CarreraId = 1, NombreItem = "Escoba",                                                  CategoriaNombre = "ASEO_LIMPIEZA",           UnidadNombre = "Unidad",  CantidadBase = 2.0m,   PrecioUnitario = 10.50m, EsCantidadFija = false },
-            new ItemMaterialInsumo { CarreraId = 1, NombreItem = "Paquete de Fundas de Basura",                             CategoriaNombre = "ASEO_LIMPIEZA",           UnidadNombre = "Paquete", CantidadBase = 6.0m,   PrecioUnitario = 0.80m,  EsCantidadFija = false },
-            new ItemMaterialInsumo { CarreraId = 1, NombreItem = "Trapeador",                                               CategoriaNombre = "ASEO_LIMPIEZA",           UnidadNombre = "Unidad",  CantidadBase = 3.0m,   PrecioUnitario = 2.50m,  EsCantidadFija = false },
-            new ItemMaterialInsumo { CarreraId = 1, NombreItem = "Cloro (Gal\u00f3n)",                                     CategoriaNombre = "ASEO_LIMPIEZA",           UnidadNombre = "Gal\u00f3n",  CantidadBase = 0.9m,   PrecioUnitario = 2.50m,  EsCantidadFija = false },
-            // Secci\u00f3n D: Accesorios y Materiales (2 \u00edtems)
-            new ItemMaterialInsumo { CarreraId = 1, NombreItem = "Grapadora",                                               CategoriaNombre = "ACCESORIOS_MATERIALES",   UnidadNombre = "Unidad",  CantidadBase = 5.25m,  PrecioUnitario = 15.00m, EsCantidadFija = false },
-            new ItemMaterialInsumo { CarreraId = 1, NombreItem = "Perforadora",                                             CategoriaNombre = "ACCESORIOS_MATERIALES",   UnidadNombre = "Unidad",  CantidadBase = 5.25m,  PrecioUnitario = 10.00m, EsCantidadFija = false },
-        };
+        // Mismo cat\u00e1logo can\u00f3nico que usa el bot\u00f3n "Generar materiales por defecto" (fuente \u00fanica).
+        var materiales = CatalogoMaterialesPorDefecto.Items
+            .Select(m => new ItemMaterialInsumo
+            {
+                CarreraId = 1,
+                NombreItem = m.Nombre,
+                CategoriaNombre = m.Categoria,
+                UnidadNombre = m.Unidad,
+                CantidadBase = m.CantidadBase,
+                PrecioUnitario = m.PrecioUnitario,
+                EsCantidadFija = false
+            })
+            .ToArray();
 
         await ctx.ItemsMaterialInsumo.AddRangeAsync(materiales);
 

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SistemaAranceles.Application.DTOs.CapitalTrabajo;
 using SistemaAranceles.Application.Interfaces.Persistencia;
+using SistemaAranceles.Domain.Constantes;
 using SistemaAranceles.Infrastructure.Persistence.Entidades;
 
 namespace SistemaAranceles.Infrastructure.Persistence.Repositories;
@@ -64,6 +65,39 @@ public sealed class RepositorioItemMaterialInsumo(ContextoAplicacion ctx) : IRep
         }
 
         await ctx.SaveChangesAsync(ct);
+    }
+
+    public async Task<int> SembrarItemsPorDefectoAsync(
+        int carreraId,
+        IReadOnlyList<MaterialPorDefecto> items,
+        CancellationToken ct = default)
+    {
+        var existentes = await ctx.ItemsMaterialInsumo.AsNoTracking()
+            .Where(x => x.CarreraId == carreraId && x.EstaActivo)
+            .Select(x => x.NombreItem)
+            .ToListAsync(ct);
+        var existentesSet = existentes.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var nuevos = items
+            .Where(i => !existentesSet.Contains(i.Nombre))
+            .Select(i => new ItemMaterialInsumo
+            {
+                CarreraId = carreraId,
+                CategoriaNombre = i.Categoria,
+                NombreItem = i.Nombre,
+                UnidadNombre = i.Unidad,
+                CantidadBase = i.CantidadBase,
+                PrecioUnitario = i.PrecioUnitario,
+                EsCantidadFija = false
+            })
+            .ToList();
+
+        if (nuevos.Count == 0)
+            return 0;
+
+        await ctx.ItemsMaterialInsumo.AddRangeAsync(nuevos, ct);
+        await ctx.SaveChangesAsync(ct);
+        return nuevos.Count;
     }
 
     public async Task EliminarAsync(int id, CancellationToken ct = default)

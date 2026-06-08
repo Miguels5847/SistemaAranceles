@@ -71,6 +71,10 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     [ObservableProperty] private IndicadoresFinancierosDto? _indicadoresFinancieros;
     [ObservableProperty] private PeriodoRecuperacionDto? _periodoRecuperacion;
     [ObservableProperty] private PuntoEquilibrioDto? _puntoEquilibrio;
+    // Simulación de deserción editable (defaults = constantes del cálculo). Solo recalcula las dos
+    // filas de estudiantes/ciclo con deserción; no re-ejecuta el pipeline ni afecta otros valores.
+    [ObservableProperty] private decimal _tasaDesercionAltaPe = 35m;
+    [ObservableProperty] private decimal _tasaDesercionMediaPe = 17.5m;
     [ObservableProperty] private ArancelOptimoBiseccionDto? _arancelOptimoBiseccion;
     [ObservableProperty] private DashboardFinancieroDto? _dashboardFinanciero;
     [ObservableProperty] private CesDto? _ces;
@@ -103,6 +107,12 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     public IReadOnlyList<PuntoEquilibrioResultadoFilaDto> ProyeccionResultadosPuntoEquilibrio => PuntoEquilibrio?.ProyeccionResultados ?? [];
     public IReadOnlyList<PuntoEquilibrioAnalisisFilaDto> AnalisisPuntoEquilibrio => PuntoEquilibrio?.AnalisisPuntoEquilibrio ?? [];
     public bool TienePuntoEquilibrio => PuntoEquilibrio?.TieneDatos == true;
+    public string PeriodoBasePuntoEquilibrio => PuntoEquilibrio?.PeriodoBaseEtiqueta ?? string.Empty;
+    public decimal EstudiantesPorCicloBasePe => PuntoEquilibrio?.EstudiantesPorCicloBase ?? 0m;
+    public bool TieneSimulacionDesercion => TienePuntoEquilibrio && EstudiantesPorCicloBasePe > 0m;
+    public string EstudiantesPorCicloBaseDisplay => EstudiantesPorCicloBasePe.ToString("N0");
+    public string EstudiantesDesercionAltaDisplay => decimal.Round(EstudiantesPorCicloBasePe * (1m + TasaDesercionAltaPe / 100m), 2).ToString("N0");
+    public string EstudiantesDesercionMediaDisplay => decimal.Round(EstudiantesPorCicloBasePe * (1m + TasaDesercionMediaPe / 100m), 2).ToString("N0");
     public IReadOnlyList<ArancelOptimoBiseccionIteracionDto> IteracionesArancelOptimo => ArancelOptimoBiseccion?.Iteraciones ?? [];
     public IReadOnlyList<ArancelOptimoBiseccionPeriodoDto> DetalleArancelOptimo => ArancelOptimoBiseccion?.Periodos ?? [];
     public bool TieneArancelOptimoBiseccion => ArancelOptimoBiseccion?.TieneDatos == true;
@@ -113,11 +123,20 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     public IReadOnlyList<CesParametroFilaDto> ParametrosCes => Ces?.Parametros ?? [];
     public IReadOnlyList<CesDistribucionFilaDto> DistribucionCes => Ces?.Distribucion ?? [];
     public bool TieneCes => Ces?.TieneDatos == true;
+    // Si el arancel vigente ya coincide con el óptimo (dentro de tolerancia), no tiene sentido
+    // re-aplicar: evita la sensación de "iterar una y otra vez" cuando ya se está en el óptimo.
+    private const decimal ToleranciaAplicacionArancel = 2m;
+    public bool ArancelOptimoYaAplicado => DiferenciaArancel(out var dif) && Math.Abs(dif) <= ToleranciaAplicacionArancel;
+    public string TextoBotonArancelOptimo => ArancelOptimoYaAplicado
+        ? "Arancel óptimo ya aplicado"
+        : "Usar arancel óptimo";
+
     public bool PuedeUsarArancelOptimo => PuedeEditar
                                            && !EstaCargando
                                            && ArancelOptimoBiseccion?.Disponible == true
                                            && CarreraSeleccionada is not null
-                                           && EscenarioSeleccionado is not null;
+                                           && EscenarioSeleccionado is not null
+                                           && !ArancelOptimoYaAplicado;
     public bool PuedeEditar => _sesionActual.EsAdministrador || _sesionActual.TienePermiso("DI_NG.EDITAR");
 
     // Comparativa arancel vigente vs propuesto (Fase 6).
@@ -225,6 +244,24 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         OnPropertyChanged(nameof(ProyeccionResultadosPuntoEquilibrio));
         OnPropertyChanged(nameof(AnalisisPuntoEquilibrio));
         OnPropertyChanged(nameof(TienePuntoEquilibrio));
+        OnPropertyChanged(nameof(PeriodoBasePuntoEquilibrio));
+        OnPropertyChanged(nameof(EstudiantesPorCicloBasePe));
+        OnPropertyChanged(nameof(TieneSimulacionDesercion));
+        OnPropertyChanged(nameof(EstudiantesPorCicloBaseDisplay));
+        OnPropertyChanged(nameof(EstudiantesDesercionAltaDisplay));
+        OnPropertyChanged(nameof(EstudiantesDesercionMediaDisplay));
+    }
+
+    partial void OnTasaDesercionAltaPeChanged(decimal value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(EstudiantesDesercionAltaDisplay));
+    }
+
+    partial void OnTasaDesercionMediaPeChanged(decimal value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(EstudiantesDesercionMediaDisplay));
     }
 
     partial void OnArancelOptimoBiseccionChanged(ArancelOptimoBiseccionDto? value)
@@ -261,6 +298,9 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         OnPropertyChanged(nameof(TotalOptimoComparativaDisplay));
         OnPropertyChanged(nameof(DiferenciaArancelDisplay));
         OnPropertyChanged(nameof(DiferenciaPorcentajeDisplay));
+        OnPropertyChanged(nameof(ArancelOptimoYaAplicado));
+        OnPropertyChanged(nameof(TextoBotonArancelOptimo));
+        OnPropertyChanged(nameof(PuedeUsarArancelOptimo));
     }
 
     partial void OnDashboardFinancieroChanged(DashboardFinancieroDto? value)

@@ -166,6 +166,7 @@ public sealed class ObtenerPuntoEquilibrioQuery(
             EscenarioNombre = escenario?.Nombre ?? costos.EscenarioNombre,
             Periodos = periodos,
             PeriodoBaseEtiqueta = periodoBase?.EtiquetaPeriodo ?? string.Empty,
+            EstudiantesPorCicloBase = resumen?.EstudiantesPorCiclo ?? 0m,
             ProyeccionResultados = resumen is not null ? ConstruirProyeccionResultados(resumen) : [],
             AnalisisPuntoEquilibrio = resumen is not null ? ConstruirAnalisisPuntoEquilibrio(resumen) : [],
             MensajeAdvertencia = ConstruirMensaje(advertencias)
