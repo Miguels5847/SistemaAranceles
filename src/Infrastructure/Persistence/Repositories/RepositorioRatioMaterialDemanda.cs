@@ -126,8 +126,22 @@ public sealed class RepositorioRatioMaterialDemanda(ContextoAplicacion contexto)
         await contexto.SaveChangesAsync(ct);
     }
 
-    private Task AsegurarTablaAsync(CancellationToken ct)
-        => contexto.Database.ExecuteSqlRawAsync("""
+    private static readonly SemaphoreSlim _gateEsquema = new(1, 1);
+    private static bool _esquemaListo;
+
+    // El DDL self-healing corre una sola vez por proceso (no en cada lectura).
+    private async Task AsegurarTablaAsync(CancellationToken ct)
+    {
+        if (_esquemaListo)
+            return;
+
+        await _gateEsquema.WaitAsync(ct);
+        try
+        {
+            if (_esquemaListo)
+                return;
+
+            await contexto.Database.ExecuteSqlRawAsync("""
             CREATE TABLE IF NOT EXISTS public.ratio_material_demanda (
                 id                         SERIAL PRIMARY KEY,
                 carrera_id                 INTEGER NULL REFERENCES public.carrera(id) ON DELETE CASCADE,
@@ -148,4 +162,11 @@ public sealed class RepositorioRatioMaterialDemanda(ContextoAplicacion contexto)
                 eliminado_por_usuario_id   INTEGER NULL
             );
             """, ct);
+            _esquemaListo = true;
+        }
+        finally
+        {
+            _gateEsquema.Release();
+        }
+    }
 }

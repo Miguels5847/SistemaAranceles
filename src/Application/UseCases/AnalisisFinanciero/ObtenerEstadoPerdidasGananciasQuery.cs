@@ -1,5 +1,6 @@
 using SistemaAranceles.Application.DTOs.AnalisisFinanciero;
 using SistemaAranceles.Application.DTOs.CostosGastos;
+using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.CostosGastos;
 using SistemaAranceles.Application.UseCases.DemandaIngresos;
@@ -20,7 +21,8 @@ public sealed class ObtenerEstadoPerdidasGananciasQuery(
         int? escenarioProyeccionId,
         CancellationToken ct = default,
         MatrizCostosGastosDto? costosPrecalculados = null,
-        decimal factorImprevisto = 1.05m)
+        decimal factorImprevisto = 1.05m,
+        IngresosProyectadosDto? ingresosPrecalculados = null)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -38,7 +40,8 @@ public sealed class ObtenerEstadoPerdidasGananciasQuery(
                 "Selecciona un escenario para calcular P\u00e9rdidas y Ganancias.");
         }
 
-        var ingresos = await calcularIngresosProyectadosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+        var ingresos = ingresosPrecalculados
+            ?? await calcularIngresosProyectadosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
         AgregarAdvertencia(advertencias, ingresos.MensajeAdvertencia);
 
         var costos = costosPrecalculados

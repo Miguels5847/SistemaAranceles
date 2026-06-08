@@ -1,4 +1,5 @@
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
+using SistemaAranceles.Application.DTOs.Estudiantes;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.Services.Aranceles;
 
@@ -22,7 +23,9 @@ public sealed class CalcularIngresosProyectadosQuery(
     public async Task<IngresosProyectadosDto> EjecutarAsync(
         int carreraId,
         int? escenarioProyeccionId,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        ArancelEfectivoDto? arancelPrecalculado = null,
+        ProyeccionEstudiantesDto? proyeccionPrecalculada = null)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var carreraNombre = carrera?.Nombre ?? string.Empty;
@@ -37,7 +40,7 @@ public sealed class CalcularIngresosProyectadosQuery(
         if (escenarioProyeccionId is null or <= 0)
             advertencias.Add("Selecciona un escenario para ver ingresos por período.");
 
-        var arancel = await obtenerArancelEfectivoQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+        var arancel = arancelPrecalculado ?? await obtenerArancelEfectivoQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
         var arancelValor = arancel.ArancelEfectivo ?? 0m;
         var matriculaValor = arancel.MatriculaEfectiva;
 
@@ -66,15 +69,20 @@ public sealed class CalcularIngresosProyectadosQuery(
         if (escenarioProyeccionId is null or <= 0)
             return ConstruirVacio();
 
-        var proyeccionId = await repositorioProyeccion.ObtenerIdPorCarreraYEscenarioAsync(
-            carreraId, escenarioProyeccionId.Value, ct);
-        if (proyeccionId is null or <= 0)
+        var proyeccion = proyeccionPrecalculada;
+        if (proyeccion is null)
         {
-            advertencias.Add("No hay proyección de estudiantes para esta carrera/escenario. Genere la proyección primero en Proyección de Estudiantes.");
-            return ConstruirVacio();
+            var proyeccionId = await repositorioProyeccion.ObtenerIdPorCarreraYEscenarioAsync(
+                carreraId, escenarioProyeccionId.Value, ct);
+            if (proyeccionId is null or <= 0)
+            {
+                advertencias.Add("No hay proyección de estudiantes para esta carrera/escenario. Genere la proyección primero en Proyección de Estudiantes.");
+                return ConstruirVacio();
+            }
+
+            proyeccion = await repositorioProyeccion.ObtenerDtoPorIdAsync(proyeccionId.Value, ct);
         }
 
-        var proyeccion = await repositorioProyeccion.ObtenerDtoPorIdAsync(proyeccionId.Value, ct);
         if (proyeccion is null || proyeccion.Detalles.Count == 0)
         {
             advertencias.Add("Proyección sin detalles. Genera la proyección de estudiantes.");

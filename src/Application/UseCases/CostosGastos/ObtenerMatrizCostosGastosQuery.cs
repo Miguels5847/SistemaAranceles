@@ -42,7 +42,8 @@ public sealed class ObtenerMatrizCostosGastosQuery(
         MatrizInvVinBecasDto? invVinBecasPrecalculado = null,
         DemandaProyectadaDto? demandaPrecalculada = null,
         decimal factorImprevisto = 1.05m,
-        IReadOnlyDictionary<int, decimal>? becasInstitucionalesPorPeriodo = null)
+        IReadOnlyDictionary<int, decimal>? becasInstitucionalesPorPeriodo = null,
+        ProyeccionEstudiantesDto? proyeccionPrecalculada = null)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -106,7 +107,7 @@ public sealed class ObtenerMatrizCostosGastosQuery(
             })
             .ToDictionary(x => x.Anio, x => x.Valor);
 
-        var proyeccion = await ObtenerProyeccionAsync(carreraId, escenarioProyeccionId.Value, ct);
+        var proyeccion = proyeccionPrecalculada ?? await ObtenerProyeccionAsync(carreraId, escenarioProyeccionId.Value, ct);
         var consolidado = proyeccion is null
             ? null
             : await ObtenerConsolidadoAsync(proyeccion, carreraId, escenarioProyeccionId.Value, ct);

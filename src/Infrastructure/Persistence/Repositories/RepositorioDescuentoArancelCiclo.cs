@@ -112,8 +112,22 @@ public sealed class RepositorioDescuentoArancelCiclo(ContextoAplicacion contexto
         await contexto.SaveChangesAsync(ct);
     }
 
-    private Task AsegurarTablaAsync(CancellationToken ct)
-        => contexto.Database.ExecuteSqlRawAsync("""
+    private static readonly SemaphoreSlim _gateEsquema = new(1, 1);
+    private static bool _esquemaListo;
+
+    // El DDL self-healing corre una sola vez por proceso (no en cada lectura).
+    private async Task AsegurarTablaAsync(CancellationToken ct)
+    {
+        if (_esquemaListo)
+            return;
+
+        await _gateEsquema.WaitAsync(ct);
+        try
+        {
+            if (_esquemaListo)
+                return;
+
+            await contexto.Database.ExecuteSqlRawAsync("""
             CREATE TABLE IF NOT EXISTS public.descuento_arancel_ciclo (
                 id                          SERIAL PRIMARY KEY,
                 carrera_id                  INTEGER NOT NULL REFERENCES public.carrera(id) ON DELETE CASCADE,
@@ -132,4 +146,11 @@ public sealed class RepositorioDescuentoArancelCiclo(ContextoAplicacion contexto
                 CONSTRAINT "CK_descuento_arancel_ciclo_porc" CHECK (porcentaje_descuento >= 0 AND porcentaje_descuento <= 100)
             );
             """, ct);
+            _esquemaListo = true;
+        }
+        finally
+        {
+            _gateEsquema.Release();
+        }
+    }
 }

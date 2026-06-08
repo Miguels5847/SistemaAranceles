@@ -51,8 +51,23 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
         return lista.Select(MapearADominio).ToList();
     }
 
-    private Task AsegurarParametrosInversionAsync(CancellationToken cancellationToken)
-        => contexto.Database.ExecuteSqlRawAsync("""
+    private static readonly SemaphoreSlim _gateEsquema = new(1, 1);
+    private static bool _esquemaListo;
+
+    // El DDL self-healing corre una sola vez por proceso (no en cada lectura): el esquema no cambia
+    // bajo una app en ejecución, y un reinicio lo vuelve a aplicar (auto-heal preservado).
+    private async Task AsegurarParametrosInversionAsync(CancellationToken cancellationToken)
+    {
+        if (_esquemaListo)
+            return;
+
+        await _gateEsquema.WaitAsync(cancellationToken);
+        try
+        {
+            if (_esquemaListo)
+                return;
+
+            await contexto.Database.ExecuteSqlRawAsync("""
             ALTER TABLE public.datos_institucionales
                 ADD COLUMN IF NOT EXISTS meses_capital_trabajo INTEGER NOT NULL DEFAULT 2;
 
@@ -122,6 +137,13 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
                 ADD COLUMN IF NOT EXISTS arancel_maximo_busqueda NUMERIC(18,2) NOT NULL DEFAULT 5000.00,
                 ADD COLUMN IF NOT EXISTS max_iteraciones_biseccion INTEGER NOT NULL DEFAULT 60;
             """, cancellationToken);
+            _esquemaListo = true;
+        }
+        finally
+        {
+            _gateEsquema.Release();
+        }
+    }
 
     public void Agregar(DominioDatosInstitucionales datos)
         => contexto.DatosInstitucionales.Add(MapearAInfra(datos));
