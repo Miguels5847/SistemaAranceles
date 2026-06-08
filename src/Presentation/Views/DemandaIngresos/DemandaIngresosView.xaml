@@ -129,6 +129,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <Border Grid.Row="0" Background="#EEF2FF" BorderBrush="#1A237E" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,0,0,8">
                         <Grid>
@@ -239,8 +240,67 @@
                             </StackPanel>
                         </StackPanel>
                     </Border>
-                    <TextBlock Grid.Row="4" Text="Resumen consolidado" FontSize="14" FontWeight="SemiBold" Margin="0,12,0,8"/>
-                    <UniformGrid Grid.Row="5" Columns="4" Rows="2" Margin="0,0,0,8">
+                    <StackPanel Grid.Row="4" Margin="0,4,0,8">
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Descuentos por ciclo" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <Button Grid.Column="1" Content="+ Nuevo descuento" Margin="12,0,4,0" Padding="8,3" Command="{Binding AbrirNuevoDescuentoCommand}"/>
+                            <TextBlock Grid.Column="2" VerticalAlignment="Center" Margin="8,0,0,0" TextWrapping="Wrap"
+                                       FontSize="10" FontStyle="Italic" Foreground="#546E7A"
+                                       Text="El arancel base se mantiene; el descuento solo afecta el valor cobrado por ciclo para calcular ingresos. Ej.: 1-2: 25%, 3-4: 20%, 5-6: 15%, 7+: 0%."/>
+                        </Grid>
+                        <DataGrid ItemsSource="{Binding Descuentos}" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9" MaxHeight="180">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Escenario" Binding="{Binding EscenarioNombre}" Width="160"/>
+                                <DataGridTextColumn Header="Rango ciclos" Binding="{Binding RangoDisplay}" Width="*" MinWidth="140"/>
+                                <DataGridTextColumn Header="% Descuento" Binding="{Binding PorcentajeDisplay}" Width="120"/>
+                                <DataGridTemplateColumn Header="Acciones" Width="160">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="Editar" Style="{StaticResource BtnAccion}" Command="{Binding DataContext.AbrirEditarDescuentoCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}"/>
+                                                <Button Content="Eliminar" Style="{StaticResource BtnEliminar}" Command="{Binding DataContext.EliminarDescuentoCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <Border Style="{StaticResource PanelFormulario}" Margin="0,6,0,0" Visibility="{Binding DescuentoFormVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <StackPanel>
+                                <TextBlock Text="Descuento por ciclo" FontWeight="Bold" FontSize="14" Margin="0,0,0,6"/>
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                        <TextBlock Text="Ciclo desde" FontSize="11"/>
+                                        <TextBox Text="{Binding DescuentoFormCicloDesde, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                                        <TextBlock Text="Ciclo hasta" FontSize="11"/>
+                                        <TextBox Text="{Binding DescuentoFormCicloHasta, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="% Descuento" FontSize="11"/>
+                                        <TextBox Text="{Binding DescuentoFormPorcentaje, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
+                                    </StackPanel>
+                                </Grid>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Content="Guardar" Style="{StaticResource BtnPrimario}" Command="{Binding GuardarDescuentoCommand}" IsEnabled="{Binding NoEstaGuardando}"/>
+                                    <Button Content="Cancelar" Padding="8,3" Margin="6,0,0,0" Command="{Binding CancelarDescuentoCommand}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                    <TextBlock Grid.Row="5" Text="Resumen consolidado" FontSize="14" FontWeight="SemiBold" Margin="0,12,0,8"/>
+                    <UniformGrid Grid.Row="6" Columns="4" Rows="2" Margin="0,0,0,8">
                         <Border Background="#EEF2FF" BorderBrush="#C5CAE9" BorderThickness="1" Padding="10,8" Margin="0,0,6,6"><StackPanel><TextBlock Text="Ingreso bruto" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Resumen.TotalIngresoBrutoDisplay}" FontWeight="Bold" Foreground="#1A237E"/></StackPanel></Border>
                         <Border Background="#EEF2FF" BorderBrush="#C5CAE9" BorderThickness="1" Padding="10,8" Margin="0,0,6,6"><StackPanel><TextBlock Text="Becas" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Resumen.TotalBecasDisplay}" FontWeight="Bold"/></StackPanel></Border>
                         <Border Background="#EEF2FF" BorderBrush="#C5CAE9" BorderThickness="1" Padding="10,8" Margin="0,0,6,6"><StackPanel><TextBlock Text="Ingreso neto" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Resumen.TotalIngresoNetoDisplay}" FontWeight="Bold" Foreground="#1A237E"/></StackPanel></Border>
@@ -310,6 +370,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,4" Text="Ingresos proyectados por carrera/escenario (matriz Ciclo × Período)"/>
@@ -318,7 +379,7 @@
                             <StackPanel Grid.Column="0"><TextBlock Text="Arancel efectivo" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Ingresos.ArancelDisplay, FallbackValue='-'}" FontWeight="Bold" Foreground="#1A237E"/></StackPanel>
                             <StackPanel Grid.Column="1"><TextBlock Text="Matrícula efectiva" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Ingresos.MatriculaDisplay, FallbackValue='-'}" FontWeight="Bold"/></StackPanel>
                             <StackPanel Grid.Column="2"><TextBlock Text="% Becas aplicado" FontSize="11" Foreground="#546E7A"/><TextBlock Text="{Binding Ingresos.PorcentajeBecasDisplay, FallbackValue='-'}" FontWeight="Bold"/></StackPanel>
-                            <StackPanel Grid.Column="3"><TextBlock Text="Fórmula" FontSize="11" Foreground="#546E7A"/><TextBlock Text="Bruto = estudiantes × (arancel + matrícula); Neto = Bruto − Becas" FontSize="11" TextWrapping="Wrap"/></StackPanel>
+                            <StackPanel Grid.Column="3"><TextBlock Text="Fórmula" FontSize="11" Foreground="#546E7A"/><TextBlock Text="Bruto = estudiantes × (arancel cobrado + matrícula); el arancel cobrado aplica el descuento por ciclo; Neto = Bruto − Becas" FontSize="11" TextWrapping="Wrap"/></StackPanel>
                         </Grid>
                     </Border>
                     <Border Grid.Row="2" Background="#F8F9FF" BorderBrush="#C5CAE9" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,0,0,6">
@@ -329,7 +390,19 @@
                         </Grid>
                     </Border>
                     <Border Grid.Row="3" Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1" CornerRadius="4" Padding="8,5" Margin="0,0,0,6" Visibility="{Binding Ingresos.MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}"><TextBlock Text="{Binding Ingresos.MensajeAdvertencia}" Foreground="#E65100" TextWrapping="Wrap"/></Border>
-                    <DataGrid x:Name="IngresosProyectadosGrid" Grid.Row="4" ItemsSource="{Binding IngresosMatrizFilas}" AutoGenerateColumns="False" IsReadOnly="True" RowStyle="{StaticResource MatrizRowStyle}" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9"/>
+                    <StackPanel Grid.Row="4" Margin="0,0,0,6">
+                        <TextBlock Text="Arancel cobrado por ciclo (descuento comercial)" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,3"/>
+                        <DataGrid ItemsSource="{Binding ArancelesPorCiclo}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9" MaxHeight="180">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Ciclo" Binding="{Binding CicloDisplay}" Width="*" MinWidth="80"/>
+                                <DataGridTextColumn Header="Arancel base" Binding="{Binding ArancelBaseDisplay}" Width="130"/>
+                                <DataGridTextColumn Header="Descuento" Binding="{Binding DescuentoDisplay}" Width="110"/>
+                                <DataGridTextColumn Header="Arancel cobrado" Binding="{Binding ArancelCicloDisplay}" Width="140"/>
+                                <DataGridTextColumn Header="Matrícula" Binding="{Binding MatriculaCicloDisplay}" Width="120"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                    <DataGrid x:Name="IngresosProyectadosGrid" Grid.Row="5" ItemsSource="{Binding IngresosMatrizFilas}" AutoGenerateColumns="False" IsReadOnly="True" RowStyle="{StaticResource MatrizRowStyle}" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9"/>
                 </Grid>
             </TabItem>
 

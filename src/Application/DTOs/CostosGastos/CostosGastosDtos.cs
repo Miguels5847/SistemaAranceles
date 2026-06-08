@@ -152,7 +152,7 @@ public sealed class CostoGastoPeriodoDto
         + TiempoParcial
         + OcasionalTipo2TecnicoDocente
         + CostoSeguroEstudiantil
-        + BecasInstitucionales
+        // BecasInstitucionales NO suma: es descuento al ingreso (Demanda), dato referencial aquí (KAN-44).
         + Investigacion
         + Vinculacion
         + MaterialesSuministros

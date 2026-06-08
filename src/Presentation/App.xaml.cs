@@ -179,6 +179,9 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ObtenerDemandaProyectadaQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ObtenerPresupuestosCarreraQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.CalcularIngresosProyectadosQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ObtenerDescuentosArancelCicloQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.GuardarDescuentoArancelCicloCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.EliminarDescuentoArancelCicloCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.GuardarRatioMaterialDemandaCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.EliminarRatioMaterialDemandaCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ListarRatiosMaterialDemandaQuery>();

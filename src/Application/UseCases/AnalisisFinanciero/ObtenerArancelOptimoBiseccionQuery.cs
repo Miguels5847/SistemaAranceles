@@ -4,6 +4,7 @@ using SistemaAranceles.Application.DTOs.CostosGastos;
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.DTOs.RecursosFisicosDepreciacion;
 using SistemaAranceles.Application.Interfaces.Persistencia;
+using SistemaAranceles.Application.Services.Aranceles;
 using SistemaAranceles.Application.Services.Financieros;
 using SistemaAranceles.Application.UseCases.ActivoDiferido;
 using SistemaAranceles.Application.UseCases.CapitalTrabajo;
@@ -28,7 +29,8 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
     IRepositorioEscenarioProyeccion repositorioEscenario,
     IRepositorioDatosInstitucionales repositorioDatos,
     IRepositorioInflacionAnual repositorioInflacion,
-    IRepositorioConfiguracionArancelCarrera repositorioConfiguracionArancel)
+    IRepositorioConfiguracionArancelCarrera repositorioConfiguracionArancel,
+    IRepositorioDescuentoArancelCiclo repositorioDescuentos)
 {
     private const decimal ArancelMinimo = 500m;
     private const decimal ArancelMaximo = 5000m;
@@ -108,6 +110,9 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
         var porcentajeMatricula = await ObtenerPorcentajeMatriculaAsync(carreraId, escenarioProyeccionId, datos, ct);
         var porcentajeBecas = datos?.PorcentajeBecasInstitucionales
             ?? DatosInstitucionales.PorcentajeBecasInstitucionalesPorDefecto;
+        // KAN-44: descuentos comerciales por ciclo (efectivos carrera+escenario, fallback global).
+        var descuentos = await repositorioDescuentos.ListarEfectivosPorCarreraEscenarioAsync(
+            carreraId, escenarioProyeccionId, ct);
         var semestresPorAnio = datos?.SemestresPorAnio is > 0
             ? datos.SemestresPorAnio
             : DatosInstitucionales.SemestresPorAnioPorDefecto;
@@ -161,7 +166,8 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             capitalTrabajo.TotalCapitalTrabajo,
             porcentajeMatricula,
             porcentajeBecas,
-            tmr.TmrTasa);
+            tmr.TmrTasa,
+            descuentos);
 
         var resultado = CalculadoraArancelOptimoBiseccion.Calcular(new EntradaBiseccionArancel
         {
@@ -333,7 +339,8 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
         decimal capitalTrabajo,
         decimal porcentajeMatricula,
         decimal porcentajeBecas,
-        decimal tmrTasa)
+        decimal tmrTasa,
+        IReadOnlyList<DescuentoArancelCicloDto> descuentos)
     {
         var estudiantesPorPeriodo = demanda.PeriodoAcademicoIds
             .Select((periodoId, index) => new
@@ -343,10 +350,23 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             })
             .ToDictionary(x => x.PeriodoId, x => x.Estudiantes);
 
+        // KAN-44: estudiantes por (período, ciclo) desde demanda.Filas, para aplicar descuento por ciclo.
+        var estudiantesPorCicloPeriodo = demanda.PeriodoAcademicoIds
+            .Select((periodoId, index) => new
+            {
+                PeriodoId = periodoId,
+                Ciclos = (IReadOnlyList<(int Ciclo, decimal Estudiantes)>)demanda.Filas
+                    .Select(f => (f.NumeroCiclo, index < f.Periodos.Count ? f.Periodos[index] : 0m))
+                    .ToList()
+            })
+            .ToDictionary(x => x.PeriodoId, x => x.Ciclos);
+
         return new ContextoEvaluacionArancel
         {
             Costos = costos.ValoresPorPeriodo,
             EstudiantesPorPeriodo = estudiantesPorPeriodo,
+            EstudiantesPorCicloPeriodo = estudiantesPorCicloPeriodo,
+            Descuentos = descuentos,
             InversionInicial = decimal.Round(inversionInicial, 2),
             InversionesFuturasPorPeriodo = inversionesFuturasPorPeriodo,
             DepreciacionPorPeriodo = depreciacionPorPeriodo,
@@ -381,10 +401,30 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             contexto.DepreciacionPorPeriodo.TryGetValue(costo.NumeroPeriodo, out var depreciacion);
             contexto.AmortizacionPorAnio.TryGetValue(costo.Anio, out var amortizacion);
 
+            // KAN-44: con descuentos por ciclo, el ingreso bruto se arma sumando cada ciclo a su arancel
+            // cobrado (arancelBase×(1−%desc) + matrícula sobre ese arancel). Sin descuentos → usa el total
+            // del período con el arancel base (idéntico al cálculo anterior).
             // Becas = descuento al ingreso (neto = bruto − becas), NO costo. El rubro Becas en Costos
             // y Gastos está en 0 (igual que el Excel), así que TotalCostosGastos no las incluye y NO se
             // vuelven a sumar aquí: se evita el doble conteo y el VAN coincide con el flujo real.
-            var ingresoBruto = decimal.Round(estudiantes * precioPorEstudiante, 2);
+            decimal ingresoBruto;
+            if (contexto.Descuentos.Count > 0
+                && contexto.EstudiantesPorCicloPeriodo.TryGetValue(costo.PeriodoAcademicoId, out var ciclosPeriodo))
+            {
+                var bruto = 0m;
+                foreach (var (ciclo, estCiclo) in ciclosPeriodo)
+                {
+                    var descCiclo = DescuentoArancelHelper.ResolverPorcentajeDescuentoCiclo(contexto.Descuentos, ciclo);
+                    var arancelCiclo = DescuentoArancelHelper.CalcularArancelCiclo(arancel, descCiclo);
+                    var matriculaCiclo = decimal.Round(arancelCiclo * contexto.PorcentajeMatricula / 100m, 2);
+                    bruto += estCiclo * (arancelCiclo + matriculaCiclo);
+                }
+                ingresoBruto = decimal.Round(bruto, 2);
+            }
+            else
+            {
+                ingresoBruto = decimal.Round(estudiantes * precioPorEstudiante, 2);
+            }
             var becas = decimal.Round(ingresoBruto * contexto.PorcentajeBecas / 100m, 2);
             var ingresosNetos = decimal.Round(ingresoBruto - becas, 2);
             var costosYGastos = decimal.Round(costo.TotalCostosGastos, 2);
@@ -473,6 +513,9 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
     {
         public IReadOnlyList<CostoGastoPeriodoDto> Costos { get; init; } = [];
         public IReadOnlyDictionary<int, decimal> EstudiantesPorPeriodo { get; init; } = new Dictionary<int, decimal>();
+        public IReadOnlyDictionary<int, IReadOnlyList<(int Ciclo, decimal Estudiantes)>> EstudiantesPorCicloPeriodo { get; init; }
+            = new Dictionary<int, IReadOnlyList<(int Ciclo, decimal Estudiantes)>>();
+        public IReadOnlyList<DescuentoArancelCicloDto> Descuentos { get; init; } = [];
         public decimal InversionInicial { get; init; }
         public IReadOnlyDictionary<int, decimal> InversionesFuturasPorPeriodo { get; init; } = new Dictionary<int, decimal>();
         public IReadOnlyDictionary<int, decimal> DepreciacionPorPeriodo { get; init; } = new Dictionary<int, decimal>();

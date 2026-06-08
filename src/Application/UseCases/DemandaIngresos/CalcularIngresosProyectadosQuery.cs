@@ -1,5 +1,6 @@
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.Interfaces.Persistencia;
+using SistemaAranceles.Application.Services.Aranceles;
 
 namespace SistemaAranceles.Application.UseCases.DemandaIngresos;
 
@@ -15,7 +16,8 @@ public sealed class CalcularIngresosProyectadosQuery(
     IRepositorioCarrera repositorioCarrera,
     IRepositorioEscenarioProyeccion repositorioEscenario,
     IRepositorioDatosInstitucionales repositorioDatos,
-    ObtenerArancelEfectivoQuery obtenerArancelEfectivoQuery)
+    ObtenerArancelEfectivoQuery obtenerArancelEfectivoQuery,
+    IRepositorioDescuentoArancelCiclo repositorioDescuentos)
 {
     public async Task<IngresosProyectadosDto> EjecutarAsync(
         int carreraId,
@@ -102,10 +104,20 @@ public sealed class CalcularIngresosProyectadosQuery(
             .OrderBy(c => c)
             .ToList();
 
-        var precioPorEstudiante = arancelValor + matriculaValor;
+        // KAN-44: descuento comercial por ciclo. El arancel base se mantiene; cada ciclo cobra
+        // arancelCiclo = arancelBase × (1 − %desc) y la matrícula se calcula sobre el arancel cobrado.
+        // Sin descuentos configurados, arancelCiclo = arancelBase y el resultado es idéntico al anterior.
+        var descuentos = await repositorioDescuentos.ListarEfectivosPorCarreraEscenarioAsync(
+            carreraId, escenarioProyeccionId, ct);
+        var porcentajeMatricula = arancel.PorcentajeMatriculaAplicado;
 
         var filas = ciclos.Select(ciclo =>
         {
+            var descuentoCiclo = DescuentoArancelHelper.ResolverPorcentajeDescuentoCiclo(descuentos, ciclo);
+            var arancelCiclo = DescuentoArancelHelper.CalcularArancelCiclo(arancelValor, descuentoCiclo);
+            var matriculaCiclo = decimal.Round(arancelCiclo * porcentajeMatricula / 100m, 2);
+            var precioPorEstudiante = arancelCiclo + matriculaCiclo;
+
             var celdas = periodos.Select(p =>
             {
                 var detalle = proyeccion.Detalles
@@ -125,7 +137,11 @@ public sealed class CalcularIngresosProyectadosQuery(
                     Estudiantes = estudiantes,
                     IngresoBruto = bruto,
                     Becas = becas,
-                    IngresoNeto = neto
+                    IngresoNeto = neto,
+                    ArancelBase = arancelValor,
+                    PorcentajeDescuentoCiclo = descuentoCiclo,
+                    ArancelCiclo = arancelCiclo,
+                    MatriculaCiclo = matriculaCiclo
                 };
             }).ToList();
 

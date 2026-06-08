@@ -18,7 +18,8 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
         int carreraId,
         int? escenarioProyeccionId,
         CancellationToken ct = default,
-        DemandaProyectadaDto? demandaPrecalculada = null)
+        DemandaProyectadaDto? demandaPrecalculada = null,
+        IReadOnlyDictionary<int, decimal>? becasInstitucionalesPorPeriodo = null)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -60,10 +61,15 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
             advertencias.Add("Presupuesto gobierno becas está en 0; Becas Gobierno quedan en 0.");
 
         var semestresPorAnio = datos.SemestresPorAnio > 0 ? datos.SemestresPorAnio : DatosInstitucionales.SemestresPorAnioPorDefecto;
-        // Becas Institucionales NO es costo: es un descuento al ingreso (Ingresos Proyectados resta
-        // neto = bruto - becas). En Costos/P&G/Flujo el rubro Becas queda en 0 para no doble-contar
-        // (en el Excel "10 Costos y Gastos" la fila Becas Institucionales está en 0).
-        var becasInstitucionales = Enumerable.Repeat(0m, periodos.Count).ToList();
+        // KAN-44: Becas Institucionales NO es costo (es descuento al ingreso). Aquí se muestra como dato
+        // REFERENCIAL el valor real que viene de Demanda/Ingresos (si el llamador lo provee); todas las
+        // sumas de costo lo excluyen (CostosPorServicios/PE), así que no hay doble conteo.
+        var becasInstitucionales = periodos
+            .Select(p => becasInstitucionalesPorPeriodo != null
+                && becasInstitucionalesPorPeriodo.TryGetValue(p.PeriodoAcademicoId, out var b)
+                    ? decimal.Round(b, 2)
+                    : 0m)
+            .ToList();
 
         var valores = new List<InvVinBecasPeriodoDto>();
         for (var i = 0; i < periodos.Count; i++)

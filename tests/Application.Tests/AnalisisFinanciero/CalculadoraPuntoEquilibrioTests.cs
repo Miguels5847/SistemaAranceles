@@ -78,8 +78,9 @@ public sealed class CalculadoraPuntoEquilibrioTests
     {
         var costo = new CostoGastoPeriodoDto
         {
-            // Costo por servicio (9 rubros del Excel) => 18000
-            MantenimientoEdificio = 10000m,
+            // Costo por servicio (rubros del Excel) => 18000. Becas NO suma (es descuento al ingreso,
+            // KAN-44): se fija en 1000 para verificar que queda EXCLUIDo del costo.
+            MantenimientoEdificio = 11000m,
             CapacitacionDocente = 2000m,
             Internacionalizacion = 2000m,
             CostoSeguroEstudiantil = 1000m,

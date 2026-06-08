@@ -41,7 +41,8 @@ public sealed class ObtenerMatrizCostosGastosQuery(
         CancellationToken ct = default,
         MatrizInvVinBecasDto? invVinBecasPrecalculado = null,
         DemandaProyectadaDto? demandaPrecalculada = null,
-        decimal factorImprevisto = 1.05m)
+        decimal factorImprevisto = 1.05m,
+        IReadOnlyDictionary<int, decimal>? becasInstitucionalesPorPeriodo = null)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -67,7 +68,7 @@ public sealed class ObtenerMatrizCostosGastosQuery(
 
         // Reutiliza la matriz Inv. Vin. Becas si ya fue calculada (evita recomputar Ingresos/arancel).
         var invVinBecas = invVinBecasPrecalculado
-            ?? await obtenerMatrizInvVinBecasQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, demandaPrecalculada: demanda);
+            ?? await obtenerMatrizInvVinBecasQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, demandaPrecalculada: demanda, becasInstitucionalesPorPeriodo: becasInstitucionalesPorPeriodo);
         AgregarAdvertencia(advertencias, invVinBecas.MensajeAdvertencia);
 
         var periodos = ObtenerMatrizInvVinBecasQuery.ConstruirPeriodos(demanda);

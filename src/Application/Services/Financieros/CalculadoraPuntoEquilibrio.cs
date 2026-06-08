@@ -62,6 +62,10 @@ public sealed class ResultadoPuntoEquilibrioPeriodo
 
 public static class CalculadoraPuntoEquilibrio
 {
+    // Escenarios de riesgo por deserción: estudiantes mínimos que la carrera necesita si hay retiro.
+    public const decimal TasaDesercionAlta = 35m;
+    public const decimal TasaDesercionMedia = 17.5m;
+
     public static ResultadoPuntoEquilibrioPeriodo CalcularPeriodo(EntradaPuntoEquilibrioPeriodo entrada)
     {
         var estudiantes = decimal.Round(entrada.Estudiantes, 2);
@@ -137,7 +141,7 @@ public static class CalculadoraPuntoEquilibrio
             + costo.CapacitacionDocente
             + costo.Internacionalizacion
             + costo.CostoSeguroEstudiantil
-            + costo.BecasInstitucionales
+            // BecasInstitucionales NO suma: descuento al ingreso, no costo (KAN-44).
             + costo.Investigacion
             + costo.Vinculacion
             + costo.MaterialesSuministros
@@ -218,8 +222,8 @@ public static class CalculadoraPuntoEquilibrio
             PuntoEquilibrioEstudiantes = puntoEquilibrioEstudiantes,
             Ciclos = ciclosBase,
             EstudiantesPorCiclo = estudiantesPorCiclo,
-            EstudiantesPorCicloDesercion35 = decimal.Round(estudiantesPorCiclo * 1.35m, 2),
-            EstudiantesPorCicloDesercion175 = decimal.Round(estudiantesPorCiclo * 1.175m, 2),
+            EstudiantesPorCicloDesercion35 = decimal.Round(estudiantesPorCiclo * (1m + TasaDesercionAlta / 100m), 2),
+            EstudiantesPorCicloDesercion175 = decimal.Round(estudiantesPorCiclo * (1m + TasaDesercionMedia / 100m), 2),
             EsCalculable = esCalculable
         };
     }

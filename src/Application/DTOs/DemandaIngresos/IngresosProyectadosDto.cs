@@ -12,11 +12,21 @@ public sealed class IngresoPeriodoCeldaDto
     public decimal Becas { get; init; }
     public decimal IngresoNeto { get; init; }
 
+    // KAN-44: arancel base vs. cobrado por ciclo (descuento comercial).
+    public decimal ArancelBase { get; init; }
+    public decimal PorcentajeDescuentoCiclo { get; init; }
+    public decimal ArancelCiclo { get; init; }
+    public decimal MatriculaCiclo { get; init; }
+
     public string CicloDisplay => $"Ciclo {NumeroCiclo}";
     public string EstudiantesDisplay => Estudiantes.ToString("N2");
     public string BrutoDisplay => $"$ {IngresoBruto:N2}";
     public string BecasDisplay => $"$ {Becas:N2}";
     public string NetoDisplay => $"$ {IngresoNeto:N2}";
+    public string ArancelBaseDisplay => $"$ {ArancelBase:N2}";
+    public string DescuentoCicloDisplay => $"{PorcentajeDescuentoCiclo:0.##}%";
+    public string ArancelCicloDisplay => $"$ {ArancelCiclo:N2}";
+    public string MatriculaCicloDisplay => $"$ {MatriculaCiclo:N2}";
 }
 
 public sealed class IngresoFilaCicloDto
@@ -62,6 +72,11 @@ public sealed class IngresosProyectadosDto
         => Filas.SelectMany(f => f.Periodos)
             .Where(p => p.PeriodoAcademicoId == periodoAcademicoId)
             .Sum(p => p.IngresoNeto);
+
+    public decimal TotalBecasPeriodo(int periodoAcademicoId)
+        => Filas.SelectMany(f => f.Periodos)
+            .Where(p => p.PeriodoAcademicoId == periodoAcademicoId)
+            .Sum(p => p.Becas);
 
     public decimal TotalGeneralBruto => Filas.Sum(f => f.TotalBruto);
     public decimal TotalGeneralBecas => Filas.Sum(f => f.TotalBecas);

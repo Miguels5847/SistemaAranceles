@@ -639,7 +639,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             await command.EjecutarAsync(dto, _sesionActual.UsuarioId);
 
             await RefrescarAsync();
-            MensajeExito = "Arancel financiero sugerido aplicado como arancel vigente del escenario.";
+            MensajeExito = "Se aplicó el arancel óptimo financiero como arancel base vigente. Los descuentos por ciclo se mantienen y los ingresos fueron recalculados.";
         }
         catch (Exception ex)
         {

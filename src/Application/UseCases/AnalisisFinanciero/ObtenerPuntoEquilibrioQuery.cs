@@ -178,7 +178,7 @@ public sealed class ObtenerPuntoEquilibrioQuery(
         // Sueldos, mantenimiento, depreciacion, amortizacion, financiero e imprevistos quedan como fijos.
         return decimal.Round(
             costo.SeguroEstudiantil
-            + costo.BecasInstitucionales
+            // BecasInstitucionales NO suma: descuento al ingreso, no costo (KAN-44).
             + costo.Investigacion
             + costo.Vinculacion
             + costo.MarketingComunicacion,

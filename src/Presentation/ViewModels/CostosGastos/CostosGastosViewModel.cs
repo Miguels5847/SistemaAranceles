@@ -273,13 +273,21 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             var queryInv = scope.ServiceProvider.GetRequiredService<ObtenerMatrizInvVinBecasQuery>();
             var queryCostos = scope.ServiceProvider.GetRequiredService<ObtenerMatrizCostosGastosQuery>();
             var queryCostoCarrera = scope.ServiceProvider.GetRequiredService<ObtenerCostoCarreraQuery>();
+            var queryIngresos = scope.ServiceProvider.GetRequiredService<CalcularIngresosProyectadosQuery>();
 
             var carreraId = CarreraSeleccionada.Id;
             var escenarioId = EscenarioSeleccionado.Id;
             // Encadena resultados ya calculados: Demanda → InvVinBecas → CostosGastos → CostoCarrera
             // para no recomputar las matrices anidadas (ni reconsultar demanda/arancel) varias veces.
             var demanda = await queryDemanda.EjecutarAsync(carreraId, escenarioId);
-            var invVinBecas = await queryInv.EjecutarAsync(carreraId, escenarioId, demandaPrecalculada: demanda);
+            // KAN-44: becas reales (de Ingresos, ya con descuentos) para mostrar en Inv. Vin. Becas como
+            // dato referencial. No suman como costo (CostosPorServicios/PE las excluyen).
+            var ingresos = await queryIngresos.EjecutarAsync(carreraId, escenarioId);
+            var becasPorPeriodo = ingresos.CeldasPlanas
+                .GroupBy(c => c.PeriodoAcademicoId)
+                .ToDictionary(g => g.Key, g => g.Sum(c => c.Becas));
+            var invVinBecas = await queryInv.EjecutarAsync(
+                carreraId, escenarioId, demandaPrecalculada: demanda, becasInstitucionalesPorPeriodo: becasPorPeriodo);
             MatrizInvVinBecas = invVinBecas;
             var costosGastos = await queryCostos.EjecutarAsync(
                 carreraId,

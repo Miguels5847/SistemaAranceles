@@ -51,10 +51,10 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly DatosInstitucionalesViewModel _datosInstitucionalesViewModel;
     private readonly AportePlantaCentralViewModel _aportePlantaCentralViewModel;
     private readonly SistemaAranceles.Presentation.ViewModels.RecursosFisicos.ActivosFijosViewModel _activosFijosViewModel;
-    private readonly DemandaIngresosViewModel _demandaIngresosViewModel;
     private readonly Func<EditarUsuarioViewModel> _editarUsuarioViewModelFactory;
     private int _cerrandoSesion;
     private int _cargandoUsuarios;
+    private int _navegando;
 
     public MainViewModel(
         IServiceProvider serviceProvider,
@@ -71,7 +71,6 @@ public sealed partial class MainViewModel : ObservableObject
         DatosInstitucionalesViewModel datosInstitucionalesViewModel,
         AportePlantaCentralViewModel aportePlantaCentralViewModel,
         SistemaAranceles.Presentation.ViewModels.RecursosFisicos.ActivosFijosViewModel activosFijosViewModel,
-        DemandaIngresosViewModel demandaIngresosViewModel,
         Func<EditarUsuarioViewModel> editarUsuarioViewModelFactory)
     {
         _serviceProvider = serviceProvider;
@@ -88,7 +87,6 @@ public sealed partial class MainViewModel : ObservableObject
         _datosInstitucionalesViewModel = datosInstitucionalesViewModel;
         _aportePlantaCentralViewModel = aportePlantaCentralViewModel;
         _activosFijosViewModel = activosFijosViewModel;
-        _demandaIngresosViewModel = demandaIngresosViewModel;
         _editarUsuarioViewModelFactory = editarUsuarioViewModelFactory;
 
         _servicioInactividad.TiempoRestanteActualizado += (_, tiempoRestante) =>
@@ -377,9 +375,17 @@ public sealed partial class MainViewModel : ObservableObject
     {
         SeleccionarMenu("Demanda e Ingresos");
         if (!(_sesionActual.TienePermiso("DI_NG.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo Demanda e Ingresos."; return; }
+        if (Interlocked.Exchange(ref _navegando, 1) == 1) return;
         MensajePagina = string.Empty;
-        PaginaActual = _demandaIngresosViewModel;
-        await _demandaIngresosViewModel.CargarCommand.ExecuteAsync(null);
+        try
+        {
+            // Instancia fresca por navegación (como Costos/Análisis): evita que una recarga en vuelo
+            // (cambio de escenario) deje el módulo pegado y sin poder reseleccionarse.
+            var vm = _serviceProvider.GetRequiredService<DemandaIngresosViewModel>();
+            PaginaActual = vm;
+            await vm.CargarCommand.ExecuteAsync(null);
+        }
+        finally { Interlocked.Exchange(ref _navegando, 0); }
     }
 
     private async Task MostrarCostosGastosAsync()
