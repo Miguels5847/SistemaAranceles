@@ -158,8 +158,22 @@ public sealed class RepositorioConfiguracionArancelCarrera(ContextoAplicacion co
         await contexto.SaveChangesAsync(ct);
     }
 
-    private Task AsegurarTablaAsync(CancellationToken ct)
-        => contexto.Database.ExecuteSqlRawAsync("""
+    private static readonly SemaphoreSlim _gateEsquema = new(1, 1);
+    private static bool _esquemaListo;
+
+    // El DDL self-healing corre una sola vez por proceso (no en cada lectura).
+    private async Task AsegurarTablaAsync(CancellationToken ct)
+    {
+        if (_esquemaListo)
+            return;
+
+        await _gateEsquema.WaitAsync(ct);
+        try
+        {
+            if (_esquemaListo)
+                return;
+
+            await contexto.Database.ExecuteSqlRawAsync("""
             CREATE TABLE IF NOT EXISTS public.configuracion_arancel_carrera (
                 id                                       SERIAL PRIMARY KEY,
                 carrera_id                               INTEGER NOT NULL REFERENCES public.carrera(id) ON DELETE CASCADE,
@@ -177,6 +191,13 @@ public sealed class RepositorioConfiguracionArancelCarrera(ContextoAplicacion co
                 eliminado_por_usuario_id                 INTEGER NULL
             );
             """, ct);
+            _esquemaListo = true;
+        }
+        finally
+        {
+            _gateEsquema.Release();
+        }
+    }
 
     private static DominioConfiguracion MapearADominio(InfraConfiguracion e)
     {

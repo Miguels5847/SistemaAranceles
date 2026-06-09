@@ -33,6 +33,23 @@ public sealed class IngresosMatrizFilaView
     public string TotalDisplay => $"$ {Total:N2}";
 }
 
+public sealed class ArancelCicloResumenView
+{
+    public string CicloDisplay { get; init; } = string.Empty;
+    public string ArancelBaseDisplay { get; init; } = string.Empty;
+    public string DescuentoDisplay { get; init; } = string.Empty;
+    public string ArancelCicloDisplay { get; init; } = string.Empty;
+    public string MatriculaCicloDisplay { get; init; } = string.Empty;
+}
+
+// Fila editable de la tabla de descuentos por ciclo.
+public sealed partial class DescuentoCicloEditableView : ObservableObject
+{
+    public int NumeroCiclo { get; init; }
+    public string CicloDisplay => $"Ciclo {NumeroCiclo}";
+    [ObservableProperty] private decimal _porcentaje;
+}
+
 public sealed class MaterialCantidadMatrizFilaView
 {
     public string Categoria { get; init; } = string.Empty;
@@ -73,9 +90,7 @@ public sealed class UnidadConsumoOpcion
 }
 
 /// <summary>
-/// ViewModel composite para la vista "Demanda e Ingresos" (Épica 9).
-/// KAN-32 implementa la pestaña de Configuración de Arancel.
-/// Las demás pestañas quedan como placeholder hasta KAN-33/34/35.
+/// ViewModel composite para la vista "Demanda e Ingresos".
 /// </summary>
 public sealed partial class DemandaIngresosViewModel : ObservableObject
 {
@@ -86,6 +101,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     private readonly SesionActual _sesionActual;
     private bool _suprimirCambios;
     private int _refrescoArancelVersion;
+    private Dictionary<int, decimal> _descuentosGuardadosPorCiclo = [];
 
     public DemandaIngresosViewModel(IServiceProvider serviceProvider, SesionActual sesionActual)
     {
@@ -114,6 +130,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     [ObservableProperty] private string _presupuestosTotalBecasDisplay = "$ 0.00";
     [ObservableProperty] private IngresosProyectadosDto? _ingresos;
     [ObservableProperty] private ObservableCollection<IngresosMatrizFilaView> _ingresosMatrizFilas = [];
+    [ObservableProperty] private ObservableCollection<ArancelCicloResumenView> _arancelesPorCiclo = [];
     [ObservableProperty] private MaterialesProyectadosDto? _materiales;
     [ObservableProperty] private ObservableCollection<MaterialCantidadMatrizFilaView> _materialesCantidadMatrizFilas = [];
     [ObservableProperty] private ObservableCollection<MaterialMonetarioMatrizFilaView> _materialesMonetariosMatrizFilas = [];
@@ -136,6 +153,11 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     [ObservableProperty] private bool _ratioFormAplicaInflacion = true;
     [ObservableProperty] private int? _ratioFormItemMaterialId;
 
+    // Descuentos de arancel por ciclo. Tabla autogenerada con una fila por ciclo (1..N de la
+    // carrera); el usuario edita solo el % y se guarda en bloque.
+    [ObservableProperty] private ObservableCollection<DescuentoCicloEditableView> _descuentosPorCiclo = [];
+    [ObservableProperty] private bool _descuentosEditables;
+
     [ObservableProperty] private bool _formVisible;
     [ObservableProperty] private bool _formEsEdicion;
     [ObservableProperty] private int _formId;
@@ -148,6 +170,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
 
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
+    [ObservableProperty] private string _mensajeInfo = string.Empty;
     [ObservableProperty] private bool _estaCargando;
     [ObservableProperty] private bool _estaGuardando;
 
@@ -223,7 +246,31 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     partial void OnIngresosChanged(IngresosProyectadosDto? value)
     {
         IngresosMatrizFilas = ConstruirFilasIngresos(value);
+        ArancelesPorCiclo = ConstruirArancelesPorCiclo(value);
         ReconstruirMatricesPresupuestosYSeguro();
+    }
+
+    // Resumen por ciclo del arancel cobrado tras el descuento comercial.
+    private static ObservableCollection<ArancelCicloResumenView> ConstruirArancelesPorCiclo(IngresosProyectadosDto? dto)
+    {
+        if (dto is null || dto.Filas.Count == 0)
+            return [];
+
+        var filas = dto.Filas
+            .Where(f => f.Periodos.Count > 0)
+            .Select(f =>
+            {
+                var celda = f.Periodos[0];
+                return new ArancelCicloResumenView
+                {
+                    CicloDisplay = f.CicloDisplay,
+                    ArancelBaseDisplay = celda.ArancelBaseDisplay,
+                    DescuentoDisplay = celda.DescuentoCicloDisplay,
+                    ArancelCicloDisplay = celda.ArancelCicloDisplay,
+                    MatriculaCicloDisplay = celda.MatriculaCicloDisplay
+                };
+            });
+        return new ObservableCollection<ArancelCicloResumenView>(filas);
     }
 
     partial void OnArancelSugeridoCostoCarreraChanged(ArancelOptimoCarreraDto? value)
@@ -242,6 +289,19 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     public bool FormEsModoManual => string.Equals(FormModoCalculo, ModoManual, StringComparison.OrdinalIgnoreCase);
     public bool FormPorcentajeMatriculaEditable => !FormUsaPorcentajeInstitucional;
     public bool NoEstaGuardando => !EstaGuardando;
+    public bool PuedeTrabajar => CarreraSeleccionada is not null && !EstaCargando;
+    public bool PuedeEditarDescuentos => PuedeEditar
+                                         && PuedeTrabajar
+                                         && !EstaCargando
+                                         && !EstaGuardando
+                                         && !DescuentosEditables
+                                         && DescuentosPorCiclo.Count > 0;
+    public bool PuedeGuardarDescuentos => PuedeEditar
+                                          && PuedeTrabajar
+                                          && !EstaCargando
+                                          && !EstaGuardando
+                                          && DescuentosEditables;
+    public bool PuedeCancelarDescuentos => DescuentosEditables && !EstaGuardando;
     public bool PuedeUsarArancelSugerido => PuedeEditar
                                             && !EstaGuardando
                                             && ArancelSugeridoCostoCarrera?.Disponible == true
@@ -254,6 +314,10 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     partial void OnCarreraSeleccionadaChanged(Carrera? value)
     {
         _ = value;
+        DescuentosEditables = false;
+        OnPropertyChanged(nameof(PuedeTrabajar));
+        OnPropertyChanged(nameof(PuedeUsarArancelSugerido));
+        NotificarEstadoDescuentos();
         if (_suprimirCambios || EstaCargando) return;
         _ = RecargarPorCarreraAsync();
     }
@@ -261,6 +325,9 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     partial void OnEscenarioSeleccionadoChanged(EscenarioDemandaIngresosDto? value)
     {
         _ = value;
+        DescuentosEditables = false;
+        OnPropertyChanged(nameof(PuedeUsarArancelSugerido));
+        NotificarEstadoDescuentos();
         if (_suprimirCambios || EstaCargando) return;
         _ = RefrescarArancelEfectivoAsync();
     }
@@ -294,6 +361,27 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         _ = value;
         OnPropertyChanged(nameof(NoEstaGuardando));
         OnPropertyChanged(nameof(PuedeUsarArancelSugerido));
+        NotificarEstadoDescuentos();
+    }
+
+    partial void OnEstaCargandoChanged(bool value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(PuedeTrabajar));
+        OnPropertyChanged(nameof(PuedeUsarArancelSugerido));
+        NotificarEstadoDescuentos();
+    }
+
+    partial void OnDescuentosEditablesChanged(bool value)
+    {
+        _ = value;
+        NotificarEstadoDescuentos();
+    }
+
+    partial void OnDescuentosPorCicloChanged(ObservableCollection<DescuentoCicloEditableView> value)
+    {
+        _ = value;
+        NotificarEstadoDescuentos();
     }
 
     [RelayCommand]
@@ -303,8 +391,10 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         EstaCargando = true;
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
+        MensajeInfo = string.Empty;
         try
         {
+            var teniaCarrerasCargadas = Carreras.Count > 0;
             using var scope = _serviceProvider.CreateScope();
             var repoCarreras = scope.ServiceProvider.GetRequiredService<IRepositorioCarrera>();
             var carreras = await repoCarreras.ListarAsync();
@@ -314,15 +404,20 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             try
             {
                 Carreras = new ObservableCollection<Carrera>(carreras);
-                CarreraSeleccionada = Carreras.FirstOrDefault(c => c.Id == carreraActualId)
-                    ?? Carreras.FirstOrDefault();
+                CarreraSeleccionada = carreraActualId is > 0
+                    ? Carreras.FirstOrDefault(c => c.Id == carreraActualId.Value)
+                    : null;
             }
             finally { _suprimirCambios = false; }
 
             if (CarreraSeleccionada is null)
             {
-                MensajeError = "No hay carreras registradas. Crea una carrera primero.";
                 LimpiarTodo();
+                MensajeInfo = Carreras.Count == 0
+                    ? "No hay carreras registradas. Crea una carrera primero."
+                    : teniaCarrerasCargadas
+                        ? "Selecciona una carrera para refrescar la información."
+                        : "Selecciona una carrera para cargar Demanda e Ingresos.";
                 return;
             }
 
@@ -343,11 +438,13 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         if (CarreraSeleccionada is null)
         {
             LimpiarTodo();
+            MensajeInfo = "Selecciona una carrera para cargar Demanda e Ingresos.";
             return;
         }
 
         try
         {
+            MensajeInfo = string.Empty;
             using var scope = _serviceProvider.CreateScope();
             var repoEscenario = scope.ServiceProvider.GetRequiredService<IRepositorioEscenarioProyeccion>();
             var repoProyeccion = scope.ServiceProvider.GetRequiredService<IRepositorioProyeccionEstudiantes>();
@@ -408,6 +505,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         {
             _refrescoArancelVersion++;
             LimpiarTodo();
+            MensajeInfo = "Selecciona una carrera para refrescar la información.";
             return;
         }
 
@@ -421,6 +519,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             Ingresos = null;
             Materiales = null;
             Ratios = [];
+            DescuentosPorCiclo = [];
             ActualizarResumen();
             MensajeError = "Selecciona un escenario para calcular Demanda e Ingresos.";
             return;
@@ -434,6 +533,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         try
         {
             MensajeError = string.Empty;
+            MensajeInfo = string.Empty;
             ArancelEfectivo = null;
             ArancelSugeridoCostoCarrera = null;
             DemandaProyectada = null;
@@ -463,6 +563,9 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             var listarRatios = scope.ServiceProvider.GetRequiredService<ListarRatiosMaterialDemandaQuery>();
             var ratios = await listarRatios.EjecutarAsync(carreraId);
 
+            var obtenerDescuentos = scope.ServiceProvider.GetRequiredService<ObtenerDescuentosArancelCicloQuery>();
+            var descuentos = await obtenerDescuentos.EjecutarAsync(carreraId, escenarioId);
+
             var listarConfigs = scope.ServiceProvider.GetRequiredService<ListarConfiguracionesArancelCarreraQuery>();
             var configs = await listarConfigs.EjecutarAsync(carreraId);
 
@@ -477,6 +580,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             Materiales = materiales;
             Configuraciones = new ObservableCollection<ConfiguracionArancelCarreraDto>(configs);
             Ratios = new ObservableCollection<RatioMaterialDemandaDto>(ratios);
+            ConstruirDescuentosPorCiclo(descuentos);
 
             ActualizarResumen();
         }
@@ -493,6 +597,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             Ingresos = null;
             Materiales = null;
             Ratios = [];
+            DescuentosPorCiclo = [];
             ActualizarResumen();
         }
         finally
@@ -645,6 +750,134 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         {
             EstaGuardando = false;
         }
+    }
+
+    [RelayCommand]
+    private async Task GenerarConsumosPorDefectoAsync()
+    {
+        if (!PuedeEditar) { MensajeError = "No tienes permiso para editar."; return; }
+        if (CarreraSeleccionada is null) { MensajeError = "Selecciona una carrera."; return; }
+
+        EstaGuardando = true;
+        MensajeError = string.Empty;
+        MensajeExito = string.Empty;
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var command = scope.ServiceProvider.GetRequiredService<GenerarRatiosPorDefectoCarreraCommand>();
+            var insertados = await command.EjecutarAsync(CarreraSeleccionada.Id);
+            MensajeExito = insertados > 0
+                ? $"Se generaron {insertados} consumos por defecto."
+                : "La carrera ya tiene los consumos por defecto.";
+            await RefrescarArancelEfectivoAsync();
+        }
+        catch (Exception ex)
+        {
+            MensajeError = Detalle(ex);
+        }
+        finally
+        {
+            EstaGuardando = false;
+        }
+    }
+
+    private void ConstruirDescuentosPorCiclo(MatrizDescuentosArancelDto matriz)
+    {
+        DescuentosEditables = false;
+        var totalCiclos = (CarreraSeleccionada?.TotalCiclos ?? 0) > 0 ? CarreraSeleccionada!.TotalCiclos : 8;
+
+        // Cada ciclo cubierto por un descuento activo (rango o por-ciclo) hereda su %; el resto queda en 0.
+        var porCiclo = new Dictionary<int, decimal>();
+        foreach (var d in matriz.Descuentos.Where(x => x.EstaActivo))
+            for (var c = d.CicloDesde; c <= d.CicloHasta; c++)
+                porCiclo[c] = d.PorcentajeDescuento;
+
+        var filas = Enumerable.Range(1, totalCiclos)
+            .Select(c => new DescuentoCicloEditableView
+            {
+                NumeroCiclo = c,
+                Porcentaje = porCiclo.TryGetValue(c, out var p) ? p : 0m
+            })
+            .ToList();
+        _descuentosGuardadosPorCiclo = filas.ToDictionary(f => f.NumeroCiclo, f => f.Porcentaje);
+        DescuentosPorCiclo = new ObservableCollection<DescuentoCicloEditableView>(filas);
+    }
+
+    [RelayCommand]
+    private void EditarDescuentos()
+    {
+        if (!PuedeEditar) { MensajeError = "No tienes permiso para editar."; return; }
+        if (CarreraSeleccionada is null) { MensajeError = "Selecciona una carrera."; return; }
+        if (EscenarioSeleccionado is null) { MensajeError = "Selecciona un escenario."; return; }
+        if (DescuentosPorCiclo.Count == 0) { MensajeError = "No hay descuentos por ciclo cargados."; return; }
+
+        DescuentosEditables = true;
+        MensajeError = string.Empty;
+        MensajeExito = string.Empty;
+        MensajeInfo = string.Empty;
+    }
+
+    [RelayCommand]
+    private void CancelarEdicionDescuentos()
+    {
+        RestaurarDescuentosGuardados();
+        DescuentosEditables = false;
+        MensajeError = string.Empty;
+        MensajeExito = string.Empty;
+        MensajeInfo = "Edición de descuentos cancelada.";
+    }
+
+    [RelayCommand]
+    private async Task GuardarDescuentosAsync()
+    {
+        if (!PuedeEditar) { MensajeError = "No tienes permiso para editar."; return; }
+        if (CarreraSeleccionada is null) { MensajeError = "Selecciona una carrera."; return; }
+        if (EscenarioSeleccionado is null) { MensajeError = "Selecciona un escenario."; return; }
+        if (!DescuentosEditables) { MensajeError = "Presiona Editar descuentos antes de guardar."; return; }
+
+        EstaGuardando = true;
+        MensajeError = string.Empty;
+        MensajeExito = string.Empty;
+        MensajeInfo = string.Empty;
+        try
+        {
+            var filas = DescuentosPorCiclo
+                .Select(d => (d.NumeroCiclo, d.Porcentaje))
+                .ToList();
+            if (filas.Any(d => d.Porcentaje < 0m || d.Porcentaje > 100m))
+            {
+                MensajeError = "El descuento debe estar entre 0% y 100%.";
+                return;
+            }
+
+            using var scope = _serviceProvider.CreateScope();
+            var command = scope.ServiceProvider.GetRequiredService<GuardarMatrizDescuentosArancelCommand>();
+            await command.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id, filas, _sesionActual.UsuarioId);
+            DescuentosEditables = false;
+            MensajeExito = "Descuentos por ciclo guardados.";
+            await RefrescarArancelEfectivoAsync();
+        }
+        catch (Exception ex)
+        {
+            MensajeError = Detalle(ex);
+        }
+        finally
+        {
+            EstaGuardando = false;
+        }
+    }
+
+    private void RestaurarDescuentosGuardados()
+    {
+        foreach (var fila in DescuentosPorCiclo)
+            fila.Porcentaje = _descuentosGuardadosPorCiclo.TryGetValue(fila.NumeroCiclo, out var valor) ? valor : 0m;
+    }
+
+    private void NotificarEstadoDescuentos()
+    {
+        OnPropertyChanged(nameof(PuedeEditarDescuentos));
+        OnPropertyChanged(nameof(PuedeGuardarDescuentos));
+        OnPropertyChanged(nameof(PuedeCancelarDescuentos));
     }
 
     [RelayCommand]
@@ -860,6 +1093,8 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
 
     private void LimpiarTodo()
     {
+        DescuentosEditables = false;
+        _descuentosGuardadosPorCiclo = [];
         Configuraciones = [];
         Escenarios = [];
         EscenarioSeleccionado = null;
@@ -873,6 +1108,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         MaterialesMonetariosMatrizFilas = [];
         MaterialesEtiquetasPeriodos = [];
         Ratios = [];
+        DescuentosPorCiclo = [];
         ItemsCapitalTrabajo = [];
         RatioFormItemSeleccionado = null;
         ActualizarResumen();

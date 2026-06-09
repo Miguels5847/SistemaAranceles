@@ -17,14 +17,47 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0"
-                                   Text="Datos Institucionales"
-                                   FontSize="18"
-                                   FontWeight="SemiBold"
-                                   Foreground="#1A237E"
-                                   Margin="0,0,0,4"/>
+                        <Grid Grid.Row="0" Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0"
+                                           Text="Datos Institucionales"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Foreground="#1A237E"
+                                           VerticalAlignment="Center"/>
+
+                                <StackPanel Grid.Column="1"
+                                            Orientation="Horizontal"
+                                            HorizontalAlignment="Right">
+                                        <Button Content="Editar"
+                                                Padding="10,4"
+                                                Margin="0,0,6,0"
+                                                Command="{Binding HabilitarEdicionCommand}"
+                                                IsEnabled="{Binding PuedeEditar}"/>
+                                        <Button Content="Cancelar"
+                                                Padding="10,4"
+                                                Margin="0,0,6,0"
+                                                Command="{Binding CancelarEdicionCommand}"
+                                                Visibility="{Binding EdicionActiva, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                        <Button Content="Recargar"
+                                                Padding="10,4"
+                                                Margin="0,0,6,0"
+                                                Command="{Binding CargarCommand}"/>
+                                        <Button Content="Guardar"
+                                                Padding="14,4"
+                                                Background="#1A237E"
+                                                Foreground="White"
+                                                IsEnabled="{Binding CamposEditables}"
+                                                Command="{Binding GuardarCommand}"/>
+                                </StackPanel>
+                        </Grid>
 
                         <TextBlock Grid.Row="1"
                                    Text="{Binding UltimaActualizacionTexto}"
@@ -32,21 +65,21 @@
                                    FontStyle="Italic"
                                    Margin="0,0,0,10"/>
 
-                        <TextBlock Grid.Row="2"
-                                   Text="{Binding MensajeError}"
-                                   Foreground="#C62828"
-                                   FontWeight="SemiBold"
-                                   Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"
-                                   Margin="0,0,0,4"/>
+                        <StackPanel Grid.Row="2" Margin="0,0,0,4">
+                                <TextBlock Text="{Binding MensajeError}"
+                                           Foreground="#C62828"
+                                           FontWeight="SemiBold"
+                                           Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"
+                                           Margin="0,0,0,4"/>
 
-                        <TextBlock Grid.Row="3"
-                                   Text="{Binding MensajeExito}"
-                                   Foreground="#2E7D32"
-                                   FontWeight="SemiBold"
-                                   Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"
-                                   Margin="0,0,0,4"/>
+                                <TextBlock Text="{Binding MensajeExito}"
+                                           Foreground="#2E7D32"
+                                           FontWeight="SemiBold"
+                                           Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"
+                                           Margin="0,0,0,4"/>
+                        </StackPanel>
 
-                        <!-- Inputs Poblacion -->
+                        <!-- Población institucional y período -->
                         <Border Grid.Row="4"
                                 BorderBrush="#C5CAE9"
                                 BorderThickness="1"
@@ -110,8 +143,8 @@
                                 </Grid>
                         </Border>
 
-                        <!-- Inputs Rubros monetarios -->
-                        <Border Grid.Row="5"
+                        <!-- Planta central -->
+                        <Border Grid.Row="3"
                                 BorderBrush="#C5CAE9"
                                 BorderThickness="1"
                                 CornerRadius="4"
@@ -119,7 +152,6 @@
                                 Margin="0,0,0,8">
                                 <Grid>
                                         <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
@@ -237,37 +269,11 @@
                                                          Padding="4,2"/>
                                         </StackPanel>
 
-                                        <StackPanel Grid.Row="5"
-                                                    Grid.ColumnSpan="4"
-                                                    Orientation="Horizontal"
-                                                    HorizontalAlignment="Right"
-                                                    Margin="0,10,0,0">
-                                                <Button Content="Editar"
-                                                        Padding="10,4"
-                                                        Margin="0,0,6,0"
-                                                        Command="{Binding HabilitarEdicionCommand}"
-                                                        IsEnabled="{Binding PuedeEditar}"/>
-                                                <Button Content="Cancelar"
-                                                        Padding="10,4"
-                                                        Margin="0,0,6,0"
-                                                        Command="{Binding CancelarEdicionCommand}"
-                                                        Visibility="{Binding EdicionActiva, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                                <Button Content="Recargar"
-                                                        Padding="10,4"
-                                                        Margin="0,0,6,0"
-                                                        Command="{Binding CargarCommand}"/>
-                                                <Button Content="Guardar"
-                                                        Padding="14,4"
-                                                        Background="#1A237E"
-                                                        Foreground="White"
-                                                        IsEnabled="{Binding CamposEditables}"
-                                                        Command="{Binding GuardarCommand}"/>
-                                        </StackPanel>
                                 </Grid>
                         </Border>
 
-                        <!-- KAN-35: Parámetros Demanda e Ingresos -->
-                        <Border Grid.Row="6"
+                        <!-- Parámetros de Demanda e Ingresos -->
+                        <Border Grid.Row="5"
                                 BorderBrush="#7986CB"
                                 BorderThickness="1"
                                 CornerRadius="4"
@@ -289,7 +295,7 @@
                                         </Grid.ColumnDefinitions>
 
                                         <TextBlock Grid.Row="0" Grid.ColumnSpan="4"
-                                                   Text="Parámetros Demanda e Ingresos (Épica 9)"
+                                                   Text="Parámetros de Demanda e Ingresos"
                                                    FontWeight="SemiBold" Foreground="#1A237E"
                                                    Margin="0,0,0,6"/>
 
@@ -391,8 +397,8 @@
                                 </Grid>
                         </Border>
 
-                        <!-- KAN-36: Parametros Costos y Gastos -->
-                        <Border Grid.Row="7"
+                        <!-- Parámetros de Costos y Gastos -->
+                        <Border Grid.Row="6"
                                 BorderBrush="#7986CB"
                                 BorderThickness="1"
                                 CornerRadius="4"
@@ -413,7 +419,7 @@
                                         </Grid.ColumnDefinitions>
 
                                         <TextBlock Grid.Row="0" Grid.ColumnSpan="4"
-                                                   Text="Parámetros Costos y Gastos (Épica 10)"
+                                                   Text="Parámetros de Costos y Gastos"
                                                    FontWeight="SemiBold" Foreground="#1A237E"
                                                    Margin="0,0,0,6"/>
 
@@ -450,14 +456,128 @@
                                         </StackPanel>
 
                                         <TextBlock Grid.Row="3" Grid.ColumnSpan="4"
-                                                   Text="Estos valores alimentan las pestañas Inv. Vin. Becas y Costo de la Carrera."
+                                                   Text="Estos valores alimentan las pestañas Inv. Vin. Becas y Arancel referencial por costo de carrera."
+                                                   FontSize="11" Foreground="#546E7A" FontStyle="Italic"
+                                                   TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                </Grid>
+                        </Border>
+
+                        <!-- Parámetros de Análisis Financiero -->
+                        <Border Grid.Row="7"
+                                BorderBrush="#7986CB"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="10,8"
+                                Margin="0,0,0,8">
+                                <Grid>
+                                        <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.ColumnSpan="4"
+                                                   Text="Parámetros de Análisis Financiero"
+                                                   FontWeight="SemiBold" Foreground="#1A237E"
+                                                   Margin="0,0,0,6"/>
+
+                                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,6,4">
+                                                <TextBlock Text="Tasa interés financiera (%)" FontSize="11"/>
+                                                <TextBox Text="{Binding TasaInteresFinanciera, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,6,4">
+                                                <TextBlock Text="Premio al riesgo (%)" FontSize="11"/>
+                                                <TextBox Text="{Binding PremioRiesgo, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,6,4">
+                                                <TextBlock Text="TMR manual (%)" FontSize="11"/>
+                                                <TextBox Text="{Binding TmrManual, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="3" Margin="0,0,0,4" VerticalAlignment="Bottom">
+                                                <CheckBox IsChecked="{Binding UsarTmrManual}"
+                                                          IsEnabled="{Binding CamposEditables}"
+                                                          Content="Usar TMR manual"
+                                                          Margin="0,18,0,4"/>
+                                        </StackPanel>
+
+                                        <TextBlock Grid.Row="2" Grid.ColumnSpan="4"
+                                                   Text="Si 'Usar TMR manual' está activo se usa la TMR manual; si no, TMR = tasa interés + inflación promedio + premio al riesgo. La inflación proviene del módulo Inflación, no se escribe aquí."
+                                                   FontSize="11" Foreground="#546E7A" FontStyle="Italic"
+                                                   TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                </Grid>
+                        </Border>
+
+                        <!-- Parámetros de Arancel Óptimo / Bisección VAN=0 -->
+                        <Border Grid.Row="8"
+                                Background="#F1F8E9"
+                                BorderBrush="#81C784"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="10,8"
+                                Margin="0,0,0,8">
+                                <Grid>
+                                        <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.ColumnSpan="4"
+                                                   Text="Parámetros de Arancel Óptimo / Bisección VAN=0"
+                                                   FontWeight="SemiBold" Foreground="#1B5E20"
+                                                   Margin="0,0,0,6"/>
+
+                                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,6,4">
+                                                <TextBlock Text="Tolerancia VAN ($)" FontSize="11"/>
+                                                <TextBox Text="{Binding ToleranciaVanArancel, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,6,4">
+                                                <TextBlock Text="Margen aproximación VAN ($)" FontSize="11"/>
+                                                <TextBox Text="{Binding MargenAproximacionVanArancel, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,6,4">
+                                                <TextBlock Text="Arancel mínimo búsqueda ($)" FontSize="11"/>
+                                                <TextBox Text="{Binding ArancelMinimoBusqueda, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="3" Margin="0,0,0,4">
+                                                <TextBlock Text="Arancel máximo búsqueda ($)" FontSize="11"/>
+                                                <TextBox Text="{Binding ArancelMaximoBusqueda, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalStringConverter}}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,4,6,4">
+                                                <TextBlock Text="Máx. iteraciones bisección" FontSize="11"/>
+                                                <TextBox Text="{Binding MaxIteracionesBiseccion, UpdateSourceTrigger=PropertyChanged}"
+                                                         IsEnabled="{Binding CamposEditables}" Padding="4,2"/>
+                                        </StackPanel>
+
+                                        <TextBlock Grid.Row="3" Grid.ColumnSpan="4"
+                                                   Text="Controlan la búsqueda del arancel financiero óptimo (VAN=0). |VAN| ≤ tolerancia = Calculado; ≤ margen = Equilibrio aproximado; mayor = No convergió."
                                                    FontSize="11" Foreground="#546E7A" FontStyle="Italic"
                                                    TextWrapping="Wrap" Margin="0,2,0,0"/>
                                 </Grid>
                         </Border>
 
                         <!-- Métricas calculadas -->
-                        <Border Grid.Row="8"
+                        <Border Grid.Row="9"
                                 BorderBrush="#C5CAE9"
                                 BorderThickness="1"
                                 CornerRadius="4"

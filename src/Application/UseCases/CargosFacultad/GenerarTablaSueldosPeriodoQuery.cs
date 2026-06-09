@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using SistemaAranceles.Application.DTOs.CargosFacultad;
 using SistemaAranceles.Application.DTOs.Estudiantes;
 using SistemaAranceles.Application.Interfaces.Persistencia;
@@ -17,6 +19,14 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
     IRepositorioProyeccionEstudiantes repositorioProyeccionEstudiantes,
     IRepositorioCarrera repositorioCarrera)
 {
+    public sealed class ContextoSueldosCarrera
+    {
+        public required ProyeccionEstudiantesDto Proyeccion { get; init; }
+        public required string CarreraNombre { get; init; }
+        public required IReadOnlyList<InflacionAnual> RegistrosInflacion { get; init; }
+        public required IReadOnlyList<CargoFacultad> Cargos { get; init; }
+    }
+
     public async Task<SueldosPeriodoVistaDto> EjecutarAsync(
         int carreraId,
         int escenarioProyeccionId,
@@ -28,43 +38,45 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
         if (carreraId <= 0 || escenarioProyeccionId <= 0 || periodoAcademicoId <= 0)
             return new SueldosPeriodoVistaDto { CarreraId = carreraId, PeriodoAcademicoId = periodoAcademicoId };
 
+        var contexto = await PrepararContextoAsync(carreraId, escenarioProyeccionId, cancellationToken);
+        if (contexto is null)
+            return new SueldosPeriodoVistaDto { CarreraId = carreraId, PeriodoAcademicoId = periodoAcademicoId };
+
+        return GenerarParaPeriodo(contexto, carreraId, periodoAcademicoId, estudiantesUA, consolidadoActual);
+    }
+
+    /// <summary>
+    /// Carga (una sola vez) los datos invariantes por período: proyección, carrera, cargos e
+    /// inflación del horizonte completo. Permite calcular todos los períodos en memoria sin re-consultar
+    /// la base por cada período (evita N+1 al consolidar la matriz de Costos y Gastos).
+    /// </summary>
+    public async Task<ContextoSueldosCarrera?> PrepararContextoAsync(
+        int carreraId,
+        int escenarioProyeccionId,
+        CancellationToken cancellationToken = default)
+    {
+        if (carreraId <= 0 || escenarioProyeccionId <= 0)
+            return null;
+
         var proyeccionId = await repositorioProyeccionEstudiantes.ObtenerIdPorCarreraYEscenarioAsync(
             carreraId,
             escenarioProyeccionId,
             cancellationToken);
 
         if (proyeccionId is null or 0)
-            return new SueldosPeriodoVistaDto { CarreraId = carreraId, PeriodoAcademicoId = periodoAcademicoId };
+            return null;
 
         var proyeccion = await repositorioProyeccionEstudiantes.ObtenerDtoPorIdAsync(proyeccionId.Value, cancellationToken);
         if (proyeccion is null)
-            return new SueldosPeriodoVistaDto { CarreraId = carreraId, PeriodoAcademicoId = periodoAcademicoId };
-
-        var detallesPeriodo = proyeccion.Detalles
-            .Where(d => d.PeriodoAcademicoId == periodoAcademicoId)
-            .ToList();
-
-        if (detallesPeriodo.Count == 0)
-            return new SueldosPeriodoVistaDto { CarreraId = carreraId, PeriodoAcademicoId = periodoAcademicoId };
-
-        var primerDetalle = detallesPeriodo[0];
-        var anioPeriodo = primerDetalle.Anio;
-        var numeroPeriodo = primerDetalle.NumeroPeriodo;
-        var etiquetaPeriodo = primerDetalle.EtiquetaPeriodo;
-        var anioBase = proyeccion.AnioBase;
-
-        var estudiantesCarrera = detallesPeriodo.Sum(d => d.TotalEstudiantes);
+            return null;
 
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, cancellationToken);
-        var carreraNombre = carrera?.Nombre ?? string.Empty;
 
-        var registrosInflacion = await repositorioInflacion.ListarPorRangoAsync(anioBase, anioPeriodo, cancellationToken);
-        var factorEncadenado = CalculoCargosFacultad.CalcularFactorInflacionEncadenado(
-            registrosInflacion,
-            anioBase,
-            anioPeriodo,
-            numeroPeriodo);
-        var inflacionPeriodoPct = ObtenerPorcentajeAnio(registrosInflacion, anioPeriodo);
+        var anioBase = proyeccion.AnioBase;
+        var anioMaximo = proyeccion.Detalles.Count > 0
+            ? proyeccion.Detalles.Max(d => d.Anio)
+            : anioBase;
+        var registrosInflacion = await repositorioInflacion.ListarPorRangoAsync(anioBase, anioMaximo, cancellationToken);
 
         var cargos = await repositorioCargo.ListarPorCarreraAsync(carreraId, cancellationToken);
 
@@ -84,6 +96,51 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
             }
         }
 
+        return new ContextoSueldosCarrera
+        {
+            Proyeccion = proyeccion,
+            CarreraNombre = carrera?.Nombre ?? string.Empty,
+            RegistrosInflacion = registrosInflacion,
+            Cargos = cargos
+        };
+    }
+
+    /// <summary>
+    /// Calcula la tabla de sueldos de un período en memoria a partir del contexto precargado.
+    /// </summary>
+    public SueldosPeriodoVistaDto GenerarParaPeriodo(
+        ContextoSueldosCarrera contexto,
+        int carreraId,
+        int periodoAcademicoId,
+        decimal estudiantesUA,
+        ProyeccionConsolidadaDto? consolidadoActual = null)
+    {
+        if (periodoAcademicoId <= 0)
+            return new SueldosPeriodoVistaDto { CarreraId = carreraId, PeriodoAcademicoId = periodoAcademicoId };
+
+        var proyeccion = contexto.Proyeccion;
+        var detallesPeriodo = proyeccion.Detalles
+            .Where(d => d.PeriodoAcademicoId == periodoAcademicoId)
+            .ToList();
+
+        if (detallesPeriodo.Count == 0)
+            return new SueldosPeriodoVistaDto { CarreraId = carreraId, PeriodoAcademicoId = periodoAcademicoId };
+
+        var primerDetalle = detallesPeriodo[0];
+        var anioPeriodo = primerDetalle.Anio;
+        var numeroPeriodo = primerDetalle.NumeroPeriodo;
+        var etiquetaPeriodo = primerDetalle.EtiquetaPeriodo;
+        var anioBase = proyeccion.AnioBase;
+
+        var estudiantesCarrera = detallesPeriodo.Sum(d => d.TotalEstudiantes);
+
+        var factorEncadenado = CalculoCargosFacultad.CalcularFactorInflacionEncadenado(
+            contexto.RegistrosInflacion,
+            anioBase,
+            anioPeriodo,
+            numeroPeriodo);
+        var inflacionPeriodoPct = ObtenerPorcentajeAnio(contexto.RegistrosInflacion, anioPeriodo);
+
         var parametros = new ParametrosCalculoCargoFacultadDto
         {
             EstudiantesCarreraPeriodo = estudiantesCarrera,
@@ -92,7 +149,7 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
         };
 
         var periodoIndex = ObtenerIndicePeriodo(proyeccion.Detalles, periodoAcademicoId);
-        var filas = cargos
+        var filas = contexto.Cargos
             .OrderBy(c => c.NombreCargo)
             .Select(c => Calcular(c, parametros, consolidadoActual, periodoIndex))
             .ToList();
@@ -100,7 +157,7 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
         return new SueldosPeriodoVistaDto
         {
             CarreraId = carreraId,
-            CarreraNombre = carreraNombre,
+            CarreraNombre = contexto.CarreraNombre,
             PeriodoAcademicoId = periodoAcademicoId,
             Anio = anioPeriodo,
             NumeroPeriodo = numeroPeriodo,
@@ -219,6 +276,9 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
             if (periodoIndex < 0 || consolidadoActual is null)
                 return 0m;
 
+            if (cargo.TipoContrato == TipoContrato.Tecnico || EsOcasionalTipo2(cargo.NombreCargo))
+                return ObtenerEquivalenteTecnicoPeriodo(consolidadoActual, periodoIndex);
+
             var tipoFila = ObtenerTipoFilaDocente(cargo);
             if (tipoFila is null)
                 return 0m;
@@ -251,4 +311,70 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
             TipoContrato.Tecnico => "Ocasional Tipo 2 (Técnico)",
             _ => null,
         };
+
+    private static decimal ObtenerEquivalenteTecnicoPeriodo(
+        ProyeccionConsolidadaDto consolidadoActual,
+        int periodoIndex)
+    {
+        if (periodoIndex < 0)
+            return 0m;
+
+        var horasTecnico = consolidadoActual.HorasTecnicoSemana > 0m
+            ? consolidadoActual.HorasTecnicoSemana
+            : 40m;
+
+        var filaHorasPractica = consolidadoActual.TablaHoras.FirstOrDefault(f =>
+        {
+            var etiqueta = NormalizarTexto(f.Etiqueta);
+            return etiqueta.Contains("practica", StringComparison.Ordinal)
+                   && etiqueta.Contains("acumuladas", StringComparison.Ordinal);
+        });
+
+        if (filaHorasPractica is null || filaHorasPractica.Valores.Length <= periodoIndex)
+            return 0m;
+
+        var horasPracticaAcumuladas = filaHorasPractica.Valores[periodoIndex];
+        return horasPracticaAcumuladas <= 0m
+            ? 0m
+            : Math.Round(horasPracticaAcumuladas / horasTecnico, 4);
+    }
+
+    private static bool EsOcasionalTipo2(string nombreCargo)
+    {
+        var normalizado = NormalizarTexto(nombreCargo);
+        return normalizado.Contains("ocasional tipo 2", StringComparison.Ordinal)
+               || normalizado.Contains("tecnico docente", StringComparison.Ordinal);
+    }
+
+    private static string NormalizarTexto(string texto)
+    {
+        if (string.IsNullOrWhiteSpace(texto))
+            return string.Empty;
+
+        var descompuesto = texto.ToLowerInvariant().Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder(descompuesto.Length);
+        var separadorPendiente = false;
+
+        foreach (var c in descompuesto)
+        {
+            var categoria = CharUnicodeInfo.GetUnicodeCategory(c);
+            if (categoria == UnicodeCategory.NonSpacingMark)
+                continue;
+
+            if (char.IsLetterOrDigit(c))
+            {
+                if (separadorPendiente && sb.Length > 0)
+                    sb.Append(' ');
+
+                sb.Append(c);
+                separadorPendiente = false;
+            }
+            else
+            {
+                separadorPendiente = true;
+            }
+        }
+
+        return sb.ToString().Normalize(NormalizationForm.FormC);
+    }
 }

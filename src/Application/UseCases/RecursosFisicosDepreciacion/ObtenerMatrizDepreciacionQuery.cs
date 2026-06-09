@@ -7,9 +7,10 @@ public sealed class ObtenerMatrizDepreciacionQuery(
     ObtenerMatrizInversionesQuery obtenerMatrizInversionesQuery,
     IRepositorioActivoFijo repositorioActivoFijo)
 {
-    public async Task<MatrizDepreciacionDto> EjecutarAsync(int carreraId, int escenarioProyeccionId, int? aniosProyeccion = null, CancellationToken ct = default)
+    public async Task<MatrizDepreciacionDto> EjecutarAsync(int carreraId, int escenarioProyeccionId, int? aniosProyeccion = null, CancellationToken ct = default, MatrizInversionesDto? inversionesPrecalculada = null)
     {
-        var matrizInversiones = await obtenerMatrizInversionesQuery.EjecutarAsync(carreraId, escenarioProyeccionId, aniosProyeccion, ct);
+        var matrizInversiones = inversionesPrecalculada
+            ?? await obtenerMatrizInversionesQuery.EjecutarAsync(carreraId, escenarioProyeccionId, aniosProyeccion, ct);
         if (matrizInversiones.Periodos.Count == 0 || matrizInversiones.Filas.Count == 0)
             return Vacia(carreraId, escenarioProyeccionId);
 

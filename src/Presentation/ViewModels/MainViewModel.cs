@@ -13,6 +13,7 @@ using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.Services;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.ViewModels.Auditoria;
+using SistemaAranceles.Presentation.ViewModels.AnalisisFinanciero;
 using SistemaAranceles.Presentation.ViewModels.Carreras;
 using SistemaAranceles.Presentation.ViewModels.CostosGastos;
 using SistemaAranceles.Presentation.ViewModels.Estudiantes;
@@ -50,10 +51,10 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly DatosInstitucionalesViewModel _datosInstitucionalesViewModel;
     private readonly AportePlantaCentralViewModel _aportePlantaCentralViewModel;
     private readonly SistemaAranceles.Presentation.ViewModels.RecursosFisicos.ActivosFijosViewModel _activosFijosViewModel;
-    private readonly DemandaIngresosViewModel _demandaIngresosViewModel;
     private readonly Func<EditarUsuarioViewModel> _editarUsuarioViewModelFactory;
     private int _cerrandoSesion;
     private int _cargandoUsuarios;
+    private int _navegando;
 
     public MainViewModel(
         IServiceProvider serviceProvider,
@@ -70,7 +71,6 @@ public sealed partial class MainViewModel : ObservableObject
         DatosInstitucionalesViewModel datosInstitucionalesViewModel,
         AportePlantaCentralViewModel aportePlantaCentralViewModel,
         SistemaAranceles.Presentation.ViewModels.RecursosFisicos.ActivosFijosViewModel activosFijosViewModel,
-        DemandaIngresosViewModel demandaIngresosViewModel,
         Func<EditarUsuarioViewModel> editarUsuarioViewModelFactory)
     {
         _serviceProvider = serviceProvider;
@@ -87,7 +87,6 @@ public sealed partial class MainViewModel : ObservableObject
         _datosInstitucionalesViewModel = datosInstitucionalesViewModel;
         _aportePlantaCentralViewModel = aportePlantaCentralViewModel;
         _activosFijosViewModel = activosFijosViewModel;
-        _demandaIngresosViewModel = demandaIngresosViewModel;
         _editarUsuarioViewModelFactory = editarUsuarioViewModelFactory;
 
         _servicioInactividad.TiempoRestanteActualizado += (_, tiempoRestante) =>
@@ -146,7 +145,10 @@ public sealed partial class MainViewModel : ObservableObject
 
     private static string FormatearTiempoRestante(TimeSpan tiempo)
     {
-        return $"{(int)tiempo.TotalMinutes}:{tiempo.Seconds:D2}";
+        // Solo minutos (redondeo hacia arriba): evita el salto visible por reinicios de actividad
+        // o por congelamiento del timer de UI durante consultas pesadas.
+        var minutos = (int)Math.Ceiling(tiempo.TotalMinutes);
+        return $"{minutos} min";
     }
 
     private void SeleccionarMenu(string titulo)
@@ -224,9 +226,14 @@ public sealed partial class MainViewModel : ObservableObject
             MenuItems.Add(new ItemMenu { Titulo = "Costos y Gastos", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarCostosGastosAsync()) });
         }
 
-        if (_sesionActual.TienePermiso("CFG.VER"))
+        if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
         {
-            MenuItems.Add(new ItemMenu { Titulo = "Configuración", Icono = string.Empty, Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Configuración", "Pendiente")) });
+            MenuItems.Add(new ItemMenu { Titulo = "Análisis Financiero", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarAnalisisFinancieroAsync()) });
+        }
+
+        if (_sesionActual.TienePermiso("DI.VER") || _sesionActual.EsAdministrador)
+        {
+            MenuItems.Add(new ItemMenu { Titulo = "Amortización", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarAmortizacionAsync()) });
         }
 
         if (_sesionActual.TienePermiso("REP.VER"))
@@ -371,9 +378,17 @@ public sealed partial class MainViewModel : ObservableObject
     {
         SeleccionarMenu("Demanda e Ingresos");
         if (!(_sesionActual.TienePermiso("DI_NG.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo Demanda e Ingresos."; return; }
+        if (Interlocked.Exchange(ref _navegando, 1) == 1) return;
         MensajePagina = string.Empty;
-        PaginaActual = _demandaIngresosViewModel;
-        await _demandaIngresosViewModel.CargarCommand.ExecuteAsync(null);
+        try
+        {
+            // Instancia fresca por navegación (como Costos/Análisis): evita que una recarga en vuelo
+            // (cambio de escenario) deje el módulo pegado y sin poder reseleccionarse.
+            var vm = _serviceProvider.GetRequiredService<DemandaIngresosViewModel>();
+            PaginaActual = vm;
+            await vm.CargarCommand.ExecuteAsync(null);
+        }
+        finally { Interlocked.Exchange(ref _navegando, 0); }
     }
 
     private async Task MostrarCostosGastosAsync()
@@ -382,6 +397,26 @@ public sealed partial class MainViewModel : ObservableObject
         if (!(_sesionActual.TienePermiso("CG.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al modulo Costos y Gastos."; return; }
         MensajePagina = string.Empty;
         var vm = _serviceProvider.GetRequiredService<CostosGastosViewModel>();
+        PaginaActual = vm;
+        await vm.CargarCommand.ExecuteAsync(null);
+    }
+
+    private async Task MostrarAnalisisFinancieroAsync()
+    {
+        SeleccionarMenu("Análisis Financiero");
+        if (!(_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo Análisis Financiero."; return; }
+        MensajePagina = string.Empty;
+        var vm = _serviceProvider.GetRequiredService<AnalisisFinancieroViewModel>();
+        PaginaActual = vm;
+        await vm.CargarCommand.ExecuteAsync(null);
+    }
+
+    private async Task MostrarAmortizacionAsync()
+    {
+        SeleccionarMenu("Amortización");
+        if (!(_sesionActual.TienePermiso("DI.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo Amortización."; return; }
+        MensajePagina = string.Empty;
+        var vm = _serviceProvider.GetRequiredService<ViewModels.Amortizacion.AmortizacionViewModel>();
         PaginaActual = vm;
         await vm.CargarCommand.ExecuteAsync(null);
     }

@@ -4,26 +4,22 @@ using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.DemandaIngresos;
 using SistemaAranceles.Application.UseCases.Inflacion;
 using SistemaAranceles.Domain.Entities;
-using SistemaAranceles.Domain.Enums;
 
 namespace SistemaAranceles.Application.UseCases.CostosGastos;
 
 public sealed class ObtenerMatrizInvVinBecasQuery(
     ObtenerDemandaProyectadaQuery obtenerDemandaProyectadaQuery,
-    // Lazy rompe el ciclo de construcción en el contenedor DI:
-    // InvVinBecas -> Ingresos -> ArancelEfectivo -> ArancelOptimo -> CostoCarrera -> CostosGastos -> InvVinBecas.
-    // En tiempo de ejecución solo se invoca en modo Manual (sin recursión); en Automático se omite.
-    Lazy<CalcularIngresosProyectadosQuery> calcularIngresosProyectadosQuery,
     IRepositorioDatosInstitucionales repositorioDatos,
     IRepositorioCarrera repositorioCarrera,
     IRepositorioEscenarioProyeccion repositorioEscenario,
-    IRepositorioInflacionAnual repositorioInflacion,
-    IRepositorioConfiguracionArancelCarrera repositorioConfiguracionArancel)
+    IRepositorioInflacionAnual repositorioInflacion)
 {
     public async Task<MatrizInvVinBecasDto> EjecutarAsync(
         int carreraId,
         int? escenarioProyeccionId,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        DemandaProyectadaDto? demandaPrecalculada = null,
+        IReadOnlyDictionary<int, decimal>? becasInstitucionalesPorPeriodo = null)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -34,7 +30,8 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
         if (escenarioProyeccionId is null or <= 0)
             return Vacia(carreraId, carrera?.Nombre ?? string.Empty, escenarioProyeccionId, escenario?.Nombre ?? string.Empty, "Selecciona un escenario para calcular Inv. Vin. Becas.");
 
-        var demanda = await obtenerDemandaProyectadaQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+        var demanda = demandaPrecalculada
+            ?? await obtenerDemandaProyectadaQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
         AgregarAdvertencia(advertencias, demanda.MensajeAdvertencia);
         AgregarAdvertencia(advertencias, demanda.MensajeAdvertenciaDocentes);
 
@@ -64,8 +61,15 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
             advertencias.Add("Presupuesto gobierno becas está en 0; Becas Gobierno quedan en 0.");
 
         var semestresPorAnio = datos.SemestresPorAnio > 0 ? datos.SemestresPorAnio : DatosInstitucionales.SemestresPorAnioPorDefecto;
-        var becasInstitucionales = await ObtenerBecasInstitucionalesPorPeriodoAsync(
-            carreraId, escenarioProyeccionId, periodos, advertencias, ct);
+        // KAN-44: Becas Institucionales NO es costo (es descuento al ingreso). Aquí se muestra como dato
+        // REFERENCIAL el valor real que viene de Demanda/Ingresos (si el llamador lo provee); todas las
+        // sumas de costo lo excluyen (CostosPorServicios/PE), así que no hay doble conteo.
+        var becasInstitucionales = periodos
+            .Select(p => becasInstitucionalesPorPeriodo != null
+                && becasInstitucionalesPorPeriodo.TryGetValue(p.PeriodoAcademicoId, out var b)
+                    ? decimal.Round(b, 2)
+                    : 0m)
+            .ToList();
 
         var valores = new List<InvVinBecasPeriodoDto>();
         for (var i = 0; i < periodos.Count; i++)
@@ -118,63 +122,6 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
             Filas = ConstruirFilas(valores),
             MensajeAdvertencia = ConstruirMensaje(advertencias)
         };
-    }
-
-    /// <summary>
-    /// Becas Institucionales por período = misma serie que Demanda e Ingresos → Ingresos Proyectados
-    /// (suma de Becas de todos los ciclos por período). Si el arancel está en modo Automático Costo
-    /// Carrera, no se invoca Ingresos Proyectados para evitar recursión con Costo de la Carrera.
-    /// </summary>
-    private async Task<IReadOnlyList<decimal>> ObtenerBecasInstitucionalesPorPeriodoAsync(
-        int carreraId,
-        int? escenarioProyeccionId,
-        IReadOnlyList<PeriodoCostoGastoDto> periodos,
-        List<string> advertencias,
-        CancellationToken ct)
-    {
-        var ceros = Enumerable.Repeat(0m, periodos.Count).ToList();
-
-        // Solo se consulta la configuración para detectar el modo Automático Costo Carrera y evitar
-        // la recursión con Costo de la Carrera. La existencia/validez del arancel la decide Ingresos Proyectados.
-        var configuracion = await repositorioConfiguracionArancel.ObtenerPorCarreraEscenarioAsync(carreraId, escenarioProyeccionId, ct);
-        if (configuracion is null && escenarioProyeccionId is not null)
-            configuracion = await repositorioConfiguracionArancel.ObtenerPorCarreraEscenarioAsync(carreraId, null, ct);
-
-        if (configuracion is not null)
-        {
-            var modo = Enum.TryParse<ModoCalculoArancel>(configuracion.ModoCalculoArancel, ignoreCase: true, out var m)
-                ? m
-                : ModoCalculoArancel.Manual;
-            if (modo == ModoCalculoArancel.AutomaticoCostoCarrera)
-            {
-                advertencias.Add("Becas institucionales no se calcularon porque el arancel está en modo Automático Costo Carrera y depende del propio costo consolidado.");
-                return ceros;
-            }
-        }
-
-        var ingresos = await calcularIngresosProyectadosQuery.Value.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
-
-        if (ingresos.ArancelEfectivo <= 0m)
-        {
-            advertencias.Add("No se pudo calcular Becas Institucionales porque no existe arancel efectivo para la carrera/escenario.");
-            AgregarAdvertencia(advertencias, ingresos.MensajeAdvertencia);
-            return ceros;
-        }
-
-        if (ingresos.CeldasPlanas.Count == 0)
-        {
-            advertencias.Add("No se pudo calcular Becas Institucionales porque no hay ingresos proyectados para esta carrera/escenario.");
-            AgregarAdvertencia(advertencias, ingresos.MensajeAdvertencia);
-            return ceros;
-        }
-
-        return periodos
-            .Select(periodo => decimal.Round(
-                ingresos.CeldasPlanas
-                    .Where(c => c.PeriodoAcademicoId == periodo.PeriodoAcademicoId)
-                    .Sum(c => c.Becas),
-                2))
-            .ToList();
     }
 
     private async Task<IReadOnlyList<decimal>> CalcularFactoresInflacionAsync(

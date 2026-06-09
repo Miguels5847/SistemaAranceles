@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.Interfaces.Persistencia;
+using SistemaAranceles.Domain.Constantes;
 using SistemaAranceles.Domain.Enums;
 using InfraRatio = SistemaAranceles.Infrastructure.Persistence.Entidades.RatioMaterialDemanda;
 
@@ -126,8 +127,80 @@ public sealed class RepositorioRatioMaterialDemanda(ContextoAplicacion contexto)
         await contexto.SaveChangesAsync(ct);
     }
 
-    private Task AsegurarTablaAsync(CancellationToken ct)
-        => contexto.Database.ExecuteSqlRawAsync("""
+    public async Task<int> SembrarRatiosPorDefectoAsync(
+        int carreraId,
+        IReadOnlyList<RatioPorDefecto> items,
+        CancellationToken ct = default)
+    {
+        await AsegurarTablaAsync(ct);
+
+        var existentes = await contexto.RatiosMaterialDemanda.AsNoTracking()
+            .Where(x => x.CarreraId == carreraId && x.EstaActivo)
+            .Select(x => new { x.Categoria, x.Concepto })
+            .ToListAsync(ct);
+        var existentesSet = existentes
+            .Select(x => (Categoria: x.Categoria.ToUpperInvariant(), Concepto: x.Concepto.ToUpperInvariant()))
+            .ToHashSet();
+
+        // El precio vive en item_material_insumo: re-resolvemos el vinculo por nombre en esta carrera.
+        var itemsPorNombre = await contexto.ItemsMaterialInsumo.AsNoTracking()
+            .Where(x => x.CarreraId == carreraId && x.EstaActivo)
+            .Select(x => new { x.Id, x.NombreItem })
+            .ToListAsync(ct);
+        var itemIdPorNombre = itemsPorNombre
+            .GroupBy(x => x.NombreItem, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
+
+        var nuevos = items
+            .Where(i => !existentesSet.Contains((i.Categoria.ToUpperInvariant(), i.Concepto.ToUpperInvariant())))
+            .Select(i => new InfraRatio
+            {
+                CarreraId = carreraId,
+                Categoria = i.Categoria,
+                Concepto = i.Concepto,
+                ItemMaterialInsumoId = i.ItemNombre is not null && itemIdPorNombre.TryGetValue(i.ItemNombre, out var itemId)
+                    ? itemId
+                    : null,
+                RatioConsumo = i.RatioConsumo,
+                UnidadRatio = i.UnidadRatio,
+                MesesOperativos = NormalizarMeses(i.UnidadRatio, i.MesesOperativos),
+                CantidadFijaAdicional = i.UnidadRatio == UnidadRatioMaterialExtensiones.PorDocenteText ? i.CantidadFijaAdicional : 0m,
+                AplicaInflacion = i.AplicaInflacion,
+                CreadoEn = DateTime.UtcNow,
+                EstaActivo = true
+            })
+            .ToList();
+
+        if (nuevos.Count == 0)
+            return 0;
+
+        await contexto.RatiosMaterialDemanda.AddRangeAsync(nuevos, ct);
+        await contexto.SaveChangesAsync(ct);
+        return nuevos.Count;
+    }
+
+    private static int NormalizarMeses(string unidad, int meses)
+        => unidad is UnidadRatioMaterialExtensiones.FijoPeriodoText
+            or UnidadRatioMaterialExtensiones.PorDocenteText
+            ? 1
+            : meses;
+
+    private static readonly SemaphoreSlim _gateEsquema = new(1, 1);
+    private static bool _esquemaListo;
+
+    // El DDL self-healing corre una sola vez por proceso (no en cada lectura).
+    private async Task AsegurarTablaAsync(CancellationToken ct)
+    {
+        if (_esquemaListo)
+            return;
+
+        await _gateEsquema.WaitAsync(ct);
+        try
+        {
+            if (_esquemaListo)
+                return;
+
+            await contexto.Database.ExecuteSqlRawAsync("""
             CREATE TABLE IF NOT EXISTS public.ratio_material_demanda (
                 id                         SERIAL PRIMARY KEY,
                 carrera_id                 INTEGER NULL REFERENCES public.carrera(id) ON DELETE CASCADE,
@@ -148,4 +221,11 @@ public sealed class RepositorioRatioMaterialDemanda(ContextoAplicacion contexto)
                 eliminado_por_usuario_id   INTEGER NULL
             );
             """, ct);
+            _esquemaListo = true;
+        }
+        finally
+        {
+            _gateEsquema.Release();
+        }
+    }
 }

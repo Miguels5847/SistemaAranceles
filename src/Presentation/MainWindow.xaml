@@ -20,6 +20,8 @@
         xmlns:vmMI="clr-namespace:SistemaAranceles.Presentation.ViewModels.MantenimientoInversion"
         xmlns:vmDIng="clr-namespace:SistemaAranceles.Presentation.ViewModels.DemandaIngresos"
         xmlns:vmCG="clr-namespace:SistemaAranceles.Presentation.ViewModels.CostosGastos"
+        xmlns:vmAFin="clr-namespace:SistemaAranceles.Presentation.ViewModels.AnalisisFinanciero"
+        xmlns:vmAmort="clr-namespace:SistemaAranceles.Presentation.ViewModels.Amortizacion"
         xmlns:vU="clr-namespace:SistemaAranceles.Presentation.Views.Usuarios"
         xmlns:vA="clr-namespace:SistemaAranceles.Presentation.Views.Auditoria"
         xmlns:vCF="clr-namespace:SistemaAranceles.Presentation.Views.CargosFacultad"
@@ -38,6 +40,8 @@
         xmlns:vMI="clr-namespace:SistemaAranceles.Presentation.Views.MantenimientoInversion"
         xmlns:vDIng="clr-namespace:SistemaAranceles.Presentation.Views.DemandaIngresos"
         xmlns:vCG="clr-namespace:SistemaAranceles.Presentation.Views.CostosGastos"
+        xmlns:vAFin="clr-namespace:SistemaAranceles.Presentation.Views.AnalisisFinanciero"
+        xmlns:vAmort="clr-namespace:SistemaAranceles.Presentation.Views.Amortizacion"
         Title="Sistema de Aranceles Universitarios"
         Width="1400"
         Height="820"
@@ -109,6 +113,12 @@
         <DataTemplate DataType="{x:Type vmCG:CostosGastosViewModel}">
             <vCG:CostosGastosView/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vmAFin:AnalisisFinancieroViewModel}">
+            <vAFin:AnalisisFinancieroView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmAmort:AmortizacionViewModel}">
+            <vAmort:AmortizacionView/>
+        </DataTemplate>
     </Window.Resources>
 
     <Grid>
@@ -151,60 +161,67 @@
 
                 <Separator Grid.Row="0" VerticalAlignment="Bottom" Background="#283593" Margin="0"/>
 
-                <ItemsControl Grid.Row="1" ItemsSource="{Binding MenuItems}" Margin="0,8,0,0">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Button Command="{Binding Comando}"
-                                    Visibility="{Binding EsVisible, Converter={StaticResource BoolToVisibilityConverter}}"
-                                    HorizontalContentAlignment="Left"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    Foreground="White"
-                                    FontSize="13"
-                                    Padding="10,8"
-                                    Margin="10,2"
-                                    Cursor="Hand"
-                                    ToolTip="{Binding Titulo}">
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
-                                                        <Grid>
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="4"/>
-                                                                <ColumnDefinition Width="*"/>
-                                                            </Grid.ColumnDefinitions>
-                                                            <Border x:Name="SelectionStripe" Background="#FFEB3B" CornerRadius="2" Opacity="0"/>
-                                                            <ContentPresenter Grid.Column="1" Margin="10,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                                                        </Grid>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="Root" Property="Background" Value="#283593"/>
-                                                        </Trigger>
-                                                        <DataTrigger Binding="{Binding EstaSeleccionado}" Value="True">
-                                                            <Setter TargetName="Root" Property="Background" Value="#3949AB"/>
-                                                            <Setter TargetName="SelectionStripe" Property="Opacity" Value="1"/>
-                                                            <Setter Property="FontWeight" Value="SemiBold"/>
-                                                            <Setter TargetName="Root" Property="Effect">
-                                                                <Setter.Value>
-                                                                    <DropShadowEffect Color="#0D143D" BlurRadius="12" ShadowDepth="2" Opacity="0.35"/>
-                                                                </Setter.Value>
-                                                            </Setter>
-                                                        </DataTrigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </Button.Style>
-                                <TextBlock Text="{Binding Titulo}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxWidth="166" LineHeight="17"/>
-                            </Button>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <ScrollViewer Grid.Row="1"
+                              Margin="0,8,0,0"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              PanningMode="VerticalOnly"
+                              CanContentScroll="False">
+                    <ItemsControl ItemsSource="{Binding MenuItems}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Command="{Binding Comando}"
+                                        Visibility="{Binding EsVisible, Converter={StaticResource BoolToVisibilityConverter}}"
+                                        HorizontalContentAlignment="Left"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Foreground="White"
+                                        FontSize="13"
+                                        Padding="10,8"
+                                        Margin="10,2"
+                                        Cursor="Hand"
+                                        ToolTip="{Binding Titulo}">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="4"/>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <Border x:Name="SelectionStripe" Background="#FFEB3B" CornerRadius="2" Opacity="0"/>
+                                                                <ContentPresenter Grid.Column="1" Margin="10,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                                            </Grid>
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="Root" Property="Background" Value="#283593"/>
+                                                            </Trigger>
+                                                            <DataTrigger Binding="{Binding EstaSeleccionado}" Value="True">
+                                                                <Setter TargetName="Root" Property="Background" Value="#3949AB"/>
+                                                                <Setter TargetName="SelectionStripe" Property="Opacity" Value="1"/>
+                                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                <Setter TargetName="Root" Property="Effect">
+                                                                    <Setter.Value>
+                                                                        <DropShadowEffect Color="#0D143D" BlurRadius="12" ShadowDepth="2" Opacity="0.35"/>
+                                                                    </Setter.Value>
+                                                                </Setter>
+                                                            </DataTrigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </Button.Style>
+                                    <TextBlock Text="{Binding Titulo}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxWidth="166" LineHeight="17"/>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
 
                 <TextBlock Grid.Row="2" Text="{Binding Bienvenida}" Foreground="#7986CB" FontSize="10" TextWrapping="Wrap" Margin="16,8,16,16"/>
             </Grid>

@@ -13,6 +13,14 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
     private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
 
+    // KAN-44B: se editan en el módulo Amortización; aquí solo se preservan al guardar.
+    private decimal _porcentajeFinanciadoPrestamo;
+    private decimal _porcentajeFinanciadoConvenio;
+    private string? _nombreEntidadPrestamo;
+    private string? _nombreEntidadConvenio;
+    private decimal _tasaInteresAnualPrestamo = DatosInstitucionalesDominio.TasaInteresAnualPrestamoPorDefecto;
+    private int _plazoPrestamoMeses = DatosInstitucionalesDominio.PlazoPrestamoMesesPorDefecto;
+
     public DatosInstitucionalesViewModel(IServiceProvider serviceProvider, SesionActual sesionActual)
     {
         _serviceProvider = serviceProvider;
@@ -33,7 +41,7 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
     [ObservableProperty] private int _mesesCapitalTrabajo = DatosInstitucionalesDominio.MesesCapitalTrabajoPorDefecto;
     [ObservableProperty] private decimal _porcentajeImprevistosInversion = DatosInstitucionalesDominio.PorcentajeImprevistosInversionPorDefecto;
 
-    // KAN-35
+    // Parámetros de Demanda e Ingresos
     [ObservableProperty] private decimal _porcentajeMatriculaDefault = DatosInstitucionalesDominio.PorcentajeMatriculaDefaultPorDefecto;
     [ObservableProperty] private decimal _porcentajeBecasInstitucionales = DatosInstitucionalesDominio.PorcentajeBecasInstitucionalesPorDefecto;
     [ObservableProperty]
@@ -56,13 +64,26 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
     [ObservableProperty] private string? _fuenteInflacion;
     [ObservableProperty] private int? _anioBaseProyeccion;
 
-    // KAN-36
+    // Parámetros de Costos y Gastos
     [ObservableProperty] private decimal _presupuestoBaseUniversidad = DatosInstitucionalesDominio.PresupuestoBaseUniversidadPorDefecto;
     [ObservableProperty] private decimal _presupuestoGobiernoBecas = DatosInstitucionalesDominio.PresupuestoGobiernoBecasPorDefecto;
     [ObservableProperty] private decimal _porcentajeInvestigacion = DatosInstitucionalesDominio.PorcentajeInvestigacionPorDefecto;
     [ObservableProperty] private decimal _porcentajeVinculacion = DatosInstitucionalesDominio.PorcentajeVinculacionPorDefecto;
     [ObservableProperty] private decimal _porcentajeBecasEstudiantes = DatosInstitucionalesDominio.PorcentajeBecasEstudiantesPorDefecto;
     [ObservableProperty] private decimal _porcentajeBecasDocentes = DatosInstitucionalesDominio.PorcentajeBecasDocentesPorDefecto;
+
+    // Parámetros de Análisis Financiero
+    [ObservableProperty] private decimal _tasaInteresFinanciera = DatosInstitucionalesDominio.TasaInteresFinancieraPorDefecto;
+    [ObservableProperty] private decimal _premioRiesgo = DatosInstitucionalesDominio.PremioRiesgoPorDefecto;
+    [ObservableProperty] private decimal _tmrManual = DatosInstitucionalesDominio.TmrManualPorDefecto;
+    [ObservableProperty] private bool _usarTmrManual = DatosInstitucionalesDominio.UsarTmrManualPorDefecto;
+
+    // Parámetros de la bisección del arancel óptimo (VAN=0)
+    [ObservableProperty] private decimal _toleranciaVanArancel = DatosInstitucionalesDominio.ToleranciaVanArancelPorDefecto;
+    [ObservableProperty] private decimal _margenAproximacionVanArancel = DatosInstitucionalesDominio.MargenAproximacionVanArancelPorDefecto;
+    [ObservableProperty] private decimal _arancelMinimoBusqueda = DatosInstitucionalesDominio.ArancelMinimoBusquedaPorDefecto;
+    [ObservableProperty] private decimal _arancelMaximoBusqueda = DatosInstitucionalesDominio.ArancelMaximoBusquedaPorDefecto;
+    [ObservableProperty] private int _maxIteracionesBiseccion = DatosInstitucionalesDominio.MaxIteracionesBiseccionPorDefecto;
 
     [ObservableProperty] private string? _fuenteNotas;
 
@@ -144,6 +165,15 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
                 PorcentajeVinculacion = DatosInstitucionalesDominio.PorcentajeVinculacionPorDefecto;
                 PorcentajeBecasEstudiantes = DatosInstitucionalesDominio.PorcentajeBecasEstudiantesPorDefecto;
                 PorcentajeBecasDocentes = DatosInstitucionalesDominio.PorcentajeBecasDocentesPorDefecto;
+                TasaInteresFinanciera = DatosInstitucionalesDominio.TasaInteresFinancieraPorDefecto;
+                PremioRiesgo = DatosInstitucionalesDominio.PremioRiesgoPorDefecto;
+                TmrManual = DatosInstitucionalesDominio.TmrManualPorDefecto;
+                UsarTmrManual = DatosInstitucionalesDominio.UsarTmrManualPorDefecto;
+                ToleranciaVanArancel = DatosInstitucionalesDominio.ToleranciaVanArancelPorDefecto;
+                MargenAproximacionVanArancel = DatosInstitucionalesDominio.MargenAproximacionVanArancelPorDefecto;
+                ArancelMinimoBusqueda = DatosInstitucionalesDominio.ArancelMinimoBusquedaPorDefecto;
+                ArancelMaximoBusqueda = DatosInstitucionalesDominio.ArancelMaximoBusquedaPorDefecto;
+                MaxIteracionesBiseccion = DatosInstitucionalesDominio.MaxIteracionesBiseccionPorDefecto;
                 UltimaActualizacionTexto = "Sin registros previos. Ingrese los datos iniciales.";
                 RecalcularMetricas();
                 return;
@@ -209,6 +239,21 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
                     PorcentajeVinculacion = PorcentajeVinculacion,
                     PorcentajeBecasEstudiantes = PorcentajeBecasEstudiantes,
                     PorcentajeBecasDocentes = PorcentajeBecasDocentes,
+                    TasaInteresFinanciera = TasaInteresFinanciera,
+                    PremioRiesgo = PremioRiesgo,
+                    TmrManual = TmrManual,
+                    UsarTmrManual = UsarTmrManual,
+                    ToleranciaVanArancel = ToleranciaVanArancel,
+                    MargenAproximacionVanArancel = MargenAproximacionVanArancel,
+                    ArancelMinimoBusqueda = ArancelMinimoBusqueda,
+                    ArancelMaximoBusqueda = ArancelMaximoBusqueda,
+                    MaxIteracionesBiseccion = MaxIteracionesBiseccion,
+                    PorcentajeFinanciadoPrestamo = _porcentajeFinanciadoPrestamo,
+                    PorcentajeFinanciadoConvenio = _porcentajeFinanciadoConvenio,
+                    NombreEntidadPrestamo = _nombreEntidadPrestamo,
+                    NombreEntidadConvenio = _nombreEntidadConvenio,
+                    TasaInteresAnualPrestamo = _tasaInteresAnualPrestamo,
+                    PlazoPrestamoMeses = _plazoPrestamoMeses,
                     FuenteNotas = FuenteNotas,
                 },
                 _sesionActual.UsuarioId);
@@ -278,6 +323,21 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
         PorcentajeVinculacion = dto.PorcentajeVinculacion;
         PorcentajeBecasEstudiantes = dto.PorcentajeBecasEstudiantes;
         PorcentajeBecasDocentes = dto.PorcentajeBecasDocentes;
+        TasaInteresFinanciera = dto.TasaInteresFinanciera;
+        PremioRiesgo = dto.PremioRiesgo;
+        TmrManual = dto.TmrManual;
+        UsarTmrManual = dto.UsarTmrManual;
+        ToleranciaVanArancel = dto.ToleranciaVanArancel;
+        MargenAproximacionVanArancel = dto.MargenAproximacionVanArancel;
+        ArancelMinimoBusqueda = dto.ArancelMinimoBusqueda;
+        ArancelMaximoBusqueda = dto.ArancelMaximoBusqueda;
+        MaxIteracionesBiseccion = dto.MaxIteracionesBiseccion;
+        _porcentajeFinanciadoPrestamo = dto.PorcentajeFinanciadoPrestamo;
+        _porcentajeFinanciadoConvenio = dto.PorcentajeFinanciadoConvenio;
+        _nombreEntidadPrestamo = dto.NombreEntidadPrestamo;
+        _nombreEntidadConvenio = dto.NombreEntidadConvenio;
+        _tasaInteresAnualPrestamo = dto.TasaInteresAnualPrestamo;
+        _plazoPrestamoMeses = dto.PlazoPrestamoMeses;
         FuenteNotas = dto.FuenteNotas;
         MasaSalarialMensual = dto.MasaSalarialMensual;
         TotalAnualPlantaCentral = dto.TotalAnualPlantaCentral;

@@ -29,6 +29,37 @@ public sealed class RepositorioCatalogoActivoBase(ContextoAplicacion contexto) :
     public async Task AgregarAsync(DominioCatalogo item, CancellationToken ct = default)
         => await contexto.CatalogosActivoBase.AddAsync(MapearAInfra(item), ct);
 
+    public async Task<int> SembrarPorDefectoAsync(
+        IReadOnlyList<SistemaAranceles.Domain.Constantes.ActivoBasePorDefecto> items,
+        CancellationToken ct = default)
+    {
+        var existentes = await contexto.CatalogosActivoBase.AsNoTracking()
+            .Where(x => x.EstaActivo)
+            .Select(x => x.Descripcion)
+            .ToListAsync(ct);
+        var set = existentes.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var nuevos = items
+            .Where(i => !set.Contains(i.Descripcion))
+            .Select(i => new DominioCatalogo(
+                i.Descripcion,
+                i.Categoria,
+                i.TipoCalculo,
+                i.CantidadDefault,
+                i.UnidadMedida,
+                i.ValorUnitario,
+                i.FactorMultiplicador,
+                i.OffsetCantidad,
+                i.VidaUtilAnios,
+                i.PorcentajeResidual))
+            .ToList();
+
+        foreach (var nuevo in nuevos)
+            await contexto.CatalogosActivoBase.AddAsync(MapearAInfra(nuevo), ct);
+
+        return nuevos.Count;
+    }
+
     public void Actualizar(DominioCatalogo item)
     {
         var rastreado = contexto.ChangeTracker.Entries<InfraCatalogo>()

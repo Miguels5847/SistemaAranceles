@@ -20,6 +20,17 @@ public sealed class DatosInstitucionales : EntidadDominioBase
     public const decimal PorcentajeVinculacionPorDefecto = 1m;
     public const decimal PorcentajeBecasEstudiantesPorDefecto = 90m;
     public const decimal PorcentajeBecasDocentesPorDefecto = 10m;
+    public const decimal TasaInteresFinancieraPorDefecto = 8m;
+    public const decimal PremioRiesgoPorDefecto = 5m;
+    public const decimal TmrManualPorDefecto = 0m;
+    public const bool UsarTmrManualPorDefecto = false;
+    public const decimal ToleranciaVanArancelPorDefecto = 1m;
+    public const decimal MargenAproximacionVanArancelPorDefecto = 2m;
+    public const decimal ArancelMinimoBusquedaPorDefecto = 500m;
+    public const decimal ArancelMaximoBusquedaPorDefecto = 5000m;
+    public const int MaxIteracionesBiseccionPorDefecto = 60;
+    public const decimal TasaInteresAnualPrestamoPorDefecto = 15.02m;
+    public const int PlazoPrestamoMesesPorDefecto = 24;
 
     private DatosInstitucionales()
     {
@@ -35,6 +46,17 @@ public sealed class DatosInstitucionales : EntidadDominioBase
         PorcentajeVinculacion = PorcentajeVinculacionPorDefecto;
         PorcentajeBecasEstudiantes = PorcentajeBecasEstudiantesPorDefecto;
         PorcentajeBecasDocentes = PorcentajeBecasDocentesPorDefecto;
+        TasaInteresFinanciera = TasaInteresFinancieraPorDefecto;
+        PremioRiesgo = PremioRiesgoPorDefecto;
+        TmrManual = TmrManualPorDefecto;
+        UsarTmrManual = UsarTmrManualPorDefecto;
+        ToleranciaVanArancel = ToleranciaVanArancelPorDefecto;
+        MargenAproximacionVanArancel = MargenAproximacionVanArancelPorDefecto;
+        ArancelMinimoBusqueda = ArancelMinimoBusquedaPorDefecto;
+        ArancelMaximoBusqueda = ArancelMaximoBusquedaPorDefecto;
+        MaxIteracionesBiseccion = MaxIteracionesBiseccionPorDefecto;
+        TasaInteresAnualPrestamo = TasaInteresAnualPrestamoPorDefecto;
+        PlazoPrestamoMeses = PlazoPrestamoMesesPorDefecto;
     }
 
     public DatosInstitucionales(
@@ -96,6 +118,28 @@ public sealed class DatosInstitucionales : EntidadDominioBase
     public decimal PorcentajeVinculacion { get; private set; } = PorcentajeVinculacionPorDefecto;
     public decimal PorcentajeBecasEstudiantes { get; private set; } = PorcentajeBecasEstudiantesPorDefecto;
     public decimal PorcentajeBecasDocentes { get; private set; } = PorcentajeBecasDocentesPorDefecto;
+
+    // KAN-40: parámetros Épica 11 (Análisis Financiero)
+    public decimal TasaInteresFinanciera { get; private set; } = TasaInteresFinancieraPorDefecto;
+    public decimal PremioRiesgo { get; private set; } = PremioRiesgoPorDefecto;
+    public decimal TmrManual { get; private set; } = TmrManualPorDefecto;
+    public bool UsarTmrManual { get; private set; } = UsarTmrManualPorDefecto;
+
+    // KAN-44: parámetros de la bisección del arancel óptimo (VAN=0)
+    public decimal ToleranciaVanArancel { get; private set; } = ToleranciaVanArancelPorDefecto;
+    public decimal MargenAproximacionVanArancel { get; private set; } = MargenAproximacionVanArancelPorDefecto;
+    public decimal ArancelMinimoBusqueda { get; private set; } = ArancelMinimoBusquedaPorDefecto;
+    public decimal ArancelMaximoBusqueda { get; private set; } = ArancelMaximoBusquedaPorDefecto;
+    public int MaxIteracionesBiseccion { get; private set; } = MaxIteracionesBiseccionPorDefecto;
+
+    // KAN-44B: parámetros módulo Amortización (3 fuentes de financiamiento)
+    public decimal PorcentajeFinanciadoPrestamo { get; private set; }
+    public decimal PorcentajeFinanciadoConvenio { get; private set; }
+    public string? NombreEntidadPrestamo { get; private set; }
+    public string? NombreEntidadConvenio { get; private set; }
+    public decimal TasaInteresAnualPrestamo { get; private set; } = TasaInteresAnualPrestamoPorDefecto;
+    public int PlazoPrestamoMeses { get; private set; } = PlazoPrestamoMesesPorDefecto;
+    public decimal PorcentajeRecursosPropios => 100m - PorcentajeFinanciadoPrestamo - PorcentajeFinanciadoConvenio;
 
     public DateTimeOffset FechaActualizacion { get; private set; }
     public int ActualizadoPorUsuarioId { get; private set; }
@@ -199,6 +243,68 @@ public sealed class DatosInstitucionales : EntidadDominioBase
         PorcentajeVinculacion = GuardiaDominio.Porcentaje(porcentajeVinculacion, "Porcentaje vinculación");
         PorcentajeBecasEstudiantes = GuardiaDominio.Porcentaje(porcentajeBecasEstudiantes, "Porcentaje becas estudiantes");
         PorcentajeBecasDocentes = GuardiaDominio.Porcentaje(porcentajeBecasDocentes, "Porcentaje becas docentes");
+    }
+
+    /// <summary>KAN-40: parámetros globales para módulo Análisis Financiero (TMR/VAN/TIR).</summary>
+    public void CambiarParametrosAnalisisFinanciero(
+        decimal tasaInteresFinanciera,
+        decimal premioRiesgo,
+        decimal tmrManual,
+        bool usarTmrManual)
+    {
+        TasaInteresFinanciera = GuardiaDominio.Porcentaje(tasaInteresFinanciera, "Tasa interés financiera");
+        PremioRiesgo = GuardiaDominio.Porcentaje(premioRiesgo, "Premio al riesgo");
+        TmrManual = GuardiaDominio.Porcentaje(tmrManual, "TMR manual");
+        UsarTmrManual = usarTmrManual;
+    }
+
+    /// <summary>KAN-44: parámetros de la bisección del arancel óptimo (VAN=0).</summary>
+    public void CambiarParametrosArancelOptimo(
+        decimal toleranciaVan,
+        decimal margenAproximacionVan,
+        decimal arancelMinimoBusqueda,
+        decimal arancelMaximoBusqueda,
+        int maxIteracionesBiseccion)
+    {
+        if (toleranciaVan <= 0m)
+            throw new DominioException("Tolerancia VAN debe ser mayor a 0.");
+        if (margenAproximacionVan < toleranciaVan)
+            throw new DominioException("Margen de aproximación VAN debe ser mayor o igual a la tolerancia.");
+        if (arancelMinimoBusqueda <= 0m)
+            throw new DominioException("Arancel mínimo de búsqueda debe ser mayor a 0.");
+        if (arancelMaximoBusqueda <= arancelMinimoBusqueda)
+            throw new DominioException("Arancel máximo de búsqueda debe ser mayor al mínimo.");
+        if (maxIteracionesBiseccion is <= 0 or > 500)
+            throw new DominioException("Máximo de iteraciones de bisección debe estar entre 1 y 500.");
+
+        ToleranciaVanArancel = decimal.Round(toleranciaVan, 2);
+        MargenAproximacionVanArancel = decimal.Round(margenAproximacionVan, 2);
+        ArancelMinimoBusqueda = decimal.Round(arancelMinimoBusqueda, 2);
+        ArancelMaximoBusqueda = decimal.Round(arancelMaximoBusqueda, 2);
+        MaxIteracionesBiseccion = maxIteracionesBiseccion;
+    }
+
+    /// <summary>KAN-44B: parámetros de financiamiento del módulo Amortización (3 fuentes).</summary>
+    public void CambiarParametrosFinanciamiento(
+        decimal porcentajePrestamo,
+        decimal porcentajeConvenio,
+        string? nombrePrestamo,
+        string? nombreConvenio,
+        decimal tasaInteresAnual,
+        int plazoMeses)
+    {
+        if (porcentajePrestamo + porcentajeConvenio > 100m)
+            throw new DominioException("La suma de % préstamo y % convenio no puede superar 100%.");
+
+        PorcentajeFinanciadoPrestamo = GuardiaDominio.Porcentaje(porcentajePrestamo, "Porcentaje préstamo");
+        PorcentajeFinanciadoConvenio = GuardiaDominio.Porcentaje(porcentajeConvenio, "Porcentaje convenio");
+        NombreEntidadPrestamo = string.IsNullOrWhiteSpace(nombrePrestamo) ? null : nombrePrestamo.Trim();
+        NombreEntidadConvenio = string.IsNullOrWhiteSpace(nombreConvenio) ? null : nombreConvenio.Trim();
+        TasaInteresAnualPrestamo = GuardiaDominio.Porcentaje(tasaInteresAnual, "Tasa interés préstamo");
+
+        if (plazoMeses is <= 0 or > 360)
+            throw new DominioException("Plazo del préstamo debe estar entre 1 y 360 meses.");
+        PlazoPrestamoMeses = plazoMeses;
     }
 
     public void RehidratarFechaActualizacion(DateTimeOffset fecha)

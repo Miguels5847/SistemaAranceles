@@ -12,7 +12,6 @@ public sealed class ObtenerMatrizInversionesQuery(
     IRepositorioInversionFutura repositorioInversionFutura,
     IRepositorioInflacionAnual repositorioInflacion,
     IRepositorioProyeccionEstudiantes repositorioProyeccionEstudiantes,
-    IServicioEstudiantesTotales servicioEstudiantesTotales,
     IServicioDocentesTotales servicioDocentesTotales)
 {
     public async Task<MatrizInversionesDto> EjecutarAsync(int carreraId, int escenarioProyeccionId, int? aniosProyeccion = null, CancellationToken ct = default)
@@ -34,6 +33,16 @@ public sealed class ObtenerMatrizInversionesQuery(
         var manuales = inversiones.ToDictionary(i => $"{i.ActivoFijoId}|{i.Anio}|{i.Semestre}", i => i.CantidadProyectada);
         var inflaciones = await repositorioInflacion.ListarPorRangoAsync(periodos.Min(p => p.Anio), periodos.Max(p => p.Anio), ct);
 
+        // Totales por período relativo precargados una sola vez (evita N+1: antes se consultaba
+        // estudiantes/docentes por cada celda activo×período, reconstruyendo proyección y consolidado).
+        var estudiantesPorPeriodo = proyeccion.Detalles
+            .GroupBy(d => d.NumeroPeriodo)
+            .ToDictionary(g => g.Key, g => decimal.Round(g.Sum(d => d.TotalEstudiantes), 4));
+        var docentesPorPeriodo = await servicioDocentesTotales.ObtenerTotalesDocentesPorPeriodoAsync(
+            carreraId,
+            escenarioProyeccionId,
+            ct);
+
         var filas = new List<FilaMatrizInversionDto>();
         foreach (var activo in activos.OrderBy(a => a.Categoria).ThenBy(a => a.Descripcion))
         {
@@ -42,8 +51,8 @@ public sealed class ObtenerMatrizInversionesQuery(
             {
                 var esInicial = periodo.NumeroPeriodo == 1;
                 var cantidad = esInicial
-                    ? await ResolverCantidadInicialAsync(activo, periodo, carreraId, escenarioProyeccionId, ct)
-                    : await ResolverCantidadAsync(activo, periodo, manuales, carreraId, escenarioProyeccionId, ct);
+                    ? ResolverCantidadInicial(activo, periodo, estudiantesPorPeriodo, docentesPorPeriodo)
+                    : ResolverCantidad(activo, periodo, manuales, estudiantesPorPeriodo, docentesPorPeriodo);
 
                 var factor = CalculoInflacionAplicada.CalcularFactorPeriodo(inflaciones, proyeccion.AnioBase, periodo.Anio, periodo.Semestre);
                 celdas.Add(new CeldaInversionDto
@@ -116,25 +125,37 @@ public sealed class ObtenerMatrizInversionesQuery(
         return anios is > 0 ? periodos.Take(anios.Value * 2) : periodos;
     }
 
-    private async Task<decimal> ResolverCantidadInicialAsync(ActivoFijo activo, PeriodoInversionDto periodo, int carreraId, int escenarioId, CancellationToken ct)
+    private static decimal ResolverCantidadInicial(
+        ActivoFijo activo,
+        PeriodoInversionDto periodo,
+        IReadOnlyDictionary<int, decimal> estudiantesPorPeriodo,
+        IReadOnlyDictionary<int, decimal> docentesPorPeriodo)
     {
         return activo.TipoCalculoCantidad switch
         {
-            TipoCalculoCantidad.PorEstudiante => RedondearUnidad(await servicioEstudiantesTotales.ObtenerTotalEstudiantesPorSemestreAsync(carreraId, escenarioId, periodo.Anio, periodo.Semestre, ct)),
-            TipoCalculoCantidad.PorDocente => RedondearUnidad(await servicioDocentesTotales.ObtenerTotalDocentesPorSemestreAsync(carreraId, escenarioId, periodo.Anio, periodo.Semestre, ct)),
+            TipoCalculoCantidad.PorEstudiante => RedondearUnidad(ObtenerTotalPeriodo(estudiantesPorPeriodo, periodo)),
+            TipoCalculoCantidad.PorDocente => RedondearUnidad(ObtenerTotalPeriodo(docentesPorPeriodo, periodo)),
             _ => activo.Cantidad
         };
     }
 
-    private async Task<decimal> ResolverCantidadAsync(ActivoFijo activo, PeriodoInversionDto periodo, IReadOnlyDictionary<string, decimal> manuales, int carreraId, int escenarioId, CancellationToken ct)
+    private static decimal ResolverCantidad(
+        ActivoFijo activo,
+        PeriodoInversionDto periodo,
+        IReadOnlyDictionary<string, decimal> manuales,
+        IReadOnlyDictionary<int, decimal> estudiantesPorPeriodo,
+        IReadOnlyDictionary<int, decimal> docentesPorPeriodo)
     {
         return activo.TipoCalculoCantidad switch
         {
-            TipoCalculoCantidad.PorEstudiante => RedondearUnidad(await servicioEstudiantesTotales.ObtenerTotalEstudiantesPorSemestreAsync(carreraId, escenarioId, periodo.Anio, periodo.Semestre, ct)),
-            TipoCalculoCantidad.PorDocente => RedondearUnidad(await servicioDocentesTotales.ObtenerTotalDocentesPorSemestreAsync(carreraId, escenarioId, periodo.Anio, periodo.Semestre, ct)),
+            TipoCalculoCantidad.PorEstudiante => RedondearUnidad(ObtenerTotalPeriodo(estudiantesPorPeriodo, periodo)),
+            TipoCalculoCantidad.PorDocente => RedondearUnidad(ObtenerTotalPeriodo(docentesPorPeriodo, periodo)),
             _ => manuales.TryGetValue($"{activo.Id}|{periodo.Anio}|{periodo.Semestre}", out var cantidad) ? cantidad : 0m
         };
     }
+
+    private static decimal ObtenerTotalPeriodo(IReadOnlyDictionary<int, decimal> totalesPorPeriodo, PeriodoInversionDto periodo)
+        => totalesPorPeriodo.TryGetValue(periodo.NumeroPeriodo, out var total) ? total : 0m;
 
     private static decimal RedondearUnidad(decimal valor)
         => decimal.Round(valor, 0, MidpointRounding.AwayFromZero);

@@ -37,12 +37,10 @@ public sealed class CostoGastoRubroDto
     public string FormatoValor { get; init; } = FormatoMatrizCostosGastos.Moneda;
 
     public IReadOnlyList<string> PeriodosDisplay => Periodos
-        .Select(v => EsEncabezadoGrupo ? string.Empty : FormatoMatrizCostosGastos.Formatear(v, FormatoValor))
+        .Select(v => FormatoMatrizCostosGastos.Formatear(v, FormatoValor))
         .ToList();
 
-    public string TotalDisplay => EsEncabezadoGrupo
-        ? string.Empty
-        : FormatoMatrizCostosGastos.Formatear(Total, FormatoValor);
+    public string TotalDisplay => FormatoMatrizCostosGastos.Formatear(Total, FormatoValor);
 }
 
 public sealed class PonderacionCostoGastoDto
@@ -55,12 +53,10 @@ public sealed class PonderacionCostoGastoDto
     public bool EsTotal { get; init; }
 
     public IReadOnlyList<string> PeriodosDisplay => Periodos
-        .Select(v => EsEncabezadoGrupo ? string.Empty : FormatoMatrizCostosGastos.Formatear(v, FormatoMatrizCostosGastos.Porcentaje))
+        .Select(v => FormatoMatrizCostosGastos.Formatear(v, FormatoMatrizCostosGastos.Porcentaje))
         .ToList();
 
-    public string TotalDisplay => EsEncabezadoGrupo
-        ? string.Empty
-        : FormatoMatrizCostosGastos.Formatear(Total, FormatoMatrizCostosGastos.Porcentaje);
+    public string TotalDisplay => FormatoMatrizCostosGastos.Formatear(Total, FormatoMatrizCostosGastos.Porcentaje);
 }
 
 public sealed class InvVinBecasPeriodoDto
@@ -110,25 +106,72 @@ public sealed class CostoGastoPeriodoDto
     public int NumeroPeriodo { get; init; }
     public string EtiquetaPeriodo { get; init; } = string.Empty;
     public decimal Mantenimiento { get; init; }
+    public decimal MantenimientoEdificio { get; init; }
     public decimal CapacitacionDocente { get; init; }
+    public decimal Internacionalizacion { get; init; }
+    public decimal InsumosPracticasLaboratorios { get; init; }
     public decimal SueldosDocentes { get; init; }
+    public decimal TiempoCompletoPhd { get; init; }
+    public decimal TiempoCompletoMgs { get; init; }
+    public decimal MedioTiempo { get; init; }
+    public decimal TiempoParcial { get; init; }
+    public decimal OcasionalTipo2TecnicoDocente { get; init; }
     public decimal SeguroEstudiantil { get; init; }
+    public decimal CostoSeguroEstudiantil { get; init; }
     public decimal BecasInstitucionales { get; init; }
     public decimal Investigacion { get; init; }
     public decimal Vinculacion { get; init; }
+    public decimal MaterialesSuministros { get; init; }
     public decimal Depreciacion { get; init; }
-    public decimal GastosAdministracion { get; init; }
+    public decimal AdministracionCentral { get; init; }
+    public decimal Decano { get; init; }
+    public decimal Subdecano { get; init; }
+    public decimal DirectorCarrera { get; init; }
+    public decimal Secretario { get; init; }
+    public decimal AuxiliarSecretaria { get; init; }
+    public decimal Coordinador { get; init; }
+    public decimal BienestarEstudiantil { get; init; }
+    public decimal Bibliotecario { get; init; }
+    public decimal AuxiliarServicio { get; init; }
+    public decimal Guardia { get; init; }
     public decimal MarketingComunicacion { get; init; }
     public decimal ServiciosBasicos { get; init; }
     public decimal AmortizacionActivosDiferidos { get; init; }
+    public decimal Amortizacion { get; init; }
     public decimal ImprevistosRecargo { get; init; }
-    public decimal GastoFinanciero { get; init; }
+    public decimal Interes { get; init; }
     public decimal TotalBecasGobierno { get; init; }
 
-    public decimal CostosServicios => Mantenimiento + CapacitacionDocente + SueldosDocentes + SeguroEstudiantil
-        + BecasInstitucionales + Investigacion + Vinculacion + Depreciacion;
+    public decimal CostosPorServicios => MantenimientoEdificio
+        + CapacitacionDocente
+        + Internacionalizacion
+        + InsumosPracticasLaboratorios
+        + TiempoCompletoPhd
+        + TiempoCompletoMgs
+        + MedioTiempo
+        + TiempoParcial
+        + OcasionalTipo2TecnicoDocente
+        + CostoSeguroEstudiantil
+        // BecasInstitucionales NO suma: es descuento al ingreso (Demanda), dato referencial aquí (KAN-44).
+        + Investigacion
+        + Vinculacion
+        + MaterialesSuministros
+        + Depreciacion;
+    public decimal CostosServicios => CostosPorServicios;
+    public decimal GastosAdministracion => AdministracionCentral
+        + Decano
+        + Subdecano
+        + DirectorCarrera
+        + Secretario
+        + AuxiliarSecretaria
+        + Coordinador
+        + BienestarEstudiantil
+        + Bibliotecario
+        + AuxiliarServicio
+        + Guardia;
     public decimal GastosVentas => MarketingComunicacion;
-    public decimal OtrosGastos => ServiciosBasicos + AmortizacionActivosDiferidos + ImprevistosRecargo;
+    public decimal OtrosGastos => ServiciosBasicos + Amortizacion;
+    public decimal GastoFinanciero => Interes;
     public decimal TotalCostosGastos => CostosServicios + GastosAdministracion + GastosVentas + OtrosGastos + GastoFinanciero;
     public decimal TotalDescontadoBecasGobierno => TotalCostosGastos - TotalBecasGobierno;
 }

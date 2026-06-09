@@ -58,6 +58,24 @@ public sealed class ConfigurarDatosInstitucionalesCommand(
                 dto.PorcentajeVinculacion,
                 dto.PorcentajeBecasEstudiantes,
                 dto.PorcentajeBecasDocentes);
+            datos.CambiarParametrosAnalisisFinanciero(
+                dto.TasaInteresFinanciera,
+                dto.PremioRiesgo,
+                dto.TmrManual,
+                dto.UsarTmrManual);
+            datos.CambiarParametrosArancelOptimo(
+                dto.ToleranciaVanArancel,
+                dto.MargenAproximacionVanArancel,
+                dto.ArancelMinimoBusqueda,
+                dto.ArancelMaximoBusqueda,
+                dto.MaxIteracionesBiseccion);
+            datos.CambiarParametrosFinanciamiento(
+                dto.PorcentajeFinanciadoPrestamo,
+                dto.PorcentajeFinanciadoConvenio,
+                dto.NombreEntidadPrestamo,
+                dto.NombreEntidadConvenio,
+                dto.TasaInteresAnualPrestamo,
+                dto.PlazoPrestamoMeses);
             repositorio.Agregar(datos);
         }
         else
@@ -95,6 +113,24 @@ public sealed class ConfigurarDatosInstitucionalesCommand(
                 dto.PorcentajeVinculacion,
                 dto.PorcentajeBecasEstudiantes,
                 dto.PorcentajeBecasDocentes);
+            existente.CambiarParametrosAnalisisFinanciero(
+                dto.TasaInteresFinanciera,
+                dto.PremioRiesgo,
+                dto.TmrManual,
+                dto.UsarTmrManual);
+            existente.CambiarParametrosArancelOptimo(
+                dto.ToleranciaVanArancel,
+                dto.MargenAproximacionVanArancel,
+                dto.ArancelMinimoBusqueda,
+                dto.ArancelMaximoBusqueda,
+                dto.MaxIteracionesBiseccion);
+            existente.CambiarParametrosFinanciamiento(
+                dto.PorcentajeFinanciadoPrestamo,
+                dto.PorcentajeFinanciadoConvenio,
+                dto.NombreEntidadPrestamo,
+                dto.NombreEntidadConvenio,
+                dto.TasaInteresAnualPrestamo,
+                dto.PlazoPrestamoMeses);
             existente.RegistrarActualizacion(usuarioId, dto.FuenteNotas);
             repositorio.Actualizar(existente);
             datos = existente;

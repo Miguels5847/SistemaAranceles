@@ -5,7 +5,9 @@ using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.DTOs.CostosGastos;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.CostosGastos;
+using SistemaAranceles.Application.UseCases.DemandaIngresos;
 using SistemaAranceles.Domain.Entities;
+using SistemaAranceles.Presentation.State;
 
 namespace SistemaAranceles.Presentation.ViewModels.CostosGastos;
 
@@ -37,11 +39,16 @@ public sealed class CostoCarreraMatrizFilaView
 public sealed partial class CostosGastosViewModel : ObservableObject
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly FactorImprevistoCostosGastosState _factorImprevistoState;
     private bool _suprimirCambios;
 
-    public CostosGastosViewModel(IServiceProvider serviceProvider)
+    public CostosGastosViewModel(
+        IServiceProvider serviceProvider,
+        FactorImprevistoCostosGastosState factorImprevistoState)
     {
         _serviceProvider = serviceProvider;
+        _factorImprevistoState = factorImprevistoState;
+        FactorImprevisto = _factorImprevistoState.FactorImprevisto;
     }
 
     [ObservableProperty] private ObservableCollection<Carrera> _carreras = [];
@@ -53,9 +60,11 @@ public sealed partial class CostosGastosViewModel : ObservableObject
     [ObservableProperty] private MatrizCostosGastosDto? _matrizCostosGastos;
     [ObservableProperty] private CostoCarreraResultadoDto? _resultadoCostoCarrera;
     [ObservableProperty] private ObservableCollection<CostoCarreraMatrizFilaView> _costoCarreraFilas = [];
+    [ObservableProperty] private decimal _factorImprevisto = FactorImprevistoCostosGastosState.FactorPorDefecto;
 
     [ObservableProperty] private string _mensajeError = string.Empty;
     [ObservableProperty] private string _mensajeExito = string.Empty;
+    [ObservableProperty] private string _mensajeInfo = string.Empty;
     [ObservableProperty] private bool _estaCargando;
 
     public IReadOnlyList<string> EtiquetasInvVinBecas => MatrizInvVinBecas?.EtiquetasPeriodos ?? [];
@@ -66,10 +75,12 @@ public sealed partial class CostosGastosViewModel : ObservableObject
     public IReadOnlyList<CostoGastoRubroDto> FilasDescontadas => MatrizCostosGastos?.DescontadoBecasGobierno ?? [];
     public IReadOnlyList<string> EtiquetasCostoCarrera => ResultadoCostoCarrera?.EtiquetasPeriodos ?? [];
     public bool TieneResultadoCostoCarrera => ResultadoCostoCarrera?.TieneDatos == true;
+    public bool PuedeTrabajar => CarreraSeleccionada is not null && !EstaCargando;
 
     partial void OnCarreraSeleccionadaChanged(Carrera? value)
     {
         _ = value;
+        OnPropertyChanged(nameof(PuedeTrabajar));
         if (_suprimirCambios || EstaCargando)
             return;
 
@@ -83,6 +94,12 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             return;
 
         _ = RefrescarAsync();
+    }
+
+    partial void OnEstaCargandoChanged(bool value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(PuedeTrabajar));
     }
 
     partial void OnMatrizInvVinBecasChanged(MatrizInvVinBecasDto? value)
@@ -108,6 +125,18 @@ public sealed partial class CostosGastosViewModel : ObservableObject
         OnPropertyChanged(nameof(TieneResultadoCostoCarrera));
     }
 
+    partial void OnFactorImprevistoChanged(decimal value)
+    {
+        if (value > 0m)
+            _factorImprevistoState.Establecer(value);
+
+        // Al cambiar el imprevisto se recalcula toda la matriz (Inv/Vin/Becas → Costos y Gastos → Costo Carrera).
+        if (_suprimirCambios || EstaCargando || EscenarioSeleccionado is null || value <= 0m)
+            return;
+
+        _ = RefrescarAsync();
+    }
+
     [RelayCommand]
     private async Task CargarAsync()
     {
@@ -117,6 +146,7 @@ public sealed partial class CostosGastosViewModel : ObservableObject
         EstaCargando = true;
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
+        MensajeInfo = string.Empty;
         try
         {
             using var scope = _serviceProvider.CreateScope();
@@ -128,8 +158,9 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             try
             {
                 Carreras = new ObservableCollection<Carrera>(carreras);
-                CarreraSeleccionada = Carreras.FirstOrDefault(c => c.Id == carreraActualId)
-                    ?? Carreras.FirstOrDefault();
+                CarreraSeleccionada = carreraActualId is > 0
+                    ? Carreras.FirstOrDefault(c => c.Id == carreraActualId.Value)
+                    : null;
             }
             finally
             {
@@ -139,7 +170,9 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             if (CarreraSeleccionada is null)
             {
                 LimpiarMatrices();
-                MensajeError = "No hay carreras registradas.";
+                MensajeInfo = Carreras.Count == 0
+                    ? "No hay carreras registradas."
+                    : "Selecciona una carrera para cargar Costos y Gastos.";
                 return;
             }
 
@@ -162,11 +195,13 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             Escenarios = [];
             EscenarioSeleccionado = null;
             LimpiarMatrices();
+            MensajeInfo = "Selecciona una carrera para cargar Costos y Gastos.";
             return;
         }
 
         try
         {
+            MensajeInfo = string.Empty;
             using var scope = _serviceProvider.CreateScope();
             var repoEscenario = scope.ServiceProvider.GetRequiredService<IRepositorioEscenarioProyeccion>();
             var repoProyeccion = scope.ServiceProvider.GetRequiredService<IRepositorioProyeccionEstudiantes>();
@@ -225,7 +260,9 @@ public sealed partial class CostosGastosViewModel : ObservableObject
         if (CarreraSeleccionada is null)
         {
             LimpiarMatrices();
-            MensajeError = "Selecciona una carrera.";
+            MensajeError = string.Empty;
+            MensajeExito = string.Empty;
+            MensajeInfo = "Selecciona una carrera para refrescar la información.";
             return;
         }
 
@@ -236,23 +273,46 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             return;
         }
 
+        if (FactorImprevisto <= 0m)
+        {
+            MensajeExito = string.Empty;
+            MensajeError = "El factor imprevisto debe ser mayor a 0.";
+            return;
+        }
+
         EstaCargando = true;
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
+        MensajeInfo = string.Empty;
         try
         {
             using var scope = _serviceProvider.CreateScope();
+            var queryDemanda = scope.ServiceProvider.GetRequiredService<ObtenerDemandaProyectadaQuery>();
             var queryInv = scope.ServiceProvider.GetRequiredService<ObtenerMatrizInvVinBecasQuery>();
             var queryCostos = scope.ServiceProvider.GetRequiredService<ObtenerMatrizCostosGastosQuery>();
             var queryCostoCarrera = scope.ServiceProvider.GetRequiredService<ObtenerCostoCarreraQuery>();
+            var queryIngresos = scope.ServiceProvider.GetRequiredService<CalcularIngresosProyectadosQuery>();
 
             var carreraId = CarreraSeleccionada.Id;
             var escenarioId = EscenarioSeleccionado.Id;
-            // Encadena resultados ya calculados: InvVinBecas → CostosGastos → CostoCarrera
-            // para no recomputar las matrices anidadas (ni reconsultar arancel) varias veces.
-            var invVinBecas = await queryInv.EjecutarAsync(carreraId, escenarioId);
+            // Encadena resultados ya calculados: Demanda → InvVinBecas → CostosGastos → CostoCarrera
+            // para no recomputar las matrices anidadas (ni reconsultar demanda/arancel) varias veces.
+            var demanda = await queryDemanda.EjecutarAsync(carreraId, escenarioId);
+            // Becas reales (de Ingresos, ya con descuentos) para mostrar en Inv. Vin. Becas como
+            // dato referencial. No suman como costo (CostosPorServicios/PE las excluyen).
+            var ingresos = await queryIngresos.EjecutarAsync(carreraId, escenarioId);
+            var becasPorPeriodo = ingresos.CeldasPlanas
+                .GroupBy(c => c.PeriodoAcademicoId)
+                .ToDictionary(g => g.Key, g => g.Sum(c => c.Becas));
+            var invVinBecas = await queryInv.EjecutarAsync(
+                carreraId, escenarioId, demandaPrecalculada: demanda, becasInstitucionalesPorPeriodo: becasPorPeriodo);
             MatrizInvVinBecas = invVinBecas;
-            var costosGastos = await queryCostos.EjecutarAsync(carreraId, escenarioId, invVinBecasPrecalculado: invVinBecas);
+            var costosGastos = await queryCostos.EjecutarAsync(
+                carreraId,
+                escenarioId,
+                invVinBecasPrecalculado: invVinBecas,
+                demandaPrecalculada: demanda,
+                factorImprevisto: FactorImprevisto);
             MatrizCostosGastos = costosGastos;
             ResultadoCostoCarrera = await queryCostoCarrera.EjecutarAsync(carreraId, escenarioId, matrizPrecalculada: costosGastos);
 

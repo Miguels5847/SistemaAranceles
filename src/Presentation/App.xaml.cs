@@ -13,6 +13,7 @@ using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Application.Options;
 using SistemaAranceles.Application.UseCases.Auditoria;
 using SistemaAranceles.Application.UseCases.Autenticacion;
+using SistemaAranceles.Application.UseCases.AnalisisFinanciero;
 using SistemaAranceles.Application.UseCases.CargosFacultad;
 using SistemaAranceles.Application.UseCases.CostosGastos;
 using SistemaAranceles.Application.UseCases.Inflacion;
@@ -31,6 +32,7 @@ using SistemaAranceles.Application.DTOs.TasaRetencion;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.ViewModels;
 using SistemaAranceles.Presentation.ViewModels.Auditoria;
+using SistemaAranceles.Presentation.ViewModels.AnalisisFinanciero;
 using SistemaAranceles.Presentation.ViewModels.Carreras;
 using SistemaAranceles.Presentation.ViewModels.Inflacion;
 using SistemaAranceles.Presentation.ViewModels.TasaRetencion;
@@ -118,6 +120,7 @@ public partial class App
 
         servicios.AddSingleton<SesionActual>();
         servicios.AddSingleton<ServicioInactividad>();
+        servicios.AddSingleton<FactorImprevistoCostosGastosState>();
 
         servicios.AddTransient<LoginUseCase>();
         servicios.AddTransient<CerrarSesionUseCase>();
@@ -148,12 +151,14 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.ListarActivosFijosQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.ObtenerTotalesActivosQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.SembrarActivosFijosDesdeCatalogoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.GenerarActivosPorDefectoCarreraCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.ListarCatalogoActivoBaseQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.ObtenerMatrizInversionesQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.GuardarInversionFuturaCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.QuitarInversionFuturaCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.ObtenerMatrizDepreciacionQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.CrearServicioMantenimientoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.GenerarServiciosMantenimientoPorDefectoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.ActualizarServicioMantenimientoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.EliminarServicioMantenimientoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.ListarServiciosMantenimientoQuery>();
@@ -162,12 +167,15 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Application.UseCases.CapitalTrabajo.ObtenerResumenCapitalTrabajoQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.CapitalTrabajo.GuardarItemCapitalTrabajoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.CapitalTrabajo.EliminarItemCapitalTrabajoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.CapitalTrabajo.GenerarMaterialesPorDefectoCarreraCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.GenerarRatiosPorDefectoCarreraCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.CrearActivoDiferidoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.ActualizarActivoDiferidoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.EliminarActivoDiferidoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.ListarActivosDiferidosQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.ObtenerTablaAmortizacionQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.InversionInicial.ObtenerInversionInicialTotalQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.Amortizacion.ObtenerResumenAmortizacionQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.GuardarConfiguracionArancelCarreraCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.EliminarConfiguracionArancelCarreraCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ListarConfiguracionesArancelCarreraQuery>();
@@ -176,9 +184,10 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ObtenerDemandaProyectadaQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ObtenerPresupuestosCarreraQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.CalcularIngresosProyectadosQuery>();
-        // Lazy<> rompe el ciclo de construcción DI hacia ObtenerMatrizInvVinBecasQuery (resolución diferida en runtime).
-        servicios.AddTransient(sp => new Lazy<SistemaAranceles.Application.UseCases.DemandaIngresos.CalcularIngresosProyectadosQuery>(
-            sp.GetRequiredService<SistemaAranceles.Application.UseCases.DemandaIngresos.CalcularIngresosProyectadosQuery>));
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ObtenerDescuentosArancelCicloQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.GuardarDescuentoArancelCicloCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.EliminarDescuentoArancelCicloCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.GuardarMatrizDescuentosArancelCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.GuardarRatioMaterialDemandaCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.EliminarRatioMaterialDemandaCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ListarRatiosMaterialDemandaQuery>();
@@ -187,6 +196,14 @@ public partial class App
         servicios.AddTransient<ObtenerMatrizCostosGastosQuery>();
         servicios.AddTransient<ObtenerCostoCarreraQuery>();
         servicios.AddTransient<ObtenerArancelOptimoCarreraQuery>();
+        servicios.AddTransient<ObtenerEstadoPerdidasGananciasQuery>();
+        servicios.AddTransient<ObtenerFlujoFondosQuery>();
+        servicios.AddTransient<ObtenerIndicadoresFinancierosQuery>();
+        servicios.AddTransient<ObtenerPeriodoRecuperacionQuery>();
+        servicios.AddTransient<ObtenerPuntoEquilibrioQuery>();
+        servicios.AddTransient<ObtenerArancelOptimoBiseccionQuery>();
+        servicios.AddTransient<ObtenerDashboardFinancieroQuery>();
+        servicios.AddTransient<ObtenerCesQuery>();
         servicios.AddTransient<CalcularAportePlantaCentralCarreraQuery>();
         servicios.AddTransient<CalcularProyeccionesCargoPlantaCentralCommand>();
         servicios.AddTransient<ListarProyeccionesCargoPlantaCentralQuery>();
@@ -260,6 +277,8 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.MantenimientoInversion.MantenimientoInversionViewModel>();
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.DemandaIngresos.DemandaIngresosViewModel>();
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.CostosGastos.CostosGastosViewModel>();
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.Amortizacion.AmortizacionViewModel>();
+        servicios.AddTransient<AnalisisFinancieroViewModel>();
         servicios.AddTransient<CargosFacultadViewModel>();
         servicios.AddTransient<EstudiantesViewModel>();
         servicios.AddTransient<MainViewModel>();
@@ -277,6 +296,7 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Presentation.Views.MantenimientoInversion.MantenimientoInversionView>();
         servicios.AddTransient<SistemaAranceles.Presentation.Views.DemandaIngresos.DemandaIngresosView>();
         servicios.AddTransient<SistemaAranceles.Presentation.Views.CostosGastos.CostosGastosView>();
+        servicios.AddTransient<SistemaAranceles.Presentation.Views.AnalisisFinanciero.AnalisisFinancieroView>();
         servicios.AddTransient<MainWindow>();
     }
 

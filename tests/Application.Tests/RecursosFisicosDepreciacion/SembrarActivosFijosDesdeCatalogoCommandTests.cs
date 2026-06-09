@@ -83,6 +83,11 @@ public class SembrarActivosFijosDesdeCatalogoCommandTests
         public void Actualizar(CatalogoActivoBase item)
         {
         }
+
+        public Task<int> SembrarPorDefectoAsync(
+            IReadOnlyList<SistemaAranceles.Domain.Constantes.ActivoBasePorDefecto> items,
+            CancellationToken ct = default)
+            => Task.FromResult(0);
     }
 
     private sealed class RepositorioActivoFijoFalso(IEnumerable<string> descripcionesRegistradas)
