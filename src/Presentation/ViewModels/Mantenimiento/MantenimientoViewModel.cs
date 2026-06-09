@@ -335,6 +335,44 @@ public sealed partial class MantenimientoViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task GenerarServiciosPorDefectoAsync()
+    {
+        if (!PuedeCrear)
+        {
+            MensajeError = "No tiene permiso para generar rubros de mantenimiento.";
+            return;
+        }
+
+        if (CarreraSeleccionada is null)
+        {
+            MensajeError = "Seleccione una carrera antes de generar.";
+            return;
+        }
+
+        if (EstaCargando || EstaGuardando) return;
+
+        EstaGuardando = true;
+        MensajeError = string.Empty;
+        MensajeExito = string.Empty;
+        try
+        {
+            int creados;
+            using (var scope = _sp.CreateScope())
+            {
+                var cmd = scope.ServiceProvider.GetRequiredService<GenerarServiciosMantenimientoPorDefectoCommand>();
+                creados = await cmd.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado?.Id);
+            }
+
+            MensajeExito = creados > 0
+                ? $"Se generaron {creados} rubros por defecto."
+                : "La carrera ya tiene los rubros por defecto.";
+            await RecargarDatosAsync();
+        }
+        catch (Exception ex) { MensajeError = Detalle(ex); }
+        finally { EstaGuardando = false; }
+    }
+
+    [RelayCommand]
     private void AbrirNuevo(string tipoStr)
     {
         if (!PuedeCrear)

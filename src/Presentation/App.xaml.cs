@@ -151,12 +151,14 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.ListarActivosFijosQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.ObtenerTotalesActivosQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.SembrarActivosFijosDesdeCatalogoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.GenerarActivosPorDefectoCarreraCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.ListarCatalogoActivoBaseQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.ObtenerMatrizInversionesQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.GuardarInversionFuturaCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.QuitarInversionFuturaCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.ObtenerMatrizDepreciacionQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.CrearServicioMantenimientoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.GenerarServiciosMantenimientoPorDefectoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.ActualizarServicioMantenimientoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.EliminarServicioMantenimientoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.Mantenimiento.ListarServiciosMantenimientoQuery>();

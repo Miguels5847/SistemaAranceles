@@ -321,6 +321,50 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task GenerarActivosPorDefectoAsync()
+    {
+        if (!PuedeCrear)
+        {
+            MensajeError = "No tiene permiso para generar activos.";
+            return;
+        }
+
+        if (CarreraSeleccionada is null)
+        {
+            MensajeError = "Seleccione una carrera antes de generar activos.";
+            return;
+        }
+
+        if (EstaCargando || EstaGuardando) return;
+
+        EstaGuardando = true;
+        MensajeError = string.Empty;
+        MensajeExito = string.Empty;
+        try
+        {
+            int creados;
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var cmd = scope.ServiceProvider.GetRequiredService<GenerarActivosPorDefectoCarreraCommand>();
+                creados = await cmd.EjecutarAsync(CarreraSeleccionada.Id);
+            }
+
+            MensajeExito = creados > 0
+                ? $"Se generaron {creados} activos por defecto."
+                : "La carrera ya tiene los activos por defecto.";
+            await RecargarActivosAsync();
+        }
+        catch (Exception ex)
+        {
+            MensajeError = $"Error al generar activos por defecto: {Detalle(ex)}";
+        }
+        finally
+        {
+            EstaGuardando = false;
+        }
+    }
+
+    [RelayCommand]
     private void Nuevo()
     {
         ActivoSeleccionado = null;

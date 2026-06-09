@@ -145,7 +145,10 @@ public sealed partial class MainViewModel : ObservableObject
 
     private static string FormatearTiempoRestante(TimeSpan tiempo)
     {
-        return $"{(int)tiempo.TotalMinutes}:{tiempo.Seconds:D2}";
+        // Solo minutos (redondeo hacia arriba): evita el salto visible por reinicios de actividad
+        // o por congelamiento del timer de UI durante consultas pesadas.
+        var minutos = (int)Math.Ceiling(tiempo.TotalMinutes);
+        return $"{minutos} min";
     }
 
     private void SeleccionarMenu(string titulo)

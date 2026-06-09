@@ -70,6 +70,7 @@
             <TextBlock Text="Escenario" FontSize="11" Foreground="#546E7A" VerticalAlignment="Center" Margin="16,0,8,0"/>
             <ComboBox Width="220" ItemsSource="{Binding Escenarios}" SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}" DisplayMemberPath="Nombre"/>
             <Button Content="Refrescar" Command="{Binding CargarCommand}" Margin="12,0,0,0" Padding="8,4"/>
+            <Button Content="Generar activos por defecto" Command="{Binding GenerarActivosPorDefectoCommand}" Margin="8,0,0,0" Padding="8,4"/>
             <Button Content="Cargar inversiones" Command="{Binding CargarMatrizInversionesCommand}" Margin="8,0,0,0" Padding="8,4"/>
         </StackPanel>
 

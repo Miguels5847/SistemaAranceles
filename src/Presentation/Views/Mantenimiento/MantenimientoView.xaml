@@ -103,6 +103,10 @@
                         Command="{Binding CargarCommand}"
                         Margin="12,0,0,0"
                         Padding="8,4"/>
+                <Button Content="Generar servicios por defecto"
+                        Command="{Binding GenerarServiciosPorDefectoCommand}"
+                        Margin="8,0,0,0"
+                        Padding="8,4"/>
             </StackPanel>
         </Border>
 
