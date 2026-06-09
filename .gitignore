@@ -16,6 +16,7 @@ artifacts/
 *.txt
 *.md
 *.claude/
+*.xlsx
 # NuGet
 packages/
 *.nupkg

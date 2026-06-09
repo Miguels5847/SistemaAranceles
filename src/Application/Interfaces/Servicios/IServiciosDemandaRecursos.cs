@@ -25,6 +25,13 @@ public interface IServicioDocentesTotales
         int anio,
         int numeroPeriodo,
         CancellationToken ct = default);
+
+    // Devuelve los docentes requeridos por número de período relativo (1..N) en una sola
+    // lectura, para evitar reconstruir el consolidado por cada celda/período.
+    Task<IReadOnlyDictionary<int, decimal>> ObtenerTotalesDocentesPorPeriodoAsync(
+        int carreraId,
+        int escenarioProyeccionId,
+        CancellationToken ct = default);
 }
 
 public interface IServicioInflacionFactor

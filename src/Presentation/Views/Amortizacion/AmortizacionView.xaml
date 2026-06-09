@@ -1,0 +1,293 @@
+<UserControl x:Class="SistemaAranceles.Presentation.Views.Amortizacion.AmortizacionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Height="Auto" Width="Auto">
+
+    <UserControl.Resources>
+        <Style x:Key="EtiquetaCampo" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="#546E7A"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,6,0"/>
+        </Style>
+        <Style x:Key="CardFinanciamiento" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="BorderBrush" Value="#D6DAEA"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style x:Key="HojaColumnHeader" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#E8EAF6"/>
+            <Setter Property="Foreground" Value="#000000"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="8,7"/>
+        </Style>
+        <Style x:Key="CeldaDerecha" TargetType="TextBlock">
+            <Setter Property="TextAlignment" Value="Right"/>
+            <Setter Property="Margin" Value="6,0,6,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="CeldaCentro" TargetType="TextBlock">
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="6,0,6,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="DataGridRow">
+            <Setter Property="Foreground" Value="#263238"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#EEF2FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#E0E7FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="DataGridCell">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#263238"/>
+            <Setter Property="BorderBrush" Value="#D6DAEA"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#E0E7FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="12">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="Amortización del Financiamiento"
+                           FontSize="18" FontWeight="Bold" Foreground="#1A237E" Margin="0,0,0,8"/>
+
+                <Border Background="#EEF1FB" CornerRadius="6" Padding="10" Margin="0,0,0,8">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Carrera" Style="{StaticResource EtiquetaCampo}"/>
+                        <ComboBox Width="320"
+                                  ItemsSource="{Binding Carreras}"
+                                  SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}"
+                                  DisplayMemberPath="Etiqueta"/>
+
+                        <TextBlock Text="Escenario" Style="{StaticResource EtiquetaCampo}" Margin="16,0,6,0"/>
+                        <ComboBox Width="220"
+                                  ItemsSource="{Binding Escenarios}"
+                                  SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}"
+                                  DisplayMemberPath="Nombre"/>
+
+                        <Button Content="Refrescar"
+                                Command="{Binding CargarCommand}"
+                                Margin="12,0,0,0"
+                                Padding="8,4"/>
+                    </StackPanel>
+                </Border>
+
+                <StackPanel Margin="0,0,0,8">
+                    <TextBlock Text="{Binding MensajeExito}" Foreground="#2E7D32" FontWeight="SemiBold"
+                               Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
+                    <TextBlock Text="{Binding MensajeInfo}" Foreground="#1A237E" FontWeight="SemiBold" TextWrapping="Wrap"
+                               Visibility="{Binding MensajeInfo, Converter={StaticResource StringToVisibilityConverter}}"/>
+                    <TextBlock Text="{Binding MensajeError}" Foreground="#C62828" FontWeight="SemiBold" TextWrapping="Wrap"
+                               Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
+                </StackPanel>
+
+                <!-- Parámetros de financiamiento (3 fuentes) -->
+                <Border Background="White" CornerRadius="6" Padding="12" Margin="0,0,0,10"
+                        BorderBrush="#D6DAEA" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="Fuentes de Financiamiento" FontWeight="Bold" Foreground="#1A237E" Margin="0,0,0,8"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180"/>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Fuente" FontWeight="SemiBold" Foreground="#546E7A" Margin="0,0,0,6"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="%" FontWeight="SemiBold" Foreground="#546E7A" Margin="0,0,0,6"/>
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Monto" FontWeight="SemiBold" Foreground="#546E7A" Margin="0,0,0,6"/>
+                            <StackPanel Grid.Row="0" Grid.Column="3" Orientation="Horizontal" Margin="0,0,0,6">
+                                <TextBlock Text="Entidad" FontWeight="SemiBold" Foreground="#546E7A"/>
+                                <TextBlock Text="  (aquí agregar el convenio realizado, ej.: bancos, entidades educativas, etc.)"
+                                           Foreground="#90A4AE" FontStyle="Italic"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Recursos Propios" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding PorcentajePropioDisplay}"
+                                       FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Resumen.MontoPropioDisplay, FallbackValue=$ -}"
+                                       FontWeight="SemiBold" Foreground="#2E7D32" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Row="1" Grid.Column="3" Text="(calculado: 100% − préstamo − convenio)"
+                                       Foreground="#90A4AE" FontStyle="Italic" VerticalAlignment="Center"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Préstamo Bancario" VerticalAlignment="Center" Margin="0,6,0,0"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" Width="80" HorizontalAlignment="Left" Margin="0,6,0,0"
+                                     Text="{Binding PorcentajePrestamo, UpdateSourceTrigger=PropertyChanged}"
+                                     IsEnabled="{Binding PuedeEditar}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding Resumen.MontoPrestamoDisplay, FallbackValue=$ -}"
+                                       FontWeight="SemiBold" Foreground="#C62828" VerticalAlignment="Center" Margin="0,6,0,0"/>
+                            <TextBox Grid.Row="2" Grid.Column="3" Width="320" HorizontalAlignment="Left" Margin="0,6,0,0"
+                                     Text="{Binding NombreEntidadPrestamo, UpdateSourceTrigger=PropertyChanged}"
+                                     IsEnabled="{Binding PuedeEditar}"
+                                     ToolTip="Aquí agregar el convenio realizado, ej.: bancos, entidades educativas, etc."/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Convenio Institucional" VerticalAlignment="Center" Margin="0,6,0,0"/>
+                            <TextBox Grid.Row="3" Grid.Column="1" Width="80" HorizontalAlignment="Left" Margin="0,6,0,0"
+                                     Text="{Binding PorcentajeConvenio, UpdateSourceTrigger=PropertyChanged}"
+                                     IsEnabled="{Binding PuedeEditar}"/>
+                            <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding Resumen.MontoConvenioDisplay, FallbackValue=$ -}"
+                                       FontWeight="SemiBold" Foreground="#6A1B9A" VerticalAlignment="Center" Margin="0,6,0,0"/>
+                            <TextBox Grid.Row="3" Grid.Column="3" Width="320" HorizontalAlignment="Left" Margin="0,6,0,0"
+                                     Text="{Binding NombreEntidadConvenio, UpdateSourceTrigger=PropertyChanged}"
+                                     IsEnabled="{Binding PuedeEditar}"
+                                     ToolTip="Aquí agregar el convenio realizado, ej.: bancos, entidades educativas, etc."/>
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="TOTAL" FontWeight="Bold" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                            <TextBlock Grid.Row="4" Grid.Column="1" Text="100%" FontWeight="Bold" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                            <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding Resumen.TotalInversionDisplay, FallbackValue=$ -}"
+                                       FontWeight="Bold" Foreground="#1A237E" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                            <TextBlock Grid.Row="4" Grid.Column="3" Text="(inversión inicial total de la carrera y escenario)"
+                                       Foreground="#90A4AE" FontStyle="Italic" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <TextBlock Text="Tasa interés anual (%)" Style="{StaticResource EtiquetaCampo}"/>
+                            <TextBox Width="80"
+                                     Text="{Binding TasaInteresAnual, UpdateSourceTrigger=PropertyChanged}"
+                                     IsEnabled="{Binding PuedeEditar}"/>
+
+                            <TextBlock Text="Plazo (meses)" Style="{StaticResource EtiquetaCampo}" Margin="16,0,6,0"/>
+                            <TextBox Width="80"
+                                     Text="{Binding PlazoMeses, UpdateSourceTrigger=PropertyChanged}"
+                                     IsEnabled="{Binding PuedeEditar}"/>
+
+                            <Button Content="Guardar parámetros"
+                                    Command="{Binding GuardarParametrosCommand}"
+                                    IsEnabled="{Binding PuedeEditar}"
+                                    Margin="20,0,0,0"
+                                    Padding="10,4"
+                                    Background="#1A237E" Foreground="White"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Resumen de montos -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <Border Style="{StaticResource CardFinanciamiento}">
+                        <StackPanel>
+                            <TextBlock Text="Inversión Total" FontSize="11" Foreground="#546E7A"/>
+                            <TextBlock Text="{Binding Resumen.TotalInversionDisplay, FallbackValue=$ -}"
+                                       FontSize="16" FontWeight="Bold" Foreground="#1A237E"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource CardFinanciamiento}">
+                        <StackPanel>
+                            <TextBlock Text="Recursos Propios" FontSize="11" Foreground="#546E7A"/>
+                            <TextBlock Text="{Binding Resumen.MontoPropioDisplay, FallbackValue=$ -}"
+                                       FontSize="16" FontWeight="Bold" Foreground="#2E7D32"/>
+                            <TextBlock Text="{Binding Resumen.PorcentajePropioDisplay, FallbackValue=''}"
+                                       FontSize="11" Foreground="#90A4AE"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource CardFinanciamiento}">
+                        <StackPanel>
+                            <TextBlock Text="Préstamo Bancario" FontSize="11" Foreground="#546E7A"/>
+                            <TextBlock Text="{Binding Resumen.MontoPrestamoDisplay, FallbackValue=$ -}"
+                                       FontSize="16" FontWeight="Bold" Foreground="#C62828"/>
+                            <TextBlock Text="{Binding Resumen.PorcentajePrestamoDisplay, FallbackValue=''}"
+                                       FontSize="11" Foreground="#90A4AE"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource CardFinanciamiento}">
+                        <StackPanel>
+                            <TextBlock Text="Convenio Institucional" FontSize="11" Foreground="#546E7A"/>
+                            <TextBlock Text="{Binding Resumen.MontoConvenioDisplay, FallbackValue=$ -}"
+                                       FontSize="16" FontWeight="Bold" Foreground="#6A1B9A"/>
+                            <TextBlock Text="{Binding Resumen.PorcentajeConvenioDisplay, FallbackValue=''}"
+                                       FontSize="11" Foreground="#90A4AE"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource CardFinanciamiento}">
+                        <StackPanel>
+                            <TextBlock Text="Cuota Mensual (PMT)" FontSize="11" Foreground="#546E7A"/>
+                            <TextBlock Text="{Binding Resumen.CuotaMensualDisplay, FallbackValue=$ -}"
+                                       FontSize="16" FontWeight="Bold" Foreground="#1A237E"/>
+                            <TextBlock Text="{Binding Resumen.TotalInteresesDisplay, StringFormat='Intereses: {0}', FallbackValue=''}"
+                                       FontSize="11" Foreground="#90A4AE"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Tabla de amortización francesa -->
+                <Border Background="White" CornerRadius="6" Padding="12" Margin="0,0,0,10"
+                        BorderBrush="#D6DAEA" BorderThickness="1">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="Tabla de Amortización del Préstamo (cuota fija)" FontWeight="Bold" Foreground="#1A237E"/>
+                            <TextBlock Text="{Binding Resumen.TasaInteresMensualDisplay, StringFormat='  |  Tasa mensual: {0}', FallbackValue=''}"
+                                       Foreground="#546E7A"/>
+                        </StackPanel>
+
+                        <ProgressBar IsIndeterminate="True" Height="4" Margin="0,0,0,6" Foreground="#1A237E"
+                                     Visibility="{Binding EstaRecalculando, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+                        <DataGrid ItemsSource="{Binding Resumen.TablaAmortizacion}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  CanUserAddRows="False"
+                                  CanUserSortColumns="False"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="None"
+                                  Background="White"
+                                  RowBackground="White"
+                                  AlternatingRowBackground="#F8FAFC"
+                                  BorderBrush="#D6DAEA" BorderThickness="1"
+                                  ColumnHeaderStyle="{StaticResource HojaColumnHeader}"
+                                  MaxHeight="520">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="N° Pago" Binding="{Binding NumeroPago}" Width="80"
+                                                    ElementStyle="{StaticResource CeldaCentro}"/>
+                                <DataGridTextColumn Header="Saldo Capital" Binding="{Binding SaldoCapitalDisplay}" Width="*"
+                                                    ElementStyle="{StaticResource CeldaDerecha}"/>
+                                <DataGridTextColumn Header="Interés" Binding="{Binding InteresDisplay}" Width="*"
+                                                    ElementStyle="{StaticResource CeldaDerecha}"/>
+                                <DataGridTextColumn Header="Amortización Capital" Binding="{Binding AmortizacionCapitalDisplay}" Width="*"
+                                                    ElementStyle="{StaticResource CeldaDerecha}"/>
+                                <DataGridTextColumn Header="Cuota" Binding="{Binding CuotaDisplay}" Width="*"
+                                                    ElementStyle="{StaticResource CeldaDerecha}"/>
+                                <DataGridTextColumn Header="Interés Acumulado" Binding="{Binding InteresAcumuladoDisplay}" Width="*"
+                                                    ElementStyle="{StaticResource CeldaDerecha}"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Overlay de carga -->
+        <Border Background="#80FFFFFF"
+                Visibility="{Binding EstaProcesando, Converter={StaticResource BoolToVisibilityConverter}}">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="220" Height="8"/>
+                <TextBlock Text="Procesando..." Margin="0,8,0,0" HorizontalAlignment="Center" Foreground="#1A237E"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

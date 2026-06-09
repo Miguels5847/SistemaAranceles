@@ -42,13 +42,16 @@ public sealed partial class AportePlantaCentralViewModel : ObservableObject
     [ObservableProperty] private decimal _porcentajePromedio;
 
     [ObservableProperty] private string _mensajeError = string.Empty;
+    [ObservableProperty] private string _mensajeInfo = string.Empty;
     [ObservableProperty] private string _textoAyudaCalculo = string.Empty;
     [ObservableProperty] private string _textoInterpretativo = string.Empty;
     [ObservableProperty] private bool _estaCargando;
     [ObservableProperty] private bool _tieneResultado;
+    public bool PuedeCalcular => CarreraSeleccionada is not null && EscenarioSeleccionado is not null && !EstaCargando;
 
     partial void OnCarreraSeleccionadaChanged(Carrera? value)
     {
+        OnPropertyChanged(nameof(PuedeCalcular));
         if (_suspendiendoAutoCarga)
             return;
 
@@ -57,10 +60,17 @@ public sealed partial class AportePlantaCentralViewModel : ObservableObject
 
     partial void OnEscenarioSeleccionadoChanged(EscenarioProyeccion? value)
     {
+        OnPropertyChanged(nameof(PuedeCalcular));
         if (_suspendiendoAutoCarga || value is null)
             return;
 
         _ = CalcularAsync();
+    }
+
+    partial void OnEstaCargandoChanged(bool value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(PuedeCalcular));
     }
 
     [RelayCommand]
@@ -69,24 +79,35 @@ public sealed partial class AportePlantaCentralViewModel : ObservableObject
         if (EstaCargando) return;
         EstaCargando = true;
         MensajeError = string.Empty;
+        MensajeInfo = string.Empty;
         TieneResultado = false;
         _suspendiendoAutoCarga = true;
 
         try
         {
+            var carreraActualId = CarreraSeleccionada?.Id;
+            var escenarioActualId = EscenarioSeleccionado?.Id;
             using var scope = _serviceProvider.CreateScope();
             var queryCarreras = scope.ServiceProvider.GetRequiredService<ListarCarrerasConProyeccionQuery>();
             var lista = await queryCarreras.EjecutarAsync();
             Carreras = new ObservableCollection<Carrera>(lista);
-            CarreraSeleccionada = Carreras.FirstOrDefault();
+            CarreraSeleccionada = carreraActualId is > 0
+                ? Carreras.FirstOrDefault(c => c.Id == carreraActualId.Value)
+                : null;
 
-            if (CarreraSeleccionada is not null)
+            if (CarreraSeleccionada is null)
             {
-                await CargarEscenariosAsync();
-                if (EscenarioSeleccionado is not null)
-                {
-                    await CalcularAsync();
-                }
+                LimpiarResultado();
+                MensajeInfo = Carreras.Count == 0
+                    ? "No hay carreras con proyección de estudiantes para calcular Aporte Planta Central."
+                    : "Selecciona una carrera para cargar Aporte Planta Central.";
+                return;
+            }
+
+            await CargarEscenariosAsync(escenarioActualId);
+            if (EscenarioSeleccionado is not null)
+            {
+                await CalcularAsync();
             }
         }
         catch (Exception ex)
@@ -100,19 +121,26 @@ public sealed partial class AportePlantaCentralViewModel : ObservableObject
         }
     }
 
-    private async Task CargarEscenariosAsync()
+    private async Task CargarEscenariosAsync(int? escenarioIdPreferido = null)
     {
         Escenarios = [];
         EscenarioSeleccionado = null;
-        if (CarreraSeleccionada is null) return;
+        if (CarreraSeleccionada is null)
+        {
+            LimpiarResultado();
+            MensajeInfo = "Selecciona una carrera para cargar Aporte Planta Central.";
+            return;
+        }
 
         try
         {
+            MensajeInfo = string.Empty;
             using var scope = _serviceProvider.CreateScope();
             var query = scope.ServiceProvider.GetRequiredService<ListarEscenariosConProyeccionPorCarreraQuery>();
             var lista = await query.EjecutarAsync(CarreraSeleccionada.Id);
             Escenarios = new ObservableCollection<EscenarioProyeccion>(lista);
-            EscenarioSeleccionado = Escenarios.FirstOrDefault();
+            EscenarioSeleccionado = Escenarios.FirstOrDefault(e => e.Id == escenarioIdPreferido)
+                ?? Escenarios.FirstOrDefault();
 
             if (!_suspendiendoAutoCarga && EscenarioSeleccionado is not null)
             {
@@ -129,13 +157,15 @@ public sealed partial class AportePlantaCentralViewModel : ObservableObject
     private async Task CalcularAsync()
     {
         MensajeError = string.Empty;
+        MensajeInfo = string.Empty;
         TieneResultado = false;
         EncabezadosPeriodos = [];
         TablaResumenAporte = [];
 
         if (CarreraSeleccionada is null || EscenarioSeleccionado is null)
         {
-            MensajeError = "Seleccione carrera y escenario.";
+            LimpiarResultado();
+            MensajeInfo = "Selecciona carrera y escenario para calcular Aporte Planta Central.";
             return;
         }
 
@@ -166,6 +196,24 @@ public sealed partial class AportePlantaCentralViewModel : ObservableObject
         {
             MensajeError = ex.Message;
         }
+    }
+
+    private void LimpiarResultado()
+    {
+        Periodos = [];
+        EncabezadosPeriodos = [];
+        TablaResumenAporte = [];
+        PeriodoInstitucionalVigente = string.Empty;
+        TotalMensualPlantaCentral = 0m;
+        TotalAnualPlantaCentral = 0m;
+        EstudiantesUniversidad = 0m;
+        AporteAcumulado = 0m;
+        AporteMensualPromedio = 0m;
+        AportePromedioAnual = 0m;
+        PorcentajePromedio = 0m;
+        TextoAyudaCalculo = string.Empty;
+        TextoInterpretativo = string.Empty;
+        TieneResultado = false;
     }
 
     private static decimal CalcularPromedioMensual(AportePlantaCentralCarreraDto dto)

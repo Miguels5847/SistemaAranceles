@@ -96,19 +96,27 @@
                     <TextBlock Text="{Binding PeriodoBaseDisplay}" FontWeight="SemiBold" Foreground="#263238" VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <Button Grid.Column="3" Content="Refrescar" Padding="10,4" VerticalAlignment="Bottom"
-                        Command="{Binding CargarCommand}"/>
+                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Bottom">
+                    <Button Content="Generar materiales por defecto" Padding="10,4" Margin="0,0,6,0"
+                            Style="{StaticResource BtnPrimario}"
+                            ToolTip="Inserta los materiales y suministros estándar (B/C/D) para la carrera seleccionada. No duplica."
+                            Command="{Binding GenerarMaterialesPorDefectoCommand}"/>
+                    <Button Content="Refrescar" Padding="10,4"
+                            Command="{Binding CargarCommand}"/>
+                </StackPanel>
             </Grid>
         </Border>
 
         <StackPanel Grid.Row="2" Margin="0,0,0,8">
             <TextBlock Text="{Binding MensajeExito}" Foreground="#2E7D32" FontWeight="SemiBold"
                        Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding MensajeInfo}" Foreground="#1A237E" FontWeight="SemiBold" TextWrapping="Wrap"
+                       Visibility="{Binding MensajeInfo, Converter={StaticResource StringToVisibilityConverter}}"/>
             <TextBlock Text="{Binding MensajeError}" Foreground="#C62828" FontWeight="SemiBold"
                        Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
         </StackPanel>
 
-        <TabControl Grid.Row="3">
+        <TabControl Grid.Row="3" IsEnabled="{Binding PuedeTrabajar}">
 
             <TabItem Header="A. Gastos de Servicio y Administracion">
                 <Grid Margin="8">

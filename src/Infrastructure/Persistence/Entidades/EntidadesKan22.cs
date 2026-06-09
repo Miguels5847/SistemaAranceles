@@ -39,6 +39,27 @@ public sealed class DatosInstitucionales
     public decimal PorcentajeBecasEstudiantes { get; set; } = 90m;
     public decimal PorcentajeBecasDocentes { get; set; } = 10m;
 
+    // KAN-40: parámetros Épica 11
+    public decimal TasaInteresFinanciera { get; set; } = 8m;
+    public decimal PremioRiesgo { get; set; } = 5m;
+    public decimal TmrManual { get; set; }
+    public bool UsarTmrManual { get; set; }
+
+    // KAN-44: parámetros bisección arancel óptimo
+    public decimal ToleranciaVanArancel { get; set; } = 1m;
+    public decimal MargenAproximacionVanArancel { get; set; } = 2m;
+    public decimal ArancelMinimoBusqueda { get; set; } = 500m;
+    public decimal ArancelMaximoBusqueda { get; set; } = 5000m;
+    public int MaxIteracionesBiseccion { get; set; } = 60;
+
+    // KAN-44B: financiamiento módulo Amortización
+    public decimal PorcentajeFinanciadoPrestamo { get; set; }
+    public decimal PorcentajeFinanciadoConvenio { get; set; }
+    public string? NombreEntidadPrestamo { get; set; }
+    public string? NombreEntidadConvenio { get; set; }
+    public decimal TasaInteresAnualPrestamo { get; set; } = 15.02m;
+    public int PlazoPrestamoMeses { get; set; } = 24;
+
     public DateTimeOffset FechaActualizacion { get; set; } = DateTimeOffset.UtcNow;
     public int ActualizadoPorUsuarioId { get; set; }
     public string? FuenteNotas { get; set; }

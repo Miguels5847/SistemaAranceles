@@ -21,12 +21,18 @@
                        Foreground="#1A237E"
                        Margin="0,0,0,10"/>
 
-            <TextBlock Grid.Row="1"
-                       Text="{Binding MensajeError}"
-                       Foreground="#C62828"
-                       FontWeight="SemiBold"
-                       Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"
-                       Margin="0,0,0,4"/>
+            <StackPanel Grid.Row="1" Margin="0,0,0,4">
+                <TextBlock Text="{Binding MensajeInfo}"
+                           Foreground="#1A237E"
+                           FontWeight="SemiBold"
+                           TextWrapping="Wrap"
+                           Visibility="{Binding MensajeInfo, Converter={StaticResource StringToVisibilityConverter}}"/>
+                <TextBlock Text="{Binding MensajeError}"
+                           Foreground="#C62828"
+                           FontWeight="SemiBold"
+                           TextWrapping="Wrap"
+                           Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
+            </StackPanel>
 
             <!-- Selectores -->
             <Border Grid.Row="2"
@@ -61,6 +67,7 @@
                                 Padding="12,4"
                                 Background="#1A237E"
                                 Foreground="White"
+                                IsEnabled="{Binding PuedeCalcular}"
                                 Command="{Binding CalcularCommand}"/>
                     </StackPanel>
                 </Grid>

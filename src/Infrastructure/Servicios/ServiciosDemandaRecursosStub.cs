@@ -108,6 +108,71 @@ public sealed class ServicioDocentesTotales(
 
         return filaDocentes.Periodos[periodoRelativo - 1];
     }
+
+    public async Task<IReadOnlyDictionary<int, decimal>> ObtenerTotalesDocentesPorPeriodoAsync(
+        int carreraId,
+        int escenarioProyeccionId,
+        CancellationToken ct = default)
+    {
+        var vacio = new Dictionary<int, decimal>();
+
+        var proyeccion = await ServiciosDemandaRecursosHelper.ObtenerProyeccionAsync(
+            repositorioProyeccion,
+            carreraId,
+            escenarioProyeccionId,
+            ct);
+
+        if (proyeccion is null || proyeccion.Detalles.Count == 0)
+        {
+            return vacio;
+        }
+
+        var configuracion = await ServiciosDemandaRecursosHelper.ObtenerConfiguracionAsync(
+            repositorioConfiguracion,
+            carreraId,
+            escenarioProyeccionId,
+            ct);
+
+        if (configuracion is null)
+        {
+            return vacio;
+        }
+
+        var overrides = await repositorioOverrides.ListarPorProyeccionAsync(proyeccion.Id, ct);
+        var (docOverride, tecOverride) = ServiciosDemandaRecursosHelper.ConstruirArreglosOverride(
+            overrides,
+            proyeccion);
+
+        var tasaRetencion = configuracion.MetaRetencionPorcentaje ?? configuracion.TasaRetencionPorcentaje;
+        var tasaGraduacion = configuracion.MetaGraduacionPorcentaje ?? configuracion.TasaGraduacionPorcentaje;
+
+        var consolidado = ConsolidadorProyeccionEstudiantes.Calcular(
+            proyeccion,
+            configuracion.ParalelosPeriodo1,
+            configuracion.ParalelosPeriodo2,
+            tasaRetencion,
+            tasaGraduacion,
+            horasDocSemestralesOverride: docOverride,
+            horasTecSemestralesOverride: tecOverride,
+            horasDocSemanaOverride: 18m,
+            horasTecSemanaOverride: 40m);
+
+        var filaDocentes = consolidado.DocentesPorPeriodo.FirstOrDefault(x =>
+            x.Tipo.Equals("Docentes Requeridos", StringComparison.OrdinalIgnoreCase));
+
+        if (filaDocentes is null)
+        {
+            return vacio;
+        }
+
+        var totales = new Dictionary<int, decimal>(filaDocentes.Periodos.Length);
+        for (var i = 0; i < filaDocentes.Periodos.Length; i++)
+        {
+            totales[i + 1] = filaDocentes.Periodos[i];
+        }
+
+        return totales;
+    }
 }
 
 public sealed class ServicioInflacionFactorStub : IServicioInflacionFactor

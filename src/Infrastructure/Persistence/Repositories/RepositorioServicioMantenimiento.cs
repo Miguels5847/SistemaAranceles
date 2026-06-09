@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SistemaAranceles.Application.Interfaces.Persistencia;
+using SistemaAranceles.Domain.Constantes;
 using SistemaAranceles.Domain.Enums;
 using DominioServicio = SistemaAranceles.Domain.Entities.ServicioMantenimiento;
 using InfraServicio = SistemaAranceles.Infrastructure.Persistence.Entidades.ServicioMantenimiento;
@@ -21,7 +22,7 @@ public sealed class RepositorioServicioMantenimiento(ContextoAplicacion ctx) : I
         int? escenarioProyeccionId = null,
         CancellationToken ct = default)
     {
-        var q = FiltrarPorCarreraYEscenario(carreraId, escenarioProyeccionId);
+        var q = await FiltrarPorCarreraYEscenarioAsync(carreraId, escenarioProyeccionId, ct);
 
         if (tipo.HasValue)
             q = q.Where(x => x.TipoRubro == tipo.Value);
@@ -34,17 +35,55 @@ public sealed class RepositorioServicioMantenimiento(ContextoAplicacion ctx) : I
         return lista.Select(MapearADominio).ToList();
     }
 
-    public async Task<decimal> SumarCostoAnualPorTipoAsync(
+    public async Task<IReadOnlyDictionary<TipoRubroMantenimiento, decimal>> SumarCostosAnualesPorTipoAsync(
         int carreraId,
-        TipoRubroMantenimiento tipo,
         int? escenarioProyeccionId = null,
         CancellationToken ct = default)
-        => await FiltrarPorCarreraYEscenario(carreraId, escenarioProyeccionId)
-            .Where(x => x.TipoRubro == tipo)
-            .SumAsync(x => x.CostoAnualUniversidad, ct);
+    {
+        var q = await FiltrarPorCarreraYEscenarioAsync(carreraId, escenarioProyeccionId, ct);
+        var sumas = await q
+            .GroupBy(x => x.TipoRubro)
+            .Select(g => new { Tipo = g.Key, Total = g.Sum(x => x.CostoAnualUniversidad) })
+            .ToListAsync(ct);
+        return sumas.ToDictionary(x => x.Tipo, x => x.Total);
+    }
 
     public async Task AgregarAsync(DominioServicio servicio, CancellationToken ct = default)
         => await ctx.ServiciosMantenimiento.AddAsync(MapearAInfra(servicio), ct);
+
+    public async Task<int> SembrarPorDefectoAsync(
+        int carreraId,
+        int? escenarioProyeccionId,
+        IReadOnlyList<ServicioMantenimientoPorDefecto> items,
+        CancellationToken ct = default)
+    {
+        var escenarioId = escenarioProyeccionId is > 0 ? escenarioProyeccionId : null;
+
+        // Si el escenario tiene rubros específicos, la vista muestra SOLO esos (tapan los generales):
+        // hay que completar los específicos. Si no, se completa la config general (escenario NULL),
+        // que aplica a todos los escenarios sin específicos.
+        var tieneEspecificos = escenarioId is not null && await ctx.ServiciosMantenimiento.AsNoTracking()
+            .AnyAsync(x => x.CarreraId == carreraId && x.EstaActivo && x.EscenarioProyeccionId == escenarioId, ct);
+        var destinoEscenarioId = tieneEspecificos ? escenarioId : null;
+
+        var existentes = await ctx.ServiciosMantenimiento.AsNoTracking()
+            .Where(x => x.CarreraId == carreraId && x.EstaActivo && x.EscenarioProyeccionId == destinoEscenarioId)
+            .Select(x => new { x.TipoRubro, x.NombreRubro })
+            .ToListAsync(ct);
+        var set = existentes
+            .Select(x => (x.TipoRubro, Nombre: x.NombreRubro.ToUpperInvariant()))
+            .ToHashSet();
+
+        var nuevos = items
+            .Where(i => !set.Contains((i.Tipo, i.Nombre.ToUpperInvariant())))
+            .Select(i => new DominioServicio(carreraId, i.Tipo, i.Nombre, i.CostoAnual, destinoEscenarioId, i.Sede))
+            .ToList();
+
+        foreach (var nuevo in nuevos)
+            await ctx.ServiciosMantenimiento.AddAsync(MapearAInfra(nuevo), ct);
+
+        return nuevos.Count;
+    }
 
     public void Actualizar(DominioServicio servicio)
     {
@@ -68,7 +107,10 @@ public sealed class RepositorioServicioMantenimiento(ContextoAplicacion ctx) : I
         ctx.ServiciosMantenimiento.Update(infra);
     }
 
-    private IQueryable<InfraServicio> FiltrarPorCarreraYEscenario(int carreraId, int? escenarioProyeccionId)
+    private async Task<IQueryable<InfraServicio>> FiltrarPorCarreraYEscenarioAsync(
+        int carreraId,
+        int? escenarioProyeccionId,
+        CancellationToken ct)
     {
         var baseQuery = ctx.ServiciosMantenimiento
             .AsNoTracking()
@@ -79,11 +121,11 @@ public sealed class RepositorioServicioMantenimiento(ContextoAplicacion ctx) : I
             return baseQuery.Where(x => x.EscenarioProyeccionId == null);
         }
 
-        var tieneEspecificos = ctx.ServiciosMantenimiento
+        var tieneEspecificos = await ctx.ServiciosMantenimiento
             .AsNoTracking()
-            .Any(x => x.CarreraId == carreraId
+            .AnyAsync(x => x.CarreraId == carreraId
                       && x.EstaActivo
-                      && x.EscenarioProyeccionId == escenarioProyeccionId.Value);
+                      && x.EscenarioProyeccionId == escenarioProyeccionId.Value, ct);
 
         return tieneEspecificos
             ? baseQuery.Where(x => x.EscenarioProyeccionId == escenarioProyeccionId.Value)

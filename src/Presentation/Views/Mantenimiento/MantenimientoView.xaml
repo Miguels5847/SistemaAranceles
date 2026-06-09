@@ -103,17 +103,23 @@
                         Command="{Binding CargarCommand}"
                         Margin="12,0,0,0"
                         Padding="8,4"/>
+                <Button Content="Generar servicios por defecto"
+                        Command="{Binding GenerarServiciosPorDefectoCommand}"
+                        Margin="8,0,0,0"
+                        Padding="8,4"/>
             </StackPanel>
         </Border>
 
         <StackPanel Grid.Row="2" Margin="0,0,0,8">
             <TextBlock Text="{Binding MensajeExito}" Foreground="#2E7D32" FontWeight="SemiBold"
                        Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding MensajeInfo}" Foreground="#1A237E" FontWeight="SemiBold" TextWrapping="Wrap"
+                       Visibility="{Binding MensajeInfo, Converter={StaticResource StringToVisibilityConverter}}"/>
             <TextBlock Text="{Binding MensajeError}" Foreground="#C62828" FontWeight="SemiBold"
                        Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
         </StackPanel>
 
-        <TabControl Grid.Row="3">
+        <TabControl Grid.Row="3" IsEnabled="{Binding PuedeTrabajar}">
 
             <TabItem Header="A. Servicios Básicos">
                 <Grid Margin="8">

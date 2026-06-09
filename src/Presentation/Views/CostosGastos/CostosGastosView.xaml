@@ -1,9 +1,13 @@
 <UserControl x:Class="SistemaAranceles.Presentation.Views.CostosGastos.CostosGastosView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:SistemaAranceles.Presentation.Converters">
     <UserControl.Resources>
+        <conv:DecimalStringConverter x:Key="DecimalStringConverter"/>
         <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="White"/>
             <Setter Property="Foreground" Value="#263238"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#EEF2FF"/>
@@ -25,7 +29,26 @@
                 <DataTrigger Binding="{Binding EsTotal}" Value="True">
                     <Setter Property="FontWeight" Value="Bold"/>
                     <Setter Property="Background" Value="#EEF2FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
                 </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="MatrizCellStyle" TargetType="DataGridCell">
+            <Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=DataGridRow}}"/>
+            <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=DataGridRow}}"/>
+            <Setter Property="BorderBrush" Value="#D8DCE8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#EEF2FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#E0E7FF"/>
+                    <Setter Property="Foreground" Value="#1A237E"/>
+                    <Setter Property="BorderBrush" Value="#C5CAE9"/>
+                </Trigger>
             </Style.Triggers>
         </Style>
         <Style x:Key="PanelResumen" TargetType="Border">
@@ -51,7 +74,7 @@
                        FontSize="22"
                        FontWeight="Bold"
                        Foreground="#1A237E"/>
-            <TextBlock Text="Inv. Vin. Becas, Costos y Gastos, y Costo de la Carrera"
+            <TextBlock Text="Inv. Vin. Becas, Costos y Gastos, y Arancel referencial por costo de carrera"
                        FontSize="12"
                        Foreground="#546E7A"
                        Margin="0,4,0,0"/>
@@ -100,6 +123,11 @@
                        Foreground="#2E7D32"
                        FontWeight="SemiBold"
                        Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding MensajeInfo}"
+                       Foreground="#1A237E"
+                       FontWeight="SemiBold"
+                       TextWrapping="Wrap"
+                       Visibility="{Binding MensajeInfo, Converter={StaticResource StringToVisibilityConverter}}"/>
             <TextBlock Text="{Binding MensajeError}"
                        Foreground="#C62828"
                        FontWeight="SemiBold"
@@ -108,7 +136,7 @@
         </StackPanel>
 
         <TabControl Grid.Row="3"
-                    IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}">
+                    IsEnabled="{Binding PuedeTrabajar}">
             <TabItem Header="1. Inv. Vin. Becas">
                 <Grid Margin="8">
                     <Grid.RowDefinitions>
@@ -138,6 +166,7 @@
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
                               RowStyle="{StaticResource MatrizRowStyle}"
+                              CellStyle="{StaticResource MatrizCellStyle}"
                               HeadersVisibility="Column"
                               GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F8F9FF"
@@ -148,7 +177,7 @@
             <TabItem Header="2. Costos y Gastos">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="8">
-                        <UniformGrid Columns="2" Margin="0,0,0,8">
+                        <UniformGrid Columns="3" Margin="0,0,0,8">
                             <Border Style="{StaticResource PanelResumen}">
                                 <StackPanel>
                                     <TextBlock Text="Total costos y gastos" FontSize="11" Foreground="#546E7A"/>
@@ -164,6 +193,18 @@
                                                FontWeight="Bold"/>
                                 </StackPanel>
                             </Border>
+                            <Border Style="{StaticResource PanelResumen}">
+                                <StackPanel>
+                                    <TextBlock Text="Imprevisto / variable" FontSize="11" Foreground="#546E7A"/>
+                                    <TextBox Text="{Binding FactorImprevisto, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource DecimalStringConverter}}"
+                                             Width="92"
+                                             HorizontalAlignment="Left"
+                                             HorizontalContentAlignment="Right"
+                                             Padding="4,2"
+                                             IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}"
+                                             ToolTip="Factor de imprevisto/variable (ej. 1,05 = 5%). Al cambiarlo se recalcula todo Costos y Gastos."/>
+                                </StackPanel>
+                            </Border>
                         </UniformGrid>
 
                         <TextBlock Text="Proyección de Costos y Gastos"
@@ -175,6 +216,7 @@
                                   AutoGenerateColumns="False"
                                   IsReadOnly="True"
                                   RowStyle="{StaticResource MatrizRowStyle}"
+                                  CellStyle="{StaticResource MatrizCellStyle}"
                                   HeadersVisibility="Column"
                                   GridLinesVisibility="Horizontal"
                                   AlternatingRowBackground="#F8F9FF"
@@ -191,6 +233,7 @@
                                   AutoGenerateColumns="False"
                                   IsReadOnly="True"
                                   RowStyle="{StaticResource MatrizRowStyle}"
+                                  CellStyle="{StaticResource MatrizCellStyle}"
                                   HeadersVisibility="Column"
                                   GridLinesVisibility="Horizontal"
                                   AlternatingRowBackground="#F8F9FF"
@@ -207,6 +250,7 @@
                                   AutoGenerateColumns="False"
                                   IsReadOnly="True"
                                   RowStyle="{StaticResource MatrizRowStyle}"
+                                  CellStyle="{StaticResource MatrizCellStyle}"
                                   HeadersVisibility="Column"
                                   GridLinesVisibility="Horizontal"
                                   AlternatingRowBackground="#F8F9FF"
@@ -216,7 +260,7 @@
                 </ScrollViewer>
             </TabItem>
 
-            <TabItem Header="3. Costo de la Carrera">
+            <TabItem Header="3. Arancel referencial por costo de carrera">
                 <Grid Margin="8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -233,7 +277,7 @@
                         </Border>
                         <Border Style="{StaticResource PanelResumen}">
                             <StackPanel>
-                                <TextBlock Text="Arancel sugerido semestre" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="Arancel referencial (semestre)" FontSize="11" Foreground="#546E7A"/>
                                 <TextBlock Text="{Binding ResultadoCostoCarrera.ArancelSugeridoDisplay, FallbackValue='Pendiente'}"
                                            FontWeight="Bold"/>
                             </StackPanel>
@@ -260,6 +304,7 @@
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
                               RowStyle="{StaticResource MatrizRowStyle}"
+                              CellStyle="{StaticResource MatrizCellStyle}"
                               HeadersVisibility="Column"
                               GridLinesVisibility="Horizontal"
                               AlternatingRowBackground="#F8F9FF"

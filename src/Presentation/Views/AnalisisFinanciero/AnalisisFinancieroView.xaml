@@ -1,0 +1,1151 @@
+<UserControl x:Class="SistemaAranceles.Presentation.Views.AnalisisFinanciero.AnalisisFinancieroView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#263238"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#E8F5E9"/>
+                    <Setter Property="Foreground" Value="#1B5E20"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#C8E6C9"/>
+                    <Setter Property="Foreground" Value="#1B5E20"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="EstadoPgRowStyle" TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsTotal}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Background" Value="#F1F8E9"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="PerdidasGananciasRowStyle" TargetType="DataGridRow" BasedOn="{StaticResource EstadoPgRowStyle}">
+            <Setter Property="MinHeight" Value="28"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsSeccion}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Background" Value="#EEF7F0"/>
+                    <Setter Property="Foreground" Value="#1B5E20"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsResultado}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Background" Value="#DDEFE2"/>
+                    <Setter Property="Foreground" Value="#0D4726"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="PeriodoRecuperacionRowStyle" TargetType="DataGridRow" BasedOn="{StaticResource EstadoPgRowStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsPeriodoRecuperacion}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Background" Value="#DCEDC8"/>
+                    <Setter Property="Foreground" Value="#1B5E20"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="PuntoEquilibrioRowStyle" TargetType="DataGridRow" BasedOn="{StaticResource EstadoPgRowStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsCalculable}" Value="False">
+                    <Setter Property="Foreground" Value="#B71C1C"/>
+                    <Setter Property="Background" Value="#FFF5F5"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="AnalisisDataGridCellStyle" TargetType="DataGridCell">
+            <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=DataGridRow}}"/>
+            <Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=DataGridRow}}"/>
+            <Setter Property="BorderBrush" Value="#C8E6C9"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsTotal}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Foreground" Value="#1B5E20"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsPeriodoRecuperacion}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Foreground" Value="#1B5E20"/>
+                    <Setter Property="Background" Value="#DCEDC8"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsCalculable}" Value="False">
+                    <Setter Property="Foreground" Value="#B71C1C"/>
+                </DataTrigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="#1B5E20"/>
+                    <Setter Property="Background" Value="#E8F5E9"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Foreground" Value="#1B5E20"/>
+                    <Setter Property="Background" Value="#C8E6C9"/>
+                    <Setter Property="BorderBrush" Value="#A5D6A7"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="PerdidasGananciasCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource AnalisisDataGridCellStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsSeccion}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Foreground" Value="#1B5E20"/>
+                    <Setter Property="Background" Value="#EEF7F0"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsResultado}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Foreground" Value="#0D4726"/>
+                    <Setter Property="Background" Value="#DDEFE2"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="PerdidasGananciasConceptoCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource PerdidasGananciasCellStyle}">
+            <Setter Property="BorderBrush" Value="#B7D7BC"/>
+            <Setter Property="BorderThickness" Value="0,0,1,0"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsDetalle}" Value="True">
+                    <Setter Property="Background" Value="#FAFCFA"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="PerdidasGananciasConceptoTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#263238"/>
+            <Setter Property="Margin" Value="8,0,8,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Nivel}" Value="1">
+                    <Setter Property="Margin" Value="22,0,8,0"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsSeccion}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Foreground" Value="#1B5E20"/>
+                    <Setter Property="Margin" Value="8,0,8,0"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsResultado}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Foreground" Value="#0D4726"/>
+                    <Setter Property="Margin" Value="8,0,8,0"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="PerdidasGananciasNumeroTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#263238"/>
+            <Setter Property="Margin" Value="8,0,8,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextAlignment" Value="Right"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsSeccion}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Foreground" Value="#1B5E20"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsResultado}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Foreground" Value="#0D4726"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="FlujoFondosRowStyle" TargetType="DataGridRow">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#263238"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsSeccion}" Value="True">
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                    <Setter Property="Background" Value="#FBFCFB"/>
+                    <Setter Property="Foreground" Value="#263238"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsResultado}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Background" Value="#EAF4EC"/>
+                    <Setter Property="Foreground" Value="#0D4726"/>
+                </DataTrigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#EEF7F0"/>
+                    <Setter Property="Foreground" Value="#263238"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#DDEFE2"/>
+                    <Setter Property="Foreground" Value="#263238"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="FlujoFondosCellStyle" TargetType="DataGridCell">
+            <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=DataGridRow}}"/>
+            <Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=DataGridRow}}"/>
+            <Setter Property="BorderBrush" Value="#DDE6DE"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsSeccion}" Value="True">
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                    <Setter Property="Foreground" Value="#263238"/>
+                    <Setter Property="Background" Value="#FBFCFB"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsResultado}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Foreground" Value="#0D4726"/>
+                    <Setter Property="Background" Value="#EAF4EC"/>
+                </DataTrigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="#263238"/>
+                    <Setter Property="Background" Value="#EEF7F0"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Foreground" Value="#263238"/>
+                    <Setter Property="Background" Value="#DDEFE2"/>
+                    <Setter Property="BorderBrush" Value="#BFD9C5"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="FlujoFondosConceptoTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#263238"/>
+            <Setter Property="Margin" Value="8,0,8,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsSeccion}" Value="True">
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                    <Setter Property="Foreground" Value="#263238"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsResultado}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Foreground" Value="#0D4726"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="FlujoFondosNumeroTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#263238"/>
+            <Setter Property="Margin" Value="8,0,8,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextAlignment" Value="Right"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsSeccion}" Value="True">
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                    <Setter Property="Foreground" Value="#263238"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsResultado}" Value="True">
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Foreground" Value="#0D4726"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="PanelResumen" TargetType="Border">
+            <Setter Property="Background" Value="#F7FAF7"/>
+            <Setter Property="BorderBrush" Value="#C8E6C9"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Margin" Value="0,0,8,8"/>
+        </Style>
+        <Style x:Key="DashboardIndicadorCard" TargetType="Border" BasedOn="{StaticResource PanelResumen}">
+            <Setter Property="MinHeight" Value="116"/>
+            <Setter Property="Width" Value="220"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsViable}" Value="True">
+                    <Setter Property="Background" Value="#F1F8E9"/>
+                    <Setter Property="BorderBrush" Value="#81C784"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding EsViable}" Value="False">
+                    <Setter Property="Background" Value="#FFF5F5"/>
+                    <Setter Property="BorderBrush" Value="#EF9A9A"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="DashboardSemaforoStyle" TargetType="Ellipse">
+            <Setter Property="Width" Value="10"/>
+            <Setter Property="Height" Value="10"/>
+            <Setter Property="Fill" Value="#C62828"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding EsViable}" Value="True">
+                    <Setter Property="Fill" Value="#2E7D32"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="DashboardRecomendacionRowStyle" TargetType="DataGridRow" BasedOn="{StaticResource EstadoPgRowStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Prioridad}" Value="Alta">
+                    <Setter Property="Foreground" Value="#B71C1C"/>
+                    <Setter Property="Background" Value="#FFF5F5"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,8">
+            <TextBlock Text="Análisis Financiero"
+                       FontSize="22"
+                       FontWeight="Bold"
+                       Foreground="#1B5E20"/>
+            <TextBlock Text="Pérdidas y Ganancias, Flujo de Fondos e indicadores financieros"
+                       FontSize="12"
+                       Foreground="#546E7A"
+                       Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <Border Grid.Row="1"
+                BorderBrush="#D8DCE8"
+                BorderThickness="0,0,0,1"
+                Padding="0,0,0,8"
+                Margin="0,0,0,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                    <TextBlock Text="Carrera" FontSize="11" Foreground="#546E7A"/>
+                    <ComboBox ItemsSource="{Binding Carreras}"
+                              SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}"
+                              DisplayMemberPath="Nombre"
+                              MinWidth="220"
+                              Padding="4,2"
+                              IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                    <TextBlock Text="Escenario" FontSize="11" Foreground="#546E7A"/>
+                    <ComboBox ItemsSource="{Binding Escenarios}"
+                              SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}"
+                              DisplayMemberPath="NombreDisplay"
+                              MinWidth="220"
+                              Padding="4,2"
+                              IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}"/>
+                </StackPanel>
+                <Button Grid.Column="3"
+                        Content="Refrescar"
+                        Padding="10,4"
+                        VerticalAlignment="Bottom"
+                        Command="{Binding RefrescarCommand}"
+                        IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}"/>
+            </Grid>
+        </Border>
+
+        <StackPanel Grid.Row="2" Margin="0,0,0,8">
+            <Border Background="#E8F5E9" BorderBrush="#A5D6A7" BorderThickness="1" CornerRadius="4" Padding="10,6" Margin="0,0,0,6"
+                    Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding MensajeExito}" Foreground="#2E7D32" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Content="✕" ToolTip="Cerrar"
+                            Command="{Binding CerrarMensajeCommand}" CommandParameter="exito"
+                            Background="Transparent" BorderThickness="0" Foreground="#2E7D32" FontWeight="Bold" Padding="8,0" Cursor="Hand"/>
+                </Grid>
+            </Border>
+            <Border Background="#EEF2FF" BorderBrush="#C5CAE9" BorderThickness="1" CornerRadius="4" Padding="10,6" Margin="0,0,0,6"
+                    Visibility="{Binding MensajeInfo, Converter={StaticResource StringToVisibilityConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding MensajeInfo}" Foreground="#1A237E" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Content="✕" ToolTip="Cerrar"
+                            Command="{Binding CerrarMensajeCommand}" CommandParameter="info"
+                            Background="Transparent" BorderThickness="0" Foreground="#1A237E" FontWeight="Bold" Padding="8,0" Cursor="Hand"/>
+                </Grid>
+            </Border>
+            <Border Background="#FFF3E0" BorderBrush="#FFCC80" BorderThickness="1" CornerRadius="4" Padding="10,6" Margin="0,0,0,6"
+                    Visibility="{Binding MensajeAdvertencia, Converter={StaticResource StringToVisibilityConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding MensajeAdvertencia}" Foreground="#E65100" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Content="✕" ToolTip="Cerrar"
+                            Command="{Binding CerrarMensajeCommand}" CommandParameter="advertencia"
+                            Background="Transparent" BorderThickness="0" Foreground="#E65100" FontWeight="Bold" Padding="8,0" Cursor="Hand"/>
+                </Grid>
+            </Border>
+            <Border Background="#FFEBEE" BorderBrush="#EF9A9A" BorderThickness="1" CornerRadius="4" Padding="10,6"
+                    Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding MensajeError}" Foreground="#C62828" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Content="✕" ToolTip="Cerrar"
+                            Command="{Binding CerrarMensajeCommand}" CommandParameter="error"
+                            Background="Transparent" BorderThickness="0" Foreground="#C62828" FontWeight="Bold" Padding="8,0" Cursor="Hand"/>
+                </Grid>
+            </Border>
+        </StackPanel>
+
+        <TabControl Grid.Row="3"
+                    IsEnabled="{Binding PuedeTrabajar}">
+            <TabItem Header="1. Pérdidas y Ganancias">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <DataGrid x:Name="PerdidasGananciasGrid"
+                              Grid.Row="0"
+                              ItemsSource="{Binding FilasPerdidasGanancias}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              RowStyle="{StaticResource PerdidasGananciasRowStyle}"
+                              CellStyle="{StaticResource PerdidasGananciasCellStyle}"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F7FAF7"
+                              BorderBrush="#C8E6C9"
+                              ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="2. Flujo de Fondos">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <DataGrid x:Name="FlujoFondosGrid"
+                              Grid.Row="0"
+                              ItemsSource="{Binding FilasFlujoFondos}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              RowStyle="{StaticResource FlujoFondosRowStyle}"
+                              CellStyle="{StaticResource FlujoFondosCellStyle}"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F7FAF7"
+                              BorderBrush="#C8E6C9"
+                              ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="3. TIR / VAN">
+                <ScrollViewer Margin="8" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <Border Style="{StaticResource PanelResumen}" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="Cálculo de la Tasa Interna de Retorno"
+                                           FontWeight="SemiBold"
+                                           Foreground="#1B5E20"
+                                           Margin="0,0,0,6"/>
+                                <DataGrid x:Name="TirFlujosGrid"
+                                          ItemsSource="{Binding FilasFlujoTir}"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          RowStyle="{StaticResource FlujoFondosRowStyle}"
+                                          CellStyle="{StaticResource FlujoFondosCellStyle}"
+                                          HeadersVisibility="Column"
+                                          GridLinesVisibility="Horizontal"
+                                          AlternatingRowBackground="#F7FAF7"
+                                          BorderBrush="#C8E6C9"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
+                                <Grid Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="260"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Tasa Interna de Retorno"
+                                               FontWeight="SemiBold"
+                                               Foreground="#263238"/>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding IndicadoresFinancieros.TirDisplay, FallbackValue='No calculable'}"
+                                               FontWeight="Bold"
+                                               Foreground="#1B5E20"/>
+                                </Grid>
+                                <TextBlock Text="{Binding IndicadoresFinancieros.TirDiagnosticoDisplay, FallbackValue=''}"
+                                           Margin="0,6,0,0"
+                                           Foreground="#E65100"
+                                           FontSize="11"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource PanelResumen}" Margin="0,0,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Tasa mínima de rendimiento"
+                                           FontWeight="SemiBold"
+                                           Foreground="#1B5E20"
+                                           Margin="0,0,0,6"/>
+                                <DataGrid ItemsSource="{Binding FilasTasaMinimaRendimiento}"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          RowStyle="{StaticResource EstadoPgRowStyle}"
+                                          CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                                          HeadersVisibility="Column"
+                                          GridLinesVisibility="Horizontal"
+                                          AlternatingRowBackground="#F7FAF7"
+                                          BorderBrush="#C8E6C9"
+                                          Margin="0,0,0,8">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Concepto" Binding="{Binding Concepto}" Width="260"/>
+                                        <DataGridTextColumn Header="Valor" Binding="{Binding ValorDisplay}" Width="160"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <TextBlock Text="Cálculo del VAN"
+                                           FontWeight="SemiBold"
+                                           Foreground="#1B5E20"
+                                           Margin="0,0,0,6"/>
+                                <DataGrid x:Name="VanFlujosGrid"
+                                          ItemsSource="{Binding FilasFlujoVan}"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          RowStyle="{StaticResource FlujoFondosRowStyle}"
+                                          CellStyle="{StaticResource FlujoFondosCellStyle}"
+                                          HeadersVisibility="Column"
+                                          GridLinesVisibility="Horizontal"
+                                          AlternatingRowBackground="#F7FAF7"
+                                          BorderBrush="#C8E6C9"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
+                                <Grid Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="260"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Valor Actual Neto"
+                                               FontWeight="SemiBold"
+                                               Foreground="#263238"/>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding IndicadoresFinancieros.VanDisplay, FallbackValue='$ 0.00'}"
+                                               FontWeight="Bold"
+                                               Foreground="#1B5E20"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="4. Periodo de Recuperación">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,8">
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="Estado" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding PeriodoRecuperacion.Estado, FallbackValue='Sin datos'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="Periodo exacto" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding PeriodoRecuperacion.PeriodoRecuperacion, FallbackValue='Pendiente'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="Tiempo de recuperación" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding PeriodoRecuperacion.TiempoRecuperacionDisplay, FallbackValue='Pendiente'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                                <TextBlock Text="{Binding PeriodoRecuperacion.TotalMesesDisplay, FallbackValue=''}"
+                                           FontSize="10"
+                                           Foreground="#546E7A"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="Flujo acumulado final" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding PeriodoRecuperacion.FlujoAcumuladoFinalDisplay, FallbackValue='$ 0.00'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <DataGrid Grid.Row="1"
+                              ItemsSource="{Binding DetallePeriodoRecuperacion}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              RowStyle="{StaticResource PeriodoRecuperacionRowStyle}"
+                              CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F7FAF7"
+                              BorderBrush="#C8E6C9">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Periodo" Binding="{Binding EtiquetaPeriodo}" Width="*"/>
+                            <DataGridTextColumn Header="Flujo neto" Binding="{Binding FlujoNetoDisplay}" Width="170"/>
+                            <DataGridTextColumn Header="Flujo acumulado" Binding="{Binding FlujoAcumuladoDisplay}" Width="170"/>
+                            <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="150"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="5. Punto de Equilibrio">
+                <ScrollViewer Margin="8" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <Border Style="{StaticResource PanelResumen}" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="Proyección de Resultados y Punto de Equilibrio"
+                                           FontWeight="SemiBold"
+                                           Foreground="#1B5E20"
+                                           Margin="0,0,0,2"/>
+                                <TextBlock Text="{Binding PuntoEquilibrio.PeriodoBaseEtiqueta, StringFormat=Período del punto de equilibrio (período base): {0}, FallbackValue='Período del punto de equilibrio: -'}"
+                                           FontSize="11"
+                                           Foreground="#546E7A"
+                                           Margin="0,0,0,8"/>
+                                <DataGrid ItemsSource="{Binding ProyeccionResultadosPuntoEquilibrio}"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          RowStyle="{StaticResource PerdidasGananciasRowStyle}"
+                                          CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                                          HeadersVisibility="Column"
+                                          GridLinesVisibility="Horizontal"
+                                          AlternatingRowBackground="#F7FAF7"
+                                          BorderBrush="#C8E6C9">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Concepto" Binding="{Binding Concepto}" Width="260"/>
+                                        <DataGridTextColumn Header="Valor anual" Binding="{Binding ValorAnualDisplay}" Width="170"/>
+                                        <DataGridTextColumn Header="Valor mensual" Binding="{Binding ValorMensualDisplay}" Width="170"/>
+                                        <DataGridTextColumn Header="%" Binding="{Binding PorcentajeDisplay}" Width="100"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource PanelResumen}" Margin="0,0,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Análisis del Punto de Equilibrio"
+                                           FontWeight="SemiBold"
+                                           Foreground="#1B5E20"
+                                           Margin="0,0,0,8"/>
+                                <DataGrid ItemsSource="{Binding AnalisisPuntoEquilibrio}"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          RowStyle="{StaticResource PerdidasGananciasRowStyle}"
+                                          CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                                          HeadersVisibility="Column"
+                                          GridLinesVisibility="Horizontal"
+                                          AlternatingRowBackground="#F7FAF7"
+                                          BorderBrush="#C8E6C9">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Concepto" Binding="{Binding Concepto}" Width="360"/>
+                                        <DataGridTextColumn Header="PE Anual" Binding="{Binding PeAnualDisplay}" Width="180"/>
+                                        <DataGridTextColumn Header="PE Mensual" Binding="{Binding PeMensualDisplay}" Width="180"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource PanelResumen}" Margin="0,8,0,0"
+                                Visibility="{Binding TieneSimulacionDesercion, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <StackPanel>
+                                <TextBlock Text="Simulación de tasa de deserción (riesgo)"
+                                           FontWeight="SemiBold" Foreground="#1B5E20" Margin="0,0,0,4"/>
+                                <TextBlock Text="Edita las tasas para ver cuántos estudiantes por ciclo se necesitan si hay retiro. Solo afecta esta simulación; no cambia el resto del análisis."
+                                           FontSize="11" Foreground="#546E7A" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="160"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Concepto" FontWeight="SemiBold" Foreground="#546E7A"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Tasa (%)" FontWeight="SemiBold" Foreground="#546E7A" TextAlignment="Right"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="2" Text="Estudiantes/ciclo" FontWeight="SemiBold" Foreground="#546E7A" TextAlignment="Right"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Sin tasa de deserción" Margin="0,4,0,0"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="—" TextAlignment="Right" Margin="0,4,0,0"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding EstudiantesPorCicloBaseDisplay}" FontWeight="SemiBold" TextAlignment="Right" Margin="0,4,0,0"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Con tasa de deserción alta" Margin="0,4,0,0"/>
+                                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding TasaDesercionAltaPe, UpdateSourceTrigger=PropertyChanged}" Padding="4,2" Margin="6,4,0,0" HorizontalContentAlignment="Right"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding EstudiantesDesercionAltaDisplay}" FontWeight="Bold" Foreground="#0D4726" TextAlignment="Right" Margin="0,4,0,0"/>
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Con tasa de deserción media" Margin="0,4,0,0"/>
+                                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding TasaDesercionMediaPe, UpdateSourceTrigger=PropertyChanged}" Padding="4,2" Margin="6,4,0,0" HorizontalContentAlignment="Right"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding EstudiantesDesercionMediaDisplay}" FontWeight="Bold" Foreground="#0D4726" TextAlignment="Right" Margin="0,4,0,0"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="6. Arancel Óptimo">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,8">
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="Arancel óptimo" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding ArancelOptimoBiseccion.ArancelOptimoDisplay, FallbackValue='No calculable'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                                <TextBlock Text="{Binding ArancelOptimoBiseccion.Estado, FallbackValue='Sin datos'}"
+                                           FontSize="10"
+                                           Foreground="#546E7A"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="Matrícula óptima" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding ArancelOptimoBiseccion.MatriculaOptimaDisplay, FallbackValue='No calculable'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                                <TextBlock Text="{Binding ArancelOptimoBiseccion.TotalPorSemestreDisplay, FallbackValue='No calculable'}"
+                                           FontSize="10"
+                                           Foreground="#546E7A"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="VAN objetivo" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding ArancelOptimoBiseccion.VanDisplay, FallbackValue='$ 0.00'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                                <TextBlock Text="{Binding ArancelOptimoBiseccion.ToleranciaDisplay, FallbackValue='± $ 1.00'}"
+                                           FontSize="10"
+                                           Foreground="#546E7A"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="TIR" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding ArancelOptimoBiseccion.TirDisplay, FallbackValue='No calculable'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                                <TextBlock Text="TIR normal calculada"
+                                           FontSize="10"
+                                           Foreground="#546E7A"/>
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <Border Grid.Row="1" Style="{StaticResource PanelResumen}" Margin="0,0,0,8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Bisección VAN = 0" FontWeight="SemiBold" Foreground="#1B5E20"/>
+                                <TextBlock FontSize="11" Foreground="#546E7A" TextWrapping="Wrap">
+                                    <Run Text="Rango "/>
+                                    <Run Text="{Binding ArancelOptimoBiseccion.RangoArancelDisplay, Mode=OneWay, FallbackValue='$ 500.00 - $ 5,000.00'}"/>
+                                    <Run Text=", iteraciones "/>
+                                    <Run Text="{Binding ArancelOptimoBiseccion.IteracionesUsadas, Mode=OneWay, FallbackValue='0'}"/>
+                                    <Run Text=". VAN en mínimo "/>
+                                    <Run Text="{Binding ArancelOptimoBiseccion.VanArancelMinimoDisplay, Mode=OneWay, FallbackValue='$ 0.00'}"/>
+                                    <Run Text=", VAN en máximo "/>
+                                    <Run Text="{Binding ArancelOptimoBiseccion.VanArancelMaximoDisplay, Mode=OneWay, FallbackValue='$ 0.00'}"/>
+                                    <Run Text=", máximo evaluado "/>
+                                    <Run Text="{Binding ArancelOptimoBiseccion.ArancelMaximoEvaluadoDisplay, Mode=OneWay, FallbackValue='$ 5,000.00'}"/>
+                                    <Run Text=", expansiones "/>
+                                    <Run Text="{Binding ArancelOptimoBiseccion.ExpansionesRango, Mode=OneWay, FallbackValue='0'}"/>
+                                    <Run Text=", mejor arancel "/>
+                                    <Run Text="{Binding ArancelOptimoBiseccion.MejorArancelEncontradoDisplay, Mode=OneWay, FallbackValue='Sin datos'}"/>
+                                    <Run Text=", mejor VAN "/>
+                                    <Run Text="{Binding ArancelOptimoBiseccion.MejorVanEncontradoDisplay, Mode=OneWay, FallbackValue='$ 0.00'}"/>
+                                    <Run Text=", estado "/>
+                                    <Run Text="{Binding ArancelOptimoBiseccion.EstadoConvergencia, Mode=OneWay, FallbackValue='Sin datos'}"/>
+                                    <Run Text="."/>
+                                </TextBlock>
+                                <Border Background="#F1F8E9" BorderBrush="#C8E6C9" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,8,0,0"
+                                        Visibility="{Binding TieneComparativaArancel, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="130"/>
+                                            <ColumnDefinition Width="130"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Comparativa de arancel" FontWeight="SemiBold" Foreground="#1B5E20"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="Arancel" FontWeight="SemiBold" Foreground="#546E7A" TextAlignment="Right"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="2" Text="Total/sem." FontWeight="SemiBold" Foreground="#546E7A" TextAlignment="Right"/>
+
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Vigente (arancel deseado aplicado)" Foreground="#263238" Margin="0,3,0,0"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ArancelVigenteDisplay}" Foreground="#263238" TextAlignment="Right" Margin="0,3,0,0"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding TotalVigenteDisplay}" Foreground="#263238" TextAlignment="Right" Margin="0,3,0,0"/>
+
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Referencial por costo de carrera" Foreground="#263238" Margin="0,3,0,0"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ArancelReferencialDisplay}" Foreground="#263238" TextAlignment="Right" Margin="0,3,0,0"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding TotalReferencialDisplay}" Foreground="#263238" TextAlignment="Right" Margin="0,3,0,0"/>
+
+                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Óptimo financiero (VAN=0)" FontWeight="Bold" Foreground="#0D4726" Margin="0,3,0,0"/>
+                                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding ArancelOptimoComparativaDisplay}" FontWeight="Bold" Foreground="#0D4726" TextAlignment="Right" Margin="0,3,0,0"/>
+                                        <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding TotalOptimoComparativaDisplay}" FontWeight="Bold" Foreground="#0D4726" TextAlignment="Right" Margin="0,3,0,0"/>
+
+                                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Diferencia (vigente → óptimo)" Foreground="#546E7A" Margin="0,3,0,0"/>
+                                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding DiferenciaArancelDisplay}" Foreground="#546E7A" TextAlignment="Right" Margin="0,3,0,0"/>
+                                        <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding DiferenciaPorcentajeDisplay}" Foreground="#546E7A" TextAlignment="Right" Margin="0,3,0,0"/>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                            <Button Grid.Column="1"
+                                    Content="{Binding TextoBotonArancelOptimo}"
+                                    Padding="10,4"
+                                    Margin="12,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Command="{Binding UsarArancelOptimoCommand}"
+                                    IsEnabled="{Binding PuedeUsarArancelOptimo}"/>
+                        </Grid>
+                    </Border>
+
+                    <DataGrid Grid.Row="2"
+                              ItemsSource="{Binding DetalleArancelOptimo}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              RowStyle="{StaticResource EstadoPgRowStyle}"
+                              CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F7FAF7"
+                              BorderBrush="#C8E6C9"
+                              Margin="0,0,0,8"
+                              ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Período" Binding="{Binding EtiquetaPeriodo}" Width="130"/>
+                            <DataGridTextColumn Header="Estudiantes" Binding="{Binding EstudiantesDisplay}" Width="110"/>
+                            <DataGridTextColumn Header="Ingresos" Binding="{Binding IngresosDisplay}" Width="150"/>
+                            <DataGridTextColumn Header="Becas" Binding="{Binding BecasInstitucionalesDisplay}" Width="140"/>
+                            <DataGridTextColumn Header="Costos y gastos" Binding="{Binding CostosYGastosDisplay}" Width="150"/>
+                            <DataGridTextColumn Header="Utilidad / pérdida" Binding="{Binding UtilidadPerdidaEjercicioDisplay}" Width="160"/>
+                            <DataGridTextColumn Header="Flujo neto" Binding="{Binding FlujoNetoDisplay}" Width="150"/>
+                            <DataGridTextColumn Header="Flujo acumulado" Binding="{Binding FlujoAcumuladoDisplay}" Width="160"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <DataGrid Grid.Row="3"
+                              ItemsSource="{Binding IteracionesArancelOptimo}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              RowStyle="{StaticResource EstadoPgRowStyle}"
+                              CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F7FAF7"
+                              BorderBrush="#C8E6C9">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="#" Binding="{Binding Numero}" Width="60"/>
+                            <DataGridTextColumn Header="Arancel mínimo" Binding="{Binding ArancelMinimoDisplay}" Width="160"/>
+                            <DataGridTextColumn Header="Arancel máximo" Binding="{Binding ArancelMaximoDisplay}" Width="160"/>
+                            <DataGridTextColumn Header="Arancel medio" Binding="{Binding ArancelMedioDisplay}" Width="160"/>
+                            <DataGridTextColumn Header="VAN" Binding="{Binding VanDisplay}" Width="170"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="7. Dashboard Financiero">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <UniformGrid Grid.Row="0" Columns="5" Margin="0,0,0,8">
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="Estado general" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding DashboardFinanciero.EstadoGeneral, FallbackValue='Sin datos'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                                <TextBlock Text="{Binding DashboardFinanciero.ViabilidadDisplay, FallbackValue='0/0 indicadores'}"
+                                           FontSize="10"
+                                           Foreground="#546E7A"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="VAN" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding DashboardFinanciero.VanDisplay, FallbackValue='$ 0.00'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                                <TextBlock Text="{Binding DashboardFinanciero.PorcentajeViabilidadDisplay, FallbackValue='0,00%'}"
+                                           FontSize="10"
+                                           Foreground="#546E7A"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="TIR / TMR" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock FontWeight="Bold" FontSize="16" Foreground="#1B5E20">
+                                    <Run Text="{Binding DashboardFinanciero.TirDisplay, Mode=OneWay, FallbackValue='No calculable'}"/>
+                                    <Run Text=" / "/>
+                                    <Run Text="{Binding DashboardFinanciero.TmrDisplay, Mode=OneWay, FallbackValue='0,00%'}"/>
+                                </TextBlock>
+                                <TextBlock Text="{Binding DashboardFinanciero.FechaCalculoDisplay, FallbackValue=''}"
+                                           FontSize="10"
+                                           Foreground="#546E7A"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <StackPanel>
+                                <TextBlock Text="Flujo acumulado final" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding DashboardFinanciero.FlujoAcumuladoFinalDisplay, FallbackValue='$ 0.00'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                                <TextBlock Text="{Binding DashboardFinanciero.UtilidadPerdidaDisplay, FallbackValue='$ 0.00'}"
+                                           FontSize="10"
+                                           Foreground="#546E7A"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource PanelResumen}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Arancel óptimo" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Grid.Row="1"
+                                           Text="{Binding DashboardFinanciero.ArancelOptimoDisplay, FallbackValue='No calculable'}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#1B5E20"/>
+                            </Grid>
+                        </Border>
+                    </UniformGrid>
+
+                    <ItemsControl Grid.Row="1"
+                                  ItemsSource="{Binding IndicadoresDashboard}"
+                                  Margin="0,0,0,8">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource DashboardIndicadorCard}">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <DockPanel>
+                                            <Ellipse Style="{StaticResource DashboardSemaforoStyle}"
+                                                     DockPanel.Dock="Left"
+                                                     Margin="0,3,6,0"/>
+                                            <TextBlock Text="{Binding Nombre}"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="#263238"/>
+                                        </DockPanel>
+                                        <TextBlock Grid.Row="1"
+                                                   Text="{Binding ValorDisplay}"
+                                                   FontSize="18"
+                                                   FontWeight="Bold"
+                                                   Foreground="#1B5E20"
+                                                   Margin="0,5,0,0"/>
+                                        <TextBlock Grid.Row="2"
+                                                   Text="{Binding Estado}"
+                                                   FontSize="11"
+                                                   Foreground="#546E7A"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,4,0,0"/>
+                                        <TextBlock Grid.Row="3"
+                                                   Text="{Binding Detalle}"
+                                                   FontSize="11"
+                                                   Foreground="#37474F"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,4,0,0"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="3*"/>
+                            <ColumnDefinition Width="2*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <DataGrid Grid.Column="0"
+                                  ItemsSource="{Binding IndicadoresDashboard}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  RowStyle="{StaticResource EstadoPgRowStyle}"
+                                  CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="Horizontal"
+                                  AlternatingRowBackground="#F7FAF7"
+                                  BorderBrush="#C8E6C9"
+                                  Margin="0,0,8,0">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Indicador" Binding="{Binding Nombre}" Width="150"/>
+                                <DataGridTextColumn Header="Valor" Binding="{Binding ValorDisplay}" Width="160"/>
+                                <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="220"/>
+                                <DataGridTextColumn Header="Módulo" Binding="{Binding Modulo}" Width="160"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <DataGrid Grid.Column="1"
+                                  ItemsSource="{Binding RecomendacionesDashboard}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  RowStyle="{StaticResource DashboardRecomendacionRowStyle}"
+                                  CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="Horizontal"
+                                  AlternatingRowBackground="#F7FAF7"
+                                  BorderBrush="#C8E6C9">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Prioridad" Binding="{Binding Prioridad}" Width="90"/>
+                                <DataGridTextColumn Header="Origen" Binding="{Binding Origen}" Width="120"/>
+                                <DataGridTextColumn Header="Recomendación" Binding="{Binding Mensaje}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="8. CES / INF CES">
+                <ScrollViewer Margin="8" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <Border Style="{StaticResource PanelResumen}" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="Distribución referencial de costos de la carrera"
+                                           FontWeight="SemiBold" Foreground="#1B5E20" Margin="0,0,0,2"/>
+                                <TextBlock Text="Cómo se reparte el 100% del costo de la carrera por categoría (información referencial)."
+                                           FontSize="11" Foreground="#546E7A" Margin="0,0,0,8" TextWrapping="Wrap"/>
+                                <DataGrid ItemsSource="{Binding DistribucionCes}"
+                                          AutoGenerateColumns="False" IsReadOnly="True"
+                                          RowStyle="{StaticResource EstadoPgRowStyle}"
+                                          CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                                          HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                                          AlternatingRowBackground="#F7FAF7" BorderBrush="#C8E6C9">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" Width="*"/>
+                                        <DataGridTextColumn Header="Monto" Binding="{Binding MontoDisplay}" Width="170"/>
+                                        <DataGridTextColumn Header="% del total" Binding="{Binding PorcentajeDisplay}" Width="120"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource PanelResumen}" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="INF CES — Presupuesto de la primera cohorte por función"
+                                           FontWeight="SemiBold" Foreground="#1B5E20" Margin="0,0,0,8"/>
+                                <DataGrid ItemsSource="{Binding InfCes}"
+                                          AutoGenerateColumns="False" IsReadOnly="True"
+                                          RowStyle="{StaticResource PerdidasGananciasRowStyle}"
+                                          CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                                          HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                                          AlternatingRowBackground="#F7FAF7" BorderBrush="#C8E6C9"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Concepto" Binding="{Binding Concepto}" Width="230"/>
+                                        <DataGridTextColumn Header="Provisión educación superior" Binding="{Binding ProvisionDisplay}" Width="150"/>
+                                        <DataGridTextColumn Header="Fomento científico y tecnológico" Binding="{Binding FomentoDisplay}" Width="150"/>
+                                        <DataGridTextColumn Header="Vinculación con la sociedad" Binding="{Binding VinculacionDisplay}" Width="150"/>
+                                        <DataGridTextColumn Header="Otros" Binding="{Binding OtrosDisplay}" Width="100"/>
+                                        <DataGridTextColumn Header="Total" Binding="{Binding TotalDisplay}" Width="150"/>
+                                        <DataGridTextColumn Header="% corriente" Binding="{Binding PorcentajeDisplay}" Width="100"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <Grid Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,24,0">
+                                        <TextBlock Text="Arancel por semestre" FontSize="11" Foreground="#546E7A"/>
+                                        <TextBlock Text="{Binding Ces.ArancelPorSemestreDisplay, FallbackValue='—'}" FontWeight="Bold" Foreground="#1B5E20"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Margin="0,0,24,0">
+                                        <TextBlock Text="Matrícula" FontSize="11" Foreground="#546E7A"/>
+                                        <TextBlock Text="{Binding Ces.MatriculaDisplay, FallbackValue='—'}" FontWeight="Bold" Foreground="#1B5E20"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Total por semestre" FontSize="11" Foreground="#546E7A"/>
+                                        <TextBlock Text="{Binding Ces.TotalPorSemestreDisplay, FallbackValue='—'}" FontWeight="Bold" Foreground="#1B5E20"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource PanelResumen}" Margin="0,0,0,0">
+                            <StackPanel>
+                                <TextBlock Text="CES — Parámetros de justificación del arancel"
+                                           FontWeight="SemiBold" Foreground="#1B5E20" Margin="0,0,0,8"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                    <TextBlock Text="Costo de carreras similares (referencial):" FontSize="11"
+                                               Foreground="#546E7A" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBox Text="{Binding CostoCarrerasSimilares, UpdateSourceTrigger=PropertyChanged}"
+                                             MinWidth="160" Padding="4,2"
+                                             IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}"/>
+                                    <TextBlock Text="(dato externo de la IES)" FontSize="10" FontStyle="Italic"
+                                               Foreground="#546E7A" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                </StackPanel>
+                                <DataGrid ItemsSource="{Binding ParametrosCes}"
+                                          AutoGenerateColumns="False" IsReadOnly="True"
+                                          RowStyle="{StaticResource PerdidasGananciasRowStyle}"
+                                          CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                                          HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                                          AlternatingRowBackground="#F7FAF7" BorderBrush="#C8E6C9">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Parámetro" Binding="{Binding Parametro}" Width="230"/>
+                                        <DataGridTextColumn Header="Criterio" Binding="{Binding Criterio}" Width="*"/>
+                                        <DataGridTextColumn Header="Valor" Binding="{Binding ValorDisplay}" Width="150"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <Border Grid.Row="3"
+                Background="#B3FFFFFF"
+                Visibility="{Binding EstaCargando, Converter={StaticResource BoolToVisibilityConverter}}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True"
+                             Width="220"
+                             Height="6"
+                             Foreground="#2E7D32"/>
+                <TextBlock Text="Calculando análisis financiero..."
+                           Margin="0,10,0,0"
+                           HorizontalAlignment="Center"
+                           FontWeight="SemiBold"
+                           Foreground="#1B5E20"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

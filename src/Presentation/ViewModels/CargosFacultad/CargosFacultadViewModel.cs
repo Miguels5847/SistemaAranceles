@@ -54,7 +54,7 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
     private ObservableCollection<FilaSueldoPeriodoDto> _filas = [];
 
     [ObservableProperty]
-    private string _estudiantesUAInput = "285";
+    private string _estudiantesUAInput = ConfiguracionSueldosCarrera.EstudiantesUnidadAcademicaPorDefecto.ToString(CultureInfo.InvariantCulture);
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(TextoEstudiantesCarrera))]
@@ -101,6 +101,20 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
     private string _mensajeExito = string.Empty;
 
     public bool PuedeVer => _sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador;
+
+    public bool EstaProcesando => EstaCargando || EstaGenerando;
+
+    partial void OnEstaCargandoChanged(bool value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(EstaProcesando));
+    }
+
+    partial void OnEstaGenerandoChanged(bool value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(EstaProcesando));
+    }
 
     public static string TituloModulo => "Sueldos";
 
@@ -283,6 +297,11 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
             return;
         }
 
+        // Anti-stale: si la selección cambia mientras corre la consulta, se descarta el resultado viejo.
+        var carreraId = CarreraSeleccionada.Id;
+        var escenarioId = EscenarioSeleccionado.Id;
+        var periodoId = PeriodoSeleccionado.PeriodoAcademicoId;
+
         EstaGenerando = true;
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
@@ -293,11 +312,16 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
             var query = scope.ServiceProvider.GetRequiredService<GenerarTablaSueldosPeriodoQuery>();
             var consolidadoActual = await ObtenerConsolidadoActualAsync();
             var resultado = await query.EjecutarAsync(
-                CarreraSeleccionada.Id,
-                EscenarioSeleccionado.Id,
-                PeriodoSeleccionado.PeriodoAcademicoId,
+                carreraId,
+                escenarioId,
+                periodoId,
                 estudiantesUA,
                 consolidadoActual);
+
+            if (CarreraSeleccionada?.Id != carreraId
+                || EscenarioSeleccionado?.Id != escenarioId
+                || PeriodoSeleccionado?.PeriodoAcademicoId != periodoId)
+                return;
 
             Filas = new ObservableCollection<FilaSueldoPeriodoDto>(resultado.Filas);
             EstudiantesCarrera = resultado.EstudiantesCarrera;

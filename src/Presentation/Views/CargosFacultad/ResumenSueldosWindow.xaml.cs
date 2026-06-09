@@ -74,12 +74,6 @@ public partial class ResumenSueldosWindow : Window
             });
         }
 
-        dgResumen.Columns.Add(new DataGridTextColumn
-        {
-            Header = "TOTAL",
-            Binding = new Binding(nameof(FilaResumenSueldosDto.TotalFila)) { StringFormat = "N2" },
-            Width = new DataGridLength(120),
-        });
     }
 
     private void ConstruirColumnasTotales(ResumenSueldosVistaDto resumen)
@@ -113,11 +107,5 @@ public partial class ResumenSueldosWindow : Window
             });
         }
 
-        dgTotales.Columns.Add(new DataGridTextColumn
-        {
-            Binding = new Binding(nameof(ResumenSueldosVistaDto.GranTotal)) { StringFormat = "N2" },
-            Width = new DataGridLength(120),
-            FontWeight = FontWeights.Bold,
-        });
     }
 }

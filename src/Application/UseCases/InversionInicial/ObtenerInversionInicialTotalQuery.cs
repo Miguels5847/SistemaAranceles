@@ -1,3 +1,4 @@
+using SistemaAranceles.Application.DTOs.CapitalTrabajo;
 using SistemaAranceles.Application.DTOs.InversionInicial;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.CapitalTrabajo;
@@ -22,11 +23,13 @@ public sealed class ObtenerInversionInicialTotalQuery(
     public async Task<InversionInicialTotalDto> EjecutarAsync(
         int carreraId,
         int? escenarioProyeccionId = null,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        ResumenCapitalTrabajoDto? capitalTrabajoPrecalculado = null)
     {
         var activosDiferidos = await repositorioActivoDiferido.SumarValorPorCarreraAsync(carreraId, ct);
         var totalesActivos = await totalesActivosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
-        var resumenCap = await resumenCapitalQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+        var resumenCap = capitalTrabajoPrecalculado
+            ?? await resumenCapitalQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
         var datos = await repositorioDatosInstitucionales.ObtenerVigenteAsync(ct);
         var porcentajeImprevistos = datos?.PorcentajeImprevistosInversion is >= 0m and <= 100m
             ? datos.PorcentajeImprevistosInversion

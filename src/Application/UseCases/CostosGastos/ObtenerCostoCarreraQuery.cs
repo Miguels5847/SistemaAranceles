@@ -17,7 +17,8 @@ public sealed class ObtenerCostoCarreraQuery(
         int carreraId,
         int? escenarioProyeccionId,
         CancellationToken ct = default,
-        MatrizCostosGastosDto? matrizPrecalculada = null)
+        MatrizCostosGastosDto? matrizPrecalculada = null,
+        decimal factorImprevisto = 1.05m)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -30,7 +31,7 @@ public sealed class ObtenerCostoCarreraQuery(
 
         // Reutiliza la matriz de Costos y Gastos si ya fue calculada (evita recomputar el consolidado completo).
         var matriz = matrizPrecalculada
-            ?? await obtenerMatrizCostosGastosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+            ?? await obtenerMatrizCostosGastosQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct, factorImprevisto: factorImprevisto);
         AgregarAdvertencia(advertencias, matriz.MensajeAdvertencia);
 
         var demanda = await obtenerDemandaProyectadaQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);

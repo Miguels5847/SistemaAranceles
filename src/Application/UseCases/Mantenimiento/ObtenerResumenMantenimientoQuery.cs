@@ -21,17 +21,9 @@ public sealed class ObtenerResumenMantenimientoQuery(
         int escenarioProyeccionId,
         CancellationToken ct = default)
     {
-        var totalServicios = await repositorio.SumarCostoAnualPorTipoAsync(
-            carreraId,
-            TipoRubroMantenimiento.ServicioBasico,
-            escenarioProyeccionId,
-            ct);
-
-        var totalMant = await repositorio.SumarCostoAnualPorTipoAsync(
-            carreraId,
-            TipoRubroMantenimiento.Mantenimiento,
-            escenarioProyeccionId,
-            ct);
+        var sumasPorTipo = await repositorio.SumarCostosAnualesPorTipoAsync(carreraId, escenarioProyeccionId, ct);
+        var totalServicios = sumasPorTipo.GetValueOrDefault(TipoRubroMantenimiento.ServicioBasico);
+        var totalMant = sumasPorTipo.GetValueOrDefault(TipoRubroMantenimiento.Mantenimiento);
 
         var datos = await repositorioDatos.ObtenerVigenteAsync(ct);
         var alumnosRef = datos?.NumeroEstudiantesUniversidad ?? 1;

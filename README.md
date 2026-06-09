@@ -4,9 +4,9 @@ Aplicacion de escritorio WPF para simulacion, proyeccion y analisis financiero d
 
 ## Estado Actual
 
-Rama documentada: `feature/KAN-34-Materiales-Inflacion`.
+Rama documentada: `feature/KAN-44-Dashboard-Financiero`.
 
-El proyecto usa Clean Architecture y ya contiene los flujos principales de seguridad, usuarios, carreras, inflacion, tasa de retencion, proyeccion de estudiantes, sueldos carrera, datos institucionales, recursos/depreciacion, mantenimiento e inversion, capital de trabajo y Demanda e Ingresos.
+El proyecto usa Clean Architecture y ya contiene los flujos principales de seguridad, usuarios, carreras, inflacion, tasa de retencion, proyeccion de estudiantes, sueldos carrera, datos institucionales, recursos/depreciacion, mantenimiento e inversion, capital de trabajo, Demanda e Ingresos, Costos y Gastos, Costo de Carrera y Analisis Financiero (incluido el cuadro regulatorio CES / INF CES).
 
 | Area | Estado |
 | --- | --- |
@@ -16,13 +16,16 @@ El proyecto usa Clean Architecture y ya contiene los flujos principales de segur
 | Tasa de Retencion y Graduacion | Implementado |
 | Proyeccion de Estudiantes | Implementado |
 | Sueldos Carrera | Implementado |
-| Datos Institucionales | Implementado y ampliado para Epica 9 |
+| Datos Institucionales | Implementado y ampliado para Epicas 9-11 |
 | Aporte Planta Central | Implementado |
 | Recursos y Depreciacion | Implementado |
 | Mantenimiento e Inversion | Implementado como contenedor de Mantenimiento, Activos Diferidos e Inversion Inicial |
 | Capital de Trabajo | Implementado |
 | Demanda e Ingresos, Epica 9 | Implementado en sus flujos principales |
-| Costos/Gastos, Financiamiento, Balance, Reportes y Analisis Financiero | Estructura parcial o pendiente |
+| Costos y Gastos (Epica 10) | Implementado (matriz por periodo + col J = SUM(B:I)) |
+| Costo de Carrera (arancel sugerido) | Implementado |
+| Analisis Financiero (Epica 11) | Implementado: P&G, Flujo de Fondos, TIR/VAN, Periodo de Recuperacion, Punto de Equilibrio, Arancel Optimo, Dashboard y CES / INF CES |
+| Financiamiento, Balance y Reportes | Estructura parcial o pendiente |
 
 ## Stack
 
@@ -106,10 +109,14 @@ El menu actual se ordena asi, segun permisos:
 10. Mantenimiento e Inversion.
 11. Capital de Trabajo.
 12. Demanda e Ingresos.
-13. Configuracion.
-14. Reportes.
-15. Auditoria.
-16. Cerrar Sesion.
+13. Costos y Gastos.
+14. Analisis Financiero.
+15. Configuracion.
+16. Reportes.
+17. Auditoria.
+18. Cerrar Sesion.
+
+Permisos asociados a los modulos financieros: `CG.VER` (Costos y Gastos), `AF.VER` (Analisis Financiero). El administrador tiene bypass.
 
 Notas de UI recientes:
 
@@ -392,6 +399,73 @@ Rutas:
 - `src/Presentation/Views/DatosInstitucionales`
 - `sql/KAN35_datos_institucionales_demanda_ingresos.sql`
 
+## Epica 10: Costos, Gastos y Costo de Carrera
+
+### Costos y Gastos (hoja Excel "10 Costos y Gastos")
+
+Consolida todos los rubros de costo y gasto por periodo (8 semestres) a partir de Sueldos Carrera, Mantenimiento, Recursos/Depreciacion, Materiales, Presupuestos y Seguro. La columna J del Excel = `SUM(B:I)` = total a 8 semestres por rubro, reproducida en codigo con `ValoresPorPeriodo.Sum(p => p.Rubro)`.
+
+- Query: `src/Application/UseCases/CostosGastos/ObtenerMatrizCostosGastosQuery.cs` -> `MatrizCostosGastosDto`.
+- DTOs: `src/Application/DTOs/CostosGastos/CostosGastosDtos.cs`.
+- `MatrizCostosGastosDto.ValoresPorPeriodo` = lista por periodo de `CostoGastoPeriodoDto`; `.TotalGeneral` = `Sum(TotalCostosGastos)`.
+- `CostoGastoPeriodoDto` expone rubros (docentes `TiempoCompletoPhd/Mgs/MedioTiempo/TiempoParcial/OcasionalTipo2TecnicoDocente`, `MantenimientoEdificio`, `CapacitacionDocente`, `Internacionalizacion`, `MaterialesSuministros`, `ServiciosBasicos`, `CostoSeguroEstudiantil`, `Investigacion`, `Vinculacion`, `Depreciacion`, `Interes`) y computados `GastosAdministracion`, `GastosVentas` (= `MarketingComunicacion`), `OtrosGastos`, `GastoFinanciero` (= `Interes`), `CostosServicios`, `TotalCostosGastos`.
+- `factorImprevisto` (1.05 por defecto) atraviesa las queries de costos y financieras.
+- Vista/VM: `src/Presentation/Views/CostosGastos`, `src/Presentation/ViewModels/CostosGastos`. Permiso `CG.VER`.
+
+### Costo de Carrera (arancel sugerido por costo)
+
+Calcula el arancel "propuesto" a partir del costo total de la carrera. Es la base del Modo Automatico de arancel y del cuadro CES.
+
+- Query: `src/Application/UseCases/CostosGastos/ObtenerCostoCarreraQuery.cs` -> `CostoCarreraResultadoDto`.
+- Acepta `matrizPrecalculada` para no recalcular Costos/Gastos.
+- Campos: `ArancelSugeridoSemestre`, `MatriculaSugerida`, `TotalPorSemestre`, `TieneDatos`.
+- `ObtenerArancelEfectivoQuery.FuenteCalculo` = "Referencial por costo de carrera".
+
+## Epica 11: Analisis Financiero
+
+Ventana: `src/Presentation/Views/AnalisisFinanciero/AnalisisFinancieroView.xaml`
+ViewModel: `src/Presentation/ViewModels/AnalisisFinanciero/AnalisisFinancieroViewModel.cs`
+Permiso: `AF.VER`.
+
+`RefrescarAsync` orquesta todas las queries con un patron de **precalculados**: calcula los DTOs pesados una sola vez (matriz costos, demanda, ingresos, costo carrera, arancel efectivo, inversiones) y los pasa a las queries dependientes para evitar round-trips N+1 a Supabase. Los mensajes y advertencias se muestran como banners cerrables (X).
+
+Pestanas:
+
+1. Estado de Perdidas y Ganancias.
+2. Flujo de Fondos.
+3. Indicadores (TIR / VAN).
+4. Periodo de Recuperacion.
+5. Punto de Equilibrio.
+6. Arancel Optimo (biseccion).
+7. Dashboard Financiero.
+8. CES / INF CES.
+
+### Modo de calculo
+
+Modo unico fijo: **Compatible Excel**, que reproduce el comportamiento del Excel del tutor (VAN ~= 0, TIR ~= 9.54%): flujos semestrales, VAN con la convencion `=VAN()` de Excel (periodo 0 tambien descontado) y sin recuperacion de capital de trabajo. El modo "Tecnico" (anual ortodoxo) se elimino porque la tesis se compara directamente contra el Excel.
+
+### Reglas financieras criticas
+
+- **Becas**: se modelan como **descuento de ingreso** (costo = 0), nunca como costo; coincide con el Excel y evita un doble conteo previo.
+- **TIR**: TIR normal (no TIRM); con multiples cambios de signo / multiples raices se reporta la raiz **mas cercana a la TMR**.
+- **Periodo de Recuperacion**: no se asume que siempre converge; hay estados de no-convergencia.
+- **Punto de Equilibrio**: se calcula con el **ultimo periodo proyectado** (no promedio).
+- **Arancel Optimo (biseccion)**: tolerancia de VAN, maximo de iteraciones y demas parametros son configurables desde Datos Institucionales; mensaje claro al alcanzar el maximo de iteraciones y estados de convergencia explicitos.
+- El Dashboard ya no exporta CSV.
+- La opcion "Costo Carrera" es informacion **referencial** y no rompe el analisis al seleccionarla.
+
+### Pestana 8: CES / INF CES (Consejo de Educacion Superior, Ecuador)
+
+Reproduce las hojas Excel "INF CES" y "CES" como cuadro regulatorio de **salida (solo lectura)**, salvo un campo referencial editable (costo de carreras similares, dato externo de la IES).
+
+- DTO: `src/Application/DTOs/AnalisisFinanciero/CesDto.cs` (`CesInfFilaDto`, `CesParametroFilaDto`, `CesDistribucionFilaDto`).
+- Query: `src/Application/UseCases/AnalisisFinanciero/ObtenerCesQuery.cs` (registrada en `App.xaml.cs`); acepta precalculados.
+- ViewModel: `Ces`, `InfCes`, `ParametrosCes`, `DistribucionCes`, `TieneCes`, `CostoCarrerasSimilares`.
+- **INF CES**: presupuesto de la 1a cohorte clasificado por las 4 funciones sustantivas (Provision de educacion superior / Fomento cientifico-tecnologico / Vinculacion con la sociedad / Otros), con gastos corrientes (= suma por rubro de la matriz + becas) e inversion (`InversionInicialTotalDto.ActivosDiferidos` + `SubtotalActivosFijos` + suma de `MatrizInversiones.TotalesPorPeriodo` + `MaterialesProyectadosDto.TotalCosto`).
+- **CES**: parametros de justificacion del arancel (ratios academico/total, investigacion/total, vinculacion/total, infraestructura/total; arancel vigente vs propuesto; matricula = 10%; estudiantes 1a cohorte; remuneracion academica promedio).
+- **Distribucion referencial de costos**: bloque destacado que muestra como se reparte el 100% del costo de la carrera por categoria (academico/docentes, administrativo, bienes y servicios, becas, investigacion, vinculacion, otros = ~100% corriente) e infraestructura/inversion mostrada aparte como referencial.
+- La remuneracion academica promedio sale de `GenerarResumenSueldosQuery` (cargos docentes tiempo completo) y es **aproximada** (la formula original del Excel es opaca).
+
 ## Mapeo Excel a Sistema
 
 | Hoja / Bloque Excel | Modulo |
@@ -405,6 +479,10 @@ Rutas:
 | Activos diferidos y amortizacion | Mantenimiento e Inversion / Activos Diferidos |
 | Inversion inicial | Mantenimiento e Inversion / Inversion Inicial |
 | Demanda, ingresos y materiales | Demanda e Ingresos |
+| 10 Costos y Gastos | Costos y Gastos |
+| Costo de carrera / arancel sugerido | Costo de Carrera (Analisis Financiero) |
+| Estado de resultados, flujo, TIR/VAN, punto de equilibrio | Analisis Financiero |
+| INF CES y CES | Analisis Financiero / pestana CES / INF CES |
 
 ## Scripts SQL Relevantes
 
@@ -439,7 +517,7 @@ Proyectos:
 - `tests/Application.Tests/SistemaAranceles.Application.Tests.csproj`
 - `tests/Presentation.Tests/SistemaAranceles.Presentation.Tests.csproj`
 
-Cobertura actual de pruebas automatizadas:
+Cobertura actual de pruebas automatizadas (Application 108 + Presentation 2 = 110):
 
 - Reglas de proyeccion de estudiantes.
 - Calculo de docentes.
@@ -448,6 +526,7 @@ Cobertura actual de pruebas automatizadas:
 - Inversion futura.
 - Datos institucionales.
 - Demanda e Ingresos: aranceles y materiales.
+- Costos/Gastos y calculos de Analisis Financiero.
 - ViewModel de consumos en Proyeccion de Estudiantes.
 
 Comandos:
@@ -457,10 +536,10 @@ dotnet build .\src\Presentation\SistemaAranceles.Presentation.csproj
 dotnet test
 ```
 
-Ultima verificacion durante esta actualizacion documental:
+Ultima verificacion conocida:
 
-- Build validado con salida temporal por ejecutable WPF abierto.
-- `dotnet test -p:OutDir=<temp>`: 72 pruebas superadas, 0 errores.
+- Build de Presentation: 0 warnings, 0 errores.
+- `dotnet test`: Application 108 + Presentation 2 pruebas superadas, 0 errores.
 
 ## Convenciones de Trabajo
 
@@ -475,11 +554,12 @@ Ultima verificacion durante esta actualizacion documental:
 
 ## Pendientes y Riesgos Conocidos
 
-- Modo Automatico de arancel depende de Epica 10/Costo Carrera.
-- Costos/Gastos, Financiamiento, Balance, Reportes y Analisis Financiero conservan estructura/documentacion parcial.
+- Implementados: Costos y Gastos, Costo de Carrera y Analisis Financiero (P&G, Flujo, TIR/VAN, Recuperacion, Punto de Equilibrio, Arancel Optimo, Dashboard y CES / INF CES).
+- Pendientes mayores: Financiamiento, Balance y Reportes.
+- La remuneracion academica promedio del cuadro CES (C5) es aproximada; la formula original del Excel (`7 Sueldos`!E238) usa un divisor opaco y no se reproduce al centavo.
 - Si la app esta abierta, el build normal puede fallar por bloqueo del `.exe`.
 - Los cambios visuales en WPF requieren cerrar y reabrir la app para ver el binario actualizado.
-- Mantener sincronizados `README.md` y `.claude.md` cuando cambien reglas de Demanda e Ingresos, docentes, menu o sesion.
+- Mantener sincronizados `README.md` y `.claude.md` cuando cambien reglas de Demanda e Ingresos, Costos, Analisis Financiero, docentes, menu o sesion.
 
 ## Documentacion Adicional
 

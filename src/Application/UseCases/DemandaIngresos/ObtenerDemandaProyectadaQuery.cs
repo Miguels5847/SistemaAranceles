@@ -16,7 +16,8 @@ public sealed class ObtenerDemandaProyectadaQuery(
     public async Task<DemandaProyectadaDto> EjecutarAsync(
         int carreraId,
         int? escenarioProyeccionId,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        ProyeccionEstudiantesDto? proyeccionPrecalculada = null)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -35,15 +36,20 @@ public sealed class ObtenerDemandaProyectadaQuery(
         if (escenarioProyeccionId is null or <= 0)
             return Vacio("Selecciona un escenario para ver la demanda proyectada.");
 
-        var proyeccionId = await repositorioProyeccion.ObtenerIdPorCarreraYEscenarioAsync(
-            carreraId,
-            escenarioProyeccionId.Value,
-            ct);
+        var proyeccion = proyeccionPrecalculada;
+        if (proyeccion is null)
+        {
+            var proyeccionId = await repositorioProyeccion.ObtenerIdPorCarreraYEscenarioAsync(
+                carreraId,
+                escenarioProyeccionId.Value,
+                ct);
 
-        if (proyeccionId is null or <= 0)
-            return Vacio("No existe proyección generada para esta carrera y escenario. Genérela primero en Proyección de Estudiantes.");
+            if (proyeccionId is null or <= 0)
+                return Vacio("No existe proyección generada para esta carrera y escenario. Genérela primero en Proyección de Estudiantes.");
 
-        var proyeccion = await repositorioProyeccion.ObtenerDtoPorIdAsync(proyeccionId.Value, ct);
+            proyeccion = await repositorioProyeccion.ObtenerDtoPorIdAsync(proyeccionId.Value, ct);
+        }
+
         if (proyeccion is null || proyeccion.Detalles.Count == 0)
             return Vacio("La proyección de estudiantes existe, pero no tiene detalles. Genérela nuevamente en Proyección de Estudiantes.");
 
