@@ -54,6 +54,14 @@ public sealed class DatosInstitucionalesDto
     public decimal ArancelMaximoBusqueda { get; init; } = DatosInstitucionales.ArancelMaximoBusquedaPorDefecto;
     public int MaxIteracionesBiseccion { get; init; } = DatosInstitucionales.MaxIteracionesBiseccionPorDefecto;
 
+    // KAN-44B
+    public decimal PorcentajeFinanciadoPrestamo { get; init; }
+    public decimal PorcentajeFinanciadoConvenio { get; init; }
+    public string? NombreEntidadPrestamo { get; init; }
+    public string? NombreEntidadConvenio { get; init; }
+    public decimal TasaInteresAnualPrestamo { get; init; } = DatosInstitucionales.TasaInteresAnualPrestamoPorDefecto;
+    public int PlazoPrestamoMeses { get; init; } = DatosInstitucionales.PlazoPrestamoMesesPorDefecto;
+
     public decimal MasaSalarialMensual { get; init; }
     public decimal TotalMensualPlantaCentral { get; init; }
     public decimal TotalAnualPlantaCentral { get; init; }
@@ -122,6 +130,14 @@ public sealed class GuardarDatosInstitucionalesDto
     public decimal ArancelMinimoBusqueda { get; init; } = DatosInstitucionales.ArancelMinimoBusquedaPorDefecto;
     public decimal ArancelMaximoBusqueda { get; init; } = DatosInstitucionales.ArancelMaximoBusquedaPorDefecto;
     public int MaxIteracionesBiseccion { get; init; } = DatosInstitucionales.MaxIteracionesBiseccionPorDefecto;
+
+    // KAN-44B
+    public decimal PorcentajeFinanciadoPrestamo { get; init; }
+    public decimal PorcentajeFinanciadoConvenio { get; init; }
+    public string? NombreEntidadPrestamo { get; init; }
+    public string? NombreEntidadConvenio { get; init; }
+    public decimal TasaInteresAnualPrestamo { get; init; } = DatosInstitucionales.TasaInteresAnualPrestamoPorDefecto;
+    public int PlazoPrestamoMeses { get; init; } = DatosInstitucionales.PlazoPrestamoMesesPorDefecto;
 
     public string? FuenteNotas { get; init; }
 }

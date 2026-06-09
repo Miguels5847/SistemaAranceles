@@ -175,6 +175,7 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.ListarActivosDiferidosQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.ObtenerTablaAmortizacionQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.InversionInicial.ObtenerInversionInicialTotalQuery>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.Amortizacion.ObtenerResumenAmortizacionQuery>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.GuardarConfiguracionArancelCarreraCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.EliminarConfiguracionArancelCarreraCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.ListarConfiguracionesArancelCarreraQuery>();
@@ -276,6 +277,7 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.MantenimientoInversion.MantenimientoInversionViewModel>();
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.DemandaIngresos.DemandaIngresosViewModel>();
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.CostosGastos.CostosGastosViewModel>();
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.Amortizacion.AmortizacionViewModel>();
         servicios.AddTransient<AnalisisFinancieroViewModel>();
         servicios.AddTransient<CargosFacultadViewModel>();
         servicios.AddTransient<EstudiantesViewModel>();

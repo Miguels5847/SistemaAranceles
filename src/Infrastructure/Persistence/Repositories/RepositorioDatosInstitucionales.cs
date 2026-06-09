@@ -136,6 +136,14 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
                 ADD COLUMN IF NOT EXISTS arancel_minimo_busqueda NUMERIC(18,2) NOT NULL DEFAULT 500.00,
                 ADD COLUMN IF NOT EXISTS arancel_maximo_busqueda NUMERIC(18,2) NOT NULL DEFAULT 5000.00,
                 ADD COLUMN IF NOT EXISTS max_iteraciones_biseccion INTEGER NOT NULL DEFAULT 60;
+
+            ALTER TABLE public.datos_institucionales
+                ADD COLUMN IF NOT EXISTS porcentaje_financiado_prestamo NUMERIC(7,4) NOT NULL DEFAULT 0.0000,
+                ADD COLUMN IF NOT EXISTS porcentaje_financiado_convenio NUMERIC(7,4) NOT NULL DEFAULT 0.0000,
+                ADD COLUMN IF NOT EXISTS nombre_entidad_prestamo VARCHAR(120),
+                ADD COLUMN IF NOT EXISTS nombre_entidad_convenio VARCHAR(120),
+                ADD COLUMN IF NOT EXISTS tasa_interes_anual_prestamo NUMERIC(7,4) NOT NULL DEFAULT 15.0200,
+                ADD COLUMN IF NOT EXISTS plazo_prestamo_meses INTEGER NOT NULL DEFAULT 24;
             """, cancellationToken);
             _esquemaListo = true;
         }
@@ -212,6 +220,14 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
             e.ArancelMaximoBusqueda,
             e.MaxIteracionesBiseccion);
 
+        dominio.CambiarParametrosFinanciamiento(
+            e.PorcentajeFinanciadoPrestamo,
+            e.PorcentajeFinanciadoConvenio,
+            e.NombreEntidadPrestamo,
+            e.NombreEntidadConvenio,
+            e.TasaInteresAnualPrestamo,
+            e.PlazoPrestamoMeses);
+
         dominio.RehidratarId(e.Id);
         dominio.RehidratarFechaActualizacion(e.FechaActualizacion);
         return dominio;
@@ -258,6 +274,12 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
         ArancelMinimoBusqueda = d.ArancelMinimoBusqueda,
         ArancelMaximoBusqueda = d.ArancelMaximoBusqueda,
         MaxIteracionesBiseccion = d.MaxIteracionesBiseccion,
+        PorcentajeFinanciadoPrestamo = d.PorcentajeFinanciadoPrestamo,
+        PorcentajeFinanciadoConvenio = d.PorcentajeFinanciadoConvenio,
+        NombreEntidadPrestamo = d.NombreEntidadPrestamo,
+        NombreEntidadConvenio = d.NombreEntidadConvenio,
+        TasaInteresAnualPrestamo = d.TasaInteresAnualPrestamo,
+        PlazoPrestamoMeses = d.PlazoPrestamoMeses,
         FechaActualizacion = d.FechaActualizacion,
         ActualizadoPorUsuarioId = d.ActualizadoPorUsuarioId,
         FuenteNotas = d.FuenteNotas,

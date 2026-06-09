@@ -60,6 +60,14 @@ internal sealed class ConfiguracionDatosInstitucionales : IEntityTypeConfigurati
         builder.Property(x => x.ArancelMaximoBusqueda).HasColumnName("arancel_maximo_busqueda").HasColumnType("numeric(18,2)").HasDefaultValue(5000m).IsRequired();
         builder.Property(x => x.MaxIteracionesBiseccion).HasColumnName("max_iteraciones_biseccion").HasDefaultValue(60).IsRequired();
 
+        // KAN-44B
+        builder.Property(x => x.PorcentajeFinanciadoPrestamo).HasColumnName("porcentaje_financiado_prestamo").HasColumnType("numeric(7,4)").HasDefaultValue(0m).IsRequired();
+        builder.Property(x => x.PorcentajeFinanciadoConvenio).HasColumnName("porcentaje_financiado_convenio").HasColumnType("numeric(7,4)").HasDefaultValue(0m).IsRequired();
+        builder.Property(x => x.NombreEntidadPrestamo).HasColumnName("nombre_entidad_prestamo").HasMaxLength(120);
+        builder.Property(x => x.NombreEntidadConvenio).HasColumnName("nombre_entidad_convenio").HasMaxLength(120);
+        builder.Property(x => x.TasaInteresAnualPrestamo).HasColumnName("tasa_interes_anual_prestamo").HasColumnType("numeric(7,4)").HasDefaultValue(15.02m).IsRequired();
+        builder.Property(x => x.PlazoPrestamoMeses).HasColumnName("plazo_prestamo_meses").HasDefaultValue(24).IsRequired();
+
         builder.Property(x => x.FechaActualizacion).HasColumnName("fecha_actualizacion").IsRequired();
         builder.Property(x => x.ActualizadoPorUsuarioId).HasColumnName("actualizado_por_usuario_id").IsRequired();
         builder.Property(x => x.FuenteNotas).HasColumnName("fuente_notas").HasMaxLength(500);

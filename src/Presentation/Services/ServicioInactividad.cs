@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Timers;
+using System.Windows;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,7 +17,7 @@ public sealed class ServicioInactividad : IDisposable
     private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
     private readonly TimeSpan _timeout;
-    private readonly DispatcherTimer _timerCountdown;
+    private readonly System.Timers.Timer _timerCountdown;
     private DateTime _ultimaActividad;
     private int _cerrandoPorInactividad;
 
@@ -40,9 +42,10 @@ public sealed class ServicioInactividad : IDisposable
         _timeout = TimeSpan.FromMinutes(opciones.Value.TimeoutMinutes);
         _ultimaActividad = DateTime.UtcNow;
 
-        // Timer de actualización de countdown (cada segundo)
-        _timerCountdown = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _timerCountdown.Tick += OnTickCountdown;
+        // Timer en ThreadPool (no DispatcherTimer): el tick sigue corriendo aunque
+        // el hilo UI esté bloqueado por consultas pesadas (el countdown no se congela).
+        _timerCountdown = new System.Timers.Timer(1000) { AutoReset = true };
+        _timerCountdown.Elapsed += OnElapsedCountdown;
     }
 
     public void Iniciar()
@@ -67,7 +70,7 @@ public sealed class ServicioInactividad : IDisposable
         TiempoRestanteActualizado?.Invoke(this, TiempoRestante);
     }
 
-    private void OnTickCountdown(object? sender, EventArgs e)
+    private void OnElapsedCountdown(object? sender, ElapsedEventArgs e)
     {
         if (!_sesionActual.EstaAutenticado)
         {
@@ -82,10 +85,12 @@ public sealed class ServicioInactividad : IDisposable
         if (tiempoRestante.TotalSeconds <= 0)
         {
             tiempoRestante = TimeSpan.Zero;
-            _ = CerrarSesionPorInactividadAsync();
+            _ = Task.Run(CerrarSesionPorInactividadAsync);
         }
 
-        TiempoRestanteActualizado?.Invoke(this, tiempoRestante);
+        System.Windows.Application.Current?.Dispatcher.BeginInvoke(
+            DispatcherPriority.Background,
+            () => TiempoRestanteActualizado?.Invoke(this, tiempoRestante));
     }
 
     private async Task CerrarSesionPorInactividadAsync()
@@ -124,6 +129,7 @@ public sealed class ServicioInactividad : IDisposable
     public void Dispose()
     {
         _timerCountdown.Stop();
-        _timerCountdown.Tick -= OnTickCountdown;
+        _timerCountdown.Elapsed -= OnElapsedCountdown;
+        _timerCountdown.Dispose();
     }
 }

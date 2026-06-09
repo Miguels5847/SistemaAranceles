@@ -13,6 +13,14 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
     private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
 
+    // KAN-44B: se editan en el módulo Amortización; aquí solo se preservan al guardar.
+    private decimal _porcentajeFinanciadoPrestamo;
+    private decimal _porcentajeFinanciadoConvenio;
+    private string? _nombreEntidadPrestamo;
+    private string? _nombreEntidadConvenio;
+    private decimal _tasaInteresAnualPrestamo = DatosInstitucionalesDominio.TasaInteresAnualPrestamoPorDefecto;
+    private int _plazoPrestamoMeses = DatosInstitucionalesDominio.PlazoPrestamoMesesPorDefecto;
+
     public DatosInstitucionalesViewModel(IServiceProvider serviceProvider, SesionActual sesionActual)
     {
         _serviceProvider = serviceProvider;
@@ -240,6 +248,12 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
                     ArancelMinimoBusqueda = ArancelMinimoBusqueda,
                     ArancelMaximoBusqueda = ArancelMaximoBusqueda,
                     MaxIteracionesBiseccion = MaxIteracionesBiseccion,
+                    PorcentajeFinanciadoPrestamo = _porcentajeFinanciadoPrestamo,
+                    PorcentajeFinanciadoConvenio = _porcentajeFinanciadoConvenio,
+                    NombreEntidadPrestamo = _nombreEntidadPrestamo,
+                    NombreEntidadConvenio = _nombreEntidadConvenio,
+                    TasaInteresAnualPrestamo = _tasaInteresAnualPrestamo,
+                    PlazoPrestamoMeses = _plazoPrestamoMeses,
                     FuenteNotas = FuenteNotas,
                 },
                 _sesionActual.UsuarioId);
@@ -318,6 +332,12 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
         ArancelMinimoBusqueda = dto.ArancelMinimoBusqueda;
         ArancelMaximoBusqueda = dto.ArancelMaximoBusqueda;
         MaxIteracionesBiseccion = dto.MaxIteracionesBiseccion;
+        _porcentajeFinanciadoPrestamo = dto.PorcentajeFinanciadoPrestamo;
+        _porcentajeFinanciadoConvenio = dto.PorcentajeFinanciadoConvenio;
+        _nombreEntidadPrestamo = dto.NombreEntidadPrestamo;
+        _nombreEntidadConvenio = dto.NombreEntidadConvenio;
+        _tasaInteresAnualPrestamo = dto.TasaInteresAnualPrestamo;
+        _plazoPrestamoMeses = dto.PlazoPrestamoMeses;
         FuenteNotas = dto.FuenteNotas;
         MasaSalarialMensual = dto.MasaSalarialMensual;
         TotalAnualPlantaCentral = dto.TotalAnualPlantaCentral;

@@ -21,6 +21,7 @@
         xmlns:vmDIng="clr-namespace:SistemaAranceles.Presentation.ViewModels.DemandaIngresos"
         xmlns:vmCG="clr-namespace:SistemaAranceles.Presentation.ViewModels.CostosGastos"
         xmlns:vmAFin="clr-namespace:SistemaAranceles.Presentation.ViewModels.AnalisisFinanciero"
+        xmlns:vmAmort="clr-namespace:SistemaAranceles.Presentation.ViewModels.Amortizacion"
         xmlns:vU="clr-namespace:SistemaAranceles.Presentation.Views.Usuarios"
         xmlns:vA="clr-namespace:SistemaAranceles.Presentation.Views.Auditoria"
         xmlns:vCF="clr-namespace:SistemaAranceles.Presentation.Views.CargosFacultad"
@@ -40,6 +41,7 @@
         xmlns:vDIng="clr-namespace:SistemaAranceles.Presentation.Views.DemandaIngresos"
         xmlns:vCG="clr-namespace:SistemaAranceles.Presentation.Views.CostosGastos"
         xmlns:vAFin="clr-namespace:SistemaAranceles.Presentation.Views.AnalisisFinanciero"
+        xmlns:vAmort="clr-namespace:SistemaAranceles.Presentation.Views.Amortizacion"
         Title="Sistema de Aranceles Universitarios"
         Width="1400"
         Height="820"
@@ -113,6 +115,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmAFin:AnalisisFinancieroViewModel}">
             <vAFin:AnalisisFinancieroView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmAmort:AmortizacionViewModel}">
+            <vAmort:AmortizacionView/>
         </DataTemplate>
     </Window.Resources>
 

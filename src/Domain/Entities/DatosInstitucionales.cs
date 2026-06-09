@@ -29,6 +29,8 @@ public sealed class DatosInstitucionales : EntidadDominioBase
     public const decimal ArancelMinimoBusquedaPorDefecto = 500m;
     public const decimal ArancelMaximoBusquedaPorDefecto = 5000m;
     public const int MaxIteracionesBiseccionPorDefecto = 60;
+    public const decimal TasaInteresAnualPrestamoPorDefecto = 15.02m;
+    public const int PlazoPrestamoMesesPorDefecto = 24;
 
     private DatosInstitucionales()
     {
@@ -53,6 +55,8 @@ public sealed class DatosInstitucionales : EntidadDominioBase
         ArancelMinimoBusqueda = ArancelMinimoBusquedaPorDefecto;
         ArancelMaximoBusqueda = ArancelMaximoBusquedaPorDefecto;
         MaxIteracionesBiseccion = MaxIteracionesBiseccionPorDefecto;
+        TasaInteresAnualPrestamo = TasaInteresAnualPrestamoPorDefecto;
+        PlazoPrestamoMeses = PlazoPrestamoMesesPorDefecto;
     }
 
     public DatosInstitucionales(
@@ -127,6 +131,15 @@ public sealed class DatosInstitucionales : EntidadDominioBase
     public decimal ArancelMinimoBusqueda { get; private set; } = ArancelMinimoBusquedaPorDefecto;
     public decimal ArancelMaximoBusqueda { get; private set; } = ArancelMaximoBusquedaPorDefecto;
     public int MaxIteracionesBiseccion { get; private set; } = MaxIteracionesBiseccionPorDefecto;
+
+    // KAN-44B: parámetros módulo Amortización (3 fuentes de financiamiento)
+    public decimal PorcentajeFinanciadoPrestamo { get; private set; }
+    public decimal PorcentajeFinanciadoConvenio { get; private set; }
+    public string? NombreEntidadPrestamo { get; private set; }
+    public string? NombreEntidadConvenio { get; private set; }
+    public decimal TasaInteresAnualPrestamo { get; private set; } = TasaInteresAnualPrestamoPorDefecto;
+    public int PlazoPrestamoMeses { get; private set; } = PlazoPrestamoMesesPorDefecto;
+    public decimal PorcentajeRecursosPropios => 100m - PorcentajeFinanciadoPrestamo - PorcentajeFinanciadoConvenio;
 
     public DateTimeOffset FechaActualizacion { get; private set; }
     public int ActualizadoPorUsuarioId { get; private set; }
@@ -269,6 +282,29 @@ public sealed class DatosInstitucionales : EntidadDominioBase
         ArancelMinimoBusqueda = decimal.Round(arancelMinimoBusqueda, 2);
         ArancelMaximoBusqueda = decimal.Round(arancelMaximoBusqueda, 2);
         MaxIteracionesBiseccion = maxIteracionesBiseccion;
+    }
+
+    /// <summary>KAN-44B: parámetros de financiamiento del módulo Amortización (3 fuentes).</summary>
+    public void CambiarParametrosFinanciamiento(
+        decimal porcentajePrestamo,
+        decimal porcentajeConvenio,
+        string? nombrePrestamo,
+        string? nombreConvenio,
+        decimal tasaInteresAnual,
+        int plazoMeses)
+    {
+        if (porcentajePrestamo + porcentajeConvenio > 100m)
+            throw new DominioException("La suma de % préstamo y % convenio no puede superar 100%.");
+
+        PorcentajeFinanciadoPrestamo = GuardiaDominio.Porcentaje(porcentajePrestamo, "Porcentaje préstamo");
+        PorcentajeFinanciadoConvenio = GuardiaDominio.Porcentaje(porcentajeConvenio, "Porcentaje convenio");
+        NombreEntidadPrestamo = string.IsNullOrWhiteSpace(nombrePrestamo) ? null : nombrePrestamo.Trim();
+        NombreEntidadConvenio = string.IsNullOrWhiteSpace(nombreConvenio) ? null : nombreConvenio.Trim();
+        TasaInteresAnualPrestamo = GuardiaDominio.Porcentaje(tasaInteresAnual, "Tasa interés préstamo");
+
+        if (plazoMeses is <= 0 or > 360)
+            throw new DominioException("Plazo del préstamo debe estar entre 1 y 360 meses.");
+        PlazoPrestamoMeses = plazoMeses;
     }
 
     public void RehidratarFechaActualizacion(DateTimeOffset fecha)

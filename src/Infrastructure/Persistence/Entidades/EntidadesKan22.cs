@@ -52,6 +52,14 @@ public sealed class DatosInstitucionales
     public decimal ArancelMaximoBusqueda { get; set; } = 5000m;
     public int MaxIteracionesBiseccion { get; set; } = 60;
 
+    // KAN-44B: financiamiento módulo Amortización
+    public decimal PorcentajeFinanciadoPrestamo { get; set; }
+    public decimal PorcentajeFinanciadoConvenio { get; set; }
+    public string? NombreEntidadPrestamo { get; set; }
+    public string? NombreEntidadConvenio { get; set; }
+    public decimal TasaInteresAnualPrestamo { get; set; } = 15.02m;
+    public int PlazoPrestamoMeses { get; set; } = 24;
+
     public DateTimeOffset FechaActualizacion { get; set; } = DateTimeOffset.UtcNow;
     public int ActualizadoPorUsuarioId { get; set; }
     public string? FuenteNotas { get; set; }

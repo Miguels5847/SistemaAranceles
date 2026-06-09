@@ -69,6 +69,13 @@ public sealed class ConfigurarDatosInstitucionalesCommand(
                 dto.ArancelMinimoBusqueda,
                 dto.ArancelMaximoBusqueda,
                 dto.MaxIteracionesBiseccion);
+            datos.CambiarParametrosFinanciamiento(
+                dto.PorcentajeFinanciadoPrestamo,
+                dto.PorcentajeFinanciadoConvenio,
+                dto.NombreEntidadPrestamo,
+                dto.NombreEntidadConvenio,
+                dto.TasaInteresAnualPrestamo,
+                dto.PlazoPrestamoMeses);
             repositorio.Agregar(datos);
         }
         else
@@ -117,6 +124,13 @@ public sealed class ConfigurarDatosInstitucionalesCommand(
                 dto.ArancelMinimoBusqueda,
                 dto.ArancelMaximoBusqueda,
                 dto.MaxIteracionesBiseccion);
+            existente.CambiarParametrosFinanciamiento(
+                dto.PorcentajeFinanciadoPrestamo,
+                dto.PorcentajeFinanciadoConvenio,
+                dto.NombreEntidadPrestamo,
+                dto.NombreEntidadConvenio,
+                dto.TasaInteresAnualPrestamo,
+                dto.PlazoPrestamoMeses);
             existente.RegistrarActualizacion(usuarioId, dto.FuenteNotas);
             repositorio.Actualizar(existente);
             datos = existente;
