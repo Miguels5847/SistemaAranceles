@@ -13,10 +13,10 @@ artifacts/
 *.userosscache
 *.lscache
 *.sln.docstates
-*.txt
-*.md
-*.claude/
-*.xlsx
+
+# Configuración local de Claude Code
+.claude/
+
 # NuGet
 packages/
 *.nupkg

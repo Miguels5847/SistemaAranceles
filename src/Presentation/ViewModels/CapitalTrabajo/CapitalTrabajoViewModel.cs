@@ -197,8 +197,16 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
         catch (Exception ex)
         {
             MensajeError = $"Error al cargar escenarios: {Detalle(ex)}";
-            Escenarios = [];
-            EscenarioSeleccionado = null;
+            _suprimirRecargaAutomatica = true;
+            try
+            {
+                Escenarios = [];
+                EscenarioSeleccionado = null;
+            }
+            finally
+            {
+                _suprimirRecargaAutomatica = false;
+            }
             await RefrescarCapitalTrabajoAsync();
         }
     }

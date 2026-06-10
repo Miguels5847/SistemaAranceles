@@ -64,12 +64,6 @@ public sealed class ServicioInactividad : IDisposable
         Trace.WriteLine($"[{DateTime.UtcNow:O}] ServicioInactividad: timer detenido.");
     }
 
-    public void ResetarActividad()
-    {
-        _ultimaActividad = DateTime.UtcNow;
-        TiempoRestanteActualizado?.Invoke(this, TiempoRestante);
-    }
-
     private void OnElapsedCountdown(object? sender, ElapsedEventArgs e)
     {
         if (!_sesionActual.EstaAutenticado)
