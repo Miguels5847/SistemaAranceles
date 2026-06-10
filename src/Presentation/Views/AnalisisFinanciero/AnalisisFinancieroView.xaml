@@ -1,6 +1,7 @@
 <UserControl x:Class="SistemaAranceles.Presentation.Views.AnalisisFinanciero.AnalisisFinancieroView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls">
     <UserControl.Resources>
         <Style TargetType="DataGridRow">
             <Setter Property="Background" Value="White"/>
@@ -311,17 +312,16 @@
                               SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}"
                               DisplayMemberPath="Nombre"
                               MinWidth="220"
-                              Padding="4,2"
-                              IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}"/>
+                              Padding="4,2"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Margin="0,0,10,0">
                     <TextBlock Text="Escenario" FontSize="11" Foreground="#546E7A"/>
                     <ComboBox ItemsSource="{Binding Escenarios}"
                               SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}"
                               DisplayMemberPath="NombreDisplay"
+                              mah:TextBoxHelper.Watermark="Selecciona el escenario…"
                               MinWidth="220"
-                              Padding="4,2"
-                              IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}"/>
+                              Padding="4,2"/>
                 </StackPanel>
                 <Button Grid.Column="3"
                         Content="Refrescar"

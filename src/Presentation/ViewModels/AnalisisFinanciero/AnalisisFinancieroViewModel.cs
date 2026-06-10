@@ -50,6 +50,8 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     private readonly SesionActual _sesionActual;
     private readonly FactorImprevistoCostosGastosState _factorImprevistoState;
     private bool _suprimirCambios;
+    // Permite cambiar carrera/escenario sin esperar la carga en curso (la vieja se descarta).
+    private int _versionCarga;
 
     public AnalisisFinancieroViewModel(
         IServiceProvider serviceProvider,
@@ -192,7 +194,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         _ = value;
         OnPropertyChanged(nameof(PuedeTrabajar));
         OnPropertyChanged(nameof(PuedeUsarArancelOptimo));
-        if (_suprimirCambios || EstaCargando)
+        if (_suprimirCambios)
             return;
 
         _ = RecargarEscenariosAsync();
@@ -202,7 +204,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     {
         _ = value;
         OnPropertyChanged(nameof(PuedeUsarArancelOptimo));
-        if (_suprimirCambios || EstaCargando)
+        if (_suprimirCambios)
             return;
 
         _ = RefrescarAsync();
@@ -401,6 +403,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             return;
         }
 
+        var carreraIdEscenarios = CarreraSeleccionada.Id;
         try
         {
             MensajeInfo = string.Empty;
@@ -408,12 +411,17 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             var repoEscenario = scope.ServiceProvider.GetRequiredService<IRepositorioEscenarioProyeccion>();
             var repoProyeccion = scope.ServiceProvider.GetRequiredService<IRepositorioProyeccionEstudiantes>();
             var escenarios = await repoEscenario.ListarAsync();
-            var proyecciones = await repoProyeccion.ListarResumenAsync(CarreraSeleccionada.Id);
+            var proyecciones = await repoProyeccion.ListarResumenAsync(carreraIdEscenarios);
+
+            // Anti-stale: la carrera cambió mientras se listaban escenarios
+            if (CarreraSeleccionada?.Id != carreraIdEscenarios)
+                return;
+
             var escenariosConProyeccion = proyecciones.Select(p => p.EscenarioProyeccionId).ToHashSet();
             var escenarioActualId = EscenarioSeleccionado?.Id;
 
             var opciones = escenarios
-                .Where(e => e.CarreraId == CarreraSeleccionada.Id && escenariosConProyeccion.Contains(e.Id))
+                .Where(e => e.CarreraId == carreraIdEscenarios && escenariosConProyeccion.Contains(e.Id))
                 .Select(e => new EscenarioAnalisisFinancieroOpcion
                 {
                     Id = e.Id,
@@ -430,8 +438,8 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             try
             {
                 Escenarios = new ObservableCollection<EscenarioAnalisisFinancieroOpcion>(opciones);
-                EscenarioSeleccionado = Escenarios.FirstOrDefault(e => e.Id == escenarioActualId)
-                    ?? Escenarios.FirstOrDefault();
+                // KAN-46: sin auto-selección — el usuario elige el escenario y recién ahí se carga
+                EscenarioSeleccionado = Escenarios.FirstOrDefault(e => e.Id == escenarioActualId);
             }
             finally
             {
@@ -441,7 +449,10 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             if (EscenarioSeleccionado is null)
             {
                 LimpiarResultados();
-                MensajeError = "La carrera no tiene escenarios con proyección de estudiantes. Genera la proyección en Proyección de Estudiantes.";
+                if (Escenarios.Count == 0)
+                    MensajeError = "La carrera no tiene escenarios con proyección de estudiantes. Genera la proyección en Proyección de Estudiantes.";
+                else
+                    MensajeInfo = "Selecciona el escenario para cargar el análisis financiero.";
                 return;
             }
 
@@ -470,7 +481,8 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         {
             LimpiarResultados();
             MensajeAdvertencia = string.Empty;
-            MensajeError = "Selecciona un escenario.";
+            MensajeError = string.Empty;
+            MensajeInfo = "Selecciona el escenario para cargar el análisis financiero.";
             return;
         }
 
@@ -483,6 +495,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             return;
         }
 
+        var version = ++_versionCarga;
         EstaCargando = true;
         MensajeError = string.Empty;
         MensajeAdvertencia = string.Empty;
@@ -544,6 +557,9 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                 factorImprevisto: factorImprevisto,
                 proyeccionPrecalculada: proyeccion));
 
+            if (version != _versionCarga)
+                return;
+
             // Inversiones y capital de trabajo se recalculaban ~5x y ~4x por refresco (Flujo,
             // ArancelOptimo y sus inversión inicial/depreciación). Se calculan una vez y se propagan.
             var hayMatriz = matriz.TieneDatos && matriz.ValoresPorPeriodo.Count > 0;
@@ -558,6 +574,9 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                 escenarioId,
                 arancelPrecalculado: ArancelVigente,
                 proyeccionPrecalculada: proyeccion));
+
+            if (version != _versionCarga)
+                return;
 
             EstadoPerdidasGanancias = await Medir("estado", () => queryEstado.EjecutarAsync(
                 carreraId,
@@ -621,6 +640,9 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                 factorImprevisto: factorImprevisto));
             Debug.WriteLine($"AF: TOTAL={swTotal.ElapsedMilliseconds}ms");
 
+            if (version != _versionCarga)
+                return;
+
             var advertencias = new[]
             {
                 EstadoPerdidasGanancias.MensajeAdvertencia,
@@ -656,12 +678,17 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            LimpiarResultados();
-            MensajeError = Detalle(ex);
+            if (version == _versionCarga)
+            {
+                LimpiarResultados();
+                MensajeError = Detalle(ex);
+            }
         }
         finally
         {
-            EstaCargando = false;
+            // Solo la carga más reciente apaga el indicador (las viejas se descartan)
+            if (version == _versionCarga)
+                EstaCargando = false;
         }
     }
 

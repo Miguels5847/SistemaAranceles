@@ -1,6 +1,7 @@
 <UserControl x:Class="SistemaAranceles.Presentation.Views.Mantenimiento.MantenimientoView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              Height="Auto" Width="Auto">
 
     <UserControl.Resources>
@@ -97,7 +98,8 @@
                 <ComboBox Width="220"
                           ItemsSource="{Binding Escenarios}"
                           SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}"
-                          DisplayMemberPath="Nombre"/>
+                          DisplayMemberPath="Nombre"
+                          mah:TextBoxHelper.Watermark="Selecciona el escenario…"/>
 
                 <Button Content="Refrescar"
                         Command="{Binding CargarCommand}"

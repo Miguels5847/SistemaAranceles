@@ -47,7 +47,6 @@ public partial class App
     public static IServiceProvider? ServiceProvider { get; private set; }
     private TextWriterTraceListener? _traceListener;
     private ServicioInactividad? _servicioInactividad;
-    private DateTime _ignorarActividadHasta = DateTime.MinValue;
 
     private void OnStartup(object sender, StartupEventArgs e)
     {
@@ -310,25 +309,13 @@ public partial class App
         {
             var loginView = Current.Windows.OfType<LoginView>().FirstOrDefault();
             var mainWindow = _proveedor!.GetRequiredService<MainWindow>();
-            mainWindow.Deactivated += (_, _) => { Trace.TraceInformation($"[{DateTime.UtcNow:O}] App: MainWindow perdió foco."); };
-            mainWindow.Activated += (_, _) =>
-            {
-                _ignorarActividadHasta = DateTime.UtcNow.AddSeconds(2);
-                Trace.TraceInformation($"[{DateTime.UtcNow:O}] App: MainWindow recuperó foco. Se ignorará actividad de foco hasta {_ignorarActividadHasta:O}.");
-            };
-            void RegistrarActividadSiCorresponde()
-            {
-                if (!mainWindow.IsActive) return;
-                if (DateTime.UtcNow < _ignorarActividadHasta) return;
-                _servicioInactividad?.ResetarActividad();
-            }
-            mainWindow.PreviewMouseDown += (_, _) => RegistrarActividadSiCorresponde();
-            mainWindow.PreviewMouseWheel += (_, _) => RegistrarActividadSiCorresponde();
-            mainWindow.PreviewKeyDown += (_, _) => RegistrarActividadSiCorresponde();
+            // KAN-46: sesión de duración FIJA — el contador baja continuo desde el login
+            // y NO se reinicia por clicks, teclas ni cambios de foco (antes era timer de
+            // inactividad y cada interacción lo regresaba a 45:00, lo que parecía un bug).
             mainWindow.Show();
             loginView?.Close();
             _servicioInactividad?.Iniciar();
-            Trace.WriteLine($"[{DateTime.UtcNow:O}] App: timer de inactividad iniciado tras login exitoso.");
+            Trace.WriteLine($"[{DateTime.UtcNow:O}] App: timer de sesión fija iniciado tras login exitoso.");
         });
 
         WeakReferenceMessenger.Default.Register<CerrarSesionMensaje>(this, (_, msg) =>

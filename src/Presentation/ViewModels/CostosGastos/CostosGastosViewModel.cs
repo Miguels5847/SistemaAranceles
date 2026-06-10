@@ -41,6 +41,8 @@ public sealed partial class CostosGastosViewModel : ObservableObject
     private readonly IServiceProvider _serviceProvider;
     private readonly FactorImprevistoCostosGastosState _factorImprevistoState;
     private bool _suprimirCambios;
+    // Permite cambiar carrera/escenario sin esperar la carga en curso (la vieja se descarta).
+    private int _versionCarga;
 
     public CostosGastosViewModel(
         IServiceProvider serviceProvider,
@@ -81,7 +83,7 @@ public sealed partial class CostosGastosViewModel : ObservableObject
     {
         _ = value;
         OnPropertyChanged(nameof(PuedeTrabajar));
-        if (_suprimirCambios || EstaCargando)
+        if (_suprimirCambios)
             return;
 
         _ = RecargarEscenariosAsync();
@@ -90,7 +92,7 @@ public sealed partial class CostosGastosViewModel : ObservableObject
     partial void OnEscenarioSeleccionadoChanged(EscenarioCostosGastosOpcion? value)
     {
         _ = value;
-        if (_suprimirCambios || EstaCargando)
+        if (_suprimirCambios)
             return;
 
         _ = RefrescarAsync();
@@ -131,7 +133,7 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             _factorImprevistoState.Establecer(value);
 
         // Al cambiar el imprevisto se recalcula toda la matriz (Inv/Vin/Becas → Costos y Gastos → Costo Carrera).
-        if (_suprimirCambios || EstaCargando || EscenarioSeleccionado is null || value <= 0m)
+        if (_suprimirCambios || EscenarioSeleccionado is null || value <= 0m)
             return;
 
         _ = RefrescarAsync();
@@ -199,6 +201,7 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             return;
         }
 
+        var carreraId = CarreraSeleccionada.Id;
         try
         {
             MensajeInfo = string.Empty;
@@ -206,14 +209,19 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             var repoEscenario = scope.ServiceProvider.GetRequiredService<IRepositorioEscenarioProyeccion>();
             var repoProyeccion = scope.ServiceProvider.GetRequiredService<IRepositorioProyeccionEstudiantes>();
             var escenarios = await repoEscenario.ListarAsync();
-            var proyecciones = await repoProyeccion.ListarResumenAsync(CarreraSeleccionada.Id);
+            var proyecciones = await repoProyeccion.ListarResumenAsync(carreraId);
+
+            // Anti-stale: la carrera cambió mientras se listaban escenarios
+            if (CarreraSeleccionada?.Id != carreraId)
+                return;
+
             var escenariosConProyeccion = proyecciones.Select(p => p.EscenarioProyeccionId).ToHashSet();
             var escenarioActualId = EscenarioSeleccionado?.Id;
 
             // Solo escenarios con proyección para la carrera: evita seleccionar duplicados sin datos
             // (arancel/becas/costos no se pueden resolver sin proyección de estudiantes).
             var opciones = escenarios
-                .Where(e => e.CarreraId == CarreraSeleccionada.Id
+                .Where(e => e.CarreraId == carreraId
                             && escenariosConProyeccion.Contains(e.Id))
                 .Select(e => new EscenarioCostosGastosOpcion
                 {
@@ -231,8 +239,8 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             try
             {
                 Escenarios = new ObservableCollection<EscenarioCostosGastosOpcion>(opciones);
-                EscenarioSeleccionado = Escenarios.FirstOrDefault(e => e.Id == escenarioActualId)
-                    ?? Escenarios.FirstOrDefault();
+                // KAN-46: sin auto-selección — el usuario elige el escenario y recién ahí se carga
+                EscenarioSeleccionado = Escenarios.FirstOrDefault(e => e.Id == escenarioActualId);
             }
             finally
             {
@@ -242,7 +250,10 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             if (EscenarioSeleccionado is null)
             {
                 LimpiarMatrices();
-                MensajeError = "La carrera no tiene escenarios con proyección de estudiantes. Genera la proyección en Proyección de Estudiantes.";
+                if (Escenarios.Count == 0)
+                    MensajeError = "La carrera no tiene escenarios con proyección de estudiantes. Genera la proyección en Proyección de Estudiantes.";
+                else
+                    MensajeInfo = "Selecciona el escenario para cargar Costos y Gastos.";
                 return;
             }
 
@@ -269,7 +280,8 @@ public sealed partial class CostosGastosViewModel : ObservableObject
         if (EscenarioSeleccionado is null)
         {
             LimpiarMatrices();
-            MensajeError = "Selecciona un escenario.";
+            MensajeError = string.Empty;
+            MensajeInfo = "Selecciona el escenario para cargar Costos y Gastos.";
             return;
         }
 
@@ -280,6 +292,7 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             return;
         }
 
+        var version = ++_versionCarga;
         EstaCargando = true;
         MensajeError = string.Empty;
         MensajeExito = string.Empty;
@@ -301,11 +314,19 @@ public sealed partial class CostosGastosViewModel : ObservableObject
             // Becas reales (de Ingresos, ya con descuentos) para mostrar en Inv. Vin. Becas como
             // dato referencial. No suman como costo (CostosPorServicios/PE las excluyen).
             var ingresos = await queryIngresos.EjecutarAsync(carreraId, escenarioId);
+
+            if (version != _versionCarga)
+                return;
+
             var becasPorPeriodo = ingresos.CeldasPlanas
                 .GroupBy(c => c.PeriodoAcademicoId)
                 .ToDictionary(g => g.Key, g => g.Sum(c => c.Becas));
             var invVinBecas = await queryInv.EjecutarAsync(
                 carreraId, escenarioId, demandaPrecalculada: demanda, becasInstitucionalesPorPeriodo: becasPorPeriodo);
+
+            if (version != _versionCarga)
+                return;
+
             MatrizInvVinBecas = invVinBecas;
             var costosGastos = await queryCostos.EjecutarAsync(
                 carreraId,
@@ -313,8 +334,13 @@ public sealed partial class CostosGastosViewModel : ObservableObject
                 invVinBecasPrecalculado: invVinBecas,
                 demandaPrecalculada: demanda,
                 factorImprevisto: FactorImprevisto);
+            var costoCarrera = await queryCostoCarrera.EjecutarAsync(carreraId, escenarioId, matrizPrecalculada: costosGastos);
+
+            if (version != _versionCarga)
+                return;
+
             MatrizCostosGastos = costosGastos;
-            ResultadoCostoCarrera = await queryCostoCarrera.EjecutarAsync(carreraId, escenarioId, matrizPrecalculada: costosGastos);
+            ResultadoCostoCarrera = costoCarrera;
 
             var advertencias = new[]
             {
@@ -332,12 +358,17 @@ public sealed partial class CostosGastosViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            LimpiarMatrices();
-            MensajeError = Detalle(ex);
+            if (version == _versionCarga)
+            {
+                LimpiarMatrices();
+                MensajeError = Detalle(ex);
+            }
         }
         finally
         {
-            EstaCargando = false;
+            // Solo la carga más reciente apaga el indicador (las viejas se descartan)
+            if (version == _versionCarga)
+                EstaCargando = false;
         }
     }
 

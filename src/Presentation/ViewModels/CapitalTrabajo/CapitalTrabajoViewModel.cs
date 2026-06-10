@@ -74,7 +74,7 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
     {
         _ = value;
         OnPropertyChanged(nameof(PuedeTrabajar));
-        if (_suprimirRecargaAutomatica || EstaCargando)
+        if (_suprimirRecargaAutomatica)
             return;
 
         _ = CargarEscenariosAsync();
@@ -83,7 +83,7 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
     partial void OnEscenarioSeleccionadoChanged(EscenarioProyeccion? value)
     {
         _ = value;
-        if (_suprimirRecargaAutomatica || EstaCargando)
+        if (_suprimirRecargaAutomatica)
             return;
 
         _ = RefrescarCapitalTrabajoAsync();
@@ -160,24 +160,36 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
             return;
         }
 
+        var carreraId = CarreraSeleccionada.Id;
         var escenarioActualId = EscenarioSeleccionado?.Id;
         try
         {
             MensajeInfo = string.Empty;
             using var scope = _serviceProvider.CreateScope();
             var query = scope.ServiceProvider.GetRequiredService<ListarEscenariosConProyeccionPorCarreraQuery>();
-            var escenarios = await query.EjecutarAsync(CarreraSeleccionada.Id);
+            var escenarios = await query.EjecutarAsync(carreraId);
+
+            // Anti-stale: la carrera cambió mientras se listaban escenarios
+            if (CarreraSeleccionada?.Id != carreraId)
+                return;
 
             _suprimirRecargaAutomatica = true;
             try
             {
                 Escenarios = new ObservableCollection<EscenarioProyeccion>(escenarios);
-                EscenarioSeleccionado = Escenarios.FirstOrDefault(e => e.Id == escenarioActualId)
-                    ?? Escenarios.FirstOrDefault();
+                // KAN-46: sin auto-selección — el usuario elige el escenario y recién ahí se carga
+                EscenarioSeleccionado = Escenarios.FirstOrDefault(e => e.Id == escenarioActualId);
             }
             finally
             {
                 _suprimirRecargaAutomatica = false;
+            }
+
+            if (EscenarioSeleccionado is null && Escenarios.Count > 0)
+            {
+                LimpiarBloques();
+                MensajeInfo = "Selecciona el escenario para cargar Capital de Trabajo.";
+                return;
             }
 
             await RefrescarCapitalTrabajoAsync();
@@ -202,11 +214,17 @@ public sealed partial class CapitalTrabajoViewModel : ObservableObject
 
         MensajeError = string.Empty;
         MensajeInfo = string.Empty;
+        var carreraId = CarreraSeleccionada.Id;
+        var escenarioId = EscenarioSeleccionado?.Id;
         try
         {
             using var scope = _serviceProvider.CreateScope();
             var query = scope.ServiceProvider.GetRequiredService<ObtenerCapitalTrabajoPorCarreraQuery>();
-            var capital = await query.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado?.Id);
+            var capital = await query.EjecutarAsync(carreraId, escenarioId);
+
+            // Anti-stale: la selección cambió durante la consulta
+            if (CarreraSeleccionada?.Id != carreraId || EscenarioSeleccionado?.Id != escenarioId)
+                return;
 
             PeriodoBaseDisplay = capital.PeriodoBaseDisplay;
             GastosServicioAdministracion = new ObservableCollection<FilaGastoServicioAdministracionDto>(capital.GastosServicioAdministracion);

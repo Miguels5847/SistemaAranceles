@@ -190,19 +190,24 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
             return;
         }
 
+        var carreraId = CarreraSeleccionada.Id;
         IReadOnlyList<EscenarioProyeccion> lista;
         using (var scope = _serviceProvider.CreateScope())
         {
             var query = scope.ServiceProvider.GetRequiredService<ListarEscenariosConProyeccionPorCarreraQuery>();
-            lista = await query.EjecutarAsync(CarreraSeleccionada.Id);
+            lista = await query.EjecutarAsync(carreraId);
         }
+
+        // Anti-stale: la carrera cambió mientras se listaban escenarios
+        if (CarreraSeleccionada?.Id != carreraId)
+            return;
 
         _suprimirRecargaAutomatica = true;
         try
         {
             EscenarioSeleccionado = null;
             Escenarios = new ObservableCollection<EscenarioProyeccion>(lista);
-            EscenarioSeleccionado = Escenarios.Count > 0 ? Escenarios[0] : null;
+            // KAN-46: sin auto-selección — el usuario elige el escenario y recién ahí se generan los datos
         }
         finally { _suprimirRecargaAutomatica = false; }
 
@@ -236,12 +241,18 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
             return;
         }
 
+        var carreraId = CarreraSeleccionada.Id;
+        var escenarioId = EscenarioSeleccionado.Id;
         IReadOnlyList<PeriodoDisponibleSueldosDto> lista;
         using (var scope = _serviceProvider.CreateScope())
         {
             var query = scope.ServiceProvider.GetRequiredService<ListarPeriodosDeProyeccionEstudiantesQuery>();
-            lista = await query.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Id);
+            lista = await query.EjecutarAsync(carreraId, escenarioId);
         }
+
+        // Anti-stale: la selección cambió mientras se listaban períodos
+        if (CarreraSeleccionada?.Id != carreraId || EscenarioSeleccionado?.Id != escenarioId)
+            return;
 
         _suprimirRecargaAutomatica = true;
         try
@@ -404,7 +415,7 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
     partial void OnCarreraSeleccionadaChanged(Carrera? value)
     {
         _ = value;
-        if (_suprimirRecargaAutomatica || EstaCargando)
+        if (_suprimirRecargaAutomatica)
             return;
         _ = CargarEscenariosAsync();
     }
@@ -412,7 +423,7 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
     partial void OnEscenarioSeleccionadoChanged(EscenarioProyeccion? value)
     {
         _ = value;
-        if (_suprimirRecargaAutomatica || EstaCargando)
+        if (_suprimirRecargaAutomatica)
             return;
         _ = CargarPeriodosAsync();
     }
@@ -420,7 +431,7 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
     partial void OnPeriodoSeleccionadoChanged(PeriodoDisponibleSueldosDto? value)
     {
         _ = value;
-        if (_suprimirRecargaAutomatica || EstaCargando)
+        if (_suprimirRecargaAutomatica)
             return;
         _ = GenerarAsync();
     }

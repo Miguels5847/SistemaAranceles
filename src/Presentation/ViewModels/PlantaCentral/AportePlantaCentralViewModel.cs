@@ -139,10 +139,15 @@ public sealed partial class AportePlantaCentralViewModel : ObservableObject
             var query = scope.ServiceProvider.GetRequiredService<ListarEscenariosConProyeccionPorCarreraQuery>();
             var lista = await query.EjecutarAsync(CarreraSeleccionada.Id);
             Escenarios = new ObservableCollection<EscenarioProyeccion>(lista);
-            EscenarioSeleccionado = Escenarios.FirstOrDefault(e => e.Id == escenarioIdPreferido)
-                ?? Escenarios.FirstOrDefault();
+            // KAN-46: sin auto-selección — el usuario elige el escenario y recién ahí se calcula
+            EscenarioSeleccionado = Escenarios.FirstOrDefault(e => e.Id == escenarioIdPreferido);
 
-            if (!_suspendiendoAutoCarga && EscenarioSeleccionado is not null)
+            if (EscenarioSeleccionado is null && Escenarios.Count > 0)
+            {
+                LimpiarResultado();
+                MensajeInfo = "Selecciona el escenario para calcular Aporte Planta Central.";
+            }
+            else if (!_suspendiendoAutoCarga && EscenarioSeleccionado is not null)
             {
                 await CalcularAsync();
             }

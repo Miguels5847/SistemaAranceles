@@ -188,8 +188,8 @@ public sealed partial class ReportesViewModel : ObservableObject
             try
             {
                 Escenarios = new ObservableCollection<EscenarioProyeccion>(lista);
-                EscenarioSeleccionado = Escenarios.FirstOrDefault(x => x.Id == escenarioIdPreferido)
-                    ?? Escenarios.FirstOrDefault();
+                // KAN-46: sin auto-selección — el usuario elige el escenario y recién ahí se carga
+                EscenarioSeleccionado = Escenarios.FirstOrDefault(x => x.Id == escenarioIdPreferido);
             }
             finally
             {
@@ -220,6 +220,12 @@ public sealed partial class ReportesViewModel : ObservableObject
         if (CarreraSeleccionada is null)
             return;
 
+        if (EscenarioSeleccionado is null && Escenarios.Count > 0)
+        {
+            MensajeInfo = "Selecciona el escenario para generar el reporte.";
+            return;
+        }
+
         var carreraId = CarreraSeleccionada.Id;
         var escenarioId = EscenarioSeleccionado?.Id;
         var pestana = PestanaSeleccionada;
@@ -227,6 +233,7 @@ public sealed partial class ReportesViewModel : ObservableObject
 
         EstaCargando = true;
         MensajeError = string.Empty;
+        MensajeInfo = string.Empty;
         try
         {
             switch (pestana)

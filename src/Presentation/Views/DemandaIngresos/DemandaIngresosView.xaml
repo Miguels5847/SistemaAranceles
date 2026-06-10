@@ -1,6 +1,7 @@
 <UserControl x:Class="SistemaAranceles.Presentation.Views.DemandaIngresos.DemandaIngresosView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              Height="Auto" Width="Auto">
 
     <UserControl.Resources>
@@ -103,11 +104,11 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Margin="0,0,10,0">
                     <TextBlock Text="Carrera" FontSize="11" Foreground="#546E7A"/>
-                    <ComboBox ItemsSource="{Binding Carreras}" SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}" DisplayMemberPath="Nombre" MinWidth="220" Padding="4,2" IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}"/>
+                    <ComboBox ItemsSource="{Binding Carreras}" SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}" DisplayMemberPath="Nombre" MinWidth="220" Padding="4,2"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Margin="0,0,10,0">
                     <TextBlock Text="Escenario" FontSize="11" Foreground="#546E7A"/>
-                    <ComboBox ItemsSource="{Binding Escenarios}" SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}" DisplayMemberPath="NombreDisplay" MinWidth="220" Padding="4,2" IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}"/>
+                    <ComboBox ItemsSource="{Binding Escenarios}" SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}" DisplayMemberPath="NombreDisplay" mah:TextBoxHelper.Watermark="Selecciona el escenario…" MinWidth="220" Padding="4,2"/>
                 </StackPanel>
                 <Button Grid.Column="2" Content="Refrescar" Padding="10,4" VerticalAlignment="Bottom" Command="{Binding CargarCommand}" IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}"/>
             </Grid>

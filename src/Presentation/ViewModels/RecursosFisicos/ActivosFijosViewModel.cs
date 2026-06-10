@@ -36,6 +36,8 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
     private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
     private bool _suprimirRecargaAutomatica;
+    // Permite cambiar carrera/escenario sin esperar la carga en curso (la vieja se descarta).
+    private int _versionCarga;
 
     public ActivosFijosViewModel(IServiceProvider serviceProvider, SesionActual sesionActual)
     {
@@ -115,7 +117,7 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
     {
         _ = value;
         OnPropertyChanged(nameof(PuedeTrabajar));
-        if (_suprimirRecargaAutomatica || EstaCargando)
+        if (_suprimirRecargaAutomatica)
             return;
 
         _ = CargarEscenariosAsync();
@@ -124,7 +126,7 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
     partial void OnEscenarioSeleccionadoChanged(EscenarioProyeccion? value)
     {
         _ = value;
-        if (_suprimirRecargaAutomatica || EstaCargando)
+        if (_suprimirRecargaAutomatica)
             return;
 
         _ = RecargarActivosAsync();
@@ -231,19 +233,24 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
             return;
         }
 
+        var carreraId = CarreraSeleccionada.Id;
         try
         {
             MensajeInfo = string.Empty;
             using var scope = _serviceProvider.CreateScope();
             var query = scope.ServiceProvider.GetRequiredService<SistemaAranceles.Application.UseCases.CargosFacultad.ListarEscenariosConProyeccionPorCarreraQuery>();
-            var lista = await query.EjecutarAsync(CarreraSeleccionada.Id);
+            var lista = await query.EjecutarAsync(carreraId);
+
+            // Anti-stale: la carrera cambió mientras se listaban escenarios
+            if (CarreraSeleccionada?.Id != carreraId)
+                return;
 
             _suprimirRecargaAutomatica = true;
             try
             {
                 Escenarios = new ObservableCollection<EscenarioProyeccion>(lista);
-                EscenarioSeleccionado = Escenarios.FirstOrDefault(x => x.Id == escenarioIdPreferido)
-                    ?? Escenarios.FirstOrDefault();
+                // KAN-46: sin auto-selección — el usuario elige el escenario y recién ahí se carga
+                EscenarioSeleccionado = Escenarios.FirstOrDefault(x => x.Id == escenarioIdPreferido);
             }
             finally
             {
@@ -265,6 +272,13 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
             }
         }
 
+        if (EscenarioSeleccionado is null && Escenarios.Count > 0)
+        {
+            LimpiarActivos();
+            MensajeInfo = "Selecciona el escenario para cargar Recursos y Depreciación.";
+            return;
+        }
+
         await RecargarActivosAsync();
     }
 
@@ -277,6 +291,9 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
             return;
         }
 
+        var version = ++_versionCarga;
+        var carreraId = CarreraSeleccionada.Id;
+        var escenarioProyeccionId = EscenarioSeleccionado?.Id;
         EstaCargando = true;
         MensajeError = string.Empty;
         MensajeInfo = string.Empty;
@@ -285,11 +302,15 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
             using var scope = _serviceProvider.CreateScope();
             var sembrar = scope.ServiceProvider.GetRequiredService<SembrarActivosFijosDesdeCatalogoCommand>();
             var listar = scope.ServiceProvider.GetRequiredService<ListarActivosFijosQuery>();
-            var escenarioProyeccionId = EscenarioSeleccionado?.Id;
 
-            await sembrar.EjecutarAsync(CarreraSeleccionada.Id);
+            await sembrar.EjecutarAsync(carreraId);
 
-            var activos = await listar.EjecutarAsync(CarreraSeleccionada.Id, escenarioProyeccionId);
+            var activos = await listar.EjecutarAsync(carreraId, escenarioProyeccionId);
+
+            // Anti-stale: la selección cambió durante la consulta
+            if (version != _versionCarga)
+                return;
+
             var activosNormalizados = activos.Select(NormalizarActivoParaPantalla).ToList();
 
             Activos = new ObservableCollection<ActivoFijoDto>(activosNormalizados);
@@ -302,12 +323,17 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            MensajeError = $"Error al cargar activos: {Detalle(ex)}";
-            LimpiarActivos();
+            if (version == _versionCarga)
+            {
+                MensajeError = $"Error al cargar activos: {Detalle(ex)}";
+                LimpiarActivos();
+            }
         }
         finally
         {
-            EstaCargando = false;
+            // Solo la carga más reciente apaga el indicador (las viejas se descartan)
+            if (version == _versionCarga)
+                EstaCargando = false;
         }
     }
 

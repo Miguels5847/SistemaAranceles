@@ -376,7 +376,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         OnPropertyChanged(nameof(PuedeTrabajar));
         OnPropertyChanged(nameof(PuedeUsarArancelSugerido));
         NotificarEstadoDescuentos();
-        if (_suprimirCambios || EstaCargando) return;
+        if (_suprimirCambios) return;
         _ = RecargarPorCarreraAsync();
     }
 
@@ -387,7 +387,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         OnPropertyChanged(nameof(PuedeUsarArancelSugerido));
         NotificarComparativoAranceles();
         NotificarEstadoDescuentos();
-        if (_suprimirCambios || EstaCargando) return;
+        if (_suprimirCambios) return;
         _ = RefrescarArancelEfectivoAsync();
     }
 
@@ -501,6 +501,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             return;
         }
 
+        var carreraId = CarreraSeleccionada.Id;
         try
         {
             MensajeInfo = string.Empty;
@@ -509,13 +510,18 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             var repoProyeccion = scope.ServiceProvider.GetRequiredService<IRepositorioProyeccionEstudiantes>();
             var repoItems = scope.ServiceProvider.GetRequiredService<IRepositorioItemMaterialInsumo>();
             var todosEscenarios = await repoEscenario.ListarAsync();
-            var proyecciones = await repoProyeccion.ListarResumenAsync(CarreraSeleccionada.Id);
+            var proyecciones = await repoProyeccion.ListarResumenAsync(carreraId);
+
+            // Anti-stale: la carrera cambió mientras se listaban escenarios
+            if (CarreraSeleccionada?.Id != carreraId)
+                return;
+
             var proyeccionPorEscenario = proyecciones
                 .GroupBy(p => p.EscenarioProyeccionId)
                 .ToDictionary(g => g.Key, g => g.First().Id);
 
             var escenarios = todosEscenarios
-                .Where(e => e.CarreraId == CarreraSeleccionada.Id)
+                .Where(e => e.CarreraId == carreraId)
                 .Select(e => new EscenarioDemandaIngresosDto
                 {
                     Id = e.Id,
@@ -536,18 +542,21 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             try
             {
                 Escenarios = new ObservableCollection<EscenarioDemandaIngresosDto>(escenarios);
-                EscenarioSeleccionado = Escenarios.FirstOrDefault(e => e.Id == escenarioActualId)
-                    ?? Escenarios.FirstOrDefault(e => e.TieneProyeccion)
-                    ?? Escenarios.FirstOrDefault();
+                // KAN-46: sin auto-selección — el usuario elige el escenario y recién ahí se carga
+                EscenarioSeleccionado = Escenarios.FirstOrDefault(e => e.Id == escenarioActualId);
             }
             finally { _suprimirCambios = false; }
 
-            var items = await repoItems.ListarPorCarreraAsync(CarreraSeleccionada.Id);
+            var items = await repoItems.ListarPorCarreraAsync(carreraId);
+            var listarQuery = scope.ServiceProvider.GetRequiredService<ListarConfiguracionesArancelCarreraQuery>();
+            var configs = await listarQuery.EjecutarAsync(carreraId);
+
+            // Anti-stale: la carrera cambió durante las consultas
+            if (CarreraSeleccionada?.Id != carreraId)
+                return;
+
             ItemsCapitalTrabajo = ConstruirOpcionesItems(items);
             SeleccionarItemRatio(RatioFormItemMaterialId);
-
-            var listarQuery = scope.ServiceProvider.GetRequiredService<ListarConfiguracionesArancelCarreraQuery>();
-            var configs = await listarQuery.EjecutarAsync(CarreraSeleccionada.Id);
             Configuraciones = new ObservableCollection<ConfiguracionArancelCarreraDto>(configs);
 
             await RefrescarArancelEfectivoAsync();
@@ -580,7 +589,8 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             Ratios = [];
             DescuentosPorCiclo = [];
             ActualizarResumen();
-            MensajeError = "Selecciona un escenario para calcular Demanda e Ingresos.";
+            MensajeError = string.Empty;
+            MensajeInfo = "Selecciona el escenario para calcular Demanda e Ingresos.";
             return;
         }
 
@@ -661,7 +671,9 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         }
         finally
         {
-            EstaCargando = false;
+            // Solo el refresco más reciente apaga el indicador (los viejos se descartan)
+            if (version == _refrescoArancelVersion)
+                EstaCargando = false;
         }
     }
 
