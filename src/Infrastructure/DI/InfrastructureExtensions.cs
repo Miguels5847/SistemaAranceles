@@ -61,6 +61,7 @@ public static class InfrastructureExtensions
         services.AddTransient<IServicioEstudiantesTotales, ServicioEstudiantesTotales>();
         services.AddTransient<IServicioDocentesTotales, ServicioDocentesTotales>();
         services.AddTransient<IServicioInflacionFactor, ServicioInflacionFactorStub>();
+        services.AddTransient<IServicioExportacionPdf, Export.ServicioExportacionPdfQuestPdf>();
 
         return services;
     }

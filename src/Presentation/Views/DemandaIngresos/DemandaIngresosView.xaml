@@ -132,7 +132,8 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <Border Grid.Row="0" Background="#EEF2FF" BorderBrush="#1A237E" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,0,0,8">
+                    <StackPanel Grid.Row="0">
+                    <Border Background="#EEF2FF" BorderBrush="#1A237E" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,0,0,8">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -169,6 +170,31 @@
                             </StackPanel>
                         </Grid>
                     </Border>
+                    <!-- KAN-46: comparativo de los 3 tipos de arancel para evitar confusión -->
+                    <UniformGrid Columns="3" Margin="0,0,0,8">
+                        <Border Background="#F8F9FF" BorderBrush="#C5CAE9" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,0,6,0">
+                            <StackPanel>
+                                <TextBlock Text="Arancel deseado (manual)" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding ArancelDeseadoComparativoDisplay}" FontWeight="Bold" Foreground="#1A237E"/>
+                                <TextBlock Text="Escrito por el usuario" FontSize="10" FontStyle="Italic" Foreground="#90A4AE"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="#F8F9FF" BorderBrush="#C5CAE9" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,0,6,0">
+                            <StackPanel>
+                                <TextBlock Text="Arancel referencial por costo" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding ArancelReferencialComparativoDisplay}" FontWeight="Bold" Foreground="#6A1B9A"/>
+                                <TextBlock Text="Costo de carrera ÷ semestres (hoja 11)" FontSize="10" FontStyle="Italic" Foreground="#90A4AE"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="#F8F9FF" BorderBrush="#C5CAE9" BorderThickness="1" CornerRadius="4" Padding="10,8">
+                            <StackPanel>
+                                <TextBlock Text="Arancel óptimo financiero" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="{Binding ArancelOptimoComparativoDisplay}" FontWeight="Bold" Foreground="#2E7D32"/>
+                                <TextBlock Text="Bisección VAN≈0 (Análisis Financiero)" FontSize="10" FontStyle="Italic" Foreground="#90A4AE"/>
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+                    </StackPanel>
                     <Grid Grid.Row="1" Margin="0,0,0,6">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -265,15 +291,25 @@
                                        Text="Se listan todos los ciclos de la carrera/escenario. Edita solo la columna % (0% = sin descuento) y presiona Guardar. El arancel base se mantiene; el descuento solo afecta el valor cobrado por ciclo. Ej.: 1-2: 25%, 3-4: 20%, 5-6: 15%."/>
                         </Grid>
                         <DataGrid ItemsSource="{Binding DescuentosPorCiclo}" AutoGenerateColumns="False"
-                                  IsReadOnly="{Binding DescuentosEditables, Converter={StaticResource InverseBoolConverter}}"
+                                  IsReadOnly="True"
                                   CanUserAddRows="False" CanUserDeleteRows="False" CanUserResizeColumns="False" CanUserReorderColumns="False"
                                   SelectionMode="Single" HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                                   AlternatingRowBackground="#F8F9FF" BorderBrush="#C5CAE9" MaxHeight="240">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Ciclo" Binding="{Binding CicloDisplay}" Width="*" MinWidth="160" IsReadOnly="True"/>
-                                <DataGridTextColumn Header="% Descuento"
-                                                    Binding="{Binding Porcentaje, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                    Width="180"/>
+                                <!-- TextBox siempre visible: sin edit-mode del DataGrid, no se pierde el valor
+                                     de la celda activa al pulsar Guardar (cada tecla actualiza el VM). -->
+                                <DataGridTemplateColumn Header="% Descuento" Width="180">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding Porcentaje, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     IsEnabled="{Binding DataContext.DescuentosEditables,
+                                                                 RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                     BorderThickness="0" Background="Transparent"
+                                                     VerticalContentAlignment="Center" Padding="4,2"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
                     </StackPanel>

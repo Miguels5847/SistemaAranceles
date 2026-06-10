@@ -96,6 +96,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
 {
     private const string ModoManual = "Manual";
     private const string ModoAutomatico = "AutomaticoCostoCarrera";
+    private const string ModoOptimoFinanciero = "OptimoFinanciero";
 
     private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
@@ -174,7 +175,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     [ObservableProperty] private bool _estaCargando;
     [ObservableProperty] private bool _estaGuardando;
 
-    public IReadOnlyList<string> ModosCalculo { get; } = [ModoManual, ModoAutomatico];
+    public IReadOnlyList<string> ModosCalculo { get; } = [ModoManual, ModoAutomatico, ModoOptimoFinanciero];
     public IReadOnlyList<string> CategoriasRatio { get; } = ["MATERIALES_SUMINISTROS", "ASEO_LIMPIEZA", "ACCESORIOS_MATERIALES", "OTRO"];
     public IReadOnlyList<UnidadConsumoOpcion> UnidadesRatio { get; } =
     [
@@ -277,6 +278,59 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
     {
         _ = value;
         OnPropertyChanged(nameof(PuedeUsarArancelSugerido));
+        NotificarComparativoAranceles();
+    }
+
+    partial void OnConfiguracionesChanged(ObservableCollection<ConfiguracionArancelCarreraDto> value)
+    {
+        _ = value;
+        NotificarComparativoAranceles();
+    }
+
+    // KAN-46: panel comparativo de los 3 aranceles (sin ejecutar la bisección).
+    private ConfiguracionArancelCarreraDto? ConfiguracionVigente()
+    {
+        var escenarioId = EscenarioSeleccionado?.Id;
+        return Configuraciones.FirstOrDefault(c => c.EscenarioProyeccionId == escenarioId)
+            ?? Configuraciones.FirstOrDefault(c => c.EscenarioProyeccionId == null);
+    }
+
+    public string ArancelDeseadoComparativoDisplay
+    {
+        get
+        {
+            var config = ConfiguracionVigente();
+            return config is not null
+                && string.Equals(config.ModoCalculoArancel, ModoManual, StringComparison.OrdinalIgnoreCase)
+                && config.ArancelManual is > 0m
+                ? $"$ {config.ArancelManual.Value:N2}"
+                : "—";
+        }
+    }
+
+    public string ArancelReferencialComparativoDisplay
+        => ArancelSugeridoCostoCarrera?.Disponible == true && ArancelSugeridoCostoCarrera.ArancelSugeridoSemestre > 0m
+            ? $"$ {ArancelSugeridoCostoCarrera.ArancelSugeridoSemestre:N2}"
+            : "Costo de carrera pendiente";
+
+    public string ArancelOptimoComparativoDisplay
+    {
+        get
+        {
+            var config = ConfiguracionVigente();
+            return config is not null
+                && string.Equals(config.ModoCalculoArancel, ModoOptimoFinanciero, StringComparison.OrdinalIgnoreCase)
+                && config.ArancelManual is > 0m
+                ? $"$ {config.ArancelManual.Value:N2}"
+                : "No aplicado";
+        }
+    }
+
+    private void NotificarComparativoAranceles()
+    {
+        OnPropertyChanged(nameof(ArancelDeseadoComparativoDisplay));
+        OnPropertyChanged(nameof(ArancelReferencialComparativoDisplay));
+        OnPropertyChanged(nameof(ArancelOptimoComparativoDisplay));
     }
 
     partial void OnMaterialesChanged(MaterialesProyectadosDto? value)
@@ -286,7 +340,11 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         MaterialesMonetariosMatrizFilas = ConstruirFilasMaterialesMonetarios(value, MaterialesEtiquetasPeriodos);
     }
     public string TituloFormulario => FormEsEdicion ? "Editar configuración" : "Nueva configuración";
-    public bool FormEsModoManual => string.Equals(FormModoCalculo, ModoManual, StringComparison.OrdinalIgnoreCase);
+    public bool FormEsModoManual => EsModoValorFijo(FormModoCalculo);
+
+    private static bool EsModoValorFijo(string? modo)
+        => string.Equals(modo, ModoManual, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(modo, ModoOptimoFinanciero, StringComparison.OrdinalIgnoreCase);
     public bool FormPorcentajeMatriculaEditable => !FormUsaPorcentajeInstitucional;
     public bool NoEstaGuardando => !EstaGuardando;
     public bool PuedeTrabajar => CarreraSeleccionada is not null && !EstaCargando;
@@ -327,6 +385,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         _ = value;
         DescuentosEditables = false;
         OnPropertyChanged(nameof(PuedeUsarArancelSugerido));
+        NotificarComparativoAranceles();
         NotificarEstadoDescuentos();
         if (_suprimirCambios || EstaCargando) return;
         _ = RefrescarArancelEfectivoAsync();
@@ -945,10 +1004,10 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             MensajeError = "Selecciona una carrera.";
             return;
         }
-        if (string.Equals(FormModoCalculo, ModoManual, StringComparison.OrdinalIgnoreCase)
+        if (EsModoValorFijo(FormModoCalculo)
             && (!TryDecimal(FormArancelManual, out var arancel) || arancel <= 0m))
         {
-            MensajeError = "Arancel manual inválido (debe ser > 0).";
+            MensajeError = "Arancel inválido (debe ser > 0).";
             return;
         }
 

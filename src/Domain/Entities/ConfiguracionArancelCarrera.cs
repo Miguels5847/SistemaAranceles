@@ -52,11 +52,11 @@ public sealed class ConfiguracionArancelCarrera : EntidadDominioBase
     {
         ModoCalculo = modoCalculo;
 
-        if (modoCalculo == ModoCalculoArancel.Manual)
+        if (modoCalculo is ModoCalculoArancel.Manual or ModoCalculoArancel.OptimoFinanciero)
         {
             if (arancelManual is null or <= 0m)
             {
-                throw new DominioException("El arancel manual es obligatorio en modo Manual y debe ser mayor a cero.");
+                throw new DominioException("El arancel es obligatorio en modo Manual u Óptimo financiero y debe ser mayor a cero.");
             }
             ArancelManual = decimal.Round(arancelManual.Value, 2);
         }
@@ -91,6 +91,7 @@ public sealed class ConfiguracionArancelCarrera : EntidadDominioBase
         return ModoCalculo switch
         {
             ModoCalculoArancel.Manual => ArancelManual,
+            ModoCalculoArancel.OptimoFinanciero => ArancelManual,
             ModoCalculoArancel.AutomaticoCostoCarrera when costoCarrera is > 0m && totalSemestres > 0
                 => decimal.Round(costoCarrera.Value / totalSemestres, 2),
             _ => null

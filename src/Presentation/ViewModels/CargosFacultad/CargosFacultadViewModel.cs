@@ -100,7 +100,7 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
     [ObservableProperty]
     private string _mensajeExito = string.Empty;
 
-    public bool PuedeVer => _sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador;
+    public bool PuedeVer => _sesionActual.TienePermiso("SC.VER") || _sesionActual.EsAdministrador;
 
     public bool EstaProcesando => EstaCargando || EstaGenerando;
 

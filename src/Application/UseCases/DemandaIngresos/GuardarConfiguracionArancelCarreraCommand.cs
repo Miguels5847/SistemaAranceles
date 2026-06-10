@@ -18,10 +18,12 @@ public sealed class GuardarConfiguracionArancelCarreraCommand(
         if (dto.CarreraId <= 0)
             throw new ArgumentException("Carrera es obligatoria.", nameof(dto.CarreraId));
 
-        if (string.Equals(dto.ModoCalculoArancel, "Manual", StringComparison.OrdinalIgnoreCase))
+        var esValorFijo = string.Equals(dto.ModoCalculoArancel, "Manual", StringComparison.OrdinalIgnoreCase)
+                       || string.Equals(dto.ModoCalculoArancel, "OptimoFinanciero", StringComparison.OrdinalIgnoreCase);
+        if (esValorFijo)
         {
             if (dto.ArancelManual is null or <= 0m)
-                throw new ArgumentException("Arancel manual obligatorio en modo Manual.", nameof(dto.ArancelManual));
+                throw new ArgumentException("Arancel obligatorio en modo Manual u Óptimo financiero.", nameof(dto.ArancelManual));
         }
         else if (!string.Equals(dto.ModoCalculoArancel, "AutomaticoCostoCarrera", StringComparison.OrdinalIgnoreCase))
         {

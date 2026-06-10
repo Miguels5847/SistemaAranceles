@@ -55,12 +55,14 @@ public sealed class ObtenerArancelEfectivoQuery(
         string fuente;
         string? advertencia = null;
 
-        if (modo == ModoCalculoArancel.Manual)
+        if (modo is ModoCalculoArancel.Manual or ModoCalculoArancel.OptimoFinanciero)
         {
             arancel = configuracion.ArancelManual;
-            fuente = "Manual";
+            fuente = modo == ModoCalculoArancel.OptimoFinanciero
+                ? "Óptimo financiero (VAN≈0)"
+                : "Manual";
             if (arancel is null or <= 0m)
-                advertencia = "Arancel manual no definido.";
+                advertencia = "Arancel no definido.";
         }
         else
         {

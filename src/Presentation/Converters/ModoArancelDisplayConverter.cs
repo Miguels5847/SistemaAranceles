@@ -14,6 +14,7 @@ public sealed class ModoArancelDisplayConverter : IValueConverter
         {
             "Manual" => "Arancel deseado",
             "AutomaticoCostoCarrera" => "Arancel referencial por costo de carrera",
+            "OptimoFinanciero" => "Arancel óptimo financiero (VAN≈0)",
             var otro => otro ?? string.Empty
         };
 
@@ -22,6 +23,7 @@ public sealed class ModoArancelDisplayConverter : IValueConverter
         {
             "Arancel deseado" => "Manual",
             "Arancel referencial por costo de carrera" => "AutomaticoCostoCarrera",
+            "Arancel óptimo financiero (VAN≈0)" => "OptimoFinanciero",
             var otro => otro ?? string.Empty
         };
 }

@@ -278,6 +278,7 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.DemandaIngresos.DemandaIngresosViewModel>();
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.CostosGastos.CostosGastosViewModel>();
         servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.Amortizacion.AmortizacionViewModel>();
+        servicios.AddTransient<SistemaAranceles.Presentation.ViewModels.Reportes.ReportesViewModel>();
         servicios.AddTransient<AnalisisFinancieroViewModel>();
         servicios.AddTransient<CargosFacultadViewModel>();
         servicios.AddTransient<EstudiantesViewModel>();

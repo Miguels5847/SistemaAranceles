@@ -55,7 +55,7 @@ public sealed partial class AmortizacionViewModel : ObservableObject
     [ObservableProperty] private string _mensajeExito = string.Empty;
     [ObservableProperty] private string _mensajeInfo = string.Empty;
 
-    public bool PuedeEditar => _sesion.EsAdministrador || _sesion.TienePermiso("DI.EDITAR");
+    public bool PuedeEditar => _sesion.EsAdministrador || _sesion.TienePermiso("AMO.EDITAR");
     public bool EstaProcesando => EstaCargando || EstaGuardando;
     public decimal PorcentajePropio => 100m - PorcentajePrestamo - PorcentajeConvenio;
     public string PorcentajePropioDisplay => $"{PorcentajePropio:0.####}%";
@@ -143,7 +143,7 @@ public sealed partial class AmortizacionViewModel : ObservableObject
     partial void OnCarreraSeleccionadaChanged(CarreraMantenimientoOpcion? value)
     {
         _ = value;
-        if (_suprimirRecarga || EstaCargando)
+        if (_suprimirRecarga)
             return;
         _ = CargarEscenariosAsync();
     }
@@ -151,7 +151,7 @@ public sealed partial class AmortizacionViewModel : ObservableObject
     partial void OnEscenarioSeleccionadoChanged(EscenarioProyeccion? value)
     {
         _ = value;
-        if (_suprimirRecarga || EstaCargando)
+        if (_suprimirRecarga)
             return;
         _ = RecargarResumenAsync();
     }
@@ -231,12 +231,17 @@ public sealed partial class AmortizacionViewModel : ObservableObject
             return;
         }
 
+        var carreraId = CarreraSeleccionada.Id;
         try
         {
             MensajeInfo = string.Empty;
             using var scope = _sp.CreateScope();
             var query = scope.ServiceProvider.GetRequiredService<ListarEscenariosConProyeccionPorCarreraQuery>();
-            var lista = await query.EjecutarAsync(CarreraSeleccionada.Id);
+            var lista = await query.EjecutarAsync(carreraId);
+
+            // Anti-stale: la carrera cambió mientras se listaban escenarios
+            if (CarreraSeleccionada?.Id != carreraId)
+                return;
 
             _suprimirRecarga = true;
             try

@@ -1,0 +1,314 @@
+<UserControl x:Class="SistemaAranceles.Presentation.Views.Reportes.ReportesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Height="Auto" Width="Auto">
+
+    <UserControl.Resources>
+        <Style x:Key="CardReporte" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="BorderBrush" Value="#D6DAEA"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style x:Key="HeaderReporte" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#E8EAF6"/>
+            <Setter Property="Foreground" Value="#000000"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="8,6"/>
+        </Style>
+        <Style x:Key="BtnExportar" TargetType="Button">
+            <Setter Property="Background" Value="#1A237E"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="12,5"/>
+            <Setter Property="Margin" Value="0,8,0,0"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+        </Style>
+        <Style TargetType="DataGridCell">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#263238"/>
+            <Setter Property="BorderBrush" Value="#D6DAEA"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Reportes"
+                   FontSize="18" FontWeight="Bold" Foreground="#1A237E" Margin="0,0,0,8"/>
+
+        <Border Grid.Row="1" Background="#EEF1FB" CornerRadius="6" Padding="10" Margin="0,0,0,8">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Carrera" FontSize="11" Foreground="#546E7A" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <ComboBox Width="320"
+                          ItemsSource="{Binding Carreras}"
+                          SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}"
+                          DisplayMemberPath="Etiqueta"/>
+
+                <TextBlock Text="Escenario" FontSize="11" Foreground="#546E7A" VerticalAlignment="Center" Margin="16,0,8,0"/>
+                <ComboBox Width="220"
+                          ItemsSource="{Binding Escenarios}"
+                          SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}"
+                          DisplayMemberPath="Nombre"/>
+
+                <Button Content="Refrescar"
+                        Command="{Binding CargarCommand}"
+                        Margin="12,0,0,0"
+                        Padding="8,4"/>
+            </StackPanel>
+        </Border>
+
+        <StackPanel Grid.Row="2" Margin="0,0,0,8">
+            <TextBlock Text="{Binding MensajeExito}" Foreground="#2E7D32" FontWeight="SemiBold" TextWrapping="Wrap"
+                       Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding MensajeInfo}" Foreground="#1A237E" FontWeight="SemiBold" TextWrapping="Wrap"
+                       Visibility="{Binding MensajeInfo, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding MensajeError}" Foreground="#C62828" FontWeight="SemiBold" TextWrapping="Wrap"
+                       Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
+        </StackPanel>
+
+        <TabControl Grid.Row="3" SelectedIndex="{Binding PestanaSeleccionada, Mode=TwoWay}">
+
+            <!-- ============ REPORTE CES ============ -->
+            <TabItem Header="Reporte CES / INF CES">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="8">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <Border Style="{StaticResource CardReporte}">
+                                <StackPanel>
+                                    <TextBlock Text="Arancel por semestre" FontSize="11" Foreground="#546E7A"/>
+                                    <TextBlock Text="{Binding Ces.ArancelPorSemestreDisplay, FallbackValue='-'}" FontSize="15" FontWeight="Bold" Foreground="#1A237E"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource CardReporte}">
+                                <StackPanel>
+                                    <TextBlock Text="Matrícula" FontSize="11" Foreground="#546E7A"/>
+                                    <TextBlock Text="{Binding Ces.MatriculaDisplay, FallbackValue='-'}" FontSize="15" FontWeight="Bold" Foreground="#1A237E"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource CardReporte}">
+                                <StackPanel>
+                                    <TextBlock Text="Total por semestre" FontSize="11" Foreground="#546E7A"/>
+                                    <TextBlock Text="{Binding Ces.TotalPorSemestreDisplay, FallbackValue='-'}" FontSize="15" FontWeight="Bold" Foreground="#1A237E"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <TextBlock Text="INF CES — Presupuesto primera cohorte por función sustantiva"
+                                   FontWeight="Bold" Foreground="#1A237E" Margin="0,4,0,4"/>
+                        <DataGrid ItemsSource="{Binding Ces.InfCes}" AutoGenerateColumns="False" IsReadOnly="True"
+                                  CanUserAddRows="False" HeadersVisibility="Column" GridLinesVisibility="None"
+                                  Background="White" RowBackground="White" AlternatingRowBackground="#F8FAFC"
+                                  BorderBrush="#D6DAEA" BorderThickness="1" MaxHeight="320"
+                                  ColumnHeaderStyle="{StaticResource HeaderReporte}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Concepto" Binding="{Binding Concepto}" Width="2.6*"/>
+                                <DataGridTextColumn Header="Provisión" Binding="{Binding ProvisionDisplay}" Width="*"/>
+                                <DataGridTextColumn Header="Fomento" Binding="{Binding FomentoDisplay}" Width="*"/>
+                                <DataGridTextColumn Header="Vinculación" Binding="{Binding VinculacionDisplay}" Width="*"/>
+                                <DataGridTextColumn Header="Otros" Binding="{Binding OtrosDisplay}" Width="*"/>
+                                <DataGridTextColumn Header="Total" Binding="{Binding TotalDisplay}" Width="*"/>
+                                <DataGridTextColumn Header="%" Binding="{Binding PorcentajeDisplay}" Width="0.7*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <TextBlock Text="Parámetros de justificación del arancel"
+                                   FontWeight="Bold" Foreground="#1A237E" Margin="0,12,0,4"/>
+                        <DataGrid ItemsSource="{Binding Ces.Parametros}" AutoGenerateColumns="False" IsReadOnly="True"
+                                  CanUserAddRows="False" HeadersVisibility="Column" GridLinesVisibility="None"
+                                  Background="White" RowBackground="White" AlternatingRowBackground="#F8FAFC"
+                                  BorderBrush="#D6DAEA" BorderThickness="1" MaxHeight="260"
+                                  ColumnHeaderStyle="{StaticResource HeaderReporte}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Parámetro" Binding="{Binding Parametro}" Width="1.6*"/>
+                                <DataGridTextColumn Header="Criterio" Binding="{Binding Criterio}" Width="2.4*"/>
+                                <DataGridTextColumn Header="Valor" Binding="{Binding ValorDisplay}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <TextBlock Text="Distribución referencial del costo de la carrera"
+                                   FontWeight="Bold" Foreground="#1A237E" Margin="0,12,0,4"/>
+                        <DataGrid ItemsSource="{Binding Ces.Distribucion}" AutoGenerateColumns="False" IsReadOnly="True"
+                                  CanUserAddRows="False" HeadersVisibility="Column" GridLinesVisibility="None"
+                                  Background="White" RowBackground="White" AlternatingRowBackground="#F8FAFC"
+                                  BorderBrush="#D6DAEA" BorderThickness="1" MaxHeight="260"
+                                  ColumnHeaderStyle="{StaticResource HeaderReporte}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" Width="2.4*"/>
+                                <DataGridTextColumn Header="Monto" Binding="{Binding MontoDisplay}" Width="*"/>
+                                <DataGridTextColumn Header="%" Binding="{Binding PorcentajeDisplay}" Width="0.8*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <Button Content="Exportar PDF"
+                                Style="{StaticResource BtnExportar}"
+                                Command="{Binding ExportarPdfCommand}" CommandParameter="CES"
+                                Visibility="{Binding PuedeExportar, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ============ REPORTE FINANCIERO ============ -->
+            <TabItem Header="Reporte Financiero">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="8">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <Border Style="{StaticResource CardReporte}">
+                                <StackPanel>
+                                    <TextBlock Text="Inversión total" FontSize="11" Foreground="#546E7A"/>
+                                    <TextBlock Text="{Binding Inversion.TotalInversionDisplay, FallbackValue='-'}" FontSize="15" FontWeight="Bold" Foreground="#1A237E"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource CardReporte}">
+                                <StackPanel>
+                                    <TextBlock Text="Capital de trabajo" FontSize="11" Foreground="#546E7A"/>
+                                    <TextBlock Text="{Binding CapitalTrabajo.TotalCapitalTrabajoDisplay, FallbackValue='-'}" FontSize="15" FontWeight="Bold" Foreground="#1A237E"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource CardReporte}">
+                                <StackPanel>
+                                    <TextBlock Text="TMR" FontSize="11" Foreground="#546E7A"/>
+                                    <TextBlock Text="{Binding Indicadores.TmrDisplay, FallbackValue='-'}" FontSize="15" FontWeight="Bold" Foreground="#1A237E"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource CardReporte}">
+                                <StackPanel>
+                                    <TextBlock Text="VAN" FontSize="11" Foreground="#546E7A"/>
+                                    <TextBlock Text="{Binding Indicadores.VanDisplay, FallbackValue='-'}" FontSize="15" FontWeight="Bold" Foreground="#2E7D32"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource CardReporte}">
+                                <StackPanel>
+                                    <TextBlock Text="TIR" FontSize="11" Foreground="#546E7A"/>
+                                    <TextBlock Text="{Binding Indicadores.TirDisplay, FallbackValue='-'}" FontSize="15" FontWeight="Bold" Foreground="#2E7D32"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource CardReporte}">
+                                <StackPanel>
+                                    <TextBlock Text="Viabilidad" FontSize="11" Foreground="#546E7A"/>
+                                    <TextBlock Text="{Binding Indicadores.EstadoViabilidad, FallbackValue='-'}" FontSize="15" FontWeight="Bold" Foreground="#1A237E"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <TextBlock Text="Financiamiento de la inversión (3 fuentes)"
+                                   FontWeight="Bold" Foreground="#1A237E" Margin="0,4,0,4"/>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="200"/>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Recursos Propios"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Financiamiento.PorcentajePropioDisplay, FallbackValue='-'}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Financiamiento.MontoPropioDisplay, FallbackValue='-'}" FontWeight="SemiBold" Foreground="#2E7D32"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Préstamo Bancario"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Financiamiento.PorcentajePrestamoDisplay, FallbackValue='-'}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Financiamiento.MontoPrestamoDisplay, FallbackValue='-'}" FontWeight="SemiBold" Foreground="#C62828"/>
+                            <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding Financiamiento.NombreEntidadPrestamo, FallbackValue=''}" Foreground="#546E7A"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Convenio Institucional"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Financiamiento.PorcentajeConvenioDisplay, FallbackValue='-'}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding Financiamiento.MontoConvenioDisplay, FallbackValue='-'}" FontWeight="SemiBold" Foreground="#6A1B9A"/>
+                            <TextBlock Grid.Row="2" Grid.Column="3" Text="{Binding Financiamiento.NombreEntidadConvenio, FallbackValue=''}" Foreground="#546E7A"/>
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Cuota mensual préstamo" FontWeight="Bold" Margin="0,4,0,0"/>
+                            <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding Financiamiento.CuotaMensualDisplay, FallbackValue='-'}" FontWeight="Bold" Foreground="#1A237E" Margin="0,4,0,0"/>
+                        </Grid>
+
+                        <TextBlock Text="El PDF incluye además: desglose de Inversión Inicial, detalle de Capital de Trabajo, Proyección de Costos y Gastos por período y Flujo de Fondos completo."
+                                   FontSize="11" FontStyle="Italic" Foreground="#546E7A" TextWrapping="Wrap"/>
+
+                        <Button Content="Exportar PDF"
+                                Style="{StaticResource BtnExportar}"
+                                Command="{Binding ExportarPdfCommand}" CommandParameter="Financiero"
+                                Visibility="{Binding PuedeExportar, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ============ REPORTE DEMANDA ============ -->
+            <TabItem Header="Reporte de Demanda">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="8">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <Border Style="{StaticResource CardReporte}">
+                                <StackPanel>
+                                    <TextBlock Text="Arancel efectivo" FontSize="11" Foreground="#546E7A"/>
+                                    <TextBlock Text="{Binding ArancelEfectivo.ArancelDisplay, FallbackValue='-'}" FontSize="15" FontWeight="Bold" Foreground="#1A237E"/>
+                                    <TextBlock Text="{Binding ArancelEfectivo.FuenteCalculo, FallbackValue=''}" FontSize="10" Foreground="#90A4AE"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource CardReporte}">
+                                <StackPanel>
+                                    <TextBlock Text="Matrícula efectiva" FontSize="11" Foreground="#546E7A"/>
+                                    <TextBlock Text="{Binding ArancelEfectivo.MatriculaDisplay, FallbackValue='-'}" FontSize="15" FontWeight="Bold" Foreground="#1A237E"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource CardReporte}">
+                                <StackPanel>
+                                    <TextBlock Text="Demanda total proyectada" FontSize="11" Foreground="#546E7A"/>
+                                    <TextBlock Text="{Binding Demanda.TotalGeneralDisplay, FallbackValue='-'}" FontSize="15" FontWeight="Bold" Foreground="#1A237E"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource CardReporte}">
+                                <StackPanel>
+                                    <TextBlock Text="Ingreso neto proyectado" FontSize="11" Foreground="#546E7A"/>
+                                    <TextBlock Text="{Binding Ingresos.TotalNetoDisplay, FallbackValue='-'}" FontSize="15" FontWeight="Bold" Foreground="#2E7D32"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <TextBlock Text="Ingresos proyectados por ciclo"
+                                   FontWeight="Bold" Foreground="#1A237E" Margin="0,4,0,4"/>
+                        <DataGrid ItemsSource="{Binding Ingresos.Filas}" AutoGenerateColumns="False" IsReadOnly="True"
+                                  CanUserAddRows="False" HeadersVisibility="Column" GridLinesVisibility="None"
+                                  Background="White" RowBackground="White" AlternatingRowBackground="#F8FAFC"
+                                  BorderBrush="#D6DAEA" BorderThickness="1" MaxHeight="320"
+                                  ColumnHeaderStyle="{StaticResource HeaderReporte}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Ciclo" Binding="{Binding CicloDisplay}" Width="*"/>
+                                <DataGridTextColumn Header="Estudiantes" Binding="{Binding TotalEstudiantesDisplay}" Width="*"/>
+                                <DataGridTextColumn Header="Ingreso bruto" Binding="{Binding TotalBrutoDisplay}" Width="*"/>
+                                <DataGridTextColumn Header="Becas" Binding="{Binding TotalBecasDisplay}" Width="*"/>
+                                <DataGridTextColumn Header="Ingreso neto" Binding="{Binding TotalNetoDisplay}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <TextBlock Text="El PDF incluye además: demanda por ciclo × período, docentes requeridos por período y totales por período."
+                                   FontSize="11" FontStyle="Italic" Foreground="#546E7A" TextWrapping="Wrap" Margin="0,8,0,0"/>
+
+                        <Button Content="Exportar PDF"
+                                Style="{StaticResource BtnExportar}"
+                                Command="{Binding ExportarPdfCommand}" CommandParameter="Demanda"
+                                Visibility="{Binding PuedeExportar, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <!-- Overlay solo sobre el contenido: los selectores de carrera/escenario siguen usables
+             durante la carga (la carga vieja se descarta por versión en el VM). -->
+        <Border Grid.Row="3" Background="#80FFFFFF" Panel.ZIndex="10"
+                Visibility="{Binding EstaProcesando, Converter={StaticResource BoolToVisibilityConverter}}">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="220" Height="8"/>
+                <TextBlock Text="Procesando..." Margin="0,8,0,0" HorizontalAlignment="Center" Foreground="#1A237E"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

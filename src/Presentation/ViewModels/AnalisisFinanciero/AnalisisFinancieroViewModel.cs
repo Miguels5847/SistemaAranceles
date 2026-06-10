@@ -139,7 +139,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                                            && EscenarioSeleccionado is not null
                                            && !ArancelOptimoYaAplicado;
     public bool PuedeTrabajar => CarreraSeleccionada is not null && !EstaCargando;
-    public bool PuedeEditar => _sesionActual.EsAdministrador || _sesionActual.TienePermiso("DI_NG.EDITAR");
+    public bool PuedeEditar => _sesionActual.EsAdministrador || _sesionActual.TienePermiso("AF.EDITAR");
 
     // Comparativa arancel vigente vs propuesto (Fase 6).
     public bool TieneComparativaArancel => ArancelVigente is not null
@@ -709,15 +709,14 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             var configExacta = configuraciones.FirstOrDefault(c => c.EscenarioProyeccionId == EscenarioSeleccionado.Id);
             var usaPorcentajeInstitucional = configExacta?.UsaPorcentajeMatriculaInstitucional ?? true;
 
-            // El arancel financiero sugerido (VAN=0) se confirma como arancel vigente. Se persiste
-            // como "Manual" porque queda como valor fijo del escenario; el valor fue calculado por
-            // bisección y confirmado explícitamente por el usuario con este botón (no es automático).
+            // KAN-46: se persiste como "OptimoFinanciero" (valor fijo igual que Manual) para que
+            // la UI siempre pueda distinguir que este arancel vino de la bisección VAN≈0.
             var dto = new GuardarConfiguracionArancelCarreraDto
             {
                 Id = configExacta?.Id,
                 CarreraId = CarreraSeleccionada.Id,
                 EscenarioProyeccionId = EscenarioSeleccionado.Id,
-                ModoCalculoArancel = "Manual",
+                ModoCalculoArancel = "OptimoFinanciero",
                 ArancelManual = optimo.ArancelOptimo,
                 UsaPorcentajeMatriculaInstitucional = usaPorcentajeInstitucional,
                 PorcentajeMatricula = usaPorcentajeInstitucional

@@ -281,8 +281,9 @@
             </StackPanel>
         </ScrollViewer>
 
-        <!-- Overlay de carga -->
-        <Border Background="#80FFFFFF"
+        <!-- Overlay de carga (solo visual: no bloquea clicks para poder cambiar
+             carrera/escenario sin esperar; los comandos ya tienen guards). -->
+        <Border Background="#80FFFFFF" IsHitTestVisible="False"
                 Visibility="{Binding EstaProcesando, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                 <ProgressBar IsIndeterminate="True" Width="220" Height="8"/>

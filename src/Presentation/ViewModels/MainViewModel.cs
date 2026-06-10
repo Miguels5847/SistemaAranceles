@@ -117,7 +117,7 @@ public sealed partial class MainViewModel : ObservableObject
             PaginaActual = _inflacionViewModel;
             _ = MostrarInflacionAsync();
         }
-        else if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
+        else if (_sesionActual.TienePermiso("SC.VER") || _sesionActual.EsAdministrador)
         {
             PaginaActual = _cargosFacultadViewModel;
             _ = MostrarCargosFacultadAsync();
@@ -145,10 +145,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     private static string FormatearTiempoRestante(TimeSpan tiempo)
     {
-        // Solo minutos (redondeo hacia arriba): evita el salto visible por reinicios de actividad
-        // o por congelamiento del timer de UI durante consultas pesadas.
-        var minutos = (int)Math.Ceiling(tiempo.TotalMinutes);
-        return $"{minutos} min";
+        var t = tiempo < TimeSpan.Zero ? TimeSpan.Zero : tiempo;
+        // TotalMinutes (no Minutes) para soportar timeouts > 59 min.
+        return $"{(int)t.TotalMinutes:00}:{t.Seconds:00}";
     }
 
     private void SeleccionarMenu(string titulo)
@@ -186,7 +185,7 @@ public sealed partial class MainViewModel : ObservableObject
             MenuItems.Add(new ItemMenu { Titulo = "Proyección de Estudiantes", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarEstudiantesAsync()) });
         }
 
-        if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
+        if (_sesionActual.TienePermiso("SC.VER") || _sesionActual.EsAdministrador)
         {
             MenuItems.Add(new ItemMenu { Titulo = "Sueldos Carrera", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarCargosFacultadAsync()) });
         }
@@ -211,7 +210,7 @@ public sealed partial class MainViewModel : ObservableObject
             MenuItems.Add(new ItemMenu { Titulo = "Mantenimiento e Inversión", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarMantenimientoInversionAsync()) });
         }
 
-        if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
+        if (_sesionActual.TienePermiso("CT.VER") || _sesionActual.EsAdministrador)
         {
             MenuItems.Add(new ItemMenu { Titulo = "Capital de Trabajo", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarCapitalTrabajoAsync()) });
         }
@@ -231,14 +230,14 @@ public sealed partial class MainViewModel : ObservableObject
             MenuItems.Add(new ItemMenu { Titulo = "Análisis Financiero", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarAnalisisFinancieroAsync()) });
         }
 
-        if (_sesionActual.TienePermiso("DI.VER") || _sesionActual.EsAdministrador)
+        if (_sesionActual.TienePermiso("AMO.VER") || _sesionActual.EsAdministrador)
         {
             MenuItems.Add(new ItemMenu { Titulo = "Amortización", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarAmortizacionAsync()) });
         }
 
-        if (_sesionActual.TienePermiso("REP.VER"))
+        if (_sesionActual.TienePermiso("REP.VER") || _sesionActual.EsAdministrador)
         {
-            MenuItems.Add(new ItemMenu { Titulo = "Reportes", Icono = string.Empty, Comando = new RelayCommand(() => MostrarModuloEnDesarrollo("Reportes", "Pendiente")) });
+            MenuItems.Add(new ItemMenu { Titulo = "Reportes", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarReportesAsync()) });
         }
 
         if (_sesionActual.EsAdministrador && _sesionActual.TienePermiso("AUD.VER"))
@@ -355,7 +354,7 @@ public sealed partial class MainViewModel : ObservableObject
     private async Task MostrarCargosFacultadAsync()
     {
         SeleccionarMenu("Sueldos Carrera");
-        if (!(_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo de Sueldos."; return; }
+        if (!(_sesionActual.TienePermiso("SC.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo de Sueldos."; return; }
         MensajePagina = string.Empty;
         PaginaActual = _cargosFacultadViewModel;
         await _cargosFacultadViewModel.CargarCommand.ExecuteAsync(null);
@@ -366,7 +365,7 @@ public sealed partial class MainViewModel : ObservableObject
     private async Task MostrarCapitalTrabajoAsync()
     {
         SeleccionarMenu("Capital de Trabajo");
-        if (!(_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo Capital de Trabajo."; return; }
+        if (!(_sesionActual.TienePermiso("CT.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo Capital de Trabajo."; return; }
         MensajePagina = string.Empty;
         PaginaActual = _capitalTrabajoViewModel;
         await _capitalTrabajoViewModel.CargarCommand.ExecuteAsync(null);
@@ -411,10 +410,20 @@ public sealed partial class MainViewModel : ObservableObject
         await vm.CargarCommand.ExecuteAsync(null);
     }
 
+    private async Task MostrarReportesAsync()
+    {
+        SeleccionarMenu("Reportes");
+        if (!(_sesionActual.TienePermiso("REP.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo Reportes."; return; }
+        MensajePagina = string.Empty;
+        var vm = _serviceProvider.GetRequiredService<ViewModels.Reportes.ReportesViewModel>();
+        PaginaActual = vm;
+        await vm.CargarCommand.ExecuteAsync(null);
+    }
+
     private async Task MostrarAmortizacionAsync()
     {
         SeleccionarMenu("Amortización");
-        if (!(_sesionActual.TienePermiso("DI.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo Amortización."; return; }
+        if (!(_sesionActual.TienePermiso("AMO.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo Amortización."; return; }
         MensajePagina = string.Empty;
         var vm = _serviceProvider.GetRequiredService<ViewModels.Amortizacion.AmortizacionViewModel>();
         PaginaActual = vm;
