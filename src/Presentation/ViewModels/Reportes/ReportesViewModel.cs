@@ -8,9 +8,13 @@ using SistemaAranceles.Application.DTOs.Amortizacion;
 using SistemaAranceles.Application.DTOs.AnalisisFinanciero;
 using SistemaAranceles.Application.DTOs.CapitalTrabajo;
 using SistemaAranceles.Application.DTOs.CostosGastos;
+using SistemaAranceles.Application.DTOs.CargosFacultad;
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.DTOs.InversionInicial;
+using SistemaAranceles.Application.DTOs.Mantenimiento;
+using SistemaAranceles.Application.DTOs.RecursosFisicosDepreciacion;
 using SistemaAranceles.Application.DTOs.Reportes;
+using SistemaAranceles.Application.DTOs.SueldosPlantaCentral;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.Interfaces.Servicios;
 using SistemaAranceles.Application.UseCases.Amortizacion;
@@ -20,6 +24,9 @@ using SistemaAranceles.Application.UseCases.CargosFacultad;
 using SistemaAranceles.Application.UseCases.CostosGastos;
 using SistemaAranceles.Application.UseCases.DemandaIngresos;
 using SistemaAranceles.Application.UseCases.InversionInicial;
+using SistemaAranceles.Application.UseCases.Mantenimiento;
+using SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion;
+using SistemaAranceles.Application.UseCases.SueldosPlantaCentral;
 using SistemaAranceles.Domain.Entities;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.ViewModels.Mantenimiento;
@@ -43,7 +50,16 @@ public sealed partial class ReportesViewModel : ObservableObject
     {
         _sp = sp;
         _sesion = sesion;
+        _direccionSeleccionada = Direcciones[0];
     }
+
+    // KAN-47: reporte por dirección/destinatario (un solo flujo, secciones filtradas)
+    public IReadOnlyList<DireccionReporteOpcion> Direcciones { get; } =
+        Enum.GetValues<DireccionReporte>()
+            .Select(d => new DireccionReporteOpcion(d, SeccionesReporte.Titulo(d)))
+            .ToList();
+
+    [ObservableProperty] private DireccionReporteOpcion? _direccionSeleccionada;
 
     [ObservableProperty] private ObservableCollection<CarreraMantenimientoOpcion> _carreras = [];
     [ObservableProperty] private CarreraMantenimientoOpcion? _carreraSeleccionada;
@@ -425,6 +441,216 @@ public sealed partial class ReportesViewModel : ObservableObject
         }
     }
 
+    [RelayCommand]
+    private async Task ExportarPdfDireccionAsync()
+    {
+        if (!PuedeExportar)
+        {
+            MensajeError = "No tiene permiso para exportar reportes (REP.EXPORTAR).";
+            return;
+        }
+
+        if (CarreraSeleccionada is null)
+        {
+            MensajeError = "Selecciona una carrera antes de exportar.";
+            return;
+        }
+
+        if (EscenarioSeleccionado is null)
+        {
+            MensajeError = "Selecciona el escenario antes de exportar.";
+            return;
+        }
+
+        if (DireccionSeleccionada is null)
+        {
+            MensajeError = "Selecciona la dirección destinataria del reporte.";
+            return;
+        }
+
+        if (EstaExportando) return;
+        EstaExportando = true;
+        MensajeError = string.Empty;
+        MensajeExito = string.Empty;
+
+        var direccion = DireccionSeleccionada.Valor;
+        var carreraNombre = CarreraSeleccionada.Etiqueta;
+        var escenarioNombre = EscenarioSeleccionado.Nombre;
+
+        try
+        {
+            var datos = await ConstruirDatosDireccionAsync(
+                direccion, CarreraSeleccionada.Id, EscenarioSeleccionado.Id, carreraNombre, escenarioNombre);
+            var pdf = GenerarPdf(s => s.GenerarReporteDireccion(datos));
+
+            var dialogo = new SaveFileDialog
+            {
+                Filter = "Archivo PDF (*.pdf)|*.pdf",
+                FileName = $"Reporte_{SeccionesReporte.SlugArchivo(direccion)}_{Sanear(carreraNombre)}_{Sanear(escenarioNombre)}_{DateTime.Now:yyyyMMdd}.pdf"
+            };
+            if (dialogo.ShowDialog() != true)
+                return;
+
+            await File.WriteAllBytesAsync(dialogo.FileName, pdf);
+            MensajeExito = $"Reporte ({SeccionesReporte.Titulo(direccion)}) exportado: {dialogo.FileName}";
+        }
+        catch (Exception ex)
+        {
+            MensajeError = Detalle(ex);
+        }
+        finally
+        {
+            EstaExportando = false;
+        }
+    }
+
+    /// <summary>
+    /// Junta solo los DTOs que la dirección necesita, cada uno con queries ya existentes.
+    /// Una sección que falle queda en null y el PDF imprime su nota de datos insuficientes.
+    /// </summary>
+    private async Task<ReporteDireccionDatos> ConstruirDatosDireccionAsync(
+        DireccionReporte direccion, int carreraId, int escenarioId, string carreraNombre, string escenarioNombre)
+    {
+        var secciones = SeccionesReporte.ParaDireccion(direccion).ToHashSet();
+        bool Necesita(params SeccionReporte[] s) => s.Any(secciones.Contains);
+
+        using var scope = _sp.CreateScope();
+        var sp = scope.ServiceProvider;
+
+        ArancelEfectivoDto? arancel = null;
+        if (Necesita(SeccionReporte.ArancelMatricula, SeccionReporte.Ingresos))
+            arancel = await Seguro(() => sp.GetRequiredService<ObtenerArancelEfectivoQuery>()
+                .EjecutarAsync(carreraId, escenarioId));
+
+        DemandaProyectadaDto? demanda = null;
+        if (Necesita(SeccionReporte.DemandaTabla, SeccionReporte.GraficoMatricula,
+                SeccionReporte.DocentesTabla, SeccionReporte.GraficoDocentes, SeccionReporte.InvVinBecas))
+            demanda = await Seguro(() => sp.GetRequiredService<ObtenerDemandaProyectadaQuery>()
+                .EjecutarAsync(carreraId, escenarioId));
+
+        IngresosProyectadosDto? ingresos = null;
+        if (Necesita(SeccionReporte.Ingresos, SeccionReporte.BalanceProyectado))
+            ingresos = await Seguro(() => sp.GetRequiredService<CalcularIngresosProyectadosQuery>()
+                .EjecutarAsync(carreraId, escenarioId, arancelPrecalculado: arancel));
+
+        MaterialesProyectadosDto? materiales = null;
+        if (Necesita(SeccionReporte.MaterialesUnidades, SeccionReporte.MaterialesMonetario))
+            materiales = await Seguro(() => sp.GetRequiredService<CalcularMaterialesPorPeriodoQuery>()
+                .EjecutarAsync(carreraId, escenarioId));
+
+        IReadOnlyList<ActivoFijoDto>? activos = null;
+        TotalesActivosFijosDto? totalesActivos = null;
+        if (Necesita(SeccionReporte.ActivosFijos))
+        {
+            activos = await Seguro(() => sp.GetRequiredService<ListarActivosFijosQuery>()
+                .EjecutarAsync(carreraId, escenarioId));
+            totalesActivos = await Seguro(() => sp.GetRequiredService<ObtenerTotalesActivosQuery>()
+                .EjecutarAsync(carreraId, escenarioId));
+        }
+
+        InversionInicialTotalDto? inversion = null;
+        if (Necesita(SeccionReporte.InversionInicial))
+            inversion = await Seguro(() => sp.GetRequiredService<ObtenerInversionInicialTotalQuery>()
+                .EjecutarAsync(carreraId, escenarioId));
+
+        ResumenCapitalTrabajoDto? capital = null;
+        if (Necesita(SeccionReporte.CapitalTrabajo, SeccionReporte.FlujoFondos))
+            capital = await Seguro(() => sp.GetRequiredService<ObtenerResumenCapitalTrabajoQuery>()
+                .EjecutarAsync(carreraId, escenarioId));
+
+        MatrizDepreciacionDto? depreciacion = null;
+        if (Necesita(SeccionReporte.Depreciacion))
+            depreciacion = await Seguro(() => sp.GetRequiredService<ObtenerMatrizDepreciacionQuery>()
+                .EjecutarAsync(carreraId, escenarioId));
+
+        ResumenSueldosVistaDto? sueldos = null;
+        if (Necesita(SeccionReporte.Sueldos))
+            sueldos = await Seguro(() => sp.GetRequiredService<GenerarResumenSueldosQuery>()
+                .EjecutarAsync(carreraId, escenarioId, ConfiguracionSueldosCarrera.EstudiantesUnidadAcademicaPorDefecto));
+
+        ResumenMantenimientoDto? mantenimiento = null;
+        if (Necesita(SeccionReporte.Mantenimiento))
+            mantenimiento = await Seguro(() => sp.GetRequiredService<ObtenerResumenMantenimientoQuery>()
+                .EjecutarAsync(carreraId, escenarioId));
+
+        AportePlantaCentralCarreraDto? plantaCentral = null;
+        if (Necesita(SeccionReporte.PlantaCentral))
+            plantaCentral = await Seguro(() => sp.GetRequiredService<CalcularAportePlantaCentralCarreraQuery>()
+                .EjecutarAsync(carreraId, escenarioId));
+
+        MatrizInvVinBecasDto? invVinBecas = null;
+        if (Necesita(SeccionReporte.InvVinBecas))
+            invVinBecas = await Seguro(() => sp.GetRequiredService<ObtenerMatrizInvVinBecasQuery>()
+                .EjecutarAsync(carreraId, escenarioId, demandaPrecalculada: demanda));
+
+        MatrizCostosGastosDto? costos = null;
+        if (Necesita(SeccionReporte.CostosGastos, SeccionReporte.BalanceProyectado))
+            costos = await Seguro(() => sp.GetRequiredService<ObtenerMatrizCostosGastosQuery>()
+                .EjecutarAsync(carreraId, escenarioId));
+
+        ResumenFinanciamientoDto? financiamiento = null;
+        if (Necesita(SeccionReporte.FinanciamientoAmortizacion))
+            financiamiento = await Seguro(() => sp.GetRequiredService<ObtenerResumenAmortizacionQuery>()
+                .EjecutarAsync(carreraId, escenarioId));
+
+        FlujoFondosDto? flujo = null;
+        if (Necesita(SeccionReporte.FlujoFondos, SeccionReporte.Indicadores))
+            flujo = await Seguro(() => sp.GetRequiredService<ObtenerFlujoFondosQuery>()
+                .EjecutarAsync(carreraId, escenarioId, capitalTrabajoPrecalculado: capital));
+
+        IndicadoresFinancierosDto? indicadores = null;
+        if (Necesita(SeccionReporte.Indicadores))
+            indicadores = await Seguro(() => sp.GetRequiredService<ObtenerIndicadoresFinancierosQuery>()
+                .EjecutarAsync(carreraId, escenarioId, flujoPrecalculado: flujo));
+
+        EstadoPerdidasGananciasDto? balance = null;
+        if (Necesita(SeccionReporte.BalanceProyectado))
+            balance = await Seguro(() => sp.GetRequiredService<ObtenerEstadoPerdidasGananciasQuery>()
+                .EjecutarAsync(carreraId, escenarioId,
+                    costosPrecalculados: costos, ingresosPrecalculados: ingresos));
+
+        CesDto? ces = null;
+        if (Necesita(SeccionReporte.Ces))
+            ces = await Seguro(() => sp.GetRequiredService<ObtenerCesQuery>()
+                .EjecutarAsync(carreraId, escenarioId));
+
+        return new ReporteDireccionDatos(direccion, carreraNombre, escenarioNombre, DateTime.Now)
+        {
+            Arancel = arancel,
+            Demanda = demanda,
+            Ingresos = ingresos,
+            Materiales = materiales,
+            ActivosFijos = activos,
+            TotalesActivos = totalesActivos,
+            Inversion = inversion,
+            CapitalTrabajo = capital,
+            Depreciacion = depreciacion,
+            Sueldos = sueldos,
+            Mantenimiento = mantenimiento,
+            PlantaCentral = plantaCentral,
+            InvVinBecas = invVinBecas,
+            CostosGastos = costos,
+            Financiamiento = financiamiento,
+            Indicadores = indicadores,
+            FlujoFondos = flujo,
+            BalanceProyectado = balance,
+            Ces = ces
+        };
+    }
+
+    private static async Task<T?> Seguro<T>(Func<Task<T>> consulta) where T : class
+    {
+        try
+        {
+            return await consulta();
+        }
+        catch (Exception)
+        {
+            // Sección opcional: si la query falla, el PDF imprime la nota de datos insuficientes.
+            return null;
+        }
+    }
+
     private byte[] GenerarPdf(Func<IServicioExportacionPdf, byte[]> generar)
     {
         using var scope = _sp.CreateScope();
@@ -442,3 +668,6 @@ public sealed partial class ReportesViewModel : ObservableObject
     private static string Detalle(Exception ex)
         => ex.InnerException is null ? ex.Message : $"{ex.Message} ({ex.InnerException.Message})";
 }
+
+/// <summary>Opción del selector "Dirección / Destinatario" (KAN-47).</summary>
+public sealed record DireccionReporteOpcion(DireccionReporte Valor, string Etiqueta);

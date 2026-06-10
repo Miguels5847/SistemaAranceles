@@ -1,0 +1,857 @@
+using QuestPDF.Fluent;
+using SistemaAranceles.Application.DTOs.Amortizacion;
+using SistemaAranceles.Application.DTOs.AnalisisFinanciero;
+using SistemaAranceles.Application.DTOs.CapitalTrabajo;
+using SistemaAranceles.Application.DTOs.CargosFacultad;
+using SistemaAranceles.Application.DTOs.DemandaIngresos;
+using SistemaAranceles.Application.DTOs.InversionInicial;
+using SistemaAranceles.Application.DTOs.Mantenimiento;
+using SistemaAranceles.Application.DTOs.RecursosFisicosDepreciacion;
+using SistemaAranceles.Application.DTOs.SueldosPlantaCentral;
+
+namespace SistemaAranceles.Infrastructure.Export;
+
+/// <summary>
+/// Renderers de sección compartidos por los reportes PDF (KAN-47): los documentos
+/// existentes (CES/Financiero/Demanda) y el reporte por dirección componen con
+/// estos mismos bloques para no duplicar tablas ni formatos.
+/// </summary>
+internal static class SeccionesPdf
+{
+    public static void SinDatos(ColumnDescriptor col, string titulo)
+    {
+        EstilosPdf.TituloSeccion(col, titulo);
+        col.Item().Text("No existen datos suficientes para generar esta sección.")
+            .FontSize(8).Italic().FontColor(EstilosPdf.ColorGris);
+    }
+
+    // ============ Demanda / Estrategia Comercial ============
+
+    public static void Arancel(ColumnDescriptor col, ArancelEfectivoDto arancel)
+    {
+        EstilosPdf.TituloSeccion(col, "Arancel y Matrícula vigentes");
+        col.Item().Row(row =>
+        {
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("Arancel efectivo").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(arancel.ArancelDisplay).Bold().FontColor(EstilosPdf.ColorPrimario);
+            });
+            row.Spacing(6);
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("Matrícula efectiva").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(arancel.MatriculaDisplay).Bold().FontColor(EstilosPdf.ColorPrimario);
+            });
+            row.RelativeItem(2).CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("Fuente del arancel").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(arancel.FuenteCalculo).Bold();
+            });
+        });
+        EstilosPdf.Advertencia(col, arancel.MensajeAdvertencia);
+    }
+
+    public static void DemandaTabla(ColumnDescriptor col, DemandaProyectadaDto demanda)
+    {
+        EstilosPdf.TituloSeccion(col, $"Demanda considerada por la carrera de {demanda.CarreraNombre} — proyección por ciclo (estudiantes)");
+        var etiquetas = demanda.EtiquetasPeriodos;
+        if (!demanda.TieneDatos)
+        {
+            col.Item().Text("Sin datos de demanda proyectada.").FontSize(8).Italic().FontColor(EstilosPdf.ColorGris);
+            EstilosPdf.Advertencia(col, demanda.MensajeAdvertencia);
+            return;
+        }
+
+        col.Item().Table(tabla =>
+        {
+            tabla.ColumnsDefinition(c =>
+            {
+                c.RelativeColumn(1.6f);
+                foreach (var _ in etiquetas)
+                    c.RelativeColumn();
+                c.RelativeColumn(1.1f);
+            });
+            tabla.Header(h =>
+            {
+                h.Cell().CeldaHeader().Text("Ciclo").Bold();
+                foreach (var etiqueta in etiquetas)
+                    h.Cell().CeldaHeader().AlignRight().Text(etiqueta).Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Total").Bold();
+            });
+            foreach (var fila in demanda.Filas)
+            {
+                tabla.Cell().Celda().Text(fila.CicloDisplay);
+                for (var i = 0; i < etiquetas.Count; i++)
+                {
+                    var valor = i < fila.Periodos.Count ? fila.Periodos[i].ToString("N0") : string.Empty;
+                    tabla.Cell().Celda().AlignRight().Text(valor);
+                }
+                tabla.Cell().Celda().AlignRight().Text(fila.TotalDisplay);
+            }
+            tabla.Cell().Celda().Text("TOTAL").Bold();
+            for (var i = 0; i < etiquetas.Count; i++)
+            {
+                var valor = i < demanda.TotalesPorPeriodo.Count
+                    ? demanda.TotalesPorPeriodo[i].ToString("N0")
+                    : string.Empty;
+                tabla.Cell().Celda().AlignRight().Text(valor).Bold();
+            }
+            tabla.Cell().Celda().AlignRight().Text(demanda.TotalGeneralDisplay).Bold();
+        });
+        EstilosPdf.Advertencia(col, demanda.MensajeAdvertencia);
+    }
+
+    public static void DocentesTabla(ColumnDescriptor col, DemandaProyectadaDto demanda)
+    {
+        EstilosPdf.TituloSeccion(col, "Docentes requeridos por la carrera, por período");
+        var etiquetas = demanda.EtiquetasPeriodos;
+        if (!demanda.TieneDocentes)
+        {
+            col.Item().Text("Sin datos de docentes requeridos.").FontSize(8).Italic().FontColor(EstilosPdf.ColorGris);
+            EstilosPdf.Advertencia(col, demanda.MensajeAdvertenciaDocentes);
+            return;
+        }
+
+        col.Item().Table(tabla =>
+        {
+            tabla.ColumnsDefinition(c =>
+            {
+                c.RelativeColumn(1.6f);
+                foreach (var _ in etiquetas)
+                    c.RelativeColumn();
+                c.RelativeColumn(1.1f);
+            });
+            tabla.Header(h =>
+            {
+                h.Cell().CeldaHeader().Text("Tipo").Bold();
+                foreach (var etiqueta in etiquetas)
+                    h.Cell().CeldaHeader().AlignRight().Text(etiqueta).Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Total").Bold();
+            });
+            foreach (var fila in demanda.DocentesPorPeriodo)
+            {
+                tabla.Cell().Celda().Text(fila.Tipo);
+                for (var i = 0; i < etiquetas.Count; i++)
+                {
+                    var valor = i < fila.Periodos.Count ? fila.Periodos[i].ToString("N0") : string.Empty;
+                    tabla.Cell().Celda().AlignRight().Text(valor);
+                }
+                tabla.Cell().Celda().AlignRight().Text(fila.TotalDisplay);
+            }
+        });
+        EstilosPdf.Advertencia(col, demanda.MensajeAdvertenciaDocentes);
+    }
+
+    public static void GraficoMatricula(ColumnDescriptor col, DemandaProyectadaDto demanda)
+        => GraficosPdf.GraficoBarras(col, "Proyección de la matrícula (estudiantes por período)",
+            demanda.EtiquetasPeriodos,
+            [("Matrícula", demanda.TotalesPorPeriodo, GraficosPdf.Paleta[0])]);
+
+    public static void GraficoDocentes(ColumnDescriptor col, DemandaProyectadaDto demanda)
+        => GraficosPdf.GraficoBarras(col, "Docentes requeridos por período",
+            demanda.EtiquetasPeriodos,
+            demanda.DocentesPorPeriodo
+                .Select((fila, i) => (fila.Tipo, fila.Periodos, GraficosPdf.Paleta[i % GraficosPdf.Paleta.Length]))
+                .ToList());
+
+    public static void Ingresos(ColumnDescriptor col, IngresosProyectadosDto ingresos)
+    {
+        EstilosPdf.TituloSeccion(col, "Ingresos proyectados por ciclo");
+        col.Item().Row(row =>
+        {
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("Ingreso bruto").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(ingresos.TotalBrutoDisplay).Bold().FontColor(EstilosPdf.ColorPrimario);
+            });
+            row.Spacing(6);
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("Becas (reducen ingreso)").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(ingresos.TotalBecasDisplay).Bold().FontColor("#C62828");
+            });
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("Ingreso neto").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(ingresos.TotalNetoDisplay).Bold().FontColor("#2E7D32");
+            });
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("% becas aplicado").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(ingresos.PorcentajeBecasDisplay).Bold();
+            });
+        });
+
+        col.Item().PaddingTop(6).Table(tabla =>
+        {
+            tabla.ColumnsDefinition(c =>
+            {
+                c.RelativeColumn(1.4f);
+                c.RelativeColumn();
+                c.RelativeColumn();
+                c.RelativeColumn();
+                c.RelativeColumn();
+            });
+            tabla.Header(h =>
+            {
+                h.Cell().CeldaHeader().Text("Ciclo").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Estudiantes").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Ingreso bruto").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Becas").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Ingreso neto").Bold();
+            });
+            foreach (var fila in ingresos.Filas)
+            {
+                tabla.Cell().Celda().Text(fila.CicloDisplay);
+                tabla.Cell().Celda().AlignRight().Text(fila.TotalEstudiantesDisplay);
+                tabla.Cell().Celda().AlignRight().Text(fila.TotalBrutoDisplay);
+                tabla.Cell().Celda().AlignRight().Text(fila.TotalBecasDisplay);
+                tabla.Cell().Celda().AlignRight().Text(fila.TotalNetoDisplay);
+            }
+            tabla.Cell().Celda().Text("TOTAL").Bold();
+            tabla.Cell().Celda().Text(string.Empty);
+            tabla.Cell().Celda().AlignRight().Text(ingresos.TotalBrutoDisplay).Bold();
+            tabla.Cell().Celda().AlignRight().Text(ingresos.TotalBecasDisplay).Bold();
+            tabla.Cell().Celda().AlignRight().Text(ingresos.TotalNetoDisplay).Bold();
+        });
+
+        EstilosPdf.Advertencia(col, ingresos.MensajeAdvertencia);
+    }
+
+    // ============ Financiero ============
+
+    public static void InversionYCapital(ColumnDescriptor col, InversionInicialTotalDto inversion, ResumenCapitalTrabajoDto capital)
+    {
+        EstilosPdf.TituloSeccion(col, "Inversión Inicial y Capital de Trabajo");
+        col.Item().Row(row =>
+        {
+            row.RelativeItem().Table(tabla => TablaInversion(tabla, inversion));
+            row.Spacing(12);
+            row.RelativeItem().Table(tabla => TablaCapital(tabla, capital));
+        });
+    }
+
+    public static void Inversion(ColumnDescriptor col, InversionInicialTotalDto inversion)
+    {
+        EstilosPdf.TituloSeccion(col, "Inversión Inicial");
+        col.Item().Table(tabla => TablaInversion(tabla, inversion));
+    }
+
+    public static void CapitalTrabajo(ColumnDescriptor col, ResumenCapitalTrabajoDto capital)
+    {
+        EstilosPdf.TituloSeccion(col, "Capital de Trabajo");
+        col.Item().Table(tabla => TablaCapital(tabla, capital));
+    }
+
+    private static void TablaInversion(TableDescriptor tabla, InversionInicialTotalDto inversion)
+    {
+        tabla.ColumnsDefinition(c => { c.RelativeColumn(2.4f); c.RelativeColumn(1.2f); });
+        tabla.Header(h =>
+        {
+            h.Cell().CeldaHeader().Text("Inversión Inicial").Bold();
+            h.Cell().CeldaHeader().AlignRight().Text("Valor").Bold();
+        });
+        Fila(tabla, "Activos Diferidos", inversion.ActivosDiferidosDisplay);
+        foreach (var cat in inversion.CategoriasActivosFijos)
+            Fila(tabla, cat.CategoriaNombre, cat.ValorDisplay);
+        Fila(tabla, "Subtotal Activos Fijos", inversion.SubtotalActivosFijosDisplay, negrita: true);
+        Fila(tabla, $"Capital de Trabajo ({inversion.MesesCapitalTrabajoDisplay} meses)", inversion.CapitalTrabajoDisplay);
+        Fila(tabla, $"Imprevistos ({inversion.PorcentajeImprevistosInversionDisplay})", inversion.ImprevistosDisplay);
+        Fila(tabla, "TOTAL INVERSIÓN", inversion.TotalInversionDisplay, negrita: true);
+    }
+
+    private static void TablaCapital(TableDescriptor tabla, ResumenCapitalTrabajoDto capital)
+    {
+        tabla.ColumnsDefinition(c => { c.RelativeColumn(2.4f); c.RelativeColumn(1.2f); });
+        tabla.Header(h =>
+        {
+            h.Cell().CeldaHeader().Text("Capital de Trabajo (detalle)").Bold();
+            h.Cell().CeldaHeader().AlignRight().Text("Valor").Bold();
+        });
+        Fila(tabla, "Sueldos y cargos", capital.SubtotalCargosDisplay);
+        Fila(tabla, "Materiales de oficina", capital.SubtotalMaterialesDisplay);
+        Fila(tabla, "Aseo y limpieza", capital.SubtotalAseoDisplay);
+        Fila(tabla, "Accesorios", capital.SubtotalAccesoriosDisplay);
+        Fila(tabla, "Total mensual", capital.TotalMensualDisplay, negrita: true);
+        Fila(tabla, $"Total ({capital.MesesCapitalTrabajo} meses)", capital.TotalCapitalTrabajoDisplay, negrita: true);
+    }
+
+    public static void Financiamiento(ColumnDescriptor col, ResumenFinanciamientoDto financiamiento,
+        string titulo = "Financiamiento de la Inversión (3 fuentes)")
+    {
+        EstilosPdf.TituloSeccion(col, titulo);
+        col.Item().Table(tabla =>
+        {
+            tabla.ColumnsDefinition(c =>
+            {
+                c.RelativeColumn(2f);
+                c.RelativeColumn(0.8f);
+                c.RelativeColumn(1.2f);
+                c.RelativeColumn(2f);
+            });
+            tabla.Header(h =>
+            {
+                h.Cell().CeldaHeader().Text("Fuente").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("%").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Monto").Bold();
+                h.Cell().CeldaHeader().Text("Entidad").Bold();
+            });
+            FilaFin(tabla, "Recursos Propios", financiamiento.PorcentajePropioDisplay, financiamiento.MontoPropioDisplay, string.Empty);
+            FilaFin(tabla, "Préstamo Bancario", financiamiento.PorcentajePrestamoDisplay, financiamiento.MontoPrestamoDisplay, financiamiento.NombreEntidadPrestamo ?? string.Empty);
+            FilaFin(tabla, "Convenio Institucional", financiamiento.PorcentajeConvenioDisplay, financiamiento.MontoConvenioDisplay, financiamiento.NombreEntidadConvenio ?? string.Empty);
+            FilaFin(tabla, "TOTAL", "100%", financiamiento.TotalInversionDisplay, string.Empty, negrita: true);
+        });
+        col.Item().PaddingTop(4).Text(
+            $"Préstamo: tasa {financiamiento.TasaInteresAnualDisplay} anual, plazo {financiamiento.PlazoMeses} meses, " +
+            $"cuota mensual {financiamiento.CuotaMensualDisplay}, intereses totales {financiamiento.TotalInteresesDisplay}.")
+            .FontSize(8).FontColor(EstilosPdf.ColorGris);
+    }
+
+    public static void Indicadores(ColumnDescriptor col, IndicadoresFinancierosDto indicadores)
+    {
+        EstilosPdf.TituloSeccion(col, "Indicadores Financieros");
+        col.Item().Row(row =>
+        {
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("TMR (tasa mínima de rendimiento)").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(indicadores.TmrDisplay).Bold().FontColor(EstilosPdf.ColorPrimario);
+            });
+            row.Spacing(6);
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("VAN").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(indicadores.VanDisplay).Bold().FontColor(EstilosPdf.ColorPrimario);
+            });
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("TIR").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(indicadores.TirDisplay).Bold().FontColor(EstilosPdf.ColorPrimario);
+            });
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("Estado de viabilidad").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(indicadores.EstadoViabilidad).Bold().FontColor(EstilosPdf.ColorPrimario);
+            });
+        });
+    }
+
+    public static void Matriz(
+        ColumnDescriptor col,
+        string titulo,
+        IReadOnlyList<string> etiquetas,
+        IReadOnlyList<(string Concepto, IReadOnlyList<string> Periodos, string Total, bool EsSeccion, bool EsTotal)> filas,
+        string? advertencia)
+    {
+        if (!string.IsNullOrEmpty(titulo))
+            EstilosPdf.TituloSeccion(col, titulo);
+        if (filas.Count == 0 || etiquetas.Count == 0)
+        {
+            col.Item().Text("Sin datos para esta sección.").FontSize(8).Italic().FontColor(EstilosPdf.ColorGris);
+            EstilosPdf.Advertencia(col, advertencia);
+            return;
+        }
+
+        col.Item().Table(tabla =>
+        {
+            tabla.ColumnsDefinition(c =>
+            {
+                c.RelativeColumn(2.6f);
+                foreach (var _ in etiquetas)
+                    c.RelativeColumn();
+                c.RelativeColumn(1.1f);
+            });
+            tabla.Header(h =>
+            {
+                h.Cell().CeldaHeader().Text("Concepto").Bold();
+                foreach (var etiqueta in etiquetas)
+                    h.Cell().CeldaHeader().AlignRight().Text(etiqueta).Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Total").Bold();
+            });
+            foreach (var fila in filas)
+            {
+                if (fila.EsSeccion)
+                {
+                    tabla.Cell().ColumnSpan((uint)(etiquetas.Count + 2)).CeldaSeccion().Text(fila.Concepto).Bold();
+                    continue;
+                }
+                tabla.Cell().Celda().Text(t => { var s = t.Span(fila.Concepto); if (fila.EsTotal) s.Bold(); });
+                for (var i = 0; i < etiquetas.Count; i++)
+                {
+                    var valor = i < fila.Periodos.Count ? fila.Periodos[i] : string.Empty;
+                    tabla.Cell().Celda().AlignRight().Text(t => { var s = t.Span(valor); if (fila.EsTotal) s.Bold(); });
+                }
+                tabla.Cell().Celda().AlignRight().Text(t => { var s = t.Span(fila.Total); if (fila.EsTotal) s.Bold(); });
+            }
+        });
+        EstilosPdf.Advertencia(col, advertencia);
+    }
+
+    // ============ Administrativa ============
+
+    public static void MaterialesUnidades(ColumnDescriptor col, MaterialesProyectadosDto materiales)
+    {
+        var celdas = materiales.Cantidades;
+        var titulo = "Materiales de oficina, suministros de aseo y limpieza — proyección de necesidades (unidades)";
+        if (celdas.Count == 0)
+        {
+            SinDatos(col, titulo);
+            return;
+        }
+
+        var etiquetas = EtiquetasOrdenadas(celdas.Select(x => (x.Anio, x.NumeroPeriodo, x.EtiquetaPeriodo)));
+        var filas = celdas
+            .GroupBy(x => (x.Categoria, x.Concepto))
+            .OrderBy(g => g.Key.Categoria).ThenBy(g => g.Key.Concepto)
+            .Select(g =>
+            {
+                var porPeriodo = g.ToDictionary(x => (x.Anio, x.NumeroPeriodo), x => x.Cantidad);
+                var valores = etiquetas.Select(e => porPeriodo.GetValueOrDefault((e.Anio, e.Numero)))
+                    .Select(v => v.ToString("N2")).ToList();
+                return (Concepto: $"{g.Key.Categoria} — {g.Key.Concepto}",
+                        Periodos: (IReadOnlyList<string>)valores,
+                        Total: g.Sum(x => x.Cantidad).ToString("N2"),
+                        EsSeccion: false,
+                        EsTotal: false);
+            })
+            .ToList();
+
+        Matriz(col, titulo, etiquetas.Select(e => e.Etiqueta).ToList(), filas, materiales.MensajeAdvertencia);
+    }
+
+    public static void MaterialesMonetario(ColumnDescriptor col, MaterialesProyectadosDto materiales)
+    {
+        var celdas = materiales.Monetarios;
+        var titulo = "Materiales de oficina, suministros de aseo y limpieza — proyección de necesidades (valores monetarios)";
+        if (celdas.Count == 0)
+        {
+            SinDatos(col, titulo);
+            return;
+        }
+
+        var etiquetas = EtiquetasOrdenadas(celdas.Select(x => (x.Anio, x.NumeroPeriodo, x.EtiquetaPeriodo)));
+        var filas = celdas
+            .GroupBy(x => (x.Categoria, x.Concepto))
+            .OrderBy(g => g.Key.Categoria).ThenBy(g => g.Key.Concepto)
+            .Select(g =>
+            {
+                var porPeriodo = g.ToDictionary(x => (x.Anio, x.NumeroPeriodo), x => x.Costo);
+                var valores = etiquetas.Select(e => porPeriodo.GetValueOrDefault((e.Anio, e.Numero)))
+                    .Select(v => $"$ {v:N2}").ToList();
+                return (Concepto: $"{g.Key.Categoria} — {g.Key.Concepto}",
+                        Periodos: (IReadOnlyList<string>)valores,
+                        Total: $"$ {g.Sum(x => x.Costo):N2}",
+                        EsSeccion: false,
+                        EsTotal: false);
+            })
+            .ToList();
+
+        var totalesPorPeriodo = etiquetas
+            .Select(e => celdas.Where(x => x.Anio == e.Anio && x.NumeroPeriodo == e.Numero).Sum(x => x.Costo))
+            .Select(v => $"$ {v:N2}").ToList();
+        filas.Add(("TOTAL", totalesPorPeriodo, materiales.TotalCostoDisplay, false, true));
+
+        Matriz(col, titulo, etiquetas.Select(e => e.Etiqueta).ToList(), filas, materiales.MensajeAdvertencia);
+    }
+
+    private static List<(int Anio, int Numero, string Etiqueta)> EtiquetasOrdenadas(
+        IEnumerable<(int Anio, int Numero, string Etiqueta)> celdas)
+        => celdas.Distinct().OrderBy(x => x.Anio).ThenBy(x => x.Numero).ToList();
+
+    public static void ActivosFijos(ColumnDescriptor col, IReadOnlyList<ActivoFijoDto> activos, TotalesActivosFijosDto? totales)
+    {
+        EstilosPdf.TituloSeccion(col, "Activos fijos — desglose de la situación inicial");
+        col.Item().Table(tabla =>
+        {
+            tabla.ColumnsDefinition(c =>
+            {
+                c.RelativeColumn(2.6f);
+                c.RelativeColumn(1.4f);
+                c.RelativeColumn(0.7f);
+                c.RelativeColumn(0.7f);
+                c.RelativeColumn(1f);
+                c.RelativeColumn(1.1f);
+            });
+            tabla.Header(h =>
+            {
+                h.Cell().CeldaHeader().Text("Descripción").Bold();
+                h.Cell().CeldaHeader().Text("Categoría").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Cantidad").Bold();
+                h.Cell().CeldaHeader().Text("Unidad").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("V. unitario").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("V. total").Bold();
+            });
+            foreach (var activo in activos)
+            {
+                tabla.Cell().Celda().Text(activo.Descripcion);
+                tabla.Cell().Celda().Text(activo.CategoriaNombre);
+                tabla.Cell().Celda().AlignRight().Text(activo.Cantidad.ToString("N2"));
+                tabla.Cell().Celda().Text(activo.UnidadMedida);
+                tabla.Cell().Celda().AlignRight().Text(activo.ValorUnitarioDisplay);
+                tabla.Cell().Celda().AlignRight().Text(activo.ValorTotalDisplay);
+            }
+        });
+
+        if (totales is null)
+            return;
+
+        col.Item().PaddingTop(6).Table(tabla =>
+        {
+            tabla.ColumnsDefinition(c => { c.RelativeColumn(2.4f); c.RelativeColumn(0.8f); c.RelativeColumn(1.2f); });
+            tabla.Header(h =>
+            {
+                h.Cell().CeldaHeader().Text("Total por categoría").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Ítems").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Subtotal").Bold();
+            });
+            foreach (var cat in totales.PorCategoria)
+            {
+                tabla.Cell().Celda().Text(cat.CategoriaNombre);
+                tabla.Cell().Celda().AlignRight().Text(cat.CantidadItems.ToString("N0"));
+                tabla.Cell().Celda().AlignRight().Text(cat.SubtotalValorTotal.ToString("C2"));
+            }
+            tabla.Cell().Celda().Text("TOTAL GENERAL").Bold();
+            tabla.Cell().Celda().Text(string.Empty);
+            tabla.Cell().Celda().AlignRight().Text(totales.TotalGeneral.ToString("C2")).Bold();
+        });
+    }
+
+    public static void Depreciacion(ColumnDescriptor col, MatrizDepreciacionDto depreciacion)
+    {
+        EstilosPdf.TituloSeccion(col, "Depreciación de activos fijos");
+        if (depreciacion.Filas.Count == 0)
+        {
+            col.Item().Text("No existen datos suficientes para generar esta sección.")
+                .FontSize(8).Italic().FontColor(EstilosPdf.ColorGris);
+            return;
+        }
+
+        col.Item().Table(tabla =>
+        {
+            tabla.ColumnsDefinition(c =>
+            {
+                c.RelativeColumn(2.6f);
+                c.RelativeColumn(1.4f);
+                c.RelativeColumn(1.1f);
+                c.RelativeColumn(1.1f);
+                c.RelativeColumn(0.9f);
+            });
+            tabla.Header(h =>
+            {
+                h.Cell().CeldaHeader().Text("Activo").Bold();
+                h.Cell().CeldaHeader().Text("Categoría").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("V. inicial").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("V. residual").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Vida útil").Bold();
+            });
+            foreach (var fila in depreciacion.Filas)
+            {
+                tabla.Cell().Celda().Text(fila.Descripcion);
+                tabla.Cell().Celda().Text(fila.CategoriaNombre);
+                tabla.Cell().Celda().AlignRight().Text(fila.ValorInicialDisplay);
+                tabla.Cell().Celda().AlignRight().Text(fila.ValorResidualDisplay);
+                tabla.Cell().Celda().AlignRight().Text($"{fila.VidaUtilAnios} años");
+            }
+        });
+
+        if (depreciacion.TotalesPorPeriodo.Count == 0)
+            return;
+
+        col.Item().PaddingTop(6).Table(tabla =>
+        {
+            tabla.ColumnsDefinition(c => { c.RelativeColumn(1.6f); c.RelativeColumn(1.2f); c.RelativeColumn(1.2f); });
+            tabla.Header(h =>
+            {
+                h.Cell().CeldaHeader().Text("Período").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Depreciación del período").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Depreciación acumulada").Bold();
+            });
+            foreach (var total in depreciacion.TotalesPorPeriodo)
+            {
+                tabla.Cell().Celda().Text(total.Etiqueta);
+                tabla.Cell().Celda().AlignRight().Text(total.DepreciacionPeriodoDisplay);
+                tabla.Cell().Celda().AlignRight().Text(total.DepreciacionAcumuladaDisplay);
+            }
+        });
+    }
+
+    // ============ Talento Humano ============
+
+    public static void Sueldos(ColumnDescriptor col, ResumenSueldosVistaDto sueldos)
+    {
+        EstilosPdf.TituloSeccion(col, "Sueldos del personal docente y administrativo (por período)");
+        if (sueldos.Filas.Count == 0 || sueldos.Periodos.Count == 0)
+        {
+            col.Item().Text("No existen datos suficientes para generar esta sección.")
+                .FontSize(8).Italic().FontColor(EstilosPdf.ColorGris);
+            return;
+        }
+
+        var etiquetas = sueldos.Periodos.Select(p => p.EtiquetaPeriodo).ToList();
+        var filas = sueldos.Filas
+            .Select(f => (
+                Concepto: f.NombreCargo,
+                Periodos: (IReadOnlyList<string>)f.ValoresPorPeriodo.Select(v => v.ToString("C2")).ToList(),
+                Total: f.TotalFila.ToString("C2"),
+                EsSeccion: false,
+                EsTotal: false))
+            .ToList();
+        filas.Add((
+            "TOTAL",
+            sueldos.TotalesPorPeriodo.Select(v => v.ToString("C2")).ToList(),
+            sueldos.GranTotal.ToString("C2"),
+            false,
+            true));
+
+        Matriz(col, string.Empty, etiquetas, filas, advertencia: null);
+
+        if (sueldos.PlantaCentralDistribucion is not null)
+        {
+            col.Item().PaddingTop(4).Text(
+                $"Total sueldos + aporte a Planta Central: {sueldos.TotalSueldosMasPlantaCentral:C2}")
+                .FontSize(8).Bold().FontColor(EstilosPdf.ColorPrimario);
+        }
+    }
+
+    public static void PlantaCentral(ColumnDescriptor col, AportePlantaCentralCarreraDto aporte)
+    {
+        EstilosPdf.TituloSeccion(col, "Gasto administrativo / aporte a Planta Central");
+        col.Item().Row(row =>
+        {
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("Aporte acumulado").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(aporte.AporteAcumuladoDisplay).Bold().FontColor(EstilosPdf.ColorPrimario);
+            });
+            row.Spacing(6);
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("Aporte promedio anual").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(aporte.AportePromedioAnualDisplay).Bold().FontColor(EstilosPdf.ColorPrimario);
+            });
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("% promedio sobre total anual").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(aporte.PorcentajePromedioDisplay).Bold();
+            });
+        });
+
+        if (aporte.Periodos.Count == 0)
+            return;
+
+        col.Item().PaddingTop(6).Table(tabla =>
+        {
+            tabla.ColumnsDefinition(c =>
+            {
+                c.RelativeColumn(1.6f);
+                c.RelativeColumn();
+                c.RelativeColumn(1.2f);
+                c.RelativeColumn();
+            });
+            tabla.Header(h =>
+            {
+                h.Cell().CeldaHeader().Text("Período").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Alumnos carrera").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Aporte semestral").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("% sobre total anual").Bold();
+            });
+            foreach (var periodo in aporte.Periodos)
+            {
+                tabla.Cell().Celda().Text(periodo.Etiqueta);
+                tabla.Cell().Celda().AlignRight().Text(periodo.AlumnosCarrera.ToString("N0"));
+                tabla.Cell().Celda().AlignRight().Text(periodo.AporteSemestralDisplay);
+                tabla.Cell().Celda().AlignRight().Text(periodo.PorcentajeDisplay);
+            }
+        });
+    }
+
+    // ============ Mantenimiento ============
+
+    public static void Mantenimiento(ColumnDescriptor col, ResumenMantenimientoDto mantenimiento)
+    {
+        EstilosPdf.TituloSeccion(col, "Mantenimiento de edificio y servicios básicos");
+        col.Item().Row(row =>
+        {
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("Servicios básicos (anual)").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(mantenimiento.TotalServiciosDisplay).Bold().FontColor(EstilosPdf.ColorPrimario);
+            });
+            row.Spacing(6);
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("Mantenimiento (anual)").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(mantenimiento.TotalMantenimientoDisplay).Bold().FontColor(EstilosPdf.ColorPrimario);
+            });
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("Total general (anual)").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(mantenimiento.TotalGeneralDisplay).Bold().FontColor(EstilosPdf.ColorPrimario);
+            });
+        });
+
+        if (mantenimiento.Proyeccion.Count == 0)
+            return;
+
+        col.Item().PaddingTop(6).Table(tabla =>
+        {
+            tabla.ColumnsDefinition(c =>
+            {
+                c.RelativeColumn(1.4f);
+                c.RelativeColumn();
+                c.RelativeColumn();
+                c.RelativeColumn(1.1f);
+                c.RelativeColumn(1.1f);
+                c.RelativeColumn(1.1f);
+            });
+            tabla.Header(h =>
+            {
+                h.Cell().CeldaHeader().Text("Período").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Demanda").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("F. inflación").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Serv. básicos").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Mantenimiento").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Total").Bold();
+            });
+            foreach (var periodo in mantenimiento.Proyeccion)
+            {
+                tabla.Cell().Celda().Text(periodo.Etiqueta);
+                tabla.Cell().Celda().AlignRight().Text(periodo.DemandaDisplay);
+                tabla.Cell().Celda().AlignRight().Text(periodo.FactorInflacionDisplay);
+                tabla.Cell().Celda().AlignRight().Text(periodo.CostoServiciosBasicosDisplay);
+                tabla.Cell().Celda().AlignRight().Text(periodo.CostoMantenimientoDisplay);
+                tabla.Cell().Celda().AlignRight().Text(periodo.CostoTotalDisplay);
+            }
+        });
+    }
+
+    // ============ CES ============
+
+    public static void CuadrosCes(ColumnDescriptor col, CesDto ces)
+    {
+        EstilosPdf.TituloSeccion(col, "INF CES — Presupuesto de la primera cohorte por función sustantiva");
+        col.Item().Table(tabla =>
+        {
+            tabla.ColumnsDefinition(c =>
+            {
+                c.RelativeColumn(3.2f);
+                c.RelativeColumn();
+                c.RelativeColumn();
+                c.RelativeColumn();
+                c.RelativeColumn();
+                c.RelativeColumn(1.2f);
+                c.RelativeColumn(0.8f);
+            });
+            tabla.Header(h =>
+            {
+                h.Cell().CeldaHeader().Text("Concepto").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Provisión").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Fomento").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Vinculación").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Otros").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Total").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("%").Bold();
+            });
+            foreach (var fila in ces.InfCes)
+            {
+                var resaltada = fila.EsSeccion || fila.EsTotal || fila.EsResultado;
+                if (fila.EsSeccion)
+                {
+                    tabla.Cell().ColumnSpan(7).CeldaSeccion().Text(fila.Concepto).Bold();
+                    continue;
+                }
+                tabla.Cell().Celda().Text(t => { var s = t.Span(fila.Concepto); if (resaltada) s.Bold(); });
+                tabla.Cell().Celda().AlignRight().Text(t => { var s = t.Span(fila.ProvisionDisplay); if (resaltada) s.Bold(); });
+                tabla.Cell().Celda().AlignRight().Text(t => { var s = t.Span(fila.FomentoDisplay); if (resaltada) s.Bold(); });
+                tabla.Cell().Celda().AlignRight().Text(t => { var s = t.Span(fila.VinculacionDisplay); if (resaltada) s.Bold(); });
+                tabla.Cell().Celda().AlignRight().Text(t => { var s = t.Span(fila.OtrosDisplay); if (resaltada) s.Bold(); });
+                tabla.Cell().Celda().AlignRight().Text(t => { var s = t.Span(fila.TotalDisplay); if (resaltada) s.Bold(); });
+                tabla.Cell().Celda().AlignRight().Text(t => { var s = t.Span(fila.PorcentajeDisplay); if (resaltada) s.Bold(); });
+            }
+        });
+
+        col.Item().PaddingTop(8).Row(row =>
+        {
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("Arancel por semestre").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(ces.ArancelPorSemestreDisplay).Bold().FontColor(EstilosPdf.ColorPrimario);
+            });
+            row.Spacing(6);
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("Matrícula").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(ces.MatriculaDisplay).Bold().FontColor(EstilosPdf.ColorPrimario);
+            });
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("Total por semestre").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(ces.TotalPorSemestreDisplay).Bold().FontColor(EstilosPdf.ColorPrimario);
+            });
+        });
+
+        EstilosPdf.TituloSeccion(col, "Parámetros de justificación del arancel");
+        col.Item().Table(tabla =>
+        {
+            tabla.ColumnsDefinition(c =>
+            {
+                c.RelativeColumn(2f);
+                c.RelativeColumn(3f);
+                c.RelativeColumn(1.2f);
+            });
+            tabla.Header(h =>
+            {
+                h.Cell().CeldaHeader().Text("Parámetro").Bold();
+                h.Cell().CeldaHeader().Text("Criterio").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Valor").Bold();
+            });
+            foreach (var fila in ces.Parametros)
+            {
+                tabla.Cell().Celda().Text(t => { var s = t.Span(fila.Parametro); if (fila.EsResultado) s.Bold(); });
+                tabla.Cell().Celda().Text(t => { var s = t.Span(fila.Criterio); if (fila.EsResultado) s.Bold(); });
+                tabla.Cell().Celda().AlignRight().Text(t => { var s = t.Span(fila.ValorDisplay); if (fila.EsResultado) s.Bold(); });
+            }
+        });
+
+        EstilosPdf.TituloSeccion(col, "Distribución referencial del costo de la carrera");
+        col.Item().Table(tabla =>
+        {
+            tabla.ColumnsDefinition(c =>
+            {
+                c.RelativeColumn(3f);
+                c.RelativeColumn(1.4f);
+                c.RelativeColumn(1f);
+            });
+            tabla.Header(h =>
+            {
+                h.Cell().CeldaHeader().Text("Categoría").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Monto").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("%").Bold();
+            });
+            foreach (var fila in ces.Distribucion)
+            {
+                var resaltada = fila.EsTotal || fila.EsReferencial;
+                tabla.Cell().Celda().Text(t => { var s = t.Span(fila.Categoria); if (resaltada) s.Bold(); });
+                tabla.Cell().Celda().AlignRight().Text(t => { var s = t.Span(fila.MontoDisplay); if (resaltada) s.Bold(); });
+                tabla.Cell().Celda().AlignRight().Text(t => { var s = t.Span(fila.PorcentajeDisplay); if (resaltada) s.Bold(); });
+            }
+        });
+
+        EstilosPdf.Advertencia(col, ces.MensajeAdvertencia);
+    }
+
+    private static void Fila(TableDescriptor tabla, string concepto, string valor, bool negrita = false)
+    {
+        tabla.Cell().Celda().Text(t => { var s = t.Span(concepto); if (negrita) s.Bold(); });
+        tabla.Cell().Celda().AlignRight().Text(t => { var s = t.Span(valor); if (negrita) s.Bold(); });
+    }
+
+    private static void FilaFin(TableDescriptor tabla, string fuente, string porcentaje, string monto, string entidad, bool negrita = false)
+    {
+        tabla.Cell().Celda().Text(t => { var s = t.Span(fuente); if (negrita) s.Bold(); });
+        tabla.Cell().Celda().AlignRight().Text(t => { var s = t.Span(porcentaje); if (negrita) s.Bold(); });
+        tabla.Cell().Celda().AlignRight().Text(t => { var s = t.Span(monto); if (negrita) s.Bold(); });
+        tabla.Cell().Celda().Text(entidad);
+    }
+}

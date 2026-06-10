@@ -21,4 +21,7 @@ public sealed class ServicioExportacionPdfQuestPdf : IServicioExportacionPdf
 
     public byte[] GenerarReporteDemanda(ReporteDemandaDatos datos)
         => new ReporteDemandaDocument(datos).GeneratePdf();
+
+    public byte[] GenerarReporteDireccion(ReporteDireccionDatos datos)
+        => new ReporteDireccionDocument(datos).GeneratePdf();
 }

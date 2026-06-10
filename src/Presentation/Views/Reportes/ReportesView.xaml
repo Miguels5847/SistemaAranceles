@@ -66,6 +66,18 @@
                         Command="{Binding CargarCommand}"
                         Margin="12,0,0,0"
                         Padding="8,4"/>
+
+                <TextBlock Text="Dirección / Destinatario" FontSize="11" Foreground="#546E7A" VerticalAlignment="Center" Margin="20,0,8,0"/>
+                <ComboBox Width="280"
+                          ItemsSource="{Binding Direcciones}"
+                          SelectedItem="{Binding DireccionSeleccionada, Mode=TwoWay}"
+                          DisplayMemberPath="Etiqueta"/>
+                <Button Content="Exportar PDF por dirección"
+                        Command="{Binding ExportarPdfDireccionCommand}"
+                        Margin="8,0,0,0"
+                        Padding="8,4"
+                        Background="#1A237E" Foreground="White"
+                        Visibility="{Binding PuedeExportar, Converter={StaticResource BoolToVisibilityConverter}}"/>
             </StackPanel>
         </Border>
 

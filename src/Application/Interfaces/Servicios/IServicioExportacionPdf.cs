@@ -11,4 +11,5 @@ public interface IServicioExportacionPdf
     byte[] GenerarReporteCes(ReporteCesDatos datos);
     byte[] GenerarReporteFinanciero(ReporteFinancieroDatos datos);
     byte[] GenerarReporteDemanda(ReporteDemandaDatos datos);
+    byte[] GenerarReporteDireccion(ReporteDireccionDatos datos);
 }

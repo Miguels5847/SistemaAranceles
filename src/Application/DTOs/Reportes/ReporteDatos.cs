@@ -1,9 +1,13 @@
 using SistemaAranceles.Application.DTOs.Amortizacion;
 using SistemaAranceles.Application.DTOs.AnalisisFinanciero;
 using SistemaAranceles.Application.DTOs.CapitalTrabajo;
+using SistemaAranceles.Application.DTOs.CargosFacultad;
 using SistemaAranceles.Application.DTOs.CostosGastos;
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.DTOs.InversionInicial;
+using SistemaAranceles.Application.DTOs.Mantenimiento;
+using SistemaAranceles.Application.DTOs.RecursosFisicosDepreciacion;
+using SistemaAranceles.Application.DTOs.SueldosPlantaCentral;
 
 namespace SistemaAranceles.Application.DTOs.Reportes;
 
@@ -35,3 +39,34 @@ public sealed record ReporteDemandaDatos(
     DemandaProyectadaDto Demanda,
     ArancelEfectivoDto ArancelEfectivo,
     IngresosProyectadosDto Ingresos);
+
+/// <summary>
+/// KAN-47: reporte por dirección. Toda sección es opcional — la que venga null
+/// se imprime con la nota "No existen datos suficientes para generar esta sección."
+/// </summary>
+public sealed record ReporteDireccionDatos(
+    DireccionReporte Direccion,
+    string CarreraNombre,
+    string EscenarioNombre,
+    DateTime GeneradoEn)
+{
+    public ArancelEfectivoDto? Arancel { get; init; }
+    public DemandaProyectadaDto? Demanda { get; init; }
+    public IngresosProyectadosDto? Ingresos { get; init; }
+    public MaterialesProyectadosDto? Materiales { get; init; }
+    public IReadOnlyList<ActivoFijoDto>? ActivosFijos { get; init; }
+    public TotalesActivosFijosDto? TotalesActivos { get; init; }
+    public InversionInicialTotalDto? Inversion { get; init; }
+    public ResumenCapitalTrabajoDto? CapitalTrabajo { get; init; }
+    public MatrizDepreciacionDto? Depreciacion { get; init; }
+    public ResumenSueldosVistaDto? Sueldos { get; init; }
+    public ResumenMantenimientoDto? Mantenimiento { get; init; }
+    public AportePlantaCentralCarreraDto? PlantaCentral { get; init; }
+    public MatrizInvVinBecasDto? InvVinBecas { get; init; }
+    public MatrizCostosGastosDto? CostosGastos { get; init; }
+    public ResumenFinanciamientoDto? Financiamiento { get; init; }
+    public IndicadoresFinancierosDto? Indicadores { get; init; }
+    public FlujoFondosDto? FlujoFondos { get; init; }
+    public EstadoPerdidasGananciasDto? BalanceProyectado { get; init; }
+    public CesDto? Ces { get; init; }
+}
