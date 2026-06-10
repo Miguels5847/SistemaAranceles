@@ -214,7 +214,12 @@ public sealed partial class MantenimientoViewModel : ObservableObject
 
         if (EscenarioSeleccionado is null && Escenarios.Count > 0)
         {
-            LimpiarDatos();
+            // Solo limpiar el contenido: LimpiarDatos() vaciaría también Escenarios
+            // y dejaría el combo recién cargado en blanco (bug reportado).
+            ServiciosBasicos = [];
+            ItemsMantenimiento = [];
+            Resumen = null;
+            ProyeccionSemestralVista = null;
             MensajeInfo = "Selecciona el escenario para cargar Mantenimiento e Inversión.";
             return;
         }

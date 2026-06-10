@@ -37,6 +37,7 @@ public enum SeccionReporte
     CostosGastos,
     FinanciamientoAmortizacion,
     Indicadores,
+    PuntoEquilibrio,
     FlujoFondos,
     BalanceProyectado,
     Ces
@@ -52,6 +53,7 @@ public static class SeccionesReporte
             SeccionReporte.CapitalTrabajo,
             SeccionReporte.FinanciamientoAmortizacion,
             SeccionReporte.Indicadores,
+            SeccionReporte.PuntoEquilibrio,
             SeccionReporte.CostosGastos,
             SeccionReporte.FlujoFondos,
             SeccionReporte.BalanceProyectado
@@ -112,6 +114,7 @@ public static class SeccionesReporte
             SeccionReporte.CostosGastos,
             SeccionReporte.FinanciamientoAmortizacion,
             SeccionReporte.Indicadores,
+            SeccionReporte.PuntoEquilibrio,
             SeccionReporte.FlujoFondos,
             SeccionReporte.BalanceProyectado,
             SeccionReporte.Ces

@@ -506,6 +506,8 @@ public sealed partial class ReportesViewModel : ObservableObject
 
     /// <summary>
     /// Junta solo los DTOs que la dirección necesita, cada uno con queries ya existentes.
+    /// Las consultas independientes corren EN PARALELO (cada una con su propio scope de DI)
+    /// y las dependientes encadenan precalculados para no recomputar lo mismo dos veces.
     /// Una sección que falle queda en null y el PDF imprime su nota de datos insuficientes.
     /// </summary>
     private async Task<ReporteDireccionDatos> ConstruirDatosDireccionAsync(
@@ -514,135 +516,185 @@ public sealed partial class ReportesViewModel : ObservableObject
         var secciones = SeccionesReporte.ParaDireccion(direccion).ToHashSet();
         bool Necesita(params SeccionReporte[] s) => s.Any(secciones.Contains);
 
-        using var scope = _sp.CreateScope();
-        var sp = scope.ServiceProvider;
+        Task<T?> Cargar<T>(bool necesario, Func<IServiceProvider, Task<T>> consulta) where T : class
+            => necesario ? CargarSeguroAsync(consulta) : Task.FromResult<T?>(null);
 
-        ArancelEfectivoDto? arancel = null;
-        if (Necesita(SeccionReporte.ArancelMatricula, SeccionReporte.Ingresos))
-            arancel = await Seguro(() => sp.GetRequiredService<ObtenerArancelEfectivoQuery>()
-                .EjecutarAsync(carreraId, escenarioId));
+        // ---- Nivel 1: consultas sin dependencias, todas en paralelo ----
+        var tArancel = Cargar(
+            Necesita(SeccionReporte.ArancelMatricula, SeccionReporte.Ingresos, SeccionReporte.Ces),
+            sp => sp.GetRequiredService<ObtenerArancelEfectivoQuery>().EjecutarAsync(carreraId, escenarioId));
 
-        DemandaProyectadaDto? demanda = null;
-        if (Necesita(SeccionReporte.DemandaTabla, SeccionReporte.GraficoMatricula,
-                SeccionReporte.DocentesTabla, SeccionReporte.GraficoDocentes, SeccionReporte.InvVinBecas))
-            demanda = await Seguro(() => sp.GetRequiredService<ObtenerDemandaProyectadaQuery>()
-                .EjecutarAsync(carreraId, escenarioId));
+        var tDemanda = Cargar(
+            Necesita(SeccionReporte.DemandaTabla, SeccionReporte.GraficoMatricula, SeccionReporte.DocentesTabla,
+                SeccionReporte.GraficoDocentes, SeccionReporte.InvVinBecas, SeccionReporte.PuntoEquilibrio, SeccionReporte.Ces),
+            sp => sp.GetRequiredService<ObtenerDemandaProyectadaQuery>().EjecutarAsync(carreraId, escenarioId));
 
-        IngresosProyectadosDto? ingresos = null;
-        if (Necesita(SeccionReporte.Ingresos, SeccionReporte.BalanceProyectado))
-            ingresos = await Seguro(() => sp.GetRequiredService<CalcularIngresosProyectadosQuery>()
-                .EjecutarAsync(carreraId, escenarioId, arancelPrecalculado: arancel));
+        var tMateriales = Cargar(
+            Necesita(SeccionReporte.MaterialesUnidades, SeccionReporte.MaterialesMonetario, SeccionReporte.PuntoEquilibrio),
+            sp => sp.GetRequiredService<CalcularMaterialesPorPeriodoQuery>().EjecutarAsync(carreraId, escenarioId));
 
-        MaterialesProyectadosDto? materiales = null;
-        if (Necesita(SeccionReporte.MaterialesUnidades, SeccionReporte.MaterialesMonetario))
-            materiales = await Seguro(() => sp.GetRequiredService<CalcularMaterialesPorPeriodoQuery>()
-                .EjecutarAsync(carreraId, escenarioId));
+        var tActivos = Cargar(
+            Necesita(SeccionReporte.ActivosFijos),
+            sp => sp.GetRequiredService<ListarActivosFijosQuery>().EjecutarAsync(carreraId, escenarioId));
 
-        IReadOnlyList<ActivoFijoDto>? activos = null;
-        TotalesActivosFijosDto? totalesActivos = null;
-        if (Necesita(SeccionReporte.ActivosFijos))
-        {
-            activos = await Seguro(() => sp.GetRequiredService<ListarActivosFijosQuery>()
-                .EjecutarAsync(carreraId, escenarioId));
-            totalesActivos = await Seguro(() => sp.GetRequiredService<ObtenerTotalesActivosQuery>()
-                .EjecutarAsync(carreraId, escenarioId));
-        }
+        var tTotalesActivos = Cargar(
+            Necesita(SeccionReporte.ActivosFijos),
+            sp => sp.GetRequiredService<ObtenerTotalesActivosQuery>().EjecutarAsync(carreraId, escenarioId));
 
-        InversionInicialTotalDto? inversion = null;
-        if (Necesita(SeccionReporte.InversionInicial))
-            inversion = await Seguro(() => sp.GetRequiredService<ObtenerInversionInicialTotalQuery>()
-                .EjecutarAsync(carreraId, escenarioId));
+        var tInversion = Cargar(
+            Necesita(SeccionReporte.InversionInicial),
+            sp => sp.GetRequiredService<ObtenerInversionInicialTotalQuery>().EjecutarAsync(carreraId, escenarioId));
 
-        ResumenCapitalTrabajoDto? capital = null;
-        if (Necesita(SeccionReporte.CapitalTrabajo, SeccionReporte.FlujoFondos))
-            capital = await Seguro(() => sp.GetRequiredService<ObtenerResumenCapitalTrabajoQuery>()
-                .EjecutarAsync(carreraId, escenarioId));
+        var tCapital = Cargar(
+            Necesita(SeccionReporte.CapitalTrabajo, SeccionReporte.FlujoFondos),
+            sp => sp.GetRequiredService<ObtenerResumenCapitalTrabajoQuery>().EjecutarAsync(carreraId, escenarioId));
 
-        MatrizDepreciacionDto? depreciacion = null;
-        if (Necesita(SeccionReporte.Depreciacion))
-            depreciacion = await Seguro(() => sp.GetRequiredService<ObtenerMatrizDepreciacionQuery>()
-                .EjecutarAsync(carreraId, escenarioId));
+        var tDepreciacion = Cargar(
+            Necesita(SeccionReporte.Depreciacion),
+            sp => sp.GetRequiredService<ObtenerMatrizDepreciacionQuery>().EjecutarAsync(carreraId, escenarioId));
 
-        ResumenSueldosVistaDto? sueldos = null;
-        if (Necesita(SeccionReporte.Sueldos))
-            sueldos = await Seguro(() => sp.GetRequiredService<GenerarResumenSueldosQuery>()
+        var tSueldos = Cargar(
+            Necesita(SeccionReporte.Sueldos),
+            sp => sp.GetRequiredService<GenerarResumenSueldosQuery>()
                 .EjecutarAsync(carreraId, escenarioId, ConfiguracionSueldosCarrera.EstudiantesUnidadAcademicaPorDefecto));
 
-        ResumenMantenimientoDto? mantenimiento = null;
-        if (Necesita(SeccionReporte.Mantenimiento))
-            mantenimiento = await Seguro(() => sp.GetRequiredService<ObtenerResumenMantenimientoQuery>()
-                .EjecutarAsync(carreraId, escenarioId));
+        var tMantenimiento = Cargar(
+            Necesita(SeccionReporte.Mantenimiento),
+            sp => sp.GetRequiredService<ObtenerResumenMantenimientoQuery>().EjecutarAsync(carreraId, escenarioId));
 
-        AportePlantaCentralCarreraDto? plantaCentral = null;
-        if (Necesita(SeccionReporte.PlantaCentral))
-            plantaCentral = await Seguro(() => sp.GetRequiredService<CalcularAportePlantaCentralCarreraQuery>()
-                .EjecutarAsync(carreraId, escenarioId));
+        var tPlantaCentral = Cargar(
+            Necesita(SeccionReporte.PlantaCentral),
+            sp => sp.GetRequiredService<CalcularAportePlantaCentralCarreraQuery>().EjecutarAsync(carreraId, escenarioId));
 
-        MatrizInvVinBecasDto? invVinBecas = null;
-        if (Necesita(SeccionReporte.InvVinBecas))
-            invVinBecas = await Seguro(() => sp.GetRequiredService<ObtenerMatrizInvVinBecasQuery>()
+        var tCostos = Cargar(
+            Necesita(SeccionReporte.CostosGastos, SeccionReporte.BalanceProyectado,
+                SeccionReporte.PuntoEquilibrio, SeccionReporte.Ces),
+            sp => sp.GetRequiredService<ObtenerMatrizCostosGastosQuery>().EjecutarAsync(carreraId, escenarioId));
+
+        var tFinanciamiento = Cargar(
+            Necesita(SeccionReporte.FinanciamientoAmortizacion),
+            sp => sp.GetRequiredService<ObtenerResumenAmortizacionQuery>().EjecutarAsync(carreraId, escenarioId));
+
+        // ---- Nivel 2+: dependientes (cada cadena espera solo lo suyo) ----
+        var tIngresos = CargarIngresosAsync();
+        var tInvVinBecas = CargarInvVinBecasAsync();
+        var tCes = CargarCesDireccionAsync();
+        var tBalance = CargarBalanceAsync();
+        var tFlujo = CargarFlujoAsync();
+        var tIndicadores = CargarIndicadoresAsync();
+        var tPuntoEquilibrio = CargarPuntoEquilibrioAsync();
+
+        async Task<IngresosProyectadosDto?> CargarIngresosAsync()
+        {
+            if (!Necesita(SeccionReporte.Ingresos, SeccionReporte.BalanceProyectado))
+                return null;
+            var arancel = await tArancel;
+            return await CargarSeguroAsync(sp => sp.GetRequiredService<CalcularIngresosProyectadosQuery>()
+                .EjecutarAsync(carreraId, escenarioId, arancelPrecalculado: arancel));
+        }
+
+        async Task<MatrizInvVinBecasDto?> CargarInvVinBecasAsync()
+        {
+            if (!Necesita(SeccionReporte.InvVinBecas))
+                return null;
+            var demanda = await tDemanda;
+            return await CargarSeguroAsync(sp => sp.GetRequiredService<ObtenerMatrizInvVinBecasQuery>()
                 .EjecutarAsync(carreraId, escenarioId, demandaPrecalculada: demanda));
+        }
 
-        MatrizCostosGastosDto? costos = null;
-        if (Necesita(SeccionReporte.CostosGastos, SeccionReporte.BalanceProyectado))
-            costos = await Seguro(() => sp.GetRequiredService<ObtenerMatrizCostosGastosQuery>()
-                .EjecutarAsync(carreraId, escenarioId));
+        async Task<CesDto?> CargarCesDireccionAsync()
+        {
+            if (!Necesita(SeccionReporte.Ces))
+                return null;
+            var costos = await tCostos;
+            var demanda = await tDemanda;
+            var arancel = await tArancel;
+            return await CargarSeguroAsync(sp => sp.GetRequiredService<ObtenerCesQuery>()
+                .EjecutarAsync(carreraId, escenarioId,
+                    costosPrecalculados: costos,
+                    demandaPrecalculada: demanda,
+                    arancelVigentePrecalculado: arancel));
+        }
 
-        ResumenFinanciamientoDto? financiamiento = null;
-        if (Necesita(SeccionReporte.FinanciamientoAmortizacion))
-            financiamiento = await Seguro(() => sp.GetRequiredService<ObtenerResumenAmortizacionQuery>()
-                .EjecutarAsync(carreraId, escenarioId));
-
-        FlujoFondosDto? flujo = null;
-        if (Necesita(SeccionReporte.FlujoFondos, SeccionReporte.Indicadores))
-            flujo = await Seguro(() => sp.GetRequiredService<ObtenerFlujoFondosQuery>()
-                .EjecutarAsync(carreraId, escenarioId, capitalTrabajoPrecalculado: capital));
-
-        IndicadoresFinancierosDto? indicadores = null;
-        if (Necesita(SeccionReporte.Indicadores))
-            indicadores = await Seguro(() => sp.GetRequiredService<ObtenerIndicadoresFinancierosQuery>()
-                .EjecutarAsync(carreraId, escenarioId, flujoPrecalculado: flujo));
-
-        EstadoPerdidasGananciasDto? balance = null;
-        if (Necesita(SeccionReporte.BalanceProyectado))
-            balance = await Seguro(() => sp.GetRequiredService<ObtenerEstadoPerdidasGananciasQuery>()
+        async Task<EstadoPerdidasGananciasDto?> CargarBalanceAsync()
+        {
+            if (!Necesita(SeccionReporte.BalanceProyectado, SeccionReporte.PuntoEquilibrio, SeccionReporte.FlujoFondos))
+                return null;
+            var costos = await tCostos;
+            var ingresos = await tIngresos;
+            return await CargarSeguroAsync(sp => sp.GetRequiredService<ObtenerEstadoPerdidasGananciasQuery>()
                 .EjecutarAsync(carreraId, escenarioId,
                     costosPrecalculados: costos, ingresosPrecalculados: ingresos));
+        }
 
-        CesDto? ces = null;
-        if (Necesita(SeccionReporte.Ces))
-            ces = await Seguro(() => sp.GetRequiredService<ObtenerCesQuery>()
-                .EjecutarAsync(carreraId, escenarioId));
+        async Task<FlujoFondosDto?> CargarFlujoAsync()
+        {
+            if (!Necesita(SeccionReporte.FlujoFondos, SeccionReporte.Indicadores))
+                return null;
+            var balance = await tBalance;
+            var capital = await tCapital;
+            return await CargarSeguroAsync(sp => sp.GetRequiredService<ObtenerFlujoFondosQuery>()
+                .EjecutarAsync(carreraId, escenarioId,
+                    estadoPrecalculado: balance, capitalTrabajoPrecalculado: capital));
+        }
+
+        async Task<IndicadoresFinancierosDto?> CargarIndicadoresAsync()
+        {
+            if (!Necesita(SeccionReporte.Indicadores))
+                return null;
+            var flujo = await tFlujo;
+            return await CargarSeguroAsync(sp => sp.GetRequiredService<ObtenerIndicadoresFinancierosQuery>()
+                .EjecutarAsync(carreraId, escenarioId, flujoPrecalculado: flujo));
+        }
+
+        async Task<PuntoEquilibrioDto?> CargarPuntoEquilibrioAsync()
+        {
+            if (!Necesita(SeccionReporte.PuntoEquilibrio))
+                return null;
+            var balance = await tBalance;
+            var costos = await tCostos;
+            var demanda = await tDemanda;
+            var materiales = await tMateriales;
+            return await CargarSeguroAsync(sp => sp.GetRequiredService<ObtenerPuntoEquilibrioQuery>()
+                .EjecutarAsync(carreraId, escenarioId,
+                    estadoPrecalculado: balance,
+                    costosPrecalculados: costos,
+                    demandaPrecalculada: demanda,
+                    materialesPrecalculados: materiales));
+        }
 
         return new ReporteDireccionDatos(direccion, carreraNombre, escenarioNombre, DateTime.Now)
         {
-            Arancel = arancel,
-            Demanda = demanda,
-            Ingresos = ingresos,
-            Materiales = materiales,
-            ActivosFijos = activos,
-            TotalesActivos = totalesActivos,
-            Inversion = inversion,
-            CapitalTrabajo = capital,
-            Depreciacion = depreciacion,
-            Sueldos = sueldos,
-            Mantenimiento = mantenimiento,
-            PlantaCentral = plantaCentral,
-            InvVinBecas = invVinBecas,
-            CostosGastos = costos,
-            Financiamiento = financiamiento,
-            Indicadores = indicadores,
-            FlujoFondos = flujo,
-            BalanceProyectado = balance,
-            Ces = ces
+            Arancel = await tArancel,
+            Demanda = await tDemanda,
+            Ingresos = await tIngresos,
+            Materiales = await tMateriales,
+            ActivosFijos = await tActivos,
+            TotalesActivos = await tTotalesActivos,
+            Inversion = await tInversion,
+            CapitalTrabajo = await tCapital,
+            Depreciacion = await tDepreciacion,
+            Sueldos = await tSueldos,
+            Mantenimiento = await tMantenimiento,
+            PlantaCentral = await tPlantaCentral,
+            InvVinBecas = await tInvVinBecas,
+            CostosGastos = await tCostos,
+            Financiamiento = await tFinanciamiento,
+            Indicadores = await tIndicadores,
+            PuntoEquilibrio = await tPuntoEquilibrio,
+            FlujoFondos = await tFlujo,
+            BalanceProyectado = await tBalance,
+            Ces = await tCes
         };
     }
 
-    private static async Task<T?> Seguro<T>(Func<Task<T>> consulta) where T : class
+    private async Task<T?> CargarSeguroAsync<T>(Func<IServiceProvider, Task<T>> consulta) where T : class
     {
         try
         {
-            return await consulta();
+            // Scope propio por consulta: permite ejecutar las queries del reporte en paralelo.
+            using var scope = _sp.CreateScope();
+            return await consulta(scope.ServiceProvider);
         }
         catch (Exception)
         {

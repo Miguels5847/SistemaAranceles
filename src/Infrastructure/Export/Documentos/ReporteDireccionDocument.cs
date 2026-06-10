@@ -107,6 +107,9 @@ internal sealed class ReporteDireccionDocument(ReporteDireccionDatos datos) : ID
             case SeccionReporte.Indicadores:
                 Opcional(col, datos.Indicadores, "Indicadores Financieros", SeccionesPdf.Indicadores);
                 break;
+            case SeccionReporte.PuntoEquilibrio:
+                Opcional(col, datos.PuntoEquilibrio, "Punto de Equilibrio", SeccionesPdf.PuntoEquilibrio);
+                break;
             case SeccionReporte.FlujoFondos:
                 Opcional(col, datos.FlujoFondos, "Flujo de Fondos",
                     (c, dto) => SeccionesPdf.Matriz(c, "Flujo de Fondos",

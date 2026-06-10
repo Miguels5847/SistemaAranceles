@@ -28,6 +28,7 @@ public sealed class SeccionesReporteTests
             SeccionReporte.CapitalTrabajo,
             SeccionReporte.FinanciamientoAmortizacion,
             SeccionReporte.Indicadores,
+            SeccionReporte.PuntoEquilibrio,
             SeccionReporte.CostosGastos,
             SeccionReporte.FlujoFondos,
             SeccionReporte.BalanceProyectado

@@ -66,6 +66,7 @@ public sealed record ReporteDireccionDatos(
     public MatrizCostosGastosDto? CostosGastos { get; init; }
     public ResumenFinanciamientoDto? Financiamiento { get; init; }
     public IndicadoresFinancierosDto? Indicadores { get; init; }
+    public PuntoEquilibrioDto? PuntoEquilibrio { get; init; }
     public FlujoFondosDto? FlujoFondos { get; init; }
     public EstadoPerdidasGananciasDto? BalanceProyectado { get; init; }
     public CesDto? Ces { get; init; }

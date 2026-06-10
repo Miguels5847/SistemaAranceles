@@ -43,10 +43,11 @@ internal static class SeccionesPdf
                 c.Item().Text("Matrícula efectiva").FontSize(8).FontColor(EstilosPdf.ColorGris);
                 c.Item().Text(arancel.MatriculaDisplay).Bold().FontColor(EstilosPdf.ColorPrimario);
             });
-            row.RelativeItem(2).CeldaSeccion().Column(c =>
+            row.RelativeItem().CeldaSeccion().Column(c =>
             {
-                c.Item().Text("Fuente del arancel").FontSize(8).FontColor(EstilosPdf.ColorGris);
-                c.Item().Text(arancel.FuenteCalculo).Bold();
+                c.Item().Text("Total por semestre (arancel + matrícula)").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                var total = (arancel.ArancelEfectivo ?? 0m) + arancel.MatriculaEfectiva;
+                c.Item().Text($"$ {total:N2}").Bold().FontColor(EstilosPdf.ColorPrimario);
             });
         });
         EstilosPdf.Advertencia(col, arancel.MensajeAdvertencia);
@@ -152,6 +153,11 @@ internal static class SeccionesPdf
         => GraficosPdf.GraficoBarras(col, "Docentes requeridos por período",
             demanda.EtiquetasPeriodos,
             demanda.DocentesPorPeriodo
+                // En el gráfico solo va el desglose por tipo: las filas de "Horas asignadas ..."
+                // mezclan escalas (horas vs. personas) y "Docentes Requeridos" es el total
+                // que duplica visualmente a sus componentes.
+                .Where(fila => !fila.Tipo.Contains("Horas", StringComparison.OrdinalIgnoreCase)
+                            && !string.Equals(fila.Tipo, "Docentes Requeridos", StringComparison.OrdinalIgnoreCase))
                 .Select((fila, i) => (fila.Tipo, fila.Periodos, GraficosPdf.Paleta[i % GraficosPdf.Paleta.Length]))
                 .ToList());
 
@@ -183,6 +189,8 @@ internal static class SeccionesPdf
             });
         });
 
+        DescuentosPorCiclo(col, ingresos);
+
         col.Item().PaddingTop(6).Table(tabla =>
         {
             tabla.ColumnsDefinition(c =>
@@ -196,7 +204,7 @@ internal static class SeccionesPdf
             tabla.Header(h =>
             {
                 h.Cell().CeldaHeader().Text("Ciclo").Bold();
-                h.Cell().CeldaHeader().AlignRight().Text("Estudiantes").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Estudiantes (suma de períodos)").Bold();
                 h.Cell().CeldaHeader().AlignRight().Text("Ingreso bruto").Bold();
                 h.Cell().CeldaHeader().AlignRight().Text("Becas").Bold();
                 h.Cell().CeldaHeader().AlignRight().Text("Ingreso neto").Bold();
@@ -217,6 +225,51 @@ internal static class SeccionesPdf
         });
 
         EstilosPdf.Advertencia(col, ingresos.MensajeAdvertencia);
+
+        col.Item().PaddingTop(2).Text(
+            "Nota: \"Estudiantes (suma de períodos)\" acumula los estudiantes del ciclo a lo largo de todos los períodos proyectados; no es la matrícula simultánea de un solo período.")
+            .FontSize(7).Italic().FontColor(EstilosPdf.ColorGris);
+    }
+
+    private static void DescuentosPorCiclo(ColumnDescriptor col, IngresosProyectadosDto ingresos)
+    {
+        var filas = ingresos.Filas
+            .Select(f => f.Periodos.FirstOrDefault())
+            .Where(celda => celda is not null)
+            .Cast<IngresoPeriodoCeldaDto>()
+            .ToList();
+        if (filas.Count == 0)
+            return;
+
+        col.Item().PaddingTop(6).Text("Descuento por ciclo y arancel a cobrar")
+            .FontSize(9).Bold().FontColor(EstilosPdf.ColorPrimario);
+        col.Item().PaddingTop(3).Table(tabla =>
+        {
+            tabla.ColumnsDefinition(c =>
+            {
+                c.RelativeColumn(1.2f);
+                c.RelativeColumn();
+                c.RelativeColumn();
+                c.RelativeColumn();
+                c.RelativeColumn();
+            });
+            tabla.Header(h =>
+            {
+                h.Cell().CeldaHeader().Text("Ciclo").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Arancel base").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("% descuento").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Arancel a cobrar").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Matrícula").Bold();
+            });
+            foreach (var celda in filas)
+            {
+                tabla.Cell().Celda().Text(celda.CicloDisplay);
+                tabla.Cell().Celda().AlignRight().Text(celda.ArancelBaseDisplay);
+                tabla.Cell().Celda().AlignRight().Text(celda.DescuentoCicloDisplay);
+                tabla.Cell().Celda().AlignRight().Text(celda.ArancelCicloDisplay);
+                tabla.Cell().Celda().AlignRight().Text(celda.MatriculaCicloDisplay);
+            }
+        });
     }
 
     // ============ Financiero ============
@@ -335,6 +388,85 @@ internal static class SeccionesPdf
                 c.Item().Text(indicadores.EstadoViabilidad).Bold().FontColor(EstilosPdf.ColorPrimario);
             });
         });
+    }
+
+    public static void PuntoEquilibrio(ColumnDescriptor col, PuntoEquilibrioDto pe)
+    {
+        EstilosPdf.TituloSeccion(col, "Punto de Equilibrio");
+        // Mismos cuadros que la pantalla de Análisis Financiero (resumen estilo Excel);
+        // pe.Periodos puede venir vacío aunque el resumen sí tenga datos.
+        if (!pe.TieneResumenExcel)
+        {
+            col.Item().Text("No existen datos suficientes para generar esta sección.")
+                .FontSize(8).Italic().FontColor(EstilosPdf.ColorGris);
+            EstilosPdf.Advertencia(col, pe.MensajeAdvertencia);
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(pe.PeriodoBaseEtiqueta))
+            col.Item().Text($"Período del punto de equilibrio (período base): {pe.PeriodoBaseEtiqueta}")
+                .FontSize(8).FontColor(EstilosPdf.ColorGris);
+
+        if (pe.ProyeccionResultados.Count > 0)
+        {
+            col.Item().PaddingTop(4).Text("Proyección de Resultados y Punto de Equilibrio")
+                .FontSize(9).Bold().FontColor(EstilosPdf.ColorPrimario);
+            col.Item().PaddingTop(3).Table(tabla =>
+            {
+                tabla.ColumnsDefinition(c =>
+                {
+                    c.RelativeColumn(2.4f);
+                    c.RelativeColumn(1.3f);
+                    c.RelativeColumn(1.3f);
+                    c.RelativeColumn(0.8f);
+                });
+                tabla.Header(h =>
+                {
+                    h.Cell().CeldaHeader().Text("Concepto").Bold();
+                    h.Cell().CeldaHeader().AlignRight().Text("Valor anual").Bold();
+                    h.Cell().CeldaHeader().AlignRight().Text("Valor mensual").Bold();
+                    h.Cell().CeldaHeader().AlignRight().Text("%").Bold();
+                });
+                foreach (var fila in pe.ProyeccionResultados)
+                {
+                    var resaltada = fila.EsTotal || fila.EsResultado;
+                    tabla.Cell().Celda().Text(t => { var s = t.Span(fila.Concepto); if (resaltada) s.Bold(); });
+                    tabla.Cell().Celda().AlignRight().Text(t => { var s = t.Span(fila.ValorAnualDisplay); if (resaltada) s.Bold(); });
+                    tabla.Cell().Celda().AlignRight().Text(t => { var s = t.Span(fila.ValorMensualDisplay); if (resaltada) s.Bold(); });
+                    tabla.Cell().Celda().AlignRight().Text(t => { var s = t.Span(fila.PorcentajeDisplay); if (resaltada) s.Bold(); });
+                }
+            });
+        }
+
+        if (pe.AnalisisPuntoEquilibrio.Count > 0)
+        {
+            col.Item().PaddingTop(6).Text("Análisis del Punto de Equilibrio")
+                .FontSize(9).Bold().FontColor(EstilosPdf.ColorPrimario);
+            col.Item().PaddingTop(3).Table(tabla =>
+            {
+                tabla.ColumnsDefinition(c =>
+                {
+                    c.RelativeColumn(2.8f);
+                    c.RelativeColumn(1.3f);
+                    c.RelativeColumn(1.3f);
+                });
+                tabla.Header(h =>
+                {
+                    h.Cell().CeldaHeader().Text("Concepto").Bold();
+                    h.Cell().CeldaHeader().AlignRight().Text("PE Anual").Bold();
+                    h.Cell().CeldaHeader().AlignRight().Text("PE Mensual").Bold();
+                });
+                foreach (var fila in pe.AnalisisPuntoEquilibrio)
+                {
+                    var resaltada = fila.EsTotal || fila.EsResultado;
+                    tabla.Cell().Celda().Text(t => { var s = t.Span(fila.Concepto); if (resaltada) s.Bold(); });
+                    tabla.Cell().Celda().AlignRight().Text(t => { var s = t.Span(fila.PeAnualDisplay); if (resaltada) s.Bold(); });
+                    tabla.Cell().Celda().AlignRight().Text(t => { var s = t.Span(fila.PeMensualDisplay); if (resaltada) s.Bold(); });
+                }
+            });
+        }
+
+        EstilosPdf.Advertencia(col, pe.MensajeAdvertencia);
     }
 
     public static void Matriz(

@@ -48,36 +48,41 @@
                    FontSize="18" FontWeight="Bold" Foreground="#1A237E" Margin="0,0,0,8"/>
 
         <Border Grid.Row="1" Background="#EEF1FB" CornerRadius="6" Padding="10" Margin="0,0,0,8">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Carrera" FontSize="11" Foreground="#546E7A" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                <ComboBox Width="320"
-                          ItemsSource="{Binding Carreras}"
-                          SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}"
-                          DisplayMemberPath="Etiqueta"/>
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Carrera" FontSize="11" Foreground="#546E7A" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <ComboBox Width="320"
+                              ItemsSource="{Binding Carreras}"
+                              SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}"
+                              DisplayMemberPath="Etiqueta"/>
 
-                <TextBlock Text="Escenario" FontSize="11" Foreground="#546E7A" VerticalAlignment="Center" Margin="16,0,8,0"/>
-                <ComboBox Width="220"
-                          ItemsSource="{Binding Escenarios}"
-                          SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}"
-                          DisplayMemberPath="Nombre"
-                          mah:TextBoxHelper.Watermark="Selecciona el escenario…"/>
+                    <TextBlock Text="Escenario" FontSize="11" Foreground="#546E7A" VerticalAlignment="Center" Margin="16,0,8,0"/>
+                    <ComboBox Width="220"
+                              ItemsSource="{Binding Escenarios}"
+                              SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}"
+                              DisplayMemberPath="Nombre"
+                              mah:TextBoxHelper.Watermark="Selecciona el escenario…"/>
 
-                <Button Content="Refrescar"
-                        Command="{Binding CargarCommand}"
-                        Margin="12,0,0,0"
-                        Padding="8,4"/>
+                    <Button Content="Refrescar"
+                            Command="{Binding CargarCommand}"
+                            Margin="12,0,0,0"
+                            Padding="8,4"/>
+                </StackPanel>
 
-                <TextBlock Text="Dirección / Destinatario" FontSize="11" Foreground="#546E7A" VerticalAlignment="Center" Margin="20,0,8,0"/>
-                <ComboBox Width="280"
-                          ItemsSource="{Binding Direcciones}"
-                          SelectedItem="{Binding DireccionSeleccionada, Mode=TwoWay}"
-                          DisplayMemberPath="Etiqueta"/>
-                <Button Content="Exportar PDF por dirección"
-                        Command="{Binding ExportarPdfDireccionCommand}"
-                        Margin="8,0,0,0"
-                        Padding="8,4"
-                        Background="#1A237E" Foreground="White"
-                        Visibility="{Binding PuedeExportar, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                <!-- Segunda fila: siempre visible sin importar el ancho de la ventana -->
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                    <TextBlock Text="Dirección / Destinatario" FontSize="11" Foreground="#546E7A" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <ComboBox Width="300"
+                              ItemsSource="{Binding Direcciones}"
+                              SelectedItem="{Binding DireccionSeleccionada, Mode=TwoWay}"
+                              DisplayMemberPath="Etiqueta"/>
+                    <Button Content="Exportar PDF por dirección"
+                            Command="{Binding ExportarPdfDireccionCommand}"
+                            Margin="8,0,0,0"
+                            Padding="8,4"
+                            Background="#1A237E" Foreground="White"
+                            Visibility="{Binding PuedeExportar, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                </StackPanel>
             </StackPanel>
         </Border>
 
