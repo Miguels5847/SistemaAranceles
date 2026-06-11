@@ -17,7 +17,7 @@ if %ERRORLEVEL% GEQ 8 (
     exit /b 1
 )
 
-powershell -NoProfile -Command "$ws = New-Object -ComObject WScript.Shell; $lnk = $ws.CreateShortcut((Join-Path $ws.SpecialFolders.Item('Desktop') 'Sistema de Aranceles.lnk')); $lnk.TargetPath = '%DESTINO%\SistemaAranceles.Presentation.exe'; $lnk.WorkingDirectory = '%DESTINO%'; $lnk.Description = 'Sistema de Aranceles Universitarios'; $lnk.Save()"
+powershell -NoProfile -Command "$ws = New-Object -ComObject WScript.Shell; $lnk = $ws.CreateShortcut((Join-Path $ws.SpecialFolders.Item('Desktop') 'Sistema de Aranceles.lnk')); $lnk.TargetPath = '%DESTINO%\SistemaAranceles.exe'; $lnk.WorkingDirectory = '%DESTINO%'; $lnk.Description = 'Sistema de Aranceles Universitarios'; $lnk.Save()"
 
 echo  Listo. Se creo el acceso directo "Sistema de Aranceles" en el Escritorio.
 echo  Puedes borrar esta carpeta de instalacion si lo deseas.

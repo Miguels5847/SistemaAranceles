@@ -11,7 +11,7 @@ WHERE codigo IN ('AF.EJEC', 'PR.VER', 'PR.EJEC', 'ES.EJECUTAR')
   AND esta_activo = TRUE;
 
 -- Verificación
-SELECT codigo, nombre, modulo_nombre, esta_activo
+SELECT codigo, accion_nombre, modulo_nombre, esta_activo
 FROM public.permiso
 WHERE codigo IN ('AF.EJEC', 'PR.VER', 'PR.EJEC', 'ES.EJECUTAR')
 ORDER BY codigo;

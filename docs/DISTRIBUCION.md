@@ -1,4 +1,4 @@
-# Distribución — ejecutar el Sistema de Aranceles en otra computadora
+﻿# Distribución — ejecutar el Sistema de Aranceles en otra computadora
 
 ## 1. Generar el paquete (en la máquina de desarrollo)
 
@@ -11,7 +11,7 @@ powershell -ExecutionPolicy Bypass -File scripts\publicar.ps1
 
 Produce dos cosas:
 
-- `publish\` — la aplicación: `SistemaAranceles.Presentation.exe` **autocontenido** (incluye
+- `publish\` — la aplicación: `SistemaAranceles.exe` **autocontenido** (incluye
   .NET 8, la otra PC no instala nada), `appsettings.json`/`appsettings.Local.json`, las fuentes
   PDF (`LatoFont`) y el `instalar.bat`.
 - `SistemaAranceles-win64.zip` — lo mismo comprimido, listo para USB/correo/Drive.
@@ -28,7 +28,7 @@ Produce dos cosas:
 ### Alternativa manual (sin instalador)
 
 Copiar la carpeta `publish\` completa a cualquier ruta de la otra PC y ejecutar
-`SistemaAranceles.Presentation.exe` desde ahí. **El exe solo no basta**: necesita junto a él
+`SistemaAranceles.exe` desde ahí. **El exe solo no basta**: necesita junto a él
 `appsettings.Local.json` (cadena de conexión) y la carpeta `LatoFont` (fuentes de los PDF) —
 por eso se distribuye la carpeta o el zip, no el archivo suelto.
 

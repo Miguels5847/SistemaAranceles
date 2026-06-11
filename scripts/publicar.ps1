@@ -35,6 +35,9 @@ dotnet publish $proyecto `
 
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish fallo (codigo $LASTEXITCODE)." }
 
+# Un solo nombre claro para el usuario final (el single-file se puede renombrar sin problema).
+Rename-Item (Join-Path $salida "SistemaAranceles.Presentation.exe") "SistemaAranceles.exe" -Force
+
 Copy-Item (Join-Path $PSScriptRoot "instalar.bat") $salida -Force
 
 if (Test-Path $zip) { Remove-Item $zip -Force }
