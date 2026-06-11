@@ -1,6 +1,8 @@
-<UserControl x:Class="SistemaAranceles.Presentation.Views.AnalisisFinanciero.AnalisisFinancieroView"
+﻿<UserControl x:Class="SistemaAranceles.Presentation.Views.AnalisisFinanciero.AnalisisFinancieroView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:compartido="clr-namespace:SistemaAranceles.Presentation.Views.Compartido"
+             xmlns:beh="clr-namespace:SistemaAranceles.Presentation.Behaviors"
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls">
     <UserControl.Resources>
         <Style TargetType="DataGridRow">
@@ -323,6 +325,16 @@
                               MinWidth="220"
                               Padding="4,2"/>
                 </StackPanel>
+                <Button Grid.Column="2"
+                        Content="Generar reporte →"
+                        Padding="10,4"
+                        Margin="0,0,8,0"
+                        VerticalAlignment="Bottom"
+                        Background="#1A237E"
+                        Foreground="White"
+                        ToolTip="Abre Reportes con esta carrera y escenario ya seleccionados."
+                        Command="{Binding AbrirEnReportesCommand}"
+                        Visibility="{Binding PuedeAbrirReportes, Converter={StaticResource BoolToVisibilityConverter}}"/>
                 <Button Grid.Column="3"
                         Content="Refrescar"
                         Padding="10,4"
@@ -337,7 +349,7 @@
                     Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}">
                 <Grid>
                     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                    <TextBlock Text="{Binding MensajeExito}" Foreground="#2E7D32" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding MensajeExito}" beh:AutoOcultarMensaje.Habilitado="True" Foreground="#2E7D32" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center"/>
                     <Button Grid.Column="1" Content="✕" ToolTip="Cerrar"
                             Command="{Binding CerrarMensajeCommand}" CommandParameter="exito"
                             Background="Transparent" BorderThickness="0" Foreground="#2E7D32" FontWeight="Bold" Padding="8,0" Cursor="Hand"/>
@@ -1170,5 +1182,9 @@
                            Foreground="#1B5E20"/>
             </StackPanel>
         </Border>
+        <!-- KAN-49: estado vacio guiado + overlay de carga estandar -->
+        <compartido:AvisoSeleccionPendiente Grid.Row="2" Grid.RowSpan="97"/>
+        <compartido:OverlayCarga Grid.Row="0" Grid.RowSpan="99"
+                                 Visibility="{Binding EstaCargando, Converter={StaticResource BoolToVisibilityConverter}}"/>
     </Grid>
 </UserControl>

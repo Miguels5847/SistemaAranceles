@@ -8,6 +8,7 @@ using SistemaAranceles.Application.DTOs.InversionInicial;
 using SistemaAranceles.Application.DTOs.Mantenimiento;
 using SistemaAranceles.Application.DTOs.RecursosFisicosDepreciacion;
 using SistemaAranceles.Application.DTOs.SueldosPlantaCentral;
+using SistemaAranceles.Application.DTOs.TasaRetencion;
 
 namespace SistemaAranceles.Application.DTOs.Reportes;
 
@@ -52,6 +53,7 @@ public sealed record ReporteDireccionDatos(
 {
     public ArancelEfectivoDto? Arancel { get; init; }
     public DemandaProyectadaDto? Demanda { get; init; }
+    public RetencionSimulacionReporteDto? RetencionSimulacion { get; init; }
     public IngresosProyectadosDto? Ingresos { get; init; }
     public MaterialesProyectadosDto? Materiales { get; init; }
     public IReadOnlyList<ActivoFijoDto>? ActivosFijos { get; init; }

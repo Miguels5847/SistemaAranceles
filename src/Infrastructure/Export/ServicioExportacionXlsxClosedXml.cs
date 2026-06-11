@@ -52,6 +52,10 @@ public sealed class ServicioExportacionXlsxClosedXml : IServicioExportacionXlsx
                     FormatoNumero);
                 break;
 
+            case SeccionReporte.RetencionSimulacion when datos.RetencionSimulacion is { TieneDatos: true }:
+                ComponerRetencion(libro, datos.RetencionSimulacion);
+                break;
+
             case SeccionReporte.DocentesTabla when datos.Demanda is { TieneDocentes: true }:
                 HojaMatriz(libro, "Docentes", "Tipo", datos.Demanda.EtiquetasPeriodos,
                     datos.Demanda.DocentesPorPeriodo
@@ -369,6 +373,54 @@ public sealed class ServicioExportacionXlsxClosedXml : IServicioExportacionXlsx
         }
 
         HojaMatriz(libro, nombre, "Concepto", etiquetas.Select(e => e.Etiqueta).ToList(), filas, formato);
+    }
+
+    private static void ComponerRetencion(XLWorkbook libro, Application.DTOs.TasaRetencion.RetencionSimulacionReporteDto retencion)
+    {
+        var hoja = NuevaHoja(libro, "Retención");
+
+        hoja.Cell(1, 1).Value = "Parámetro";
+        hoja.Cell(1, 2).Value = "Valor";
+        EstiloHeader(hoja.Range(1, 1, 1, 2));
+        var pares = new List<(string, string)>
+        {
+            ("Tasa de retención", $"{retencion.TasaRetencionPorcentaje:N1}%"),
+            ("Tasa de graduación", $"{retencion.TasaGraduacionPorcentaje:N1}%"),
+            ("Paralelos abril-agosto", retencion.ParalelosPeriodo1.ToString()),
+            ("Paralelos septiembre-febrero", retencion.ParalelosPeriodo2.ToString()),
+            ("Estudiantes de ingreso abril-agosto", retencion.EstudiantesPeriodo1.ToString("N0")),
+            ("Estudiantes de ingreso septiembre-febrero", retencion.EstudiantesPeriodo2.ToString("N0")),
+            ("Total de ciclos", retencion.TotalCiclos.ToString())
+        };
+        if (retencion.MetaRetencionPorcentaje is not null || retencion.MetaGraduacionPorcentaje is not null)
+        {
+            pares.Add(("Meta de retención (aplicada a los cálculos)", $"{retencion.TasaRetencionAplicada:N1}%"));
+            pares.Add(("Meta de graduación (aplicada a los cálculos)", $"{retencion.TasaGraduacionAplicada:N1}%"));
+        }
+        for (var i = 0; i < pares.Count; i++)
+        {
+            hoja.Cell(i + 2, 1).Value = pares[i].Item1;
+            hoja.Cell(i + 2, 2).Value = pares[i].Item2;
+        }
+
+        var filaTabla = pares.Count + 4;
+        hoja.Cell(filaTabla, 1).Value = "Resultado de simulación por ciclos (estructura semestral)";
+        hoja.Cell(filaTabla, 1).Style.Font.SetBold();
+        filaTabla++;
+        hoja.Cell(filaTabla, 1).Value = "Grupo de ingreso";
+        for (var ciclo = 1; ciclo <= retencion.TotalCiclos; ciclo++)
+            hoja.Cell(filaTabla, ciclo + 1).Value = $"{ciclo}°";
+        EstiloHeader(hoja.Range(filaTabla, 1, filaTabla, retencion.TotalCiclos + 1));
+        filaTabla++;
+        hoja.Cell(filaTabla, 1).Value = "Abril - agosto";
+        for (var i = 0; i < retencion.AlumnosPeriodo1PorCiclo.Count; i++)
+            hoja.Cell(filaTabla, i + 2).Value = retencion.AlumnosPeriodo1PorCiclo[i];
+        filaTabla++;
+        hoja.Cell(filaTabla, 1).Value = "Septiembre - febrero";
+        for (var i = 0; i < retencion.AlumnosPeriodo2PorCiclo.Count; i++)
+            hoja.Cell(filaTabla, i + 2).Value = retencion.AlumnosPeriodo2PorCiclo[i];
+
+        hoja.ColumnsUsed().AdjustToContents();
     }
 
     private static void ComponerActivos(XLWorkbook libro, ReporteDireccionDatos datos)

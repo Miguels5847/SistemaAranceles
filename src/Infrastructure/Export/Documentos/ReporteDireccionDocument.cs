@@ -47,6 +47,11 @@ internal sealed class ReporteDireccionDocument(ReporteDireccionDatos datos) : ID
                 Opcional(col, datos.Demanda?.TieneDatos == true ? datos.Demanda : null,
                     "Proyección de la matrícula (gráfico)", SeccionesPdf.GraficoMatricula);
                 break;
+            case SeccionReporte.RetencionSimulacion:
+                Opcional(col, datos.RetencionSimulacion is { TieneDatos: true } retencion ? retencion : null,
+                    "Retención y graduación — resultado de simulación por ciclos (estructura semestral)",
+                    SeccionesPdf.RetencionSimulacion);
+                break;
             case SeccionReporte.DocentesTabla:
                 Opcional(col, datos.Demanda, "Docentes requeridos por período", SeccionesPdf.DocentesTabla);
                 break;

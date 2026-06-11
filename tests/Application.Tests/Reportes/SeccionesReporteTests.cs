@@ -50,6 +50,19 @@ public sealed class SeccionesReporteTests
     public void GraficoDocentes_ApareceDondeCorresponde(DireccionReporte direccion)
         => Assert.Contains(SeccionReporte.GraficoDocentes, SeccionesReporte.ParaDireccion(direccion));
 
+    [Theory]
+    [InlineData(DireccionReporte.GestionDocente)]
+    [InlineData(DireccionReporte.Completo)]
+    public void RetencionSimulacion_ApareceDondeCorresponde(DireccionReporte direccion)
+        => Assert.Contains(SeccionReporte.RetencionSimulacion, SeccionesReporte.ParaDireccion(direccion));
+
+    [Theory]
+    [InlineData(DireccionReporte.Financiera)]
+    [InlineData(DireccionReporte.Administrativa)]
+    [InlineData(DireccionReporte.GeneralCes)]
+    public void RetencionSimulacion_NoApareceEnDireccionesNoAcademicas(DireccionReporte direccion)
+        => Assert.DoesNotContain(SeccionReporte.RetencionSimulacion, SeccionesReporte.ParaDireccion(direccion));
+
     [Fact]
     public void TodasLasDirecciones_TienenSeccionesTituloYSlug()
     {

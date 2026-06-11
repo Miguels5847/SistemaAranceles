@@ -21,6 +21,7 @@ public enum SeccionReporte
     ArancelMatricula,
     DemandaTabla,
     GraficoMatricula,
+    RetencionSimulacion,
     DocentesTabla,
     GraficoDocentes,
     Ingresos,
@@ -64,6 +65,7 @@ public static class SeccionesReporte
         [
             SeccionReporte.DemandaTabla,
             SeccionReporte.GraficoMatricula,
+            SeccionReporte.RetencionSimulacion,
             SeccionReporte.DocentesTabla,
             SeccionReporte.GraficoDocentes
         ],
@@ -100,6 +102,7 @@ public static class SeccionesReporte
             SeccionReporte.ArancelMatricula,
             SeccionReporte.DemandaTabla,
             SeccionReporte.GraficoMatricula,
+            SeccionReporte.RetencionSimulacion,
             SeccionReporte.DocentesTabla,
             SeccionReporte.GraficoDocentes,
             SeccionReporte.Ingresos,

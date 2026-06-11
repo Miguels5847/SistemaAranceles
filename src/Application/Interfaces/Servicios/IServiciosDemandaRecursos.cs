@@ -33,10 +33,3 @@ public interface IServicioDocentesTotales
         int escenarioProyeccionId,
         CancellationToken ct = default);
 }
-
-public interface IServicioInflacionFactor
-{
-    // TODO(KAN-25): consumir factor acumulado real desde Sueldos/Configuracion.
-    Task<decimal> ObtenerFactorAcumuladoAsync(
-        int anio, int numeroPeriodo, CancellationToken ct = default);
-}

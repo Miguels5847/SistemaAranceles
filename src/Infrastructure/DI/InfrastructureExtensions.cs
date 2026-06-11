@@ -60,7 +60,6 @@ public static class InfrastructureExtensions
         services.AddTransient<IServicioProyeccion, ServicioProyeccion>();
         services.AddTransient<IServicioEstudiantesTotales, ServicioEstudiantesTotales>();
         services.AddTransient<IServicioDocentesTotales, ServicioDocentesTotales>();
-        services.AddTransient<IServicioInflacionFactor, ServicioInflacionFactorStub>();
         services.AddTransient<IServicioExportacionPdf, Export.ServicioExportacionPdfQuestPdf>();
         services.AddTransient<IServicioExportacionXlsx, Export.ServicioExportacionXlsxClosedXml>();
 

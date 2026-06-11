@@ -16,6 +16,7 @@
             <conv:InverseBoolConverter x:Key="InverseBoolConverter"/>
             <conv:UtcToEcuadorDateTimeConverter x:Key="UtcToEcuadorDateTimeConverter"/>
             <conv:ModoArancelDisplayConverter x:Key="ModoArancelDisplayConverter"/>
+            <conv:NombreIconoMaterialConverter x:Key="NombreIconoMaterialConverter"/>
 
             <!-- KAN-47: las tablas no se redimensionan por el usuario (arrastrar bordes
                  deformaba columnas/filas y "dañaba" la lectura de los datos).

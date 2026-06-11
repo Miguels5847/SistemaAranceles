@@ -1,0 +1,20 @@
+<UserControl x:Class="SistemaAranceles.Presentation.Views.Compartido.OverlayCarga"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+             IsHitTestVisible="True">
+    <!-- Overlay de carga estándar (KAN-49): se inserta como último hijo del Grid raíz de la
+         vista con Grid.RowSpan alto y Visibility ligado a EstaCargando. Bloquea clics mientras
+         las consultas corren para evitar acciones sobre datos a medio cargar. -->
+    <Border Background="#B3FFFFFF">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+            <mah:ProgressRing IsActive="True" Width="44" Height="44" Foreground="#1A237E"/>
+            <TextBlock Text="Cargando información…"
+                       Margin="0,10,0,0"
+                       FontSize="13"
+                       FontWeight="SemiBold"
+                       Foreground="#1A237E"
+                       HorizontalAlignment="Center"/>
+        </StackPanel>
+    </Border>
+</UserControl>

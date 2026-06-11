@@ -11,14 +11,13 @@ public sealed class FabricaContextoAplicacionTiempoDiseno : IDesignTimeDbContext
         var optionsBuilder = new DbContextOptionsBuilder<ContextoAplicacion>();
         var cadenaConexionPostgres = ObtenerCadenaConexion();
 
-        if (!string.IsNullOrWhiteSpace(cadenaConexionPostgres))
-        {
-            optionsBuilder.UseNpgsql(SupabaseConnectionStringHelper.Normalizar(cadenaConexionPostgres));
-        }
-        else
-        {
-            optionsBuilder.UseSqlite("Data Source=sistema_aranceles.db");
-        }
+        // KAN-49: la BD es siempre Postgres (Supabase); el fallback SQLite era de la época
+        // KAN-03 y se eliminó junto con su paquete. Sin cadena real, `dotnet ef migrations add`
+        // sigue funcionando (no conecta); solo `database update` la necesita.
+        // Cadena ficticia sin credenciales: solo da forma al proveedor en tiempo de diseño.
+        optionsBuilder.UseNpgsql(string.IsNullOrWhiteSpace(cadenaConexionPostgres)
+            ? "Host=localhost;Database=sistema_aranceles"
+            : SupabaseConnectionStringHelper.Normalizar(cadenaConexionPostgres));
 
         return new ContextoAplicacion(optionsBuilder.Options);
     }

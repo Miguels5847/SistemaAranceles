@@ -175,13 +175,6 @@ public sealed class ServicioDocentesTotales(
     }
 }
 
-public sealed class ServicioInflacionFactorStub : IServicioInflacionFactor
-{
-    public Task<decimal> ObtenerFactorAcumuladoAsync(
-        int anio, int numeroPeriodo, CancellationToken ct = default)
-        => Task.FromResult(1m);
-}
-
 internal static class ServiciosDemandaRecursosHelper
 {
     public static async Task<decimal> ObtenerTotalEstudiantesAsync(

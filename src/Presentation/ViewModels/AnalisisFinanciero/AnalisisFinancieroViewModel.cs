@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.DTOs.AnalisisFinanciero;
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
@@ -14,6 +15,7 @@ using SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion;
 using SistemaAranceles.Application.DTOs.CostosGastos;
 using SistemaAranceles.Domain.Entities;
 using SistemaAranceles.Domain.Enums;
+using SistemaAranceles.Presentation.Mensajes;
 using SistemaAranceles.Presentation.State;
 
 namespace SistemaAranceles.Presentation.ViewModels.AnalisisFinanciero;
@@ -151,6 +153,22 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                                            && !ArancelOptimoYaAplicado;
     public bool PuedeTrabajar => CarreraSeleccionada is not null && !EstaCargando;
     public bool PuedeEditar => _sesionActual.EsAdministrador || _sesionActual.TienePermiso("AF.EDITAR");
+
+    /// <summary>Atajo 4 → 5 del flujo: visible solo si el usuario puede entrar a Reportes.</summary>
+    public bool PuedeAbrirReportes => _sesionActual.EsAdministrador || _sesionActual.TienePermiso("REP.VER");
+
+    [RelayCommand]
+    private void AbrirEnReportes()
+    {
+        if (CarreraSeleccionada is null || EscenarioSeleccionado is null)
+        {
+            MensajeError = "Selecciona la carrera y el escenario antes de generar el reporte.";
+            return;
+        }
+
+        WeakReferenceMessenger.Default.Send(
+            new AbrirReportesMensaje(CarreraSeleccionada.Id, EscenarioSeleccionado.Id));
+    }
 
     // Comparativa arancel vigente vs propuesto (Fase 6).
     public bool TieneComparativaArancel => ArancelVigente is not null

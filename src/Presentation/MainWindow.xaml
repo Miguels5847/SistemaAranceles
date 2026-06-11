@@ -44,6 +44,7 @@
         xmlns:vAFin="clr-namespace:SistemaAranceles.Presentation.Views.AnalisisFinanciero"
         xmlns:vAmort="clr-namespace:SistemaAranceles.Presentation.Views.Amortizacion"
         xmlns:vRep="clr-namespace:SistemaAranceles.Presentation.Views.Reportes"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         Title="Sistema de Aranceles Universitarios"
         Width="1400"
         Height="820"
@@ -235,7 +236,14 @@
                                             </Style.Triggers>
                                         </Style>
                                     </Button.Style>
-                                    <TextBlock Text="{Binding Titulo}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxWidth="166" LineHeight="17"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <iconPacks:PackIconMaterial Kind="{Binding Icono, Converter={StaticResource NombreIconoMaterialConverter}}"
+                                                                    Width="14" Height="14"
+                                                                    Opacity="0.85"
+                                                                    VerticalAlignment="Center"
+                                                                    Margin="0,0,9,0"/>
+                                        <TextBlock Text="{Binding Titulo}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxWidth="148" LineHeight="17" VerticalAlignment="Center"/>
+                                    </StackPanel>
                                 </Button>
                                 </Grid>
                             </DataTemplate>

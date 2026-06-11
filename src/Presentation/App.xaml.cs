@@ -204,6 +204,7 @@ public partial class App
         servicios.AddTransient<ObtenerDashboardFinancieroQuery>();
         servicios.AddTransient<ObtenerBalanceProyectadoQuery>();
         servicios.AddTransient<ObtenerCesQuery>();
+        servicios.AddTransient<ObtenerRetencionSimulacionReporteQuery>();
         servicios.AddTransient<CalcularAportePlantaCentralCarreraQuery>();
         servicios.AddTransient<CalcularProyeccionesCargoPlantaCentralCommand>();
         servicios.AddTransient<ListarProyeccionesCargoPlantaCentralQuery>();

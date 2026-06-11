@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -112,6 +112,12 @@ public sealed partial class MainViewModel : ObservableObject
             LanzarSinEsperar(MostrarEditarUsuarioAsync(msg.Usuario));
         });
 
+        // Atajo 4 → 5 del flujo: Análisis Financiero pide abrir Reportes ya preseleccionado.
+        WeakReferenceMessenger.Default.Register<AbrirReportesMensaje>(this, (_, msg) =>
+        {
+            LanzarSinEsperar(MostrarReportesAsync(msg.CarreraId, msg.EscenarioId));
+        });
+
         ConstruirMenu();
         if (_sesionActual.TienePermiso("US.VER"))
         {
@@ -171,87 +177,87 @@ public sealed partial class MainViewModel : ObservableObject
         // guían al usuario no técnico sin bloquear la navegación libre.
         AgregarGrupo("Administración",
         [
-            Modulo("Usuarios", _sesionActual.TienePermiso("US.VER"),
+            Modulo("Usuarios", "AccountGroup", _sesionActual.TienePermiso("US.VER"),
                 "Crea y administra los usuarios y sus permisos.",
                 () => MostrarUsuariosAsync()),
-            Modulo("Auditoría", _sesionActual.EsAdministrador && _sesionActual.TienePermiso("AUD.VER"),
+            Modulo("Auditoría", "History", _sesionActual.EsAdministrador && _sesionActual.TienePermiso("AUD.VER"),
                 "Consulta quién hizo qué y cuándo dentro del sistema.",
                 () => MostrarAuditoriaAsync())
         ]);
 
         AgregarGrupo("1 · Configuración base",
         [
-            Modulo("Carreras", _sesionActual.TienePermiso("CA.VER"),
+            Modulo("Carreras", "School", _sesionActual.TienePermiso("CA.VER"),
                 "Punto de partida: registra la carrera que vas a proyectar.",
                 () => MostrarCarrerasAsync()),
-            Modulo("Inflación", _sesionActual.TienePermiso("INF.VER"),
+            Modulo("Inflación", "TrendingUp", _sesionActual.TienePermiso("INF.VER"),
                 "Tasas de inflación anuales que ajustan los costos futuros.",
                 () => MostrarInflacionAsync()),
-            Modulo("Tasa de Retención y Graduación", _sesionActual.TienePermiso("TRE.VER") || _sesionActual.EsAdministrador,
+            Modulo("Tasa de Retención y Graduación", "AccountConvert", _sesionActual.TienePermiso("TRE.VER") || _sesionActual.EsAdministrador,
                 "Define cuántos estudiantes continúan de un ciclo al siguiente.",
                 () => MostrarTasaRetencionAsync()),
-            Modulo("Datos Institucionales", _sesionActual.TienePermiso("DI.VER") || _sesionActual.EsAdministrador,
+            Modulo("Datos Institucionales", "Domain", _sesionActual.TienePermiso("DI.VER") || _sesionActual.EsAdministrador,
                 "Parámetros generales: % matrícula, becas, meses de capital de trabajo, etc.",
                 () => MostrarDatosInstitucionalesAsync())
         ]);
 
         AgregarGrupo("2 · Proyección académica",
         [
-            Modulo("Proyección de Estudiantes", _sesionActual.TienePermiso("ES.VER") || _sesionActual.EsAdministrador,
+            Modulo("Proyección de Estudiantes", "ChartLine", _sesionActual.TienePermiso("ES.VER") || _sesionActual.EsAdministrador,
                 "Crea el escenario y proyecta la matrícula por períodos.",
                 () => MostrarEstudiantesAsync()),
-            Modulo("Demanda e Ingresos", _sesionActual.TienePermiso("DI_NG.VER") || _sesionActual.EsAdministrador,
+            Modulo("Demanda e Ingresos", "CashMultiple", _sesionActual.TienePermiso("DI_NG.VER") || _sesionActual.EsAdministrador,
                 "Arancel, descuentos por ciclo, materiales e ingresos del escenario.",
                 () => MostrarDemandaIngresosAsync())
         ]);
 
         AgregarGrupo("3 · Costos y recursos",
         [
-            Modulo("Sueldos Carrera", _sesionActual.TienePermiso("SC.VER") || _sesionActual.EsAdministrador,
+            Modulo("Sueldos Carrera", "AccountCash", _sesionActual.TienePermiso("SC.VER") || _sesionActual.EsAdministrador,
                 "Cargos docentes y administrativos de la carrera y su proyección.",
                 () => MostrarCargosFacultadAsync()),
-            Modulo("Aporte Planta Central", _sesionActual.TienePermiso("PC.VER") || _sesionActual.EsAdministrador,
+            Modulo("Aporte Planta Central", "OfficeBuilding", _sesionActual.TienePermiso("PC.VER") || _sesionActual.EsAdministrador,
                 "Prorratea el costo de la administración central a la carrera.",
                 () => MostrarAportePlantaCentralAsync()),
-            Modulo("Recursos y Depreciación", _sesionActual.TienePermiso("RD.VER") || _sesionActual.EsAdministrador,
+            Modulo("Recursos y Depreciación", "DesktopClassic", _sesionActual.TienePermiso("RD.VER") || _sesionActual.EsAdministrador,
                 "Activos fijos y diferidos con su depreciación y amortización.",
                 () => MostrarActivosFijosAsync()),
-            Modulo("Mantenimiento e Inversión", _sesionActual.EsAdministrador || _sesionActual.TienePermiso("MI.VER"),
+            Modulo("Mantenimiento e Inversión", "Wrench", _sesionActual.EsAdministrador || _sesionActual.TienePermiso("MI.VER"),
                 "Servicios básicos, mantenimiento e inversiones futuras.",
                 () => MostrarMantenimientoInversionAsync()),
-            Modulo("Capital de Trabajo", _sesionActual.TienePermiso("CT.VER") || _sesionActual.EsAdministrador,
+            Modulo("Capital de Trabajo", "Briefcase", _sesionActual.TienePermiso("CT.VER") || _sesionActual.EsAdministrador,
                 "Efectivo necesario para operar los primeros meses.",
                 () => MostrarCapitalTrabajoAsync()),
-            Modulo("Costos y Gastos", _sesionActual.TienePermiso("CG.VER") || _sesionActual.EsAdministrador,
+            Modulo("Costos y Gastos", "Calculator", _sesionActual.TienePermiso("CG.VER") || _sesionActual.EsAdministrador,
                 "Matriz consolidada de todos los costos del escenario.",
                 () => MostrarCostosGastosAsync())
         ]);
 
         AgregarGrupo("4 · Financiamiento y análisis",
         [
-            Modulo("Amortización", _sesionActual.TienePermiso("AMO.VER") || _sesionActual.EsAdministrador,
+            Modulo("Amortización", "Bank", _sesionActual.TienePermiso("AMO.VER") || _sesionActual.EsAdministrador,
                 "Fuentes de financiamiento y tabla de amortización del préstamo.",
                 () => MostrarAmortizacionAsync()),
-            Modulo("Análisis Financiero", _sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador,
+            Modulo("Análisis Financiero", "Finance", _sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador,
                 "P&G, flujo, balance, VAN/TIR, punto de equilibrio y arancel óptimo.",
                 () => MostrarAnalisisFinancieroAsync())
         ]);
 
         AgregarGrupo("5 · Resultados",
         [
-            Modulo("Reportes", _sesionActual.TienePermiso("REP.VER") || _sesionActual.EsAdministrador,
+            Modulo("Reportes", "FileChart", _sesionActual.TienePermiso("REP.VER") || _sesionActual.EsAdministrador,
                 "Exporta el informe por dirección destinataria en PDF o Excel.",
                 () => MostrarReportesAsync())
         ]);
 
-        MenuItems.Add(new ItemMenu { Titulo = "Cerrar Sesión", Icono = string.Empty, Comando = new RelayCommand(() => _ = CerrarSesionAsync()) });
+        MenuItems.Add(new ItemMenu { Titulo = "Cerrar Sesión", Icono = "Logout", Comando = new RelayCommand(() => _ = CerrarSesionAsync()) });
 
         Bienvenida = $"Bienvenido, {_sesionActual.NombreCompleto}  |  Rol: {_sesionActual.RolNombre}";
     }
 
-    private static ItemMenu? Modulo(string titulo, bool visible, string descripcion, Func<Task> mostrar)
+    private static ItemMenu? Modulo(string titulo, string icono, bool visible, string descripcion, Func<Task> mostrar)
         => visible
-            ? new ItemMenu { Titulo = titulo, Descripcion = descripcion, Comando = new AsyncRelayCommand(mostrar) }
+            ? new ItemMenu { Titulo = titulo, Icono = icono, Descripcion = descripcion, Comando = new AsyncRelayCommand(mostrar) }
             : null;
 
     private void AgregarGrupo(string encabezado, ItemMenu?[] modulos)
@@ -425,12 +431,14 @@ public sealed partial class MainViewModel : ObservableObject
         await vm.CargarCommand.ExecuteAsync(null);
     }
 
-    private async Task MostrarReportesAsync()
+    private async Task MostrarReportesAsync(int? carreraId = null, int? escenarioId = null)
     {
         SeleccionarMenu("Reportes");
         if (!(_sesionActual.TienePermiso("REP.VER") || _sesionActual.EsAdministrador)) { MensajePagina = "Acceso denegado al módulo Reportes."; return; }
         MensajePagina = string.Empty;
         var vm = _serviceProvider.GetRequiredService<ViewModels.Reportes.ReportesViewModel>();
+        if (carreraId is > 0 && escenarioId is > 0)
+            vm.PrepararPreseleccion(carreraId.Value, escenarioId.Value);
         PaginaActual = vm;
         await vm.CargarCommand.ExecuteAsync(null);
     }

@@ -9,6 +9,7 @@ using SistemaAranceles.Application.DTOs.InversionInicial;
 using SistemaAranceles.Application.DTOs.Mantenimiento;
 using SistemaAranceles.Application.DTOs.RecursosFisicosDepreciacion;
 using SistemaAranceles.Application.DTOs.SueldosPlantaCentral;
+using SistemaAranceles.Application.DTOs.TasaRetencion;
 
 namespace SistemaAranceles.Infrastructure.Export;
 
@@ -102,6 +103,88 @@ internal static class SeccionesPdf
             tabla.Cell().Celda().AlignRight().Text(demanda.TotalGeneralDisplay).Bold();
         });
         EstilosPdf.Advertencia(col, demanda.MensajeAdvertencia);
+    }
+
+    public static void RetencionSimulacion(ColumnDescriptor col, RetencionSimulacionReporteDto retencion)
+    {
+        var titulo = "Retención y graduación — resultado de simulación por ciclos (estructura semestral)";
+        if (!retencion.TieneDatos)
+        {
+            SinDatos(col, titulo);
+            return;
+        }
+
+        EstilosPdf.TituloSeccion(col, titulo);
+
+        // Parámetros del escenario (la tabla usa las tasas configuradas, igual que la pantalla).
+        col.Item().Row(row =>
+        {
+            row.Spacing(6);
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("Tasa de retención").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text($"{retencion.TasaRetencionPorcentaje:N1}%").Bold().FontColor(EstilosPdf.ColorPrimario);
+            });
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("Tasa de graduación").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text($"{retencion.TasaGraduacionPorcentaje:N1}%").Bold().FontColor(EstilosPdf.ColorPrimario);
+            });
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("Paralelos abr-ago / sep-feb").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text($"{retencion.ParalelosPeriodo1} / {retencion.ParalelosPeriodo2}").Bold().FontColor(EstilosPdf.ColorPrimario);
+            });
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("Estudiantes de ingreso abr / sep").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text($"{retencion.EstudiantesPeriodo1:N0} / {retencion.EstudiantesPeriodo2:N0}").Bold().FontColor(EstilosPdf.ColorPrimario);
+            });
+        });
+
+        if (retencion.MetaRetencionPorcentaje is not null || retencion.MetaGraduacionPorcentaje is not null)
+        {
+            col.Item().PaddingTop(4).Text(
+                    $"Metas de referencia aplicadas a la proyección y a los cálculos financieros: retención {retencion.TasaRetencionAplicada:N1}%, graduación {retencion.TasaGraduacionAplicada:N1}%.")
+                .FontSize(7.5f).Italic().FontColor(EstilosPdf.ColorGris);
+        }
+
+        col.Item().PaddingTop(6).Table(tabla =>
+        {
+            tabla.ColumnsDefinition(c =>
+            {
+                c.RelativeColumn(2.2f);
+                for (var i = 0; i < retencion.TotalCiclos; i++)
+                    c.RelativeColumn();
+            });
+            tabla.Header(h =>
+            {
+                h.Cell().CeldaHeader().Text("Grupo de ingreso").Bold();
+                for (var ciclo = 1; ciclo <= retencion.TotalCiclos; ciclo++)
+                    h.Cell().CeldaHeader().AlignRight().Text($"{ciclo}°").Bold();
+            });
+
+            tabla.Cell().Celda().Text("Abril - agosto");
+            for (var i = 0; i < retencion.TotalCiclos; i++)
+            {
+                var valor = i < retencion.AlumnosPeriodo1PorCiclo.Count
+                    ? retencion.AlumnosPeriodo1PorCiclo[i].ToString("N0")
+                    : string.Empty;
+                tabla.Cell().Celda().AlignRight().Text(valor);
+            }
+
+            tabla.Cell().Celda().Text("Septiembre - febrero");
+            for (var i = 0; i < retencion.TotalCiclos; i++)
+            {
+                var valor = i < retencion.AlumnosPeriodo2PorCiclo.Count
+                    ? retencion.AlumnosPeriodo2PorCiclo[i].ToString("N0")
+                    : string.Empty;
+                tabla.Cell().Celda().AlignRight().Text(valor);
+            }
+        });
+        col.Item().PaddingTop(2).Text(
+                "Estudiantes del grupo de ingreso que llegan a cada ciclo: la primera mitad de la malla decae con la tasa de retención y la segunda con la de graduación.")
+            .FontSize(7.5f).Italic().FontColor(EstilosPdf.ColorGris);
     }
 
     public static void DocentesTabla(ColumnDescriptor col, DemandaProyectadaDto demanda)

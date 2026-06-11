@@ -27,6 +27,7 @@ using SistemaAranceles.Application.UseCases.InversionInicial;
 using SistemaAranceles.Application.UseCases.Mantenimiento;
 using SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion;
 using SistemaAranceles.Application.UseCases.SueldosPlantaCentral;
+using SistemaAranceles.Application.UseCases.TasaRetencion;
 using SistemaAranceles.Domain.Entities;
 using SistemaAranceles.Presentation.State;
 using SistemaAranceles.Presentation.ViewModels.Mantenimiento;
@@ -120,6 +121,19 @@ public sealed partial class ReportesViewModel : ObservableObject
         _ = CargarReporteActualAsync();
     }
 
+    private int? _preseleccionCarreraId;
+    private int? _preseleccionEscenarioId;
+
+    /// <summary>
+    /// Atajo desde Análisis Financiero (KAN-49): la próxima carga inicial selecciona esta
+    /// carrera y escenario en lugar de arrancar en blanco.
+    /// </summary>
+    public void PrepararPreseleccion(int carreraId, int escenarioId)
+    {
+        _preseleccionCarreraId = carreraId;
+        _preseleccionEscenarioId = escenarioId;
+    }
+
     [RelayCommand]
     private async Task CargarAsync()
     {
@@ -131,8 +145,10 @@ public sealed partial class ReportesViewModel : ObservableObject
 
         try
         {
-            var carreraIdActual = CarreraSeleccionada?.Id;
-            var escenarioIdActual = EscenarioSeleccionado?.Id;
+            var carreraIdActual = _preseleccionCarreraId ?? CarreraSeleccionada?.Id;
+            var escenarioIdActual = _preseleccionEscenarioId ?? EscenarioSeleccionado?.Id;
+            _preseleccionCarreraId = null;
+            _preseleccionEscenarioId = null;
 
             using var scope = _sp.CreateScope();
             var repoCarrera = scope.ServiceProvider.GetRequiredService<IRepositorioCarrera>();
@@ -544,6 +560,10 @@ public sealed partial class ReportesViewModel : ObservableObject
                 SeccionReporte.PuntoEquilibrio, SeccionReporte.BalanceProyectado),
             sp => sp.GetRequiredService<CalcularMaterialesPorPeriodoQuery>().EjecutarAsync(carreraId, escenarioId));
 
+        var tRetencion = Cargar(
+            Necesita(SeccionReporte.RetencionSimulacion),
+            sp => sp.GetRequiredService<ObtenerRetencionSimulacionReporteQuery>().EjecutarAsync(carreraId, escenarioId));
+
         var tActivos = Cargar(
             Necesita(SeccionReporte.ActivosFijos),
             sp => sp.GetRequiredService<ListarActivosFijosQuery>().EjecutarAsync(carreraId, escenarioId));
@@ -709,6 +729,7 @@ public sealed partial class ReportesViewModel : ObservableObject
         {
             Arancel = await tArancel,
             Demanda = await tDemanda,
+            RetencionSimulacion = await tRetencion,
             Ingresos = await tIngresos,
             Materiales = await tMateriales,
             ActivosFijos = await tActivos,

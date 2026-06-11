@@ -1,6 +1,7 @@
-<UserControl x:Class="SistemaAranceles.Presentation.Views.Amortizacion.AmortizacionView"
+﻿<UserControl x:Class="SistemaAranceles.Presentation.Views.Amortizacion.AmortizacionView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:beh="clr-namespace:SistemaAranceles.Presentation.Behaviors"
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              Height="Auto" Width="Auto">
 
@@ -93,7 +94,7 @@
                 </Border>
 
                 <StackPanel Margin="0,0,0,8">
-                    <TextBlock Text="{Binding MensajeExito}" Foreground="#2E7D32" FontWeight="SemiBold"
+                    <TextBlock Text="{Binding MensajeExito}" beh:AutoOcultarMensaje.Habilitado="True" Foreground="#2E7D32" FontWeight="SemiBold"
                                Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
                     <TextBlock Text="{Binding MensajeInfo}" Foreground="#1A237E" FontWeight="SemiBold" TextWrapping="Wrap"
                                Visibility="{Binding MensajeInfo, Converter={StaticResource StringToVisibilityConverter}}"/>

@@ -1,6 +1,7 @@
-<UserControl x:Class="SistemaAranceles.Presentation.Views.TasaRetencion.ConfiguracionRetencionView"
+﻿<UserControl x:Class="SistemaAranceles.Presentation.Views.TasaRetencion.ConfiguracionRetencionView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:beh="clr-namespace:SistemaAranceles.Presentation.Behaviors">
     <Grid Margin="16">
         <Grid.Resources>
             <Style x:Key="ComboEscenarioItemStyle"
@@ -55,7 +56,7 @@
                        Foreground="#C62828"
                        FontSize="12"
                        Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
-            <TextBlock Text="{Binding MensajeExito}"
+            <TextBlock Text="{Binding MensajeExito}" beh:AutoOcultarMensaje.Habilitado="True"
                        Foreground="#2E7D32"
                        FontSize="12"
                        Visibility="{Binding MensajeExito, Converter={StaticResource StringToVisibilityConverter}}"/>
