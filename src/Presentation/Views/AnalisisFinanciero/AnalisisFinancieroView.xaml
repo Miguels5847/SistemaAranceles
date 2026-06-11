@@ -287,7 +287,7 @@
             <TextBlock Text="Análisis Financiero"
                        FontSize="22"
                        FontWeight="Bold"
-                       Foreground="#1B5E20"/>
+                       Foreground="#1A237E"/>
             <TextBlock Text="Pérdidas y Ganancias, Flujo de Fondos e indicadores financieros"
                        FontSize="12"
                        Foreground="#546E7A"
@@ -591,7 +591,7 @@
                             <StackPanel>
                                 <TextBlock Text="Proyección de Resultados y Punto de Equilibrio"
                                            FontWeight="SemiBold"
-                                           Foreground="#1B5E20"
+                                           Foreground="#1A237E"
                                            Margin="0,0,0,2"/>
                                 <TextBlock Text="{Binding PuntoEquilibrio.PeriodoBaseEtiqueta, StringFormat=Período del punto de equilibrio (período base): {0}, FallbackValue='Período del punto de equilibrio: -'}"
                                            FontSize="11"
@@ -620,7 +620,7 @@
                             <StackPanel>
                                 <TextBlock Text="Análisis del Punto de Equilibrio"
                                            FontWeight="SemiBold"
-                                           Foreground="#1B5E20"
+                                           Foreground="#1A237E"
                                            Margin="0,0,0,8"/>
                                 <DataGrid ItemsSource="{Binding AnalisisPuntoEquilibrio}"
                                           AutoGenerateColumns="False"
@@ -644,7 +644,7 @@
                                 Visibility="{Binding TieneSimulacionDesercion, Converter={StaticResource BoolToVisibilityConverter}}">
                             <StackPanel>
                                 <TextBlock Text="Simulación de tasa de deserción (riesgo)"
-                                           FontWeight="SemiBold" Foreground="#1B5E20" Margin="0,0,0,4"/>
+                                           FontWeight="SemiBold" Foreground="#1A237E" Margin="0,0,0,4"/>
                                 <TextBlock Text="Edita las tasas para ver cuántos estudiantes por ciclo se necesitan si hay retiro. Solo afecta esta simulación; no cambia el resto del análisis."
                                            FontSize="11" Foreground="#546E7A" TextWrapping="Wrap" Margin="0,0,0,8"/>
                                 <Grid>
@@ -749,7 +749,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="Bisección VAN = 0" FontWeight="SemiBold" Foreground="#1B5E20"/>
+                                <TextBlock Text="Bisección VAN = 0" FontWeight="SemiBold" Foreground="#1A237E"/>
                                 <TextBlock FontSize="11" Foreground="#546E7A" TextWrapping="Wrap">
                                     <Run Text="Rango "/>
                                     <Run Text="{Binding ArancelOptimoBiseccion.RangoArancelDisplay, Mode=OneWay, FallbackValue='$ 500.00 - $ 5,000.00'}"/>
@@ -786,7 +786,7 @@
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
-                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Comparativa de arancel" FontWeight="SemiBold" Foreground="#1B5E20"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Comparativa de arancel" FontWeight="SemiBold" Foreground="#1A237E"/>
                                         <TextBlock Grid.Row="0" Grid.Column="1" Text="Arancel" FontWeight="SemiBold" Foreground="#546E7A" TextAlignment="Right"/>
                                         <TextBlock Grid.Row="0" Grid.Column="2" Text="Total/sem." FontWeight="SemiBold" Foreground="#546E7A" TextAlignment="Right"/>
 
@@ -1039,7 +1039,7 @@
                         <Border Style="{StaticResource PanelResumen}" Margin="0,0,0,10">
                             <StackPanel>
                                 <TextBlock Text="Distribución referencial de costos de la carrera"
-                                           FontWeight="SemiBold" Foreground="#1B5E20" Margin="0,0,0,2"/>
+                                           FontWeight="SemiBold" Foreground="#1A237E" Margin="0,0,0,2"/>
                                 <TextBlock Text="Cómo se reparte el 100% del costo de la carrera por categoría (información referencial)."
                                            FontSize="11" Foreground="#546E7A" Margin="0,0,0,8" TextWrapping="Wrap"/>
                                 <DataGrid ItemsSource="{Binding DistribucionCes}"
@@ -1060,7 +1060,7 @@
                         <Border Style="{StaticResource PanelResumen}" Margin="0,0,0,10">
                             <StackPanel>
                                 <TextBlock Text="INF CES — Presupuesto de la primera cohorte por función"
-                                           FontWeight="SemiBold" Foreground="#1B5E20" Margin="0,0,0,8"/>
+                                           FontWeight="SemiBold" Foreground="#1A237E" Margin="0,0,0,8"/>
                                 <DataGrid ItemsSource="{Binding InfCes}"
                                           AutoGenerateColumns="False" IsReadOnly="True"
                                           RowStyle="{StaticResource PerdidasGananciasRowStyle}"
@@ -1103,7 +1103,7 @@
                         <Border Style="{StaticResource PanelResumen}" Margin="0,0,0,0">
                             <StackPanel>
                                 <TextBlock Text="CES — Parámetros de justificación del arancel"
-                                           FontWeight="SemiBold" Foreground="#1B5E20" Margin="0,0,0,8"/>
+                                           FontWeight="SemiBold" Foreground="#1A237E" Margin="0,0,0,8"/>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                     <TextBlock Text="Costo de carreras similares (referencial):" FontSize="11"
                                                Foreground="#546E7A" VerticalAlignment="Center" Margin="0,0,8,0"/>

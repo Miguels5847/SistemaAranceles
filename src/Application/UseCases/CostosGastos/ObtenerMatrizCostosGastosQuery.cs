@@ -279,64 +279,13 @@ public sealed class ObtenerMatrizCostosGastosQuery(
         int carreraId,
         int escenarioProyeccionId,
         CancellationToken ct)
-    {
-        var configuracion = (await repositorioConfiguracionRetencion.ListarDtoAsync(ct))
-            .FirstOrDefault(c => c.CarreraId == carreraId && c.EscenarioProyeccionId == escenarioProyeccionId);
-        if (configuracion is null)
-            return null;
-
-        var overrides = await repositorioOverrides.ListarPorProyeccionAsync(proyeccion.Id, ct);
-        var (horasDocencia, horasPractica) = ConstruirArreglosOverride(overrides, proyeccion);
-
-        return ConsolidadorProyeccionEstudiantes.Calcular(
+        => await ConstructorConsolidadoProyeccion.ConstruirAsync(
             proyeccion,
-            configuracion.ParalelosPeriodo1,
-            configuracion.ParalelosPeriodo2,
-            configuracion.MetaRetencionPorcentaje ?? configuracion.TasaRetencionPorcentaje,
-            configuracion.MetaGraduacionPorcentaje ?? configuracion.TasaGraduacionPorcentaje,
-            horasDocSemestralesOverride: horasDocencia,
-            horasTecSemestralesOverride: horasPractica,
-            horasDocSemanaOverride: 18m,
-            horasTecSemanaOverride: 40m);
-    }
-
-    private static (decimal[]? doc, decimal[]? prac) ConstruirArreglosOverride(
-        IReadOnlyList<OverrideHorasPeriodo> overrides,
-        ProyeccionEstudiantesDto proyeccion)
-    {
-        if (overrides.Count == 0)
-            return (null, null);
-
-        var totalPeriodos = proyeccion.Detalles.Select(d => d.NumeroPeriodo).DefaultIfEmpty(0).Max();
-        if (totalPeriodos <= 0)
-            return (null, null);
-
-        var doc = new decimal[totalPeriodos];
-        var prac = new decimal[totalPeriodos];
-        var hayDoc = false;
-        var hayPrac = false;
-
-        foreach (var o in overrides)
-        {
-            var idx = o.Periodo - 1;
-            if (idx < 0 || idx >= totalPeriodos)
-                continue;
-
-            if (o.HorasDocencia is { } hd)
-            {
-                doc[idx] = hd;
-                hayDoc = true;
-            }
-
-            if (o.HorasPractica is { } hp)
-            {
-                prac[idx] = hp;
-                hayPrac = true;
-            }
-        }
-
-        return (hayDoc ? doc : null, hayPrac ? prac : null);
-    }
+            carreraId,
+            escenarioProyeccionId,
+            repositorioConfiguracionRetencion,
+            repositorioOverrides,
+            ct);
 
     private async Task<IReadOnlyDictionary<int, decimal>> ObtenerAportePlantaCentralPorPeriodoAsync(
         int carreraId,

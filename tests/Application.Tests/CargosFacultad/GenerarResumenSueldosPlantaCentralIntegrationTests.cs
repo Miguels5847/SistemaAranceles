@@ -26,7 +26,9 @@ public class GenerarResumenSueldosPlantaCentralIntegrationTests
             new RepositorioInflacionAnualFake(),
             new RepositorioProyeccionEstudiantesFake(proyeccion),
             new RepositorioCarreraFake(),
-            new RepositorioDatosInstitucionalesFake(datos));
+            new RepositorioDatosInstitucionalesFake(datos),
+            new RepositorioConfiguracionRetencionFake(),
+            new RepositorioOverrideHorasPeriodoFake());
 
         var resultado = await query.EjecutarAsync(carreraId: 1, escenarioProyeccionId: 1, estudiantesUA: 0m);
 
@@ -87,7 +89,9 @@ public class GenerarResumenSueldosPlantaCentralIntegrationTests
             repoInflacion,
             repoProyeccion,
             repoCarrera,
-            new RepositorioDatosInstitucionalesFake(datos));
+            new RepositorioDatosInstitucionalesFake(datos),
+            new RepositorioConfiguracionRetencionFake(),
+            new RepositorioOverrideHorasPeriodoFake());
         var resumen = await resumenQuery.EjecutarAsync(
             carreraId: 1,
             escenarioProyeccionId: 1,
@@ -215,5 +219,35 @@ public class GenerarResumenSueldosPlantaCentralIntegrationTests
             => Task.FromResult<IReadOnlyList<DatosInstitucionales>>(vigente is null ? [] : [vigente]);
         public void Agregar(DatosInstitucionales datos) { }
         public void Actualizar(DatosInstitucionales datos) { }
+    }
+
+    // Sin configuración de retención el consolidado interno queda null: mismo comportamiento
+    // que antes de KAN-49 para estos tests (docentes sin consolidado explícito).
+    private sealed class RepositorioConfiguracionRetencionFake : IRepositorioConfiguracionRetencion
+    {
+        public Task<IReadOnlyList<SistemaAranceles.Application.DTOs.TasaRetencion.ConfiguracionRetencionDto>> ListarDtoAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<SistemaAranceles.Application.DTOs.TasaRetencion.ConfiguracionRetencionDto>>([]);
+        public Task<SistemaAranceles.Application.DTOs.TasaRetencion.ConfiguracionRetencionDto?> ObtenerDtoPorIdAsync(int id, CancellationToken cancellationToken = default)
+            => Task.FromResult<SistemaAranceles.Application.DTOs.TasaRetencion.ConfiguracionRetencionDto?>(null);
+        public Task<ConfiguracionRetencion?> ObtenerDominioPorIdAsync(int id, CancellationToken cancellationToken = default)
+            => Task.FromResult<ConfiguracionRetencion?>(null);
+        public Task<ConfiguracionRetencion?> ObtenerActivoPorCarreraYEscenarioNombreAsync(int carreraId, string escenarioNombre, CancellationToken cancellationToken = default)
+            => Task.FromResult<ConfiguracionRetencion?>(null);
+        public Task<bool> ExisteCombinacionAsync(int carreraId, int escenarioProyeccionId, int? excluirId = null, CancellationToken cancellationToken = default)
+            => Task.FromResult(false);
+        public Task AgregarAsync(ConfiguracionRetencion configuracion, int? creadoPorUsuarioId = null, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task ActualizarAsync(ConfiguracionRetencion configuracion, int? actualizadoPorUsuarioId = null, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task EliminarPorIdAsync(int id, int? eliminadoPorUsuarioId = null, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    }
+
+    private sealed class RepositorioOverrideHorasPeriodoFake : IRepositorioOverrideHorasPeriodo
+    {
+        public Task<IReadOnlyList<OverrideHorasPeriodo>> ListarPorProyeccionAsync(int proyeccionId, CancellationToken ct = default)
+            => Task.FromResult<IReadOnlyList<OverrideHorasPeriodo>>([]);
+        public Task<OverrideHorasPeriodo?> ObtenerPorProyeccionYPeriodoAsync(int proyeccionId, int periodo, CancellationToken ct = default)
+            => Task.FromResult<OverrideHorasPeriodo?>(null);
+        public Task AgregarAsync(OverrideHorasPeriodo entidad, CancellationToken ct = default) => Task.CompletedTask;
+        public void Actualizar(OverrideHorasPeriodo entidad) { }
+        public void Eliminar(OverrideHorasPeriodo entidad) { }
     }
 }

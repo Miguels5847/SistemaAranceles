@@ -1371,14 +1371,8 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             .ToList();
     }
 
-    private static string FormatearCategoria(string categoria) => categoria?.ToUpperInvariant() switch
-    {
-        "MATERIALES_SUMINISTROS" => "MATERIALES Y SUMINISTROS",
-        "ASEO_LIMPIEZA" => "SUMINISTROS DE ASEO Y LIMPIEZA",
-        "ACCESORIOS_MATERIALES" => "ACCESORIOS Y MATERIALES",
-        "OTRO" => "OTRO",
-        _ => categoria ?? string.Empty
-    };
+    private static string FormatearCategoria(string categoria)
+        => SistemaAranceles.Application.Comun.CategoriaMaterialDisplay.Formatear(categoria);
 
     private static ObservableCollection<MaterialCantidadMatrizFilaView> ConstruirFilasMaterialesCantidades(
         MaterialesProyectadosDto? materiales,
@@ -1397,10 +1391,12 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
 
         foreach (var grupo in grupos)
         {
+            // La categoría va en la columna Concepto: la fila-encabezado es la que agrupa,
+            // así la matriz no necesita una columna "Categoría" repetida por fila (KAN-49).
             filas.Add(new MaterialCantidadMatrizFilaView
             {
                 Categoria = FormatearCategoria(grupo.Key),
-                Concepto = string.Empty,
+                Concepto = FormatearCategoria(grupo.Key),
                 EsEncabezadoCategoria = true
             });
 
@@ -1464,7 +1460,7 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
             filas.Add(new MaterialMonetarioMatrizFilaView
             {
                 Categoria = FormatearCategoria(grupo.Key),
-                Concepto = string.Empty,
+                Concepto = FormatearCategoria(grupo.Key),
                 EsEncabezadoCategoria = true
             });
 
@@ -1508,14 +1504,8 @@ public sealed partial class DemandaIngresosViewModel : ObservableObject
         return new ObservableCollection<MaterialMonetarioMatrizFilaView>(filas);
     }
 
-    private static int OrdenCategoria(string categoria) => categoria?.ToUpperInvariant() switch
-    {
-        "MATERIALES_SUMINISTROS" => 1,
-        "ASEO_LIMPIEZA" => 2,
-        "ACCESORIOS_MATERIALES" => 3,
-        "OTRO" => 99,
-        _ => 50
-    };
+    private static int OrdenCategoria(string categoria)
+        => SistemaAranceles.Application.Comun.CategoriaMaterialDisplay.Orden(categoria);
 
     private static ObservableCollection<IngresosMatrizFilaView> ConstruirFilasIngresos(IngresosProyectadosDto? ingresos)
     {

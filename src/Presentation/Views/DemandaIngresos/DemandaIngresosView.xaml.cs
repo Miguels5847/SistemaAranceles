@@ -240,17 +240,12 @@ public partial class DemandaIngresosView : UserControl
             return;
 
         grid.Columns.Clear();
-        grid.Columns.Add(new DataGridTextColumn
-        {
-            Header = "Categoría",
-            Binding = new Binding(nameof(MaterialCantidadMatrizFilaView.Categoria)),
-            Width = new DataGridLength(180)
-        });
+        // Sin columna "Categoría": la fila-encabezado de cada grupo ya la muestra (KAN-49).
         grid.Columns.Add(new DataGridTextColumn
         {
             Header = "Concepto",
             Binding = new Binding(nameof(MaterialCantidadMatrizFilaView.Concepto)),
-            Width = new DataGridLength(180)
+            Width = new DataGridLength(240)
         });
 
         if (DataContext is DemandaIngresosViewModel vm)
@@ -283,15 +278,9 @@ public partial class DemandaIngresosView : UserControl
         grid.Columns.Clear();
         grid.Columns.Add(new DataGridTextColumn
         {
-            Header = "Categoría",
-            Binding = new Binding(nameof(MaterialMonetarioMatrizFilaView.Categoria)),
-            Width = new DataGridLength(180)
-        });
-        grid.Columns.Add(new DataGridTextColumn
-        {
             Header = "Concepto",
             Binding = new Binding(nameof(MaterialMonetarioMatrizFilaView.Concepto)),
-            Width = new DataGridLength(180)
+            Width = new DataGridLength(240)
         });
 
         if (DataContext is DemandaIngresosViewModel vm)

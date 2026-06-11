@@ -1,4 +1,5 @@
 using QuestPDF.Fluent;
+using SistemaAranceles.Application.Comun;
 using SistemaAranceles.Application.DTOs.Amortizacion;
 using SistemaAranceles.Application.DTOs.AnalisisFinanciero;
 using SistemaAranceles.Application.DTOs.CapitalTrabajo;
@@ -579,21 +580,10 @@ internal static class SeccionesPdf
         }
 
         var etiquetas = EtiquetasOrdenadas(celdas.Select(x => (x.Anio, x.NumeroPeriodo, x.EtiquetaPeriodo)));
-        var filas = celdas
-            .GroupBy(x => (x.Categoria, x.Concepto))
-            .OrderBy(g => g.Key.Categoria).ThenBy(g => g.Key.Concepto)
-            .Select(g =>
-            {
-                var porPeriodo = g.ToDictionary(x => (x.Anio, x.NumeroPeriodo), x => x.Cantidad);
-                var valores = etiquetas.Select(e => porPeriodo.GetValueOrDefault((e.Anio, e.Numero)))
-                    .Select(v => v.ToString("N2")).ToList();
-                return (Concepto: $"{g.Key.Categoria} — {g.Key.Concepto}",
-                        Periodos: (IReadOnlyList<string>)valores,
-                        Total: g.Sum(x => x.Cantidad).ToString("N2"),
-                        EsSeccion: false,
-                        EsTotal: false);
-            })
-            .ToList();
+        var filas = FilasMaterialesAgrupadas(
+            celdas.Select(x => (x.Categoria, x.Concepto, x.Anio, x.NumeroPeriodo, x.Cantidad)),
+            etiquetas,
+            v => v.ToString("N2"));
 
         Matriz(col, titulo, etiquetas.Select(e => e.Etiqueta).ToList(), filas, materiales.MensajeAdvertencia);
     }
@@ -609,21 +599,10 @@ internal static class SeccionesPdf
         }
 
         var etiquetas = EtiquetasOrdenadas(celdas.Select(x => (x.Anio, x.NumeroPeriodo, x.EtiquetaPeriodo)));
-        var filas = celdas
-            .GroupBy(x => (x.Categoria, x.Concepto))
-            .OrderBy(g => g.Key.Categoria).ThenBy(g => g.Key.Concepto)
-            .Select(g =>
-            {
-                var porPeriodo = g.ToDictionary(x => (x.Anio, x.NumeroPeriodo), x => x.Costo);
-                var valores = etiquetas.Select(e => porPeriodo.GetValueOrDefault((e.Anio, e.Numero)))
-                    .Select(v => $"$ {v:N2}").ToList();
-                return (Concepto: $"{g.Key.Categoria} — {g.Key.Concepto}",
-                        Periodos: (IReadOnlyList<string>)valores,
-                        Total: $"$ {g.Sum(x => x.Costo):N2}",
-                        EsSeccion: false,
-                        EsTotal: false);
-            })
-            .ToList();
+        var filas = FilasMaterialesAgrupadas(
+            celdas.Select(x => (x.Categoria, x.Concepto, x.Anio, x.NumeroPeriodo, x.Costo)),
+            etiquetas,
+            v => $"$ {v:N2}");
 
         var totalesPorPeriodo = etiquetas
             .Select(e => celdas.Where(x => x.Anio == e.Anio && x.NumeroPeriodo == e.Numero).Sum(x => x.Costo))
@@ -636,6 +615,37 @@ internal static class SeccionesPdf
     private static List<(int Anio, int Numero, string Etiqueta)> EtiquetasOrdenadas(
         IEnumerable<(int Anio, int Numero, string Etiqueta)> celdas)
         => celdas.Distinct().OrderBy(x => x.Anio).ThenBy(x => x.Numero).ToList();
+
+    /// <summary>
+    /// Filas de materiales agrupadas como en pantalla: una banda por categoría (nombre legible)
+    /// y debajo sus conceptos, en vez del crudo "CATEGORIA_X — Concepto" por fila (KAN-49).
+    /// </summary>
+    private static List<(string Concepto, IReadOnlyList<string> Periodos, string Total, bool EsSeccion, bool EsTotal)> FilasMaterialesAgrupadas(
+        IEnumerable<(string Categoria, string Concepto, int Anio, int NumeroPeriodo, decimal Valor)> celdas,
+        List<(int Anio, int Numero, string Etiqueta)> etiquetas,
+        Func<decimal, string> formato)
+    {
+        var filas = new List<(string, IReadOnlyList<string>, string, bool, bool)>();
+        var bandaVacia = etiquetas.Select(_ => string.Empty).ToList();
+
+        foreach (var categoria in celdas
+            .GroupBy(x => x.Categoria)
+            .OrderBy(g => CategoriaMaterialDisplay.Orden(g.Key)).ThenBy(g => g.Key))
+        {
+            filas.Add((CategoriaMaterialDisplay.Formatear(categoria.Key), bandaVacia, string.Empty, true, false));
+
+            foreach (var concepto in categoria.GroupBy(x => x.Concepto).OrderBy(g => g.Key))
+            {
+                var porPeriodo = concepto.ToDictionary(x => (x.Anio, x.NumeroPeriodo), x => x.Valor);
+                var valores = etiquetas
+                    .Select(e => formato(porPeriodo.GetValueOrDefault((e.Anio, e.Numero))))
+                    .ToList();
+                filas.Add((concepto.Key, valores, formato(concepto.Sum(x => x.Valor)), false, false));
+            }
+        }
+
+        return filas;
+    }
 
     public static void ActivosFijos(ColumnDescriptor col, IReadOnlyList<ActivoFijoDto> activos, TotalesActivosFijosDto? totales)
     {

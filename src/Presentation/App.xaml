@@ -18,10 +18,14 @@
             <conv:ModoArancelDisplayConverter x:Key="ModoArancelDisplayConverter"/>
 
             <!-- KAN-47: las tablas no se redimensionan por el usuario (arrastrar bordes
-                 deformaba columnas/filas y "dañaba" la lectura de los datos). -->
+                 deformaba columnas/filas y "dañaba" la lectura de los datos).
+                 KAN-49: líneas de cuadrícula suaves (el default de WPF es negro). -->
             <Style TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
                 <Setter Property="CanUserResizeColumns" Value="False"/>
                 <Setter Property="CanUserResizeRows" Value="False"/>
+                <Setter Property="HorizontalGridLinesBrush" Value="#E3E6F0"/>
+                <Setter Property="VerticalGridLinesBrush" Value="#EDEFF7"/>
+                <Setter Property="BorderBrush" Value="#D5D9E8"/>
             </Style>
         </ResourceDictionary>
     </Application.Resources>

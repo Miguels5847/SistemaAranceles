@@ -39,6 +39,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <!-- KAN-49: necesario para `dotnet publish -r win-x64` (evita NETSDK1047 en el
+         proyecto temporal de WPF cuando los assets se restauraron sin RID). -->
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
 </Project>

@@ -175,8 +175,17 @@
                     <ItemsControl ItemsSource="{Binding MenuItems}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
+                                <Grid Visibility="{Binding EsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <!-- Encabezado de grupo: etiqueta que marca el orden del flujo, no navega. -->
+                                <TextBlock Text="{Binding Titulo}"
+                                           Visibility="{Binding EsEncabezado, Converter={StaticResource BoolToVisibilityConverter}}"
+                                           Foreground="#7986CB"
+                                           FontSize="10"
+                                           FontWeight="Bold"
+                                           Margin="22,14,10,3"
+                                           TextWrapping="Wrap"/>
                                 <Button Command="{Binding Comando}"
-                                        Visibility="{Binding EsVisible, Converter={StaticResource BoolToVisibilityConverter}}"
+                                        Visibility="{Binding EsEncabezado, Converter={StaticResource InverseBoolToVisibilityConverter}}"
                                         HorizontalContentAlignment="Left"
                                         Background="Transparent"
                                         BorderThickness="0"
@@ -184,10 +193,10 @@
                                         FontSize="13"
                                         Padding="10,8"
                                         Margin="10,2"
-                                        Cursor="Hand"
-                                        ToolTip="{Binding Titulo}">
+                                        Cursor="Hand">
                                     <Button.Style>
                                         <Style TargetType="Button">
+                                            <Setter Property="ToolTip" Value="{Binding Descripcion}"/>
                                             <Setter Property="Template">
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="Button">
@@ -219,10 +228,16 @@
                                                     </ControlTemplate>
                                                 </Setter.Value>
                                             </Setter>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Descripcion}" Value="">
+                                                    <Setter Property="ToolTip" Value="{x:Null}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
                                         </Style>
                                     </Button.Style>
                                     <TextBlock Text="{Binding Titulo}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxWidth="166" LineHeight="17"/>
                                 </Button>
+                                </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>

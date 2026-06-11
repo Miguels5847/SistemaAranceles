@@ -274,7 +274,7 @@
 
                         <!-- Parámetros de Demanda e Ingresos -->
                         <Border Grid.Row="5"
-                                BorderBrush="#7986CB"
+                                BorderBrush="#C5CAE9"
                                 BorderThickness="1"
                                 CornerRadius="4"
                                 Padding="10,8"
@@ -399,7 +399,7 @@
 
                         <!-- Parámetros de Costos y Gastos -->
                         <Border Grid.Row="6"
-                                BorderBrush="#7986CB"
+                                BorderBrush="#C5CAE9"
                                 BorderThickness="1"
                                 CornerRadius="4"
                                 Padding="10,8"
@@ -464,7 +464,7 @@
 
                         <!-- Parámetros de Análisis Financiero -->
                         <Border Grid.Row="7"
-                                BorderBrush="#7986CB"
+                                BorderBrush="#C5CAE9"
                                 BorderThickness="1"
                                 CornerRadius="4"
                                 Padding="10,8"
@@ -518,8 +518,7 @@
 
                         <!-- Parámetros de Arancel Óptimo / Bisección VAN=0 -->
                         <Border Grid.Row="8"
-                                Background="#F1F8E9"
-                                BorderBrush="#81C784"
+                                BorderBrush="#C5CAE9"
                                 BorderThickness="1"
                                 CornerRadius="4"
                                 Padding="10,8"
@@ -540,7 +539,7 @@
 
                                         <TextBlock Grid.Row="0" Grid.ColumnSpan="4"
                                                    Text="Parámetros de Arancel Óptimo / Bisección VAN=0"
-                                                   FontWeight="SemiBold" Foreground="#1B5E20"
+                                                   FontWeight="SemiBold" Foreground="#1A237E"
                                                    Margin="0,0,0,6"/>
 
                                         <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,6,4">
@@ -581,7 +580,6 @@
                                 BorderBrush="#C5CAE9"
                                 BorderThickness="1"
                                 CornerRadius="4"
-                                Background="#F8F9FF"
                                 Padding="10,8">
                                 <Grid>
                                         <Grid.RowDefinitions>

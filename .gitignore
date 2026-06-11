@@ -4,6 +4,7 @@
 out/
 publish/
 artifacts/
+SistemaAranceles-win64.zip
 
 # Visual Studio / VS Code
 .vs/

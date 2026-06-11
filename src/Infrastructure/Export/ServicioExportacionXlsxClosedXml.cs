@@ -1,4 +1,5 @@
 using ClosedXML.Excel;
+using SistemaAranceles.Application.Comun;
 using SistemaAranceles.Application.DTOs.Reportes;
 using SistemaAranceles.Application.Interfaces.Servicios;
 
@@ -208,7 +209,7 @@ public sealed class ServicioExportacionXlsxClosedXml : IServicioExportacionXlsx
         hoja.Cell(2, 1).Value = $"Carrera: {datos.CarreraNombre}";
         hoja.Cell(3, 1).Value = $"Escenario: {datos.EscenarioNombre}";
         hoja.Cell(4, 1).Value = $"Generado: {datos.GeneradoEn:dd/MM/yyyy HH:mm} — Sistema de Aranceles Universitarios";
-        hoja.Columns().AdjustToContents();
+        hoja.ColumnsUsed().AdjustToContents();
     }
 
     private static IXLWorksheet NuevaHoja(XLWorkbook libro, string nombre)
@@ -242,7 +243,7 @@ public sealed class ServicioExportacionXlsxClosedXml : IServicioExportacionXlsx
                 celda.Value = pares[i].Valor?.ToString() ?? string.Empty;
             }
         }
-        hoja.Columns().AdjustToContents();
+        hoja.ColumnsUsed().AdjustToContents();
     }
 
     private static void HojaMatriz(
@@ -268,10 +269,11 @@ public sealed class ServicioExportacionXlsxClosedXml : IServicioExportacionXlsx
             var fila = filas[f];
             var filaXl = f + 2;
             hoja.Cell(filaXl, 1).Value = fila.Concepto;
-            for (var c = 0; c < etiquetas.Count; c++)
+            // Sin períodos = fila-banda (encabezado de grupo): las celdas quedan vacías.
+            for (var c = 0; c < fila.Periodos.Count && c < etiquetas.Count; c++)
             {
                 var celda = hoja.Cell(filaXl, c + 2);
-                celda.Value = c < fila.Periodos.Count ? fila.Periodos[c] : 0m;
+                celda.Value = fila.Periodos[c];
                 celda.Style.NumberFormat.Format = formato;
             }
             if (fila.Total is decimal total)
@@ -283,7 +285,7 @@ public sealed class ServicioExportacionXlsxClosedXml : IServicioExportacionXlsx
             if (fila.Resaltada)
                 hoja.Row(filaXl).Style.Font.SetBold();
         }
-        hoja.Columns().AdjustToContents();
+        hoja.ColumnsUsed().AdjustToContents();
     }
 
     private static void EstiloHeader(IXLRange rango)
@@ -333,7 +335,7 @@ public sealed class ServicioExportacionXlsxClosedXml : IServicioExportacionXlsx
         foreach (var c in new[] { 6, 7, 8 })
             hoja.Cell(filaXl, c).Style.NumberFormat.Format = FormatoMoneda;
         hoja.Row(filaXl).Style.Font.SetBold();
-        hoja.Columns().AdjustToContents();
+        hoja.ColumnsUsed().AdjustToContents();
     }
 
     private static void ComponerMateriales(
@@ -347,21 +349,24 @@ public sealed class ServicioExportacionXlsxClosedXml : IServicioExportacionXlsx
             .Distinct()
             .OrderBy(x => x.Anio).ThenBy(x => x.NumeroPeriodo)
             .ToList();
-        var filas = celdas
-            .GroupBy(c => (c.Categoria, c.Concepto))
-            .OrderBy(g => g.Key.Categoria).ThenBy(g => g.Key.Concepto)
-            .Select(g =>
+
+        // Agrupado como en pantalla: fila resaltada por categoría legible + sus conceptos (KAN-49).
+        var filas = new List<(string Concepto, IReadOnlyList<decimal> Periodos, decimal? Total, bool Resaltada)>();
+        foreach (var categoria in celdas
+            .GroupBy(c => c.Categoria)
+            .OrderBy(g => CategoriaMaterialDisplay.Orden(g.Key)).ThenBy(g => g.Key))
+        {
+            filas.Add((CategoriaMaterialDisplay.Formatear(categoria.Key), [], null, true));
+
+            foreach (var concepto in categoria.GroupBy(c => c.Concepto).OrderBy(g => g.Key))
             {
-                var porPeriodo = g.ToDictionary(x => (x.Anio, x.NumeroPeriodo), x => x.Valor);
+                var porPeriodo = concepto.ToDictionary(x => (x.Anio, x.NumeroPeriodo), x => x.Valor);
                 var valores = etiquetas
                     .Select(e => porPeriodo.GetValueOrDefault((e.Anio, e.NumeroPeriodo)))
                     .ToList();
-                return ($"{g.Key.Categoria} — {g.Key.Concepto}",
-                    (IReadOnlyList<decimal>)valores,
-                    (decimal?)g.Sum(x => x.Valor),
-                    false);
-            })
-            .ToList();
+                filas.Add((concepto.Key, valores, concepto.Sum(x => x.Valor), false));
+            }
+        }
 
         HojaMatriz(libro, nombre, "Concepto", etiquetas.Select(e => e.Etiqueta).ToList(), filas, formato);
     }
@@ -404,7 +409,7 @@ public sealed class ServicioExportacionXlsxClosedXml : IServicioExportacionXlsx
             hoja.Cell(filaXl, 6).Style.NumberFormat.Format = FormatoMoneda;
             hoja.Row(filaXl).Style.Font.SetBold();
         }
-        hoja.Columns().AdjustToContents();
+        hoja.ColumnsUsed().AdjustToContents();
     }
 
     private static void ComponerDepreciacion(XLWorkbook libro, ReporteDireccionDatos datos)
@@ -425,7 +430,7 @@ public sealed class ServicioExportacionXlsxClosedXml : IServicioExportacionXlsx
             hoja.Cell(filaXl, 3).Style.NumberFormat.Format = FormatoMoneda;
             filaXl++;
         }
-        hoja.Columns().AdjustToContents();
+        hoja.ColumnsUsed().AdjustToContents();
     }
 
     private static void ComponerMantenimiento(XLWorkbook libro, ReporteDireccionDatos datos)
@@ -449,7 +454,7 @@ public sealed class ServicioExportacionXlsxClosedXml : IServicioExportacionXlsx
                 hoja.Cell(filaXl, c).Style.NumberFormat.Format = FormatoMoneda;
             filaXl++;
         }
-        hoja.Columns().AdjustToContents();
+        hoja.ColumnsUsed().AdjustToContents();
     }
 
     private static void ComponerPlantaCentral(XLWorkbook libro, ReporteDireccionDatos datos)
@@ -475,7 +480,7 @@ public sealed class ServicioExportacionXlsxClosedXml : IServicioExportacionXlsx
         hoja.Cell(filaXl, 3).Value = datos.PlantaCentral.AporteAcumulado;
         hoja.Cell(filaXl, 3).Style.NumberFormat.Format = FormatoMoneda;
         hoja.Row(filaXl).Style.Font.SetBold();
-        hoja.Columns().AdjustToContents();
+        hoja.ColumnsUsed().AdjustToContents();
     }
 
     private static void ComponerFinanciamiento(XLWorkbook libro, ReporteDireccionDatos datos)
@@ -515,7 +520,7 @@ public sealed class ServicioExportacionXlsxClosedXml : IServicioExportacionXlsx
                 hoja.Cell(filaXl, c).Style.NumberFormat.Format = FormatoMoneda;
             filaXl++;
         }
-        hoja.Columns().AdjustToContents();
+        hoja.ColumnsUsed().AdjustToContents();
     }
 
     private static void ComponerPuntoEquilibrio(XLWorkbook libro, ReporteDireccionDatos datos)
@@ -561,7 +566,7 @@ public sealed class ServicioExportacionXlsxClosedXml : IServicioExportacionXlsx
                 hoja.Row(filaXl).Style.Font.SetBold();
             filaXl++;
         }
-        hoja.Columns().AdjustToContents();
+        hoja.ColumnsUsed().AdjustToContents();
     }
 
     private static void ComponerCes(XLWorkbook libro, ReporteDireccionDatos datos)
@@ -597,7 +602,7 @@ public sealed class ServicioExportacionXlsxClosedXml : IServicioExportacionXlsx
         filaXl++;
         hoja.Cell(filaXl, 1).Value = "Total por semestre";
         hoja.Cell(filaXl, 2).Value = ces.TotalPorSemestreDisplay;
-        hoja.Columns().AdjustToContents();
+        hoja.ColumnsUsed().AdjustToContents();
 
         var hojaParametros = NuevaHoja(libro, "CES Parámetros");
         hojaParametros.Cell(1, 1).Value = "Parámetro";
@@ -627,6 +632,6 @@ public sealed class ServicioExportacionXlsxClosedXml : IServicioExportacionXlsx
                 hojaParametros.Row(filaP).Style.Font.SetBold();
             filaP++;
         }
-        hojaParametros.Columns().AdjustToContents();
+        hojaParametros.ColumnsUsed().AdjustToContents();
     }
 }

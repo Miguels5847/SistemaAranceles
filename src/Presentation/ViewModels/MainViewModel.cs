@@ -32,6 +32,12 @@ public sealed partial class ItemMenu : ObservableObject
     public System.Windows.Input.ICommand? Comando { get; init; }
     public bool EsVisible { get; init; } = true;
 
+    /// <summary>Encabezado de grupo del menú: no navega, solo guía el flujo de trabajo.</summary>
+    public bool EsEncabezado { get; init; }
+
+    /// <summary>Tooltip que explica qué se hace en el módulo y qué habilita después.</summary>
+    public string Descripcion { get; init; } = string.Empty;
+
     [ObservableProperty] private bool _estaSeleccionado;
 }
 
@@ -160,94 +166,103 @@ public sealed partial class MainViewModel : ObservableObject
     {
         MenuItems.Clear();
 
-        if (_sesionActual.TienePermiso("US.VER"))
-        {
-            MenuItems.Add(new ItemMenu { Titulo = "Usuarios", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarUsuariosAsync()) });
-        }
+        // El orden replica el flujo de trabajo: primero los datos base, luego la proyección,
+        // después los costos, y al final el análisis y los reportes. Los encabezados numerados
+        // guían al usuario no técnico sin bloquear la navegación libre.
+        AgregarGrupo("Administración",
+        [
+            Modulo("Usuarios", _sesionActual.TienePermiso("US.VER"),
+                "Crea y administra los usuarios y sus permisos.",
+                () => MostrarUsuariosAsync()),
+            Modulo("Auditoría", _sesionActual.EsAdministrador && _sesionActual.TienePermiso("AUD.VER"),
+                "Consulta quién hizo qué y cuándo dentro del sistema.",
+                () => MostrarAuditoriaAsync())
+        ]);
 
-        if (_sesionActual.TienePermiso("CA.VER"))
-        {
-            MenuItems.Add(new ItemMenu { Titulo = "Carreras", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarCarrerasAsync()) });
-        }
+        AgregarGrupo("1 · Configuración base",
+        [
+            Modulo("Carreras", _sesionActual.TienePermiso("CA.VER"),
+                "Punto de partida: registra la carrera que vas a proyectar.",
+                () => MostrarCarrerasAsync()),
+            Modulo("Inflación", _sesionActual.TienePermiso("INF.VER"),
+                "Tasas de inflación anuales que ajustan los costos futuros.",
+                () => MostrarInflacionAsync()),
+            Modulo("Tasa de Retención y Graduación", _sesionActual.TienePermiso("TRE.VER") || _sesionActual.EsAdministrador,
+                "Define cuántos estudiantes continúan de un ciclo al siguiente.",
+                () => MostrarTasaRetencionAsync()),
+            Modulo("Datos Institucionales", _sesionActual.TienePermiso("DI.VER") || _sesionActual.EsAdministrador,
+                "Parámetros generales: % matrícula, becas, meses de capital de trabajo, etc.",
+                () => MostrarDatosInstitucionalesAsync())
+        ]);
 
-        if (_sesionActual.TienePermiso("INF.VER"))
-        {
-            MenuItems.Add(new ItemMenu { Titulo = "Inflación", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarInflacionAsync()) });
-        }
+        AgregarGrupo("2 · Proyección académica",
+        [
+            Modulo("Proyección de Estudiantes", _sesionActual.TienePermiso("ES.VER") || _sesionActual.EsAdministrador,
+                "Crea el escenario y proyecta la matrícula por períodos.",
+                () => MostrarEstudiantesAsync()),
+            Modulo("Demanda e Ingresos", _sesionActual.TienePermiso("DI_NG.VER") || _sesionActual.EsAdministrador,
+                "Arancel, descuentos por ciclo, materiales e ingresos del escenario.",
+                () => MostrarDemandaIngresosAsync())
+        ]);
 
-        if (_sesionActual.TienePermiso("TRE.VER") || _sesionActual.EsAdministrador)
-        {
-            MenuItems.Add(new ItemMenu { Titulo = "Tasa de Retención y Graduación", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarTasaRetencionAsync()) });
-        }
+        AgregarGrupo("3 · Costos y recursos",
+        [
+            Modulo("Sueldos Carrera", _sesionActual.TienePermiso("SC.VER") || _sesionActual.EsAdministrador,
+                "Cargos docentes y administrativos de la carrera y su proyección.",
+                () => MostrarCargosFacultadAsync()),
+            Modulo("Aporte Planta Central", _sesionActual.TienePermiso("PC.VER") || _sesionActual.EsAdministrador,
+                "Prorratea el costo de la administración central a la carrera.",
+                () => MostrarAportePlantaCentralAsync()),
+            Modulo("Recursos y Depreciación", _sesionActual.TienePermiso("RD.VER") || _sesionActual.EsAdministrador,
+                "Activos fijos y diferidos con su depreciación y amortización.",
+                () => MostrarActivosFijosAsync()),
+            Modulo("Mantenimiento e Inversión", _sesionActual.EsAdministrador || _sesionActual.TienePermiso("MI.VER"),
+                "Servicios básicos, mantenimiento e inversiones futuras.",
+                () => MostrarMantenimientoInversionAsync()),
+            Modulo("Capital de Trabajo", _sesionActual.TienePermiso("CT.VER") || _sesionActual.EsAdministrador,
+                "Efectivo necesario para operar los primeros meses.",
+                () => MostrarCapitalTrabajoAsync()),
+            Modulo("Costos y Gastos", _sesionActual.TienePermiso("CG.VER") || _sesionActual.EsAdministrador,
+                "Matriz consolidada de todos los costos del escenario.",
+                () => MostrarCostosGastosAsync())
+        ]);
 
-        if (_sesionActual.TienePermiso("ES.VER") || _sesionActual.EsAdministrador)
-        {
-            MenuItems.Add(new ItemMenu { Titulo = "Proyección de Estudiantes", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarEstudiantesAsync()) });
-        }
+        AgregarGrupo("4 · Financiamiento y análisis",
+        [
+            Modulo("Amortización", _sesionActual.TienePermiso("AMO.VER") || _sesionActual.EsAdministrador,
+                "Fuentes de financiamiento y tabla de amortización del préstamo.",
+                () => MostrarAmortizacionAsync()),
+            Modulo("Análisis Financiero", _sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador,
+                "P&G, flujo, balance, VAN/TIR, punto de equilibrio y arancel óptimo.",
+                () => MostrarAnalisisFinancieroAsync())
+        ]);
 
-        if (_sesionActual.TienePermiso("SC.VER") || _sesionActual.EsAdministrador)
-        {
-            MenuItems.Add(new ItemMenu { Titulo = "Sueldos Carrera", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarCargosFacultadAsync()) });
-        }
-
-        if (_sesionActual.TienePermiso("DI.VER") || _sesionActual.EsAdministrador)
-        {
-            MenuItems.Add(new ItemMenu { Titulo = "Datos Institucionales", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarDatosInstitucionalesAsync()) });
-        }
-
-        if (_sesionActual.TienePermiso("PC.VER") || _sesionActual.EsAdministrador)
-        {
-            MenuItems.Add(new ItemMenu { Titulo = "Aporte Planta Central", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarAportePlantaCentralAsync()) });
-        }
-
-        if (_sesionActual.TienePermiso("RD.VER") || _sesionActual.EsAdministrador)
-        {
-            MenuItems.Add(new ItemMenu { Titulo = "Recursos y Depreciación", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarActivosFijosAsync()) });
-        }
-
-        if (_sesionActual.EsAdministrador || _sesionActual.TienePermiso("MI.VER"))
-        {
-            MenuItems.Add(new ItemMenu { Titulo = "Mantenimiento e Inversión", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarMantenimientoInversionAsync()) });
-        }
-
-        if (_sesionActual.TienePermiso("CT.VER") || _sesionActual.EsAdministrador)
-        {
-            MenuItems.Add(new ItemMenu { Titulo = "Capital de Trabajo", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarCapitalTrabajoAsync()) });
-        }
-
-        if (_sesionActual.TienePermiso("DI_NG.VER") || _sesionActual.EsAdministrador)
-        {
-            MenuItems.Add(new ItemMenu { Titulo = "Demanda e Ingresos", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarDemandaIngresosAsync()) });
-        }
-
-        if (_sesionActual.TienePermiso("CG.VER") || _sesionActual.EsAdministrador)
-        {
-            MenuItems.Add(new ItemMenu { Titulo = "Costos y Gastos", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarCostosGastosAsync()) });
-        }
-
-        if (_sesionActual.TienePermiso("AF.VER") || _sesionActual.EsAdministrador)
-        {
-            MenuItems.Add(new ItemMenu { Titulo = "Análisis Financiero", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarAnalisisFinancieroAsync()) });
-        }
-
-        if (_sesionActual.TienePermiso("AMO.VER") || _sesionActual.EsAdministrador)
-        {
-            MenuItems.Add(new ItemMenu { Titulo = "Amortización", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarAmortizacionAsync()) });
-        }
-
-        if (_sesionActual.TienePermiso("REP.VER") || _sesionActual.EsAdministrador)
-        {
-            MenuItems.Add(new ItemMenu { Titulo = "Reportes", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarReportesAsync()) });
-        }
-
-        if (_sesionActual.EsAdministrador && _sesionActual.TienePermiso("AUD.VER"))
-        {
-            MenuItems.Add(new ItemMenu { Titulo = "Auditoría", Icono = string.Empty, Comando = new AsyncRelayCommand(() => MostrarAuditoriaAsync()) });
-        }
+        AgregarGrupo("5 · Resultados",
+        [
+            Modulo("Reportes", _sesionActual.TienePermiso("REP.VER") || _sesionActual.EsAdministrador,
+                "Exporta el informe por dirección destinataria en PDF o Excel.",
+                () => MostrarReportesAsync())
+        ]);
 
         MenuItems.Add(new ItemMenu { Titulo = "Cerrar Sesión", Icono = string.Empty, Comando = new RelayCommand(() => _ = CerrarSesionAsync()) });
 
         Bienvenida = $"Bienvenido, {_sesionActual.NombreCompleto}  |  Rol: {_sesionActual.RolNombre}";
+    }
+
+    private static ItemMenu? Modulo(string titulo, bool visible, string descripcion, Func<Task> mostrar)
+        => visible
+            ? new ItemMenu { Titulo = titulo, Descripcion = descripcion, Comando = new AsyncRelayCommand(mostrar) }
+            : null;
+
+    private void AgregarGrupo(string encabezado, ItemMenu?[] modulos)
+    {
+        var visibles = modulos.OfType<ItemMenu>().ToList();
+        if (visibles.Count == 0)
+            return;
+
+        MenuItems.Add(new ItemMenu { Titulo = encabezado, EsEncabezado = true });
+        foreach (var modulo in visibles)
+            MenuItems.Add(modulo);
     }
 
     private void MostrarModuloEnDesarrollo(string modulo, string epica)

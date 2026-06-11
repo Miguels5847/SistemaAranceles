@@ -20,7 +20,9 @@ public sealed class GenerarResumenSueldosQuery(
     IRepositorioInflacionAnual repositorioInflacion,
     IRepositorioProyeccionEstudiantes repositorioProyeccionEstudiantes,
     IRepositorioCarrera repositorioCarrera,
-    IRepositorioDatosInstitucionales repositorioDatosInstitucionales)
+    IRepositorioDatosInstitucionales repositorioDatosInstitucionales,
+    IRepositorioConfiguracionRetencion repositorioConfiguracionRetencion,
+    IRepositorioOverrideHorasPeriodo repositorioOverrides)
 {
     private static readonly string[] OrdenCargos =
     [
@@ -63,6 +65,17 @@ public sealed class GenerarResumenSueldosQuery(
             return new ResumenSueldosVistaDto { CarreraId = carreraId };
 
         var proyeccion = contextoPeriodo.Proyeccion;
+
+        // Sin consolidado los cargos DOCENTES quedan en $0 (no hay personas por período).
+        // Si el caller no lo provee (reportes, CES), se construye aquí con la misma receta
+        // que la matriz de Costos y Gastos (KAN-49).
+        consolidadoActual ??= await ConstructorConsolidadoProyeccion.ConstruirAsync(
+            proyeccion,
+            carreraId,
+            escenarioProyeccionId,
+            repositorioConfiguracionRetencion,
+            repositorioOverrides,
+            cancellationToken);
         var periodos = ConstruirPeriodos(proyeccion);
         var cargosOrdenados = OrdenarCargos(contextoPeriodo.Cargos);
         var tablasPorPeriodo = periodos

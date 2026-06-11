@@ -521,146 +521,140 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         MensajeInfo = string.Empty;
         try
         {
-            using var scope = _serviceProvider.CreateScope();
-            var queryDemanda = scope.ServiceProvider.GetRequiredService<ObtenerDemandaProyectadaQuery>();
-            var queryMatriz = scope.ServiceProvider.GetRequiredService<ObtenerMatrizCostosGastosQuery>();
-            var queryEstado = scope.ServiceProvider.GetRequiredService<ObtenerEstadoPerdidasGananciasQuery>();
-            var queryFlujo = scope.ServiceProvider.GetRequiredService<ObtenerFlujoFondosQuery>();
-            var queryIndicadores = scope.ServiceProvider.GetRequiredService<ObtenerIndicadoresFinancierosQuery>();
-            var queryPeriodoRecuperacion = scope.ServiceProvider.GetRequiredService<ObtenerPeriodoRecuperacionQuery>();
-            var queryPuntoEquilibrio = scope.ServiceProvider.GetRequiredService<ObtenerPuntoEquilibrioQuery>();
-            var queryArancelOptimo = scope.ServiceProvider.GetRequiredService<ObtenerArancelOptimoBiseccionQuery>();
-            var queryDashboard = scope.ServiceProvider.GetRequiredService<ObtenerDashboardFinancieroQuery>();
-            var queryCes = scope.ServiceProvider.GetRequiredService<ObtenerCesQuery>();
-            var queryBalance = scope.ServiceProvider.GetRequiredService<ObtenerBalanceProyectadoQuery>();
-            var queryInversiones = scope.ServiceProvider.GetRequiredService<ObtenerMatrizInversionesQuery>();
-            var queryCapitalTrabajo = scope.ServiceProvider.GetRequiredService<ObtenerResumenCapitalTrabajoQuery>();
-            var queryArancelEfectivo = scope.ServiceProvider.GetRequiredService<ObtenerArancelEfectivoQuery>();
-            var queryCostoCarrera = scope.ServiceProvider.GetRequiredService<ObtenerCostoCarreraQuery>();
-            var queryIngresos = scope.ServiceProvider.GetRequiredService<CalcularIngresosProyectadosQuery>();
-            var repoProyeccion = scope.ServiceProvider.GetRequiredService<IRepositorioProyeccionEstudiantes>();
-
             var carreraId = CarreraSeleccionada.Id;
             var escenarioId = EscenarioSeleccionado.Id;
             var factorImprevisto = FactorImprevisto;
             _factorImprevistoState.Establecer(factorImprevisto);
 
-            // Medición de tiempos por query (ventana Output del depurador). Confirma el efecto de las
-            // optimizaciones; no afecta resultados.
+            // KAN-49: un scope de DI por consulta (DbContext propio) permite ejecutar en paralelo
+            // las queries independientes — mismo patrón validado en Reportes. Los precalculados
+            // encadenan idéntico que antes, así que los resultados no cambian; solo la latencia.
             var swTotal = Stopwatch.StartNew();
-            async Task<T> Medir<T>(string etiqueta, Func<Task<T>> factory)
+            Task<T> EnScope<T>(string etiqueta, Func<IServiceProvider, Task<T>> consulta) => Task.Run(async () =>
             {
                 var sw = Stopwatch.StartNew();
-                var resultado = await factory();
+                using var scopeConsulta = _serviceProvider.CreateScope();
+                var resultado = await consulta(scopeConsulta.ServiceProvider);
                 Debug.WriteLine($"AF: {etiqueta}={sw.ElapsedMilliseconds}ms");
                 return resultado;
-            }
+            });
 
-            // La proyección de estudiantes (DTO pesado con todos los detalles) se cargaba en demanda,
-            // matriz e ingresos. Se carga una sola vez y se propaga.
-            var proyeccionId = await repoProyeccion.ObtenerIdPorCarreraYEscenarioAsync(carreraId, escenarioId);
-            var proyeccion = proyeccionId is > 0
-                ? await repoProyeccion.ObtenerDtoPorIdAsync(proyeccionId.Value)
-                : null;
+            // ---- Nivel 1: independientes, en paralelo ----
+            // La proyección de estudiantes (DTO pesado) se carga una sola vez y se propaga.
+            var tProyeccionDemanda = EnScope("demanda", async sp =>
+            {
+                var repoProyeccion = sp.GetRequiredService<IRepositorioProyeccionEstudiantes>();
+                var proyeccionId = await repoProyeccion.ObtenerIdPorCarreraYEscenarioAsync(carreraId, escenarioId);
+                var proyeccion = proyeccionId is > 0
+                    ? await repoProyeccion.ObtenerDtoPorIdAsync(proyeccionId.Value)
+                    : null;
+                var demanda = await sp.GetRequiredService<ObtenerDemandaProyectadaQuery>()
+                    .EjecutarAsync(carreraId, escenarioId, proyeccionPrecalculada: proyeccion);
+                return (Proyeccion: proyeccion, Demanda: demanda);
+            });
+            var tInversiones = EnScope("inversiones", sp => sp.GetRequiredService<ObtenerMatrizInversionesQuery>()
+                .EjecutarAsync(carreraId, escenarioId, null));
+            var tCapitalTrabajo = EnScope("capitalTrabajo", sp => sp.GetRequiredService<ObtenerResumenCapitalTrabajoQuery>()
+                .EjecutarAsync(carreraId, escenarioId));
+            var tArancelVigente = EnScope("arancelVigente", sp => sp.GetRequiredService<ObtenerArancelEfectivoQuery>()
+                .EjecutarAsync(carreraId, escenarioId));
 
-            // Calcula una sola vez la demanda y la matriz de Costos y Gastos (lo más pesado) y las
-            // propaga a cada query que las acepta, evitando recomputarlas por refresco.
-            var demanda = await Medir("demanda", () => queryDemanda.EjecutarAsync(
-                carreraId,
-                escenarioId,
-                proyeccionPrecalculada: proyeccion));
-            var matriz = await Medir("matriz", () => queryMatriz.EjecutarAsync(
-                carreraId,
-                escenarioId,
-                demandaPrecalculada: demanda,
-                factorImprevisto: factorImprevisto,
-                proyeccionPrecalculada: proyeccion));
+            // ---- Cadena principal (dependencias reales, mismo orden de awaits que antes) ----
+            var (proyeccion, demanda) = await tProyeccionDemanda;
+            var matriz = await EnScope("matriz", sp => sp.GetRequiredService<ObtenerMatrizCostosGastosQuery>()
+                .EjecutarAsync(carreraId, escenarioId,
+                    demandaPrecalculada: demanda,
+                    factorImprevisto: factorImprevisto,
+                    proyeccionPrecalculada: proyeccion));
 
             if (version != _versionCarga)
                 return;
 
-            // Inversiones y capital de trabajo se recalculaban ~5x y ~4x por refresco (Flujo,
-            // ArancelOptimo y sus inversión inicial/depreciación). Se calculan una vez y se propagan.
+            // Inversiones y capital de trabajo solo se usan si hay matriz (misma semántica que
+            // antes); se lanzaron en paralelo para no pagar su latencia en serie.
             var hayMatriz = matriz.TieneDatos && matriz.ValoresPorPeriodo.Count > 0;
-            var inversiones = hayMatriz ? await Medir("inversiones", () => queryInversiones.EjecutarAsync(carreraId, escenarioId, null)) : null;
-            var capitalTrabajo = hayMatriz ? await Medir("capitalTrabajo", () => queryCapitalTrabajo.EjecutarAsync(carreraId, escenarioId)) : null;
+            var inversiones = hayMatriz ? await tInversiones : null;
+            var capitalTrabajo = hayMatriz ? await tCapitalTrabajo : null;
+            if (!hayMatriz)
+                ObservarDescartadas(tInversiones, tCapitalTrabajo);
 
-            // Arancel vigente e Ingresos se calculan una vez y se propagan a P&G (antes P&G recomputaba
-            // todo Ingresos, recargando proyección + arancel + descuentos).
-            ArancelVigente = await Medir("arancelVigente", () => queryArancelEfectivo.EjecutarAsync(carreraId, escenarioId));
-            var ingresos = await Medir("ingresos", () => queryIngresos.EjecutarAsync(
-                carreraId,
-                escenarioId,
-                arancelPrecalculado: ArancelVigente,
-                proyeccionPrecalculada: proyeccion));
+            ArancelVigente = await tArancelVigente;
+            var ingresos = await EnScope("ingresos", sp => sp.GetRequiredService<CalcularIngresosProyectadosQuery>()
+                .EjecutarAsync(carreraId, escenarioId,
+                    arancelPrecalculado: ArancelVigente,
+                    proyeccionPrecalculada: proyeccion));
 
             if (version != _versionCarga)
                 return;
 
-            EstadoPerdidasGanancias = await Medir("estado", () => queryEstado.EjecutarAsync(
-                carreraId,
-                escenarioId,
-                costosPrecalculados: matriz,
-                ingresosPrecalculados: ingresos));
-            FlujoFondos = await Medir("flujo", () => queryFlujo.EjecutarAsync(
-                carreraId,
-                escenarioId,
-                estadoPrecalculado: EstadoPerdidasGanancias,
-                inversionesPrecalculada: inversiones,
-                capitalTrabajoPrecalculado: capitalTrabajo));
-            BalanceProyectado = await Medir("balanceProyectado", () => queryBalance.EjecutarAsync(
-                carreraId,
-                escenarioId,
-                flujoPrecalculado: FlujoFondos));
-            IndicadoresFinancieros = await Medir("indicadores", () => queryIndicadores.EjecutarAsync(
-                carreraId,
-                escenarioId,
-                flujoPrecalculado: FlujoFondos,
-                factorImprevisto: factorImprevisto));
-            PeriodoRecuperacion = await Medir("periodoRecuperacion", () => queryPeriodoRecuperacion.EjecutarAsync(
-                carreraId,
-                escenarioId,
-                flujoPrecalculado: FlujoFondos,
-                factorImprevisto: factorImprevisto));
-            PuntoEquilibrio = await Medir("puntoEquilibrio", () => queryPuntoEquilibrio.EjecutarAsync(
-                carreraId,
-                escenarioId,
-                estadoPrecalculado: EstadoPerdidasGanancias,
-                costosPrecalculados: matriz,
-                demandaPrecalculada: demanda,
-                factorImprevisto: factorImprevisto));
-            ArancelOptimoBiseccion = await Medir("arancelOptimo", () => queryArancelOptimo.EjecutarAsync(
-                carreraId,
-                escenarioId,
-                costosPrecalculados: matriz,
-                demandaPrecalculada: demanda,
-                inversionesPrecalculada: inversiones,
-                capitalTrabajoPrecalculado: capitalTrabajo,
-                factorImprevisto: factorImprevisto));
-            ArancelReferencial = await Medir("arancelReferencial", () => queryCostoCarrera.EjecutarAsync(
-                carreraId,
-                escenarioId,
-                matrizPrecalculada: matriz,
-                factorImprevisto: factorImprevisto));
-            DashboardFinanciero = await Medir("dashboard", () => queryDashboard.EjecutarAsync(
-                carreraId,
-                escenarioId,
-                estadoPrecalculado: EstadoPerdidasGanancias,
-                flujoPrecalculado: FlujoFondos,
-                indicadoresPrecalculados: IndicadoresFinancieros,
-                periodoRecuperacionPrecalculado: PeriodoRecuperacion,
-                puntoEquilibrioPrecalculado: PuntoEquilibrio,
-                arancelOptimoPrecalculado: ArancelOptimoBiseccion,
-                factorImprevisto: factorImprevisto));
-            Ces = await Medir("ces", () => queryCes.EjecutarAsync(
-                carreraId,
-                escenarioId,
-                costosPrecalculados: matriz,
-                demandaPrecalculada: demanda,
-                inversionesPrecalculada: inversiones,
-                costoCarreraPrecalculado: ArancelReferencial,
-                arancelVigentePrecalculado: ArancelVigente,
-                factorImprevisto: factorImprevisto));
+            var estado = await EnScope("estado", sp => sp.GetRequiredService<ObtenerEstadoPerdidasGananciasQuery>()
+                .EjecutarAsync(carreraId, escenarioId,
+                    costosPrecalculados: matriz,
+                    ingresosPrecalculados: ingresos));
+            EstadoPerdidasGanancias = estado;
+
+            // El arancel óptimo (bisección) y el referencial no dependen del flujo: arrancan ya.
+            var tArancelOptimo = EnScope("arancelOptimo", sp => sp.GetRequiredService<ObtenerArancelOptimoBiseccionQuery>()
+                .EjecutarAsync(carreraId, escenarioId,
+                    costosPrecalculados: matriz,
+                    demandaPrecalculada: demanda,
+                    inversionesPrecalculada: inversiones,
+                    capitalTrabajoPrecalculado: capitalTrabajo,
+                    factorImprevisto: factorImprevisto));
+            var tArancelReferencial = EnScope("arancelReferencial", sp => sp.GetRequiredService<ObtenerCostoCarreraQuery>()
+                .EjecutarAsync(carreraId, escenarioId,
+                    matrizPrecalculada: matriz,
+                    factorImprevisto: factorImprevisto));
+            var tPuntoEquilibrio = EnScope("puntoEquilibrio", sp => sp.GetRequiredService<ObtenerPuntoEquilibrioQuery>()
+                .EjecutarAsync(carreraId, escenarioId,
+                    estadoPrecalculado: estado,
+                    costosPrecalculados: matriz,
+                    demandaPrecalculada: demanda,
+                    factorImprevisto: factorImprevisto));
+
+            var flujo = await EnScope("flujo", sp => sp.GetRequiredService<ObtenerFlujoFondosQuery>()
+                .EjecutarAsync(carreraId, escenarioId,
+                    estadoPrecalculado: estado,
+                    inversionesPrecalculada: inversiones,
+                    capitalTrabajoPrecalculado: capitalTrabajo));
+            FlujoFondos = flujo;
+
+            // ---- Nivel 2: derivados del flujo, en paralelo ----
+            var tBalance = EnScope("balanceProyectado", sp => sp.GetRequiredService<ObtenerBalanceProyectadoQuery>()
+                .EjecutarAsync(carreraId, escenarioId, flujoPrecalculado: flujo));
+            var tIndicadores = EnScope("indicadores", sp => sp.GetRequiredService<ObtenerIndicadoresFinancierosQuery>()
+                .EjecutarAsync(carreraId, escenarioId,
+                    flujoPrecalculado: flujo,
+                    factorImprevisto: factorImprevisto));
+            var tPeriodoRecuperacion = EnScope("periodoRecuperacion", sp => sp.GetRequiredService<ObtenerPeriodoRecuperacionQuery>()
+                .EjecutarAsync(carreraId, escenarioId,
+                    flujoPrecalculado: flujo,
+                    factorImprevisto: factorImprevisto));
+
+            BalanceProyectado = await tBalance;
+            IndicadoresFinancieros = await tIndicadores;
+            PeriodoRecuperacion = await tPeriodoRecuperacion;
+            PuntoEquilibrio = await tPuntoEquilibrio;
+            ArancelOptimoBiseccion = await tArancelOptimo;
+            ArancelReferencial = await tArancelReferencial;
+
+            DashboardFinanciero = await EnScope("dashboard", sp => sp.GetRequiredService<ObtenerDashboardFinancieroQuery>()
+                .EjecutarAsync(carreraId, escenarioId,
+                    estadoPrecalculado: EstadoPerdidasGanancias,
+                    flujoPrecalculado: FlujoFondos,
+                    indicadoresPrecalculados: IndicadoresFinancieros,
+                    periodoRecuperacionPrecalculado: PeriodoRecuperacion,
+                    puntoEquilibrioPrecalculado: PuntoEquilibrio,
+                    arancelOptimoPrecalculado: ArancelOptimoBiseccion,
+                    factorImprevisto: factorImprevisto));
+            Ces = await EnScope("ces", sp => sp.GetRequiredService<ObtenerCesQuery>()
+                .EjecutarAsync(carreraId, escenarioId,
+                    costosPrecalculados: matriz,
+                    demandaPrecalculada: demanda,
+                    inversionesPrecalculada: inversiones,
+                    costoCarreraPrecalculado: ArancelReferencial,
+                    arancelVigentePrecalculado: ArancelVigente,
+                    factorImprevisto: factorImprevisto));
             Debug.WriteLine($"AF: TOTAL={swTotal.ElapsedMilliseconds}ms");
 
             if (version != _versionCarga)
@@ -800,6 +794,16 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             case "advertencia": MensajeAdvertencia = string.Empty; break;
             case "error": MensajeError = string.Empty; break;
         }
+    }
+
+    /// <summary>
+    /// Observa tareas lanzadas en paralelo cuyo resultado se descarta (p. ej. inversiones cuando
+    /// no hay matriz): sin esto, una falla suya dispararía UnobservedTaskException.
+    /// </summary>
+    private static void ObservarDescartadas(params Task[] tareas)
+    {
+        foreach (var tarea in tareas)
+            _ = tarea.ContinueWith(t => _ = t.Exception, TaskContinuationOptions.OnlyOnFaulted);
     }
 
     private void LimpiarResultados()
