@@ -68,6 +68,7 @@ public sealed record ReporteDireccionDatos(
     public IndicadoresFinancierosDto? Indicadores { get; init; }
     public PuntoEquilibrioDto? PuntoEquilibrio { get; init; }
     public FlujoFondosDto? FlujoFondos { get; init; }
-    public EstadoPerdidasGananciasDto? BalanceProyectado { get; init; }
+    public EstadoPerdidasGananciasDto? EstadoResultados { get; init; }
+    public BalanceProyectadoDto? BalanceProyectado { get; init; }
     public CesDto? Ces { get; init; }
 }

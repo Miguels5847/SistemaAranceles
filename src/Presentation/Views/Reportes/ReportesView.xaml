@@ -82,6 +82,12 @@
                             Padding="8,4"
                             Background="#1A237E" Foreground="White"
                             Visibility="{Binding PuedeExportar, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    <Button Content="Exportar XLSX"
+                            Command="{Binding ExportarXlsxDireccionCommand}"
+                            Margin="8,0,0,0"
+                            Padding="8,4"
+                            Background="#1B5E20" Foreground="White"
+                            Visibility="{Binding PuedeExportar, Converter={StaticResource BoolToVisibilityConverter}}"/>
                 </StackPanel>
             </StackPanel>
         </Border>

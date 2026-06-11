@@ -1130,6 +1130,29 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
+
+            <TabItem Header="9. Balance Proyectado">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0"
+                               Text="{Binding EstadoCuadreBalance}"
+                               FontSize="11" Foreground="#546E7A" Margin="0,0,0,6"
+                               Visibility="{Binding EstadoCuadreBalance, Converter={StaticResource StringToVisibilityConverter}}"/>
+                    <DataGrid Grid.Row="1" x:Name="BalanceProyectadoGrid"
+                              ItemsSource="{Binding FilasBalanceProyectado}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              RowStyle="{StaticResource PerdidasGananciasRowStyle}"
+                              CellStyle="{StaticResource AnalisisDataGridCellStyle}"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal"
+                              AlternatingRowBackground="#F7FAF7"
+                              BorderBrush="#C8E6C9"/>
+                </Grid>
+            </TabItem>
         </TabControl>
 
         <Border Grid.Row="3"

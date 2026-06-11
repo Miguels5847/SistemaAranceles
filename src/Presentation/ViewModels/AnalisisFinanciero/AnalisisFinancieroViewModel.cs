@@ -80,6 +80,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     [ObservableProperty] private ArancelOptimoBiseccionDto? _arancelOptimoBiseccion;
     [ObservableProperty] private DashboardFinancieroDto? _dashboardFinanciero;
     [ObservableProperty] private CesDto? _ces;
+    [ObservableProperty] private BalanceProyectadoDto? _balanceProyectado;
     [ObservableProperty] private string _costoCarrerasSimilares = string.Empty;
     [ObservableProperty] private decimal _factorImprevisto = FactorImprevistoCostosGastosState.FactorPorDefecto;
     [ObservableProperty] private ArancelEfectivoDto? _arancelVigente;
@@ -96,6 +97,14 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     public IReadOnlyList<string> EtiquetasFlujoFondos => FlujoFondos?.EtiquetasPeriodos ?? [];
     public IReadOnlyList<FlujoFondosRubroDto> FilasFlujoFondos => FlujoFondos?.Filas ?? [];
     public bool TieneFlujoFondos => FlujoFondos?.TieneDatos == true;
+    public IReadOnlyList<string> EtiquetasBalanceProyectado => BalanceProyectado?.EtiquetasPeriodos ?? [];
+    public IReadOnlyList<BalanceRubroDto> FilasBalanceProyectado => BalanceProyectado?.Filas ?? [];
+    public bool TieneBalanceProyectado => BalanceProyectado?.TieneDatos == true;
+    public string EstadoCuadreBalance => BalanceProyectado is null || !BalanceProyectado.TieneDatos
+        ? string.Empty
+        : BalanceProyectado.CuadraEnTodosLosPeriodos
+            ? "El balance cuadra en todos los períodos (Activo = Pasivo + Patrimonio)."
+            : "Hay períodos con diferencia de cuadre — revisar la última fila.";
     public IReadOnlyList<string> EtiquetasTirVan => FlujoFondos?.ValoresPorPeriodo
         .Select(p => p.PeriodoOrden == 0 ? "0" : p.Anio.ToString())
         .ToList() ?? [];
@@ -227,6 +236,15 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
         OnPropertyChanged(nameof(EtiquetasTirVan));
         OnPropertyChanged(nameof(FilasFlujoTir));
         OnPropertyChanged(nameof(FilasFlujoVan));
+    }
+
+    partial void OnBalanceProyectadoChanged(BalanceProyectadoDto? value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(EtiquetasBalanceProyectado));
+        OnPropertyChanged(nameof(FilasBalanceProyectado));
+        OnPropertyChanged(nameof(TieneBalanceProyectado));
+        OnPropertyChanged(nameof(EstadoCuadreBalance));
     }
 
     partial void OnIndicadoresFinancierosChanged(IndicadoresFinancierosDto? value)
@@ -514,6 +532,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
             var queryArancelOptimo = scope.ServiceProvider.GetRequiredService<ObtenerArancelOptimoBiseccionQuery>();
             var queryDashboard = scope.ServiceProvider.GetRequiredService<ObtenerDashboardFinancieroQuery>();
             var queryCes = scope.ServiceProvider.GetRequiredService<ObtenerCesQuery>();
+            var queryBalance = scope.ServiceProvider.GetRequiredService<ObtenerBalanceProyectadoQuery>();
             var queryInversiones = scope.ServiceProvider.GetRequiredService<ObtenerMatrizInversionesQuery>();
             var queryCapitalTrabajo = scope.ServiceProvider.GetRequiredService<ObtenerResumenCapitalTrabajoQuery>();
             var queryArancelEfectivo = scope.ServiceProvider.GetRequiredService<ObtenerArancelEfectivoQuery>();
@@ -589,6 +608,10 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                 estadoPrecalculado: EstadoPerdidasGanancias,
                 inversionesPrecalculada: inversiones,
                 capitalTrabajoPrecalculado: capitalTrabajo));
+            BalanceProyectado = await Medir("balanceProyectado", () => queryBalance.EjecutarAsync(
+                carreraId,
+                escenarioId,
+                flujoPrecalculado: FlujoFondos));
             IndicadoresFinancieros = await Medir("indicadores", () => queryIndicadores.EjecutarAsync(
                 carreraId,
                 escenarioId,
@@ -783,6 +806,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     {
         EstadoPerdidasGanancias = null;
         FlujoFondos = null;
+        BalanceProyectado = null;
         IndicadoresFinancieros = null;
         PeriodoRecuperacion = null;
         PuntoEquilibrio = null;

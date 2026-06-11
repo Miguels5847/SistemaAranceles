@@ -31,6 +31,7 @@ public sealed class SeccionesReporteTests
             SeccionReporte.PuntoEquilibrio,
             SeccionReporte.CostosGastos,
             SeccionReporte.FlujoFondos,
+            SeccionReporte.EstadoResultados,
             SeccionReporte.BalanceProyectado
         ], secciones);
     }

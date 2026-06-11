@@ -1,8 +1,10 @@
+using SistemaAranceles.Application.DTOs.Amortizacion;
 using SistemaAranceles.Application.DTOs.AnalisisFinanciero;
 using SistemaAranceles.Application.DTOs.CapitalTrabajo;
 using SistemaAranceles.Application.DTOs.RecursosFisicosDepreciacion;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.ActivoDiferido;
+using SistemaAranceles.Application.UseCases.Amortizacion;
 using SistemaAranceles.Application.UseCases.CapitalTrabajo;
 using SistemaAranceles.Application.UseCases.InversionInicial;
 using SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion;
@@ -17,6 +19,7 @@ public sealed class ObtenerFlujoFondosQuery(
     ObtenerMatrizInversionesQuery obtenerMatrizInversionesQuery,
     ObtenerMatrizDepreciacionQuery obtenerMatrizDepreciacionQuery,
     ObtenerTablaAmortizacionQuery obtenerTablaAmortizacionQuery,
+    ObtenerResumenAmortizacionQuery obtenerResumenFinanciamientoQuery,
     ObtenerResumenCapitalTrabajoQuery obtenerResumenCapitalTrabajoQuery,
     IRepositorioCarrera repositorioCarrera,
     IRepositorioEscenarioProyeccion repositorioEscenario,
@@ -29,7 +32,8 @@ public sealed class ObtenerFlujoFondosQuery(
         EstadoPerdidasGananciasDto? estadoPrecalculado = null,
         MatrizInversionesDto? inversionesPrecalculada = null,
         ResumenCapitalTrabajoDto? capitalTrabajoPrecalculado = null,
-        decimal factorImprevisto = 1.05m)
+        decimal factorImprevisto = 1.05m,
+        ResumenFinanciamientoDto? financiamientoPrecalculado = null)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -91,6 +95,11 @@ public sealed class ObtenerFlujoFondosQuery(
         var anioBase = estado.ValoresPorPeriodo.Min(p => p.Anio);
         var amortizacion = await obtenerTablaAmortizacionQuery.EjecutarAsync(carreraId, anioBase, ct);
 
+        // KAN-48: "(-) PAGO DEL CREDITO" = capital semestral amortizado del préstamo
+        // (tabla francesa KAN-44B). El interés ya viene en GASTOS FINANCIEROS vía el EPG.
+        var financiamiento = financiamientoPrecalculado
+            ?? await obtenerResumenFinanciamientoQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
+
         var inversionesFuturasPorPeriodo = inversiones.TotalesPorPeriodo
             .Where(p => p.NumeroPeriodo > 1)
             .GroupBy(p => p.NumeroPeriodo)
@@ -131,7 +140,7 @@ public sealed class ObtenerFlujoFondosQuery(
             depreciacionPorPeriodo.TryGetValue(periodo.NumeroPeriodo, out var depreciacionPeriodo);
             amortizacionPorAnio.TryGetValue(periodo.Anio, out var amortizacionPeriodo);
             // No se recupera capital de trabajo (convención del Excel).
-            var pagoCredito = 0m;
+            var pagoCredito = AmortizacionPorPeriodo.CapitalDelPeriodo(financiamiento, periodo.NumeroPeriodo);
             var flujoNeto = decimal.Round(
                 periodo.UtilidadPerdidaEjercicio
                 - inversionFutura

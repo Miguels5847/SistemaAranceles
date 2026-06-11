@@ -1,11 +1,13 @@
 using System.Globalization;
 using System.Text;
+using SistemaAranceles.Application.DTOs.Amortizacion;
 using SistemaAranceles.Application.DTOs.CargosFacultad;
 using SistemaAranceles.Application.DTOs.CostosGastos;
 using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.DTOs.Estudiantes;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.ActivoDiferido;
+using SistemaAranceles.Application.UseCases.Amortizacion;
 using SistemaAranceles.Application.UseCases.CargosFacultad;
 using SistemaAranceles.Application.UseCases.DemandaIngresos;
 using SistemaAranceles.Application.UseCases.Estudiantes;
@@ -22,6 +24,7 @@ public sealed class ObtenerMatrizCostosGastosQuery(
     ObtenerResumenMantenimientoQuery obtenerResumenMantenimientoQuery,
     ObtenerMatrizDepreciacionQuery obtenerMatrizDepreciacionQuery,
     ObtenerTablaAmortizacionQuery obtenerTablaAmortizacionQuery,
+    ObtenerResumenAmortizacionQuery obtenerResumenFinanciamientoQuery,
     GenerarTablaSueldosPeriodoQuery generarTablaSueldosPeriodoQuery,
     GenerarResumenSueldosQuery generarResumenSueldosQuery,
     CalcularMaterialesPorPeriodoQuery calcularMaterialesPorPeriodoQuery,
@@ -43,7 +46,8 @@ public sealed class ObtenerMatrizCostosGastosQuery(
         DemandaProyectadaDto? demandaPrecalculada = null,
         decimal factorImprevisto = 1.05m,
         IReadOnlyDictionary<int, decimal>? becasInstitucionalesPorPeriodo = null,
-        ProyeccionEstudiantesDto? proyeccionPrecalculada = null)
+        ProyeccionEstudiantesDto? proyeccionPrecalculada = null,
+        ResumenFinanciamientoDto? financiamientoPrecalculado = null)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
         var escenario = escenarioProyeccionId is > 0
@@ -99,6 +103,11 @@ public sealed class ObtenerMatrizCostosGastosQuery(
 
         var anioBase = periodos.Min(p => p.Anio);
         var amortizacion = await obtenerTablaAmortizacionQuery.EjecutarAsync(carreraId, anioBase, ct);
+
+        // KAN-48: el gasto financiero es el interés semestral del préstamo (tabla francesa
+        // KAN-44B, hoja "Amort. prestamo"). Antes estaba hardcodeado en 0.
+        var financiamiento = financiamientoPrecalculado
+            ?? await obtenerResumenFinanciamientoQuery.EjecutarAsync(carreraId, escenarioProyeccionId, ct);
         var amortizacionPorAnio = amortizacion.Anios
             .Select((anio, index) => new
             {
@@ -187,7 +196,8 @@ public sealed class ObtenerMatrizCostosGastosQuery(
             var vinculacion = decimal.Round((invPeriodo?.Vinculacion ?? 0m) * factorImprevisto, 2);
             materialesPorPeriodo.TryGetValue(periodo.PeriodoAcademicoId, out var materialesPeriodo);
             materialesPeriodo = AplicarFactor(materialesPeriodo, factorImprevisto);
-            var gastoFinanciero = decimal.Round(0m * factorImprevisto, 2);
+            // Interés contractual del préstamo: NO se le aplica el factor imprevisto.
+            var gastoFinanciero = AmortizacionPorPeriodo.InteresDelPeriodo(financiamiento, periodo.NumeroPeriodo);
             var mantenimientoEdificio = decimal.Round(mant?.CostoMantenimiento ?? 0m, 2);
             var serviciosBasicos = decimal.Round(mant?.CostoServiciosBasicos ?? 0m, 2);
             var depreciacionPeriodo = decimal.Round(dep?.DepreciacionPeriodo ?? 0m, 2);

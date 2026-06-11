@@ -117,12 +117,15 @@ internal sealed class ReporteDireccionDocument(ReporteDireccionDatos datos) : ID
                         dto.Filas.Select(f => (f.Concepto, f.PeriodosDisplay, f.TotalDisplay, f.EsSeccion, f.EsTotal || f.EsResultado)).ToList(),
                         dto.MensajeAdvertencia));
                 break;
-            case SeccionReporte.BalanceProyectado:
-                Opcional(col, datos.BalanceProyectado, "Balance proyectado",
-                    (c, dto) => SeccionesPdf.Matriz(c, "Balance proyectado (Estado de Pérdidas y Ganancias)",
+            case SeccionReporte.EstadoResultados:
+                Opcional(col, datos.EstadoResultados, "Estado de Pérdidas y Ganancias",
+                    (c, dto) => SeccionesPdf.Matriz(c, "Estado de Pérdidas y Ganancias",
                         dto.EtiquetasPeriodos,
                         dto.Filas.Select(f => (f.Concepto, f.PeriodosDisplay, f.TotalDisplay, f.EsSeccion, f.EsTotal || f.EsResultado)).ToList(),
                         dto.MensajeAdvertencia));
+                break;
+            case SeccionReporte.BalanceProyectado:
+                Opcional(col, datos.BalanceProyectado, "Balance Proyectado", SeccionesPdf.BalanceProyectado);
                 break;
             case SeccionReporte.Ces:
                 Opcional(col, datos.Ces, "INF CES / Presupuesto general de la carrera", SeccionesPdf.CuadrosCes);

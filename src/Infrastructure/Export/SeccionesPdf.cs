@@ -469,6 +469,52 @@ internal static class SeccionesPdf
         EstilosPdf.Advertencia(col, pe.MensajeAdvertencia);
     }
 
+    public static void BalanceProyectado(ColumnDescriptor col, BalanceProyectadoDto balance)
+    {
+        EstilosPdf.TituloSeccion(col, "Balance Proyectado");
+        if (!balance.TieneDatos)
+        {
+            col.Item().Text("No existen datos suficientes para generar esta sección.")
+                .FontSize(8).Italic().FontColor(EstilosPdf.ColorGris);
+            EstilosPdf.Advertencia(col, balance.MensajeAdvertencia);
+            return;
+        }
+
+        var etiquetas = balance.EtiquetasPeriodos;
+        col.Item().Table(tabla =>
+        {
+            tabla.ColumnsDefinition(c =>
+            {
+                c.RelativeColumn(2.6f);
+                foreach (var _ in etiquetas)
+                    c.RelativeColumn();
+            });
+            tabla.Header(h =>
+            {
+                h.Cell().CeldaHeader().Text("Concepto").Bold();
+                foreach (var etiqueta in etiquetas)
+                    h.Cell().CeldaHeader().AlignRight().Text(etiqueta).Bold();
+            });
+            foreach (var fila in balance.Filas)
+            {
+                if (fila.EsSeccion)
+                {
+                    tabla.Cell().ColumnSpan((uint)(etiquetas.Count + 1)).CeldaSeccion().Text(fila.Concepto).Bold();
+                    continue;
+                }
+                var resaltada = fila.EsTotal || fila.EsResultado;
+                tabla.Cell().Celda().Text(t => { var s = t.Span(fila.Concepto); if (resaltada) s.Bold(); });
+                var displays = fila.PeriodosDisplay;
+                for (var i = 0; i < etiquetas.Count; i++)
+                {
+                    var valor = i < displays.Count ? displays[i] : string.Empty;
+                    tabla.Cell().Celda().AlignRight().Text(t => { var s = t.Span(valor); if (resaltada) s.Bold(); });
+                }
+            }
+        });
+        EstilosPdf.Advertencia(col, balance.MensajeAdvertencia);
+    }
+
     public static void Matriz(
         ColumnDescriptor col,
         string titulo,

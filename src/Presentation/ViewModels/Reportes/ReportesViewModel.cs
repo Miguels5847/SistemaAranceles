@@ -442,7 +442,12 @@ public sealed partial class ReportesViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task ExportarPdfDireccionAsync()
+    private Task ExportarPdfDireccionAsync() => ExportarDireccionAsync(comoXlsx: false);
+
+    [RelayCommand]
+    private Task ExportarXlsxDireccionAsync() => ExportarDireccionAsync(comoXlsx: true);
+
+    private async Task ExportarDireccionAsync(bool comoXlsx)
     {
         if (!PuedeExportar)
         {
@@ -481,17 +486,22 @@ public sealed partial class ReportesViewModel : ObservableObject
         {
             var datos = await ConstruirDatosDireccionAsync(
                 direccion, CarreraSeleccionada.Id, EscenarioSeleccionado.Id, carreraNombre, escenarioNombre);
-            var pdf = GenerarPdf(s => s.GenerarReporteDireccion(datos));
+            // La composición es CPU-bound (ClosedXML/QuestPDF): fuera del hilo de UI
+            // para que la ventana no quede "No responde" mientras se arma el archivo.
+            var archivo = comoXlsx
+                ? await Task.Run(() => GenerarXlsx(s => s.GenerarReporteDireccion(datos)))
+                : await Task.Run(() => GenerarPdf(s => s.GenerarReporteDireccion(datos)));
+            var extension = comoXlsx ? "xlsx" : "pdf";
 
             var dialogo = new SaveFileDialog
             {
-                Filter = "Archivo PDF (*.pdf)|*.pdf",
-                FileName = $"Reporte_{SeccionesReporte.SlugArchivo(direccion)}_{Sanear(carreraNombre)}_{Sanear(escenarioNombre)}_{DateTime.Now:yyyyMMdd}.pdf"
+                Filter = comoXlsx ? "Archivo Excel (*.xlsx)|*.xlsx" : "Archivo PDF (*.pdf)|*.pdf",
+                FileName = $"Reporte_{SeccionesReporte.SlugArchivo(direccion)}_{Sanear(carreraNombre)}_{Sanear(escenarioNombre)}_{DateTime.Now:yyyyMMdd}.{extension}"
             };
             if (dialogo.ShowDialog() != true)
                 return;
 
-            await File.WriteAllBytesAsync(dialogo.FileName, pdf);
+            await File.WriteAllBytesAsync(dialogo.FileName, archivo);
             MensajeExito = $"Reporte ({SeccionesReporte.Titulo(direccion)}) exportado: {dialogo.FileName}";
         }
         catch (Exception ex)
@@ -530,7 +540,8 @@ public sealed partial class ReportesViewModel : ObservableObject
             sp => sp.GetRequiredService<ObtenerDemandaProyectadaQuery>().EjecutarAsync(carreraId, escenarioId));
 
         var tMateriales = Cargar(
-            Necesita(SeccionReporte.MaterialesUnidades, SeccionReporte.MaterialesMonetario, SeccionReporte.PuntoEquilibrio),
+            Necesita(SeccionReporte.MaterialesUnidades, SeccionReporte.MaterialesMonetario,
+                SeccionReporte.PuntoEquilibrio, SeccionReporte.BalanceProyectado),
             sp => sp.GetRequiredService<CalcularMaterialesPorPeriodoQuery>().EjecutarAsync(carreraId, escenarioId));
 
         var tActivos = Cargar(
@@ -542,7 +553,7 @@ public sealed partial class ReportesViewModel : ObservableObject
             sp => sp.GetRequiredService<ObtenerTotalesActivosQuery>().EjecutarAsync(carreraId, escenarioId));
 
         var tInversion = Cargar(
-            Necesita(SeccionReporte.InversionInicial),
+            Necesita(SeccionReporte.InversionInicial, SeccionReporte.BalanceProyectado),
             sp => sp.GetRequiredService<ObtenerInversionInicialTotalQuery>().EjecutarAsync(carreraId, escenarioId));
 
         var tCapital = Cargar(
@@ -566,16 +577,15 @@ public sealed partial class ReportesViewModel : ObservableObject
             Necesita(SeccionReporte.PlantaCentral),
             sp => sp.GetRequiredService<CalcularAportePlantaCentralCarreraQuery>().EjecutarAsync(carreraId, escenarioId));
 
-        var tCostos = Cargar(
-            Necesita(SeccionReporte.CostosGastos, SeccionReporte.BalanceProyectado,
-                SeccionReporte.PuntoEquilibrio, SeccionReporte.Ces),
-            sp => sp.GetRequiredService<ObtenerMatrizCostosGastosQuery>().EjecutarAsync(carreraId, escenarioId));
-
+        // El financiamiento también alimenta costos (interés) y flujo (pago del crédito) — KAN-48.
         var tFinanciamiento = Cargar(
-            Necesita(SeccionReporte.FinanciamientoAmortizacion),
+            Necesita(SeccionReporte.FinanciamientoAmortizacion, SeccionReporte.CostosGastos,
+                SeccionReporte.BalanceProyectado, SeccionReporte.PuntoEquilibrio,
+                SeccionReporte.Ces, SeccionReporte.FlujoFondos),
             sp => sp.GetRequiredService<ObtenerResumenAmortizacionQuery>().EjecutarAsync(carreraId, escenarioId));
 
         // ---- Nivel 2+: dependientes (cada cadena espera solo lo suyo) ----
+        var tCostos = CargarCostosAsync();
         var tIngresos = CargarIngresosAsync();
         var tInvVinBecas = CargarInvVinBecasAsync();
         var tCes = CargarCesDireccionAsync();
@@ -583,10 +593,23 @@ public sealed partial class ReportesViewModel : ObservableObject
         var tFlujo = CargarFlujoAsync();
         var tIndicadores = CargarIndicadoresAsync();
         var tPuntoEquilibrio = CargarPuntoEquilibrioAsync();
+        var tBalanceReal = CargarBalanceRealAsync();
+
+        async Task<MatrizCostosGastosDto?> CargarCostosAsync()
+        {
+            if (!Necesita(SeccionReporte.CostosGastos, SeccionReporte.EstadoResultados,
+                    SeccionReporte.BalanceProyectado, SeccionReporte.FlujoFondos,
+                    SeccionReporte.PuntoEquilibrio, SeccionReporte.Ces))
+                return null;
+            var financiamiento = await tFinanciamiento;
+            return await CargarSeguroAsync(sp => sp.GetRequiredService<ObtenerMatrizCostosGastosQuery>()
+                .EjecutarAsync(carreraId, escenarioId, financiamientoPrecalculado: financiamiento));
+        }
 
         async Task<IngresosProyectadosDto?> CargarIngresosAsync()
         {
-            if (!Necesita(SeccionReporte.Ingresos, SeccionReporte.BalanceProyectado))
+            if (!Necesita(SeccionReporte.Ingresos, SeccionReporte.EstadoResultados,
+                    SeccionReporte.BalanceProyectado, SeccionReporte.FlujoFondos))
                 return null;
             var arancel = await tArancel;
             return await CargarSeguroAsync(sp => sp.GetRequiredService<CalcularIngresosProyectadosQuery>()
@@ -618,7 +641,8 @@ public sealed partial class ReportesViewModel : ObservableObject
 
         async Task<EstadoPerdidasGananciasDto?> CargarBalanceAsync()
         {
-            if (!Necesita(SeccionReporte.BalanceProyectado, SeccionReporte.PuntoEquilibrio, SeccionReporte.FlujoFondos))
+            if (!Necesita(SeccionReporte.EstadoResultados, SeccionReporte.BalanceProyectado,
+                    SeccionReporte.PuntoEquilibrio, SeccionReporte.FlujoFondos))
                 return null;
             var costos = await tCostos;
             var ingresos = await tIngresos;
@@ -629,13 +653,15 @@ public sealed partial class ReportesViewModel : ObservableObject
 
         async Task<FlujoFondosDto?> CargarFlujoAsync()
         {
-            if (!Necesita(SeccionReporte.FlujoFondos, SeccionReporte.Indicadores))
+            if (!Necesita(SeccionReporte.FlujoFondos, SeccionReporte.Indicadores, SeccionReporte.BalanceProyectado))
                 return null;
             var balance = await tBalance;
             var capital = await tCapital;
+            var financiamiento = await tFinanciamiento;
             return await CargarSeguroAsync(sp => sp.GetRequiredService<ObtenerFlujoFondosQuery>()
                 .EjecutarAsync(carreraId, escenarioId,
-                    estadoPrecalculado: balance, capitalTrabajoPrecalculado: capital));
+                    estadoPrecalculado: balance, capitalTrabajoPrecalculado: capital,
+                    financiamientoPrecalculado: financiamiento));
         }
 
         async Task<IndicadoresFinancierosDto?> CargarIndicadoresAsync()
@@ -645,6 +671,22 @@ public sealed partial class ReportesViewModel : ObservableObject
             var flujo = await tFlujo;
             return await CargarSeguroAsync(sp => sp.GetRequiredService<ObtenerIndicadoresFinancierosQuery>()
                 .EjecutarAsync(carreraId, escenarioId, flujoPrecalculado: flujo));
+        }
+
+        async Task<BalanceProyectadoDto?> CargarBalanceRealAsync()
+        {
+            if (!Necesita(SeccionReporte.BalanceProyectado))
+                return null;
+            var flujo = await tFlujo;
+            var financiamiento = await tFinanciamiento;
+            var inversion = await tInversion;
+            var materiales = await tMateriales;
+            return await CargarSeguroAsync(sp => sp.GetRequiredService<ObtenerBalanceProyectadoQuery>()
+                .EjecutarAsync(carreraId, escenarioId,
+                    flujoPrecalculado: flujo,
+                    financiamientoPrecalculado: financiamiento,
+                    inversionPrecalculada: inversion,
+                    materialesPrecalculados: materiales));
         }
 
         async Task<PuntoEquilibrioDto?> CargarPuntoEquilibrioAsync()
@@ -683,7 +725,8 @@ public sealed partial class ReportesViewModel : ObservableObject
             Indicadores = await tIndicadores,
             PuntoEquilibrio = await tPuntoEquilibrio,
             FlujoFondos = await tFlujo,
-            BalanceProyectado = await tBalance,
+            EstadoResultados = await tBalance,
+            BalanceProyectado = await tBalanceReal,
             Ces = await tCes
         };
     }
@@ -707,6 +750,13 @@ public sealed partial class ReportesViewModel : ObservableObject
     {
         using var scope = _sp.CreateScope();
         var servicio = scope.ServiceProvider.GetRequiredService<IServicioExportacionPdf>();
+        return generar(servicio);
+    }
+
+    private byte[] GenerarXlsx(Func<IServicioExportacionXlsx, byte[]> generar)
+    {
+        using var scope = _sp.CreateScope();
+        var servicio = scope.ServiceProvider.GetRequiredService<IServicioExportacionXlsx>();
         return generar(servicio);
     }
 

@@ -39,6 +39,7 @@ public enum SeccionReporte
     Indicadores,
     PuntoEquilibrio,
     FlujoFondos,
+    EstadoResultados,
     BalanceProyectado,
     Ces
 }
@@ -56,6 +57,7 @@ public static class SeccionesReporte
             SeccionReporte.PuntoEquilibrio,
             SeccionReporte.CostosGastos,
             SeccionReporte.FlujoFondos,
+            SeccionReporte.EstadoResultados,
             SeccionReporte.BalanceProyectado
         ],
         DireccionReporte.GestionDocente =>
@@ -116,6 +118,7 @@ public static class SeccionesReporte
             SeccionReporte.Indicadores,
             SeccionReporte.PuntoEquilibrio,
             SeccionReporte.FlujoFondos,
+            SeccionReporte.EstadoResultados,
             SeccionReporte.BalanceProyectado,
             SeccionReporte.Ces
         ]

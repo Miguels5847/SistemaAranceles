@@ -45,6 +45,10 @@ public partial class AnalisisFinancieroView : UserControl
         {
             ActualizarColumnasTirVan();
         }
+        else if (e.PropertyName == nameof(AnalisisFinancieroViewModel.BalanceProyectado))
+        {
+            ActualizarColumnasBalanceProyectado();
+        }
     }
 
     private void ActualizarTodasLasColumnas()
@@ -52,6 +56,36 @@ public partial class AnalisisFinancieroView : UserControl
         ActualizarColumnasPerdidasGanancias();
         ActualizarColumnasFlujoFondos();
         ActualizarColumnasTirVan();
+        ActualizarColumnasBalanceProyectado();
+    }
+
+    private void ActualizarColumnasBalanceProyectado()
+    {
+        if (BalanceProyectadoGrid is null)
+            return;
+
+        BalanceProyectadoGrid.Columns.Clear();
+        BalanceProyectadoGrid.Columns.Add(new DataGridTextColumn
+        {
+            Header = "Concepto",
+            Binding = new Binding(nameof(BalanceRubroDto.Concepto)),
+            Width = new DataGridLength(320),
+            CellStyle = TryFindResource("PerdidasGananciasConceptoCellStyle") as Style,
+            ElementStyle = TryFindResource("PerdidasGananciasConceptoTextStyle") as Style
+        });
+
+        var estiloNumero = TryFindResource("PerdidasGananciasNumeroTextStyle") as Style;
+        var etiquetas = DataContext is AnalisisFinancieroViewModel vm ? vm.EtiquetasBalanceProyectado : [];
+        for (var i = 0; i < etiquetas.Count; i++)
+        {
+            BalanceProyectadoGrid.Columns.Add(new DataGridTextColumn
+            {
+                Header = etiquetas[i],
+                Binding = new Binding($"PeriodosDisplay[{i}]"),
+                Width = new DataGridLength(130),
+                ElementStyle = estiloNumero
+            });
+        }
     }
 
     private void ActualizarColumnasPerdidasGanancias()
