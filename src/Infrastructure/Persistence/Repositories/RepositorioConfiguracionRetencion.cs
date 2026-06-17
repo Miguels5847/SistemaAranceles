@@ -100,6 +100,15 @@ public sealed class RepositorioConfiguracionRetencion(ContextoAplicacion context
                 cancellationToken);
     }
 
+    public async Task<int?> ObtenerIdCualquierEstadoPorCombinacionAsync(int carreraId, int escenarioProyeccionId, CancellationToken cancellationToken = default)
+    {
+        return await contextoAplicacion.ConfiguracionesRetencion
+            .AsNoTracking()
+            .Where(x => x.CarreraId == carreraId && x.EscenarioProyeccionId == escenarioProyeccionId)
+            .Select(x => (int?)x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public async Task AgregarAsync(ConfiguracionRetencionDominio configuracion, int? creadoPorUsuarioId = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(configuracion);
@@ -145,6 +154,12 @@ public sealed class RepositorioConfiguracionRetencion(ContextoAplicacion context
         existente.ParalelosPeriodo2 = configuracion.ParalelosPeriodo2;
         existente.ActualizadoEn = DateTime.UtcNow;
         existente.ActualizadoPorUsuarioId = actualizadoPorUsuarioId;
+
+        // Reactivación: si la fila estaba borrada lógicamente (revivir combinación), vuelve a
+        // quedar activa. Para una edición normal (ya activa) esto es un no-op.
+        existente.EstaActivo = true;
+        existente.EliminadoEn = null;
+        existente.EliminadoPorUsuarioId = null;
     }
 
     public async Task EliminarPorIdAsync(int id, int? eliminadoPorUsuarioId = null, CancellationToken cancellationToken = default)

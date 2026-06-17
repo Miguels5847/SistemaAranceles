@@ -53,10 +53,41 @@ public sealed class CrearConfiguracionRetencionUseCase(
             dto.ParalelosPeriodo1,
             dto.ParalelosPeriodo2);
 
+        // No hay duplicado ACTIVO, pero el índice único (carrera, escenario) cubre filas
+        // borradas lógicamente. Si existe una fila inactiva para la misma combinación, se
+        // reactiva en lugar de insertar; así no se dispara el error 23505.
+        var idInactivo = await repositorioConfiguracion.ObtenerIdCualquierEstadoPorCombinacionAsync(
+            dto.CarreraId, dto.EscenarioProyeccionId, cancellationToken);
+
+        int configuracionId;
         try
         {
-            await repositorioConfiguracion.AgregarAsync(entidad, usuarioId, cancellationToken);
-            await unidadTrabajo.GuardarCambiosAsync(cancellationToken);
+            if (idInactivo is int idRevivir)
+            {
+                entidad.RehidratarId(idRevivir);
+                await repositorioConfiguracion.ActualizarAsync(entidad, usuarioId, cancellationToken);
+                await unidadTrabajo.GuardarCambiosAsync(cancellationToken);
+                configuracionId = idRevivir;
+            }
+            else
+            {
+                await repositorioConfiguracion.AgregarAsync(entidad, usuarioId, cancellationToken);
+                await unidadTrabajo.GuardarCambiosAsync(cancellationToken);
+
+                var creada = await repositorioConfiguracion.ObtenerActivoPorCarreraYEscenarioNombreAsync(
+                    dto.CarreraId,
+                    escenario.Nombre,
+                    cancellationToken);
+
+                if (creada is null || creada.Id <= 0)
+                    throw new InvalidOperationException("No se pudo recuperar el identificador de la configuración creada.");
+
+                configuracionId = creada.Id;
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -64,16 +95,6 @@ public sealed class CrearConfiguracionRetencionUseCase(
             Trace.TraceError($"[{DateTime.UtcNow:O}] ConfRetCrearError: {detalle}");
             throw new InvalidOperationException($"No se pudo guardar la configuración de retención. Detalle: {detalle}");
         }
-
-        var creada = await repositorioConfiguracion.ObtenerActivoPorCarreraYEscenarioNombreAsync(
-            dto.CarreraId,
-            escenario.Nombre,
-            cancellationToken);
-
-        if (creada is null || creada.Id <= 0)
-            throw new InvalidOperationException("No se pudo recuperar el identificador de la configuración creada.");
-
-        var configuracionId = creada.Id;
 
         try
         {
@@ -88,6 +109,7 @@ public sealed class CrearConfiguracionRetencionUseCase(
         }
         catch
         {
+            // La auditoría es best-effort: un fallo al registrarla no debe revertir el guardado.
         }
 
         return configuracionId;

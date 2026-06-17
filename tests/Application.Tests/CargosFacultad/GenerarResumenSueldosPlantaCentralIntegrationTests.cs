@@ -235,6 +235,8 @@ public class GenerarResumenSueldosPlantaCentralIntegrationTests
             => Task.FromResult<ConfiguracionRetencion?>(null);
         public Task<bool> ExisteCombinacionAsync(int carreraId, int escenarioProyeccionId, int? excluirId = null, CancellationToken cancellationToken = default)
             => Task.FromResult(false);
+        public Task<int?> ObtenerIdCualquierEstadoPorCombinacionAsync(int carreraId, int escenarioProyeccionId, CancellationToken cancellationToken = default)
+            => Task.FromResult<int?>(null);
         public Task AgregarAsync(ConfiguracionRetencion configuracion, int? creadoPorUsuarioId = null, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task ActualizarAsync(ConfiguracionRetencion configuracion, int? actualizadoPorUsuarioId = null, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task EliminarPorIdAsync(int id, int? eliminadoPorUsuarioId = null, CancellationToken cancellationToken = default) => Task.CompletedTask;

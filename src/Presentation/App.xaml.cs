@@ -169,6 +169,7 @@ public partial class App
         servicios.AddTransient<SistemaAranceles.Application.UseCases.CapitalTrabajo.GenerarMaterialesPorDefectoCarreraCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.DemandaIngresos.GenerarRatiosPorDefectoCarreraCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.CrearActivoDiferidoCommand>();
+        servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.GenerarActivosDiferidosPorDefectoCarreraCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.ActualizarActivoDiferidoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.EliminarActivoDiferidoCommand>();
         servicios.AddTransient<SistemaAranceles.Application.UseCases.ActivoDiferido.ListarActivosDiferidosQuery>();
@@ -226,7 +227,6 @@ public partial class App
         servicios.AddTransient<ImportarInflacionBceArchivoUseCase>();
         servicios.AddTransient<ProyectarInflacionUseCase>();
         servicios.AddTransient<ObtenerInflacionProyectadaParaDependientesUseCase>();
-        servicios.AddTransient<SemillaCapitalTrabajoService>();
 
         servicios.AddTransient<IValidator<CrearConfiguracionRetencionDto>, CrearConfiguracionRetencionDtoValidador>();
         servicios.AddTransient<IValidator<ActualizarConfiguracionRetencionDto>, ActualizarConfiguracionRetencionDtoValidador>();
@@ -236,6 +236,7 @@ public partial class App
         servicios.AddTransient<ListarConfiguracionesRetencionUseCase>();
         servicios.AddTransient<ObtenerConfiguracionRetencionUseCase>();
         servicios.AddTransient<CrearConfiguracionRetencionUseCase>();
+        servicios.AddTransient<SembrarEscenariosProyeccionCarreraCommand>();
         servicios.AddTransient<ActualizarConfiguracionRetencionUseCase>();
         servicios.AddTransient<EliminarConfiguracionRetencionUseCase>();
         servicios.AddTransient<CrearCriterioReferenciaRetencionUseCase>();

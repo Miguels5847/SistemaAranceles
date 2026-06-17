@@ -15,6 +15,7 @@ public sealed class OpcionCarrera
 {
     public int Id { get; init; }
     public string Descripcion { get; init; } = string.Empty;
+    public int TotalCiclos { get; init; }
 }
 
 public sealed class OpcionEscenario
@@ -112,7 +113,7 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
             var lista = await listar.EjecutarAsync();
 
             Carreras = new ObservableCollection<OpcionCarrera>(
-                carreras.Select(c => new OpcionCarrera { Id = c.Id, Descripcion = $"{c.Codigo} - {c.Nombre}" }));
+                carreras.Select(c => new OpcionCarrera { Id = c.Id, Descripcion = $"{c.Codigo} - {c.Nombre}", TotalCiclos = c.TotalCiclos }));
             _catalogoEscenarios = escenarios
                 .Select(e => new OpcionEscenario
                 {
@@ -191,6 +192,45 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
         {
             EscenarioSeleccionado = null;
             TextoInformativoEscenario = string.Empty;
+        }
+
+        // Propaga el nº de ciclos de la carrera al formulario (en modo Nuevo). Al editar se conserva
+        // el valor guardado de la configuración; para Optimista/Pesimista la precarga desde el
+        // Histórico lo reajusta si difiere.
+        if (!EstaEditando)
+            TotalCiclos = value.TotalCiclos.ToString(CultureInfo.InvariantCulture);
+
+        // Carrera sin escenarios (creada antes de la siembra automática): se generan los 3
+        // estándar al vuelo para que el desplegable no quede vacío. No afecta a las demás carreras.
+        if (Escenarios.Count == 0)
+            _ = AsegurarEscenariosAsync(value.Id);
+    }
+
+    private async Task AsegurarEscenariosAsync(int carreraId)
+    {
+        if (EstaEditando || !PuedeEditar)
+            return;
+
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var sembrar = scope.ServiceProvider.GetRequiredService<SembrarEscenariosProyeccionCarreraCommand>();
+            var creados = await sembrar.EjecutarAsync(carreraId, _sesionActual.UsuarioId);
+            if (creados <= 0)
+                return;
+
+            var repoEscenario = scope.ServiceProvider.GetRequiredService<IRepositorioEscenarioProyeccion>();
+            var escenarios = await repoEscenario.ListarAsync();
+            _catalogoEscenarios = escenarios
+                .Select(e => new OpcionEscenario { Id = e.Id, CarreraId = e.CarreraId, Descripcion = e.Nombre })
+                .ToList();
+
+            if (CarreraSeleccionada?.Id == carreraId)
+                ActualizarEscenariosPorCarrera(carreraId);
+        }
+        catch
+        {
+            // Silencioso: si la siembra falla, el desplegable queda vacío como antes (no se rompe nada).
         }
     }
 

@@ -68,11 +68,6 @@ public sealed class FilaMatriculaAnualDto
     public decimal   Total    { get; init; }
 }
 
-public sealed class FilaParalelosDto
-{
-    public int[] CantidadParalelos { get; init; } = [];
-}
-
 /// <summary>
 /// Tabla 2 — Docentes requeridos por PERÍODO (columnas dinámicas, enteros).
 /// Periodos[p] = número de personas requeridas en el período p (0-based).

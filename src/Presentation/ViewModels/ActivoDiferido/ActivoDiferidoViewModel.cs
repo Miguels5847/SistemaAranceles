@@ -12,7 +12,7 @@ public sealed partial class ActivoDiferidoViewModel : ObservableObject
 {
     private readonly IServiceProvider _sp;
     private readonly SesionActual _sesion;
-    private int _carreraId = 1;
+    private int _carreraId;
     private int _anioBase = DateTime.UtcNow.Year;
 
     public ActivoDiferidoViewModel(IServiceProvider sp, SesionActual sesion)
@@ -59,12 +59,59 @@ public sealed partial class ActivoDiferidoViewModel : ObservableObject
 
     private async Task RefrescarAsync()
     {
+        // Sin carrera válida no se consulta nada (antes el default 1 mostraba los diferidos de la
+        // carrera 1 y luego "desaparecían" al cargar la carrera real).
+        if (_carreraId <= 0)
+        {
+            Activos = [];
+            TablaAmortizacion = null;
+            return;
+        }
+
         using var scope = _sp.CreateScope();
         var listar = scope.ServiceProvider.GetRequiredService<ListarActivosDiferidosQuery>();
         var tabla = scope.ServiceProvider.GetRequiredService<ObtenerTablaAmortizacionQuery>();
 
         Activos = new ObservableCollection<ActivoDiferidoDto>(await listar.EjecutarAsync(_carreraId));
         TablaAmortizacion = await tabla.EjecutarAsync(_carreraId, _anioBase);
+    }
+
+    [RelayCommand]
+    private async Task GenerarPorDefectoAsync()
+    {
+        MensajeError = string.Empty;
+        MensajeExito = string.Empty;
+
+        if (!PuedeCrear)
+        {
+            MensajeError = "No tiene permiso para generar activos diferidos.";
+            return;
+        }
+
+        if (_carreraId <= 0)
+        {
+            MensajeError = "Seleccione una carrera antes de generar.";
+            return;
+        }
+
+        if (EstaGuardando) return;
+        EstaGuardando = true;
+        try
+        {
+            int creados;
+            using (var scope = _sp.CreateScope())
+            {
+                var cmd = scope.ServiceProvider.GetRequiredService<GenerarActivosDiferidosPorDefectoCarreraCommand>();
+                creados = await cmd.EjecutarAsync(_carreraId);
+            }
+
+            MensajeExito = creados > 0
+                ? $"Se generaron {creados} rubros por defecto."
+                : "La carrera ya tiene los rubros por defecto.";
+            await RefrescarAsync();
+        }
+        catch (Exception ex) { MensajeError = ex.Message; }
+        finally { EstaGuardando = false; }
     }
 
     [RelayCommand]

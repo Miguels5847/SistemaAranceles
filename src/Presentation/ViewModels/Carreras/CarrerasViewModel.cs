@@ -206,6 +206,18 @@ public sealed partial class CarrerasViewModel : ObservableObject
                     var sembrar = scope.ServiceProvider
                         .GetRequiredService<SistemaAranceles.Application.UseCases.RecursosFisicosDepreciacion.SembrarActivosFijosDesdeCatalogoCommand>();
                     await sembrar.EjecutarAsync(creada.Id);
+
+                    // Crea los 3 escenarios estándar (Histórico/Optimista/Pesimista) vacíos para que
+                    // la carrera ya aparezca con escenarios en Tasa de Retención y Graduación.
+                    var sembrarEscenarios = scope.ServiceProvider
+                        .GetRequiredService<SistemaAranceles.Application.UseCases.TasaRetencion.SembrarEscenariosProyeccionCarreraCommand>();
+                    await sembrarEscenarios.EjecutarAsync(creada.Id, _sesionActual.UsuarioId);
+
+                    // Activos diferidos por defecto (permisos legales en 0) para que el módulo de
+                    // Mantenimiento e Inversión ya muestre rubros que el usuario solo debe valorar.
+                    var sembrarDiferidos = scope.ServiceProvider
+                        .GetRequiredService<SistemaAranceles.Application.UseCases.ActivoDiferido.GenerarActivosDiferidosPorDefectoCarreraCommand>();
+                    await sembrarDiferidos.EjecutarAsync(creada.Id);
                 }
 
                 await CargarAsync();

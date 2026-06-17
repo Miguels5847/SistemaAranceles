@@ -15,6 +15,13 @@ public interface IRepositorioConfiguracionRetencion
 
     Task<bool> ExisteCombinacionAsync(int carreraId, int escenarioProyeccionId, int? excluirId = null, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Id de la fila para la combinación (carrera, escenario) en CUALQUIER estado, incluida la
+    /// borrada lógicamente. El índice único cubre filas inactivas; se usa para reactivar en vez
+    /// de insertar y evitar el error 23505.
+    /// </summary>
+    Task<int?> ObtenerIdCualquierEstadoPorCombinacionAsync(int carreraId, int escenarioProyeccionId, CancellationToken cancellationToken = default);
+
     Task AgregarAsync(ConfiguracionRetencion configuracion, int? creadoPorUsuarioId = null, CancellationToken cancellationToken = default);
 
     Task ActualizarAsync(ConfiguracionRetencion configuracion, int? actualizadoPorUsuarioId = null, CancellationToken cancellationToken = default);

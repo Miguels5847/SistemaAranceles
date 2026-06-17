@@ -319,6 +319,9 @@ public sealed partial class ActivosFijosViewModel : ObservableObject
             if (EscenarioSeleccionado is not null)
             {
                 await CargarMatrizInversionesAsync();
+                // La depreciación se deriva de activos + proyección monetaria: se calcula aquí para
+                // que la pestaña Depreciación quede al día sin tener que pulsar "Recalcular".
+                await CargarMatrizDepreciacionAsync();
             }
         }
         catch (Exception ex)

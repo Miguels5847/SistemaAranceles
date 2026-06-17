@@ -2,15 +2,6 @@ using SistemaAranceles.Domain.Enums;
 
 namespace SistemaAranceles.Application.DTOs.RecursosFisicosDepreciacion;
 
-public sealed class InversionFuturaDto
-{
-    public int Id { get; init; }
-    public int ActivoFijoId { get; init; }
-    public int Anio { get; init; }
-    public int Semestre { get; init; }
-    public decimal CantidadProyectada { get; init; }
-}
-
 public sealed class GuardarInversionFuturaDto
 {
     public int ActivoFijoId { get; init; }
