@@ -4,7 +4,7 @@ Aplicacion de escritorio WPF para simulacion, proyeccion y analisis financiero d
 
 ## Estado Actual
 
-Rama documentada: `feature/KAN-44-Dashboard-Financiero`.
+Rama documentada: `feature/KAN-47-Informe-CES-INF-CES`.
 
 El proyecto usa Clean Architecture y ya contiene los flujos principales de seguridad, usuarios, carreras, inflacion, tasa de retencion, proyeccion de estudiantes, sueldos carrera, datos institucionales, recursos/depreciacion, mantenimiento e inversion, capital de trabajo, Demanda e Ingresos, Costos y Gastos, Costo de Carrera y Analisis Financiero (incluido el cuadro regulatorio CES / INF CES).
 
@@ -25,7 +25,9 @@ El proyecto usa Clean Architecture y ya contiene los flujos principales de segur
 | Costos y Gastos (Epica 10) | Implementado (matriz por periodo + col J = SUM(B:I)) |
 | Costo de Carrera (arancel sugerido) | Implementado |
 | Analisis Financiero (Epica 11) | Implementado: P&G, Flujo de Fondos, TIR/VAN, Periodo de Recuperacion, Punto de Equilibrio, Arancel Optimo, Dashboard y CES / INF CES |
-| Financiamiento, Balance y Reportes | Estructura parcial o pendiente |
+| Financiamiento y Amortizacion | Implementado (3 fuentes de financiamiento + tabla francesa; el interes alimenta costos/EPG/flujo) |
+| Balance Proyectado | Implementado (pestana 9 de Analisis Financiero y en reportes) |
+| Reportes | Implementado (informe por direccion, Informe CES, exportacion a PDF y XLSX) |
 
 ## Stack
 
@@ -91,32 +93,38 @@ $testOut = Join-Path $env:TEMP 'SistemaArancelesCodexTest\'
 dotnet test -p:OutDir=$testOut
 ```
 
+## Distribucion (ejecutable para otra PC)
+
+Para generar el ejecutable autocontenido y el paquete que se lleva a otra computadora:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\publicar.ps1
+```
+
+Produce:
+
+- `publish\` — la aplicacion lista: `SistemaAranceles.exe` (autocontenido, incluye .NET 8; ~107 MB), `appsettings.json`/`appsettings.Local.json`, las fuentes PDF (`LatoFont`) e `instalar.bat`.
+- `SistemaAranceles-win64.zip` — el mismo contenido comprimido para USB/correo/Drive (ignorado en git).
+
+En la PC destino: descomprimir el zip y ejecutar `instalar.bat`, que copia la app a `%LOCALAPPDATA%\SistemaAranceles\App` y crea el acceso directo "Sistema de Aranceles" en el Escritorio (sin permisos de administrador). El `.exe` por si solo no basta: necesita junto a el `appsettings.Local.json` (cadena de conexion) y la carpeta `LatoFont`. El icono propio (`src/Presentation/Assets/app.ico`) se embebe en el exe, el acceso directo y la barra de tareas.
+
+Detalles, requisitos y diagnostico en `docs/DISTRIBUCION.md`.
+
 ## Navegacion y Sesion
 
 La ventana principal esta en `src/Presentation/MainWindow.xaml` y el menu lateral se construye en `MainViewModel`.
 
-El menu actual se ordena asi, segun permisos:
+El menu se agrupa por flujo de trabajo (encabezados guia), y cada item se muestra segun permisos:
 
-1. Usuarios.
-2. Carreras.
-3. Inflacion.
-4. Tasa de Retencion y Graduacion.
-5. Proyeccion de Estudiantes.
-6. Sueldos Carrera.
-7. Datos Institucionales.
-8. Aporte Planta Central.
-9. Recursos y Depreciacion.
-10. Mantenimiento e Inversion.
-11. Capital de Trabajo.
-12. Demanda e Ingresos.
-13. Costos y Gastos.
-14. Analisis Financiero.
-15. Configuracion.
-16. Reportes.
-17. Auditoria.
-18. Cerrar Sesion.
+- **Administracion**: Usuarios, Auditoria.
+- **1 - Configuracion base**: Carreras, Inflacion, Tasa de Retencion y Graduacion, Datos Institucionales.
+- **2 - Proyeccion academica**: Proyeccion de Estudiantes, Demanda e Ingresos.
+- **3 - Costos y recursos**: Sueldos Carrera, Aporte Planta Central, Recursos y Depreciacion, Mantenimiento e Inversion, Capital de Trabajo, Costos y Gastos.
+- **4 - Financiamiento y analisis**: Amortizacion, Analisis Financiero.
+- **5 - Resultados**: Reportes.
+- Cerrar Sesion.
 
-Permisos asociados a los modulos financieros: `CG.VER` (Costos y Gastos), `AF.VER` (Analisis Financiero). El administrador tiene bypass.
+El modulo "Configuracion" se retiro; sus permisos legacy quedaron inactivos. Permisos asociados a los modulos financieros: `CG.VER` (Costos y Gastos), `AF.VER` (Analisis Financiero), `AMO.VER` (Amortizacion), `REP.VER` (Reportes). El administrador tiene bypass.
 
 Notas de UI recientes:
 
@@ -517,7 +525,7 @@ Proyectos:
 - `tests/Application.Tests/SistemaAranceles.Application.Tests.csproj`
 - `tests/Presentation.Tests/SistemaAranceles.Presentation.Tests.csproj`
 
-Cobertura actual de pruebas automatizadas (Application 108 + Presentation 2 = 110):
+Cobertura actual de pruebas automatizadas (Application 148 + Presentation 2 = 150):
 
 - Reglas de proyeccion de estudiantes.
 - Calculo de docentes.
@@ -538,8 +546,8 @@ dotnet test
 
 Ultima verificacion conocida:
 
-- Build de Presentation: 0 warnings, 0 errores.
-- `dotnet test`: Application 108 + Presentation 2 pruebas superadas, 0 errores.
+- Build de solucion: 0 warnings, 0 errores.
+- `dotnet test`: Application 148 + Presentation 2 pruebas superadas, 0 errores.
 
 ## Convenciones de Trabajo
 
