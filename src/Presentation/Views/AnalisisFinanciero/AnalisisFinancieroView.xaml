@@ -806,7 +806,7 @@
                                         <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ArancelVigenteDisplay}" Foreground="#263238" TextAlignment="Right" Margin="0,3,0,0"/>
                                         <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding TotalVigenteDisplay}" Foreground="#263238" TextAlignment="Right" Margin="0,3,0,0"/>
 
-                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Referencial por costo de carrera" Foreground="#263238" Margin="0,3,0,0"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Costo por semestre (referencial)" Foreground="#263238" Margin="0,3,0,0"/>
                                         <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ArancelReferencialDisplay}" Foreground="#263238" TextAlignment="Right" Margin="0,3,0,0"/>
                                         <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding TotalReferencialDisplay}" Foreground="#263238" TextAlignment="Right" Margin="0,3,0,0"/>
 
@@ -1095,16 +1095,21 @@
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Margin="0,0,24,0">
-                                        <TextBlock Text="Arancel por semestre" FontSize="11" Foreground="#546E7A"/>
+                                        <TextBlock Text="Arancel por semestre (óptimo VAN=0)" FontSize="11" Foreground="#546E7A"/>
                                         <TextBlock Text="{Binding Ces.ArancelPorSemestreDisplay, FallbackValue='—'}" FontWeight="Bold" Foreground="#1B5E20"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Margin="0,0,24,0">
+                                        <TextBlock Text="Costo por Semestre" FontSize="11" Foreground="#546E7A"/>
+                                        <TextBlock Text="{Binding Ces.CostoPorSemestreDisplay, FallbackValue='—'}" FontWeight="Bold" Foreground="#6A1B9A"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Margin="0,0,24,0">
                                         <TextBlock Text="Matrícula" FontSize="11" Foreground="#546E7A"/>
                                         <TextBlock Text="{Binding Ces.MatriculaDisplay, FallbackValue='—'}" FontWeight="Bold" Foreground="#1B5E20"/>
                                     </StackPanel>
-                                    <StackPanel Grid.Column="2">
+                                    <StackPanel Grid.Column="3">
                                         <TextBlock Text="Total por semestre" FontSize="11" Foreground="#546E7A"/>
                                         <TextBlock Text="{Binding Ces.TotalPorSemestreDisplay, FallbackValue='—'}" FontWeight="Bold" Foreground="#1B5E20"/>
                                     </StackPanel>
@@ -1116,15 +1121,6 @@
                             <StackPanel>
                                 <TextBlock Text="CES — Parámetros de justificación del arancel"
                                            FontWeight="SemiBold" Foreground="#1A237E" Margin="0,0,0,8"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                    <TextBlock Text="Costo de carreras similares (referencial):" FontSize="11"
-                                               Foreground="#546E7A" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                    <TextBox Text="{Binding CostoCarrerasSimilares, UpdateSourceTrigger=PropertyChanged}"
-                                             MinWidth="160" Padding="4,2"
-                                             IsEnabled="{Binding EstaCargando, Converter={StaticResource InverseBoolConverter}}"/>
-                                    <TextBlock Text="(dato externo de la IES)" FontSize="10" FontStyle="Italic"
-                                               Foreground="#546E7A" VerticalAlignment="Center" Margin="8,0,0,0"/>
-                                </StackPanel>
                                 <DataGrid ItemsSource="{Binding ParametrosCes}"
                                           AutoGenerateColumns="False" IsReadOnly="True"
                                           RowStyle="{StaticResource PerdidasGananciasRowStyle}"

@@ -328,7 +328,7 @@ public sealed class ServicioExportacionXlsxClosedXml : IServicioExportacionXlsx
             hoja.Cell(filaXl, 8).Value = fila.TotalNeto;
             foreach (var c in new[] { 2, 4, 6, 7, 8 })
                 hoja.Cell(filaXl, c).Style.NumberFormat.Format = FormatoMoneda;
-            hoja.Cell(filaXl, 5).Style.NumberFormat.Format = FormatoNumero;
+            hoja.Cell(filaXl, 5).Style.NumberFormat.Format = "#,##0";
             filaXl++;
         }
 
@@ -646,8 +646,11 @@ public sealed class ServicioExportacionXlsxClosedXml : IServicioExportacionXlsx
         }
 
         filaXl++;
-        hoja.Cell(filaXl, 1).Value = "Arancel por semestre";
+        hoja.Cell(filaXl, 1).Value = "Arancel por semestre (óptimo VAN=0)";
         hoja.Cell(filaXl, 2).Value = ces.ArancelPorSemestreDisplay;
+        filaXl++;
+        hoja.Cell(filaXl, 1).Value = "Costo por Semestre";
+        hoja.Cell(filaXl, 2).Value = ces.CostoPorSemestreDisplay;
         filaXl++;
         hoja.Cell(filaXl, 1).Value = "Matrícula";
         hoja.Cell(filaXl, 2).Value = ces.MatriculaDisplay;

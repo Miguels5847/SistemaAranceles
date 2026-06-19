@@ -23,6 +23,7 @@ public sealed class ObtenerCesQuery(
     CalcularIngresosProyectadosQuery calcularIngresosProyectadosQuery,
     ObtenerCostoCarreraQuery obtenerCostoCarreraQuery,
     ObtenerArancelEfectivoQuery obtenerArancelEfectivoQuery,
+    ObtenerArancelOptimoBiseccionQuery obtenerArancelOptimoBiseccionQuery,
     ObtenerInversionInicialTotalQuery obtenerInversionInicialTotalQuery,
     ObtenerMatrizInversionesQuery obtenerMatrizInversionesQuery,
     CalcularMaterialesPorPeriodoQuery calcularMaterialesPorPeriodoQuery,
@@ -40,6 +41,7 @@ public sealed class ObtenerCesQuery(
         MatrizInversionesDto? inversionesPrecalculada = null,
         CostoCarreraResultadoDto? costoCarreraPrecalculado = null,
         ArancelEfectivoDto? arancelVigentePrecalculado = null,
+        ArancelOptimoBiseccionDto? arancelOptimoPrecalculado = null,
         decimal factorImprevisto = 1.05m)
     {
         var carrera = await repositorioCarrera.ObtenerPorIdAsync(carreraId, ct);
@@ -196,6 +198,20 @@ public sealed class ObtenerCesQuery(
         var arancelVigenteValor = arancelVigente.ArancelEfectivo ?? 0m;
         var estudiantesCohorte = demanda.TotalesPorPeriodo.Count > 0 ? demanda.TotalesPorPeriodo[0] : 0m;
 
+        // El CES reporta el arancel FINAL = óptimo financiero (VAN=0), el que cubre todos los costos
+        // (no el costo referencial, que sería un valor menor). El costo referencial se muestra aparte
+        // como "Costo por Semestre". Si el óptimo no converge, cae al costo para no dejar el cuadro vacío.
+        var optimo = arancelOptimoPrecalculado
+            ?? await obtenerArancelOptimoBiseccionQuery.EjecutarAsync(
+                carreraId, escenarioProyeccionId, ct,
+                costosPrecalculados: matriz,
+                demandaPrecalculada: demanda,
+                inversionesPrecalculada: inversiones,
+                factorImprevisto: factorImprevisto);
+        var arancelCes = optimo.Disponible ? optimo.ArancelOptimo : arancelPropuesto;
+        var matriculaCes = optimo.Disponible ? optimo.MatriculaOptima : matriculaPropuesta;
+        var totalCes = optimo.Disponible ? optimo.TotalPorSemestre : costoCarrera.TotalPorSemestre;
+
         var parametros = new List<CesParametroFilaDto>
         {
             new() { Parametro = "Pago al personal académico", Criterio = "Remuneración mensual promedio de profesores a tiempo completo (referencial)", ValorDisplay = Money(sueldoPromedio) },
@@ -237,9 +253,10 @@ public sealed class ObtenerCesQuery(
             EscenarioProyeccionId = escenarioProyeccionId,
             EscenarioNombre = escenario?.Nombre ?? matriz.EscenarioNombre,
             InfCes = infCes,
-            ArancelPorSemestreDisplay = Money(arancelPropuesto),
-            MatriculaDisplay = Money(matriculaPropuesta),
-            TotalPorSemestreDisplay = Money(costoCarrera.TotalPorSemestre),
+            ArancelPorSemestreDisplay = Money(arancelCes),
+            CostoPorSemestreDisplay = Money(arancelPropuesto),
+            MatriculaDisplay = Money(matriculaCes),
+            TotalPorSemestreDisplay = Money(totalCes),
             Parametros = parametros,
             Distribucion = distribucion,
             MensajeAdvertencia = matriz.MensajeAdvertencia

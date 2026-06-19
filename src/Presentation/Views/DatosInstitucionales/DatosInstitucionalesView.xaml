@@ -457,7 +457,7 @@
                                         </StackPanel>
 
                                         <TextBlock Grid.Row="3" Grid.ColumnSpan="4"
-                                                   Text="Estos valores alimentan las pestañas Inv. Vin. Becas y Arancel referencial por costo de carrera."
+                                                   Text="Estos valores alimentan las pestañas Inv. Vin. Becas y Costo de la carrera (referencial)."
                                                    FontSize="11" Foreground="#546E7A" FontStyle="Italic"
                                                    TextWrapping="Wrap" Margin="0,2,0,0"/>
                                 </Grid>

@@ -40,7 +40,7 @@ public sealed class IngresoFilaCicloDto
     public decimal TotalNeto => Periodos.Sum(p => p.IngresoNeto);
 
     public string CicloDisplay => $"Ciclo {NumeroCiclo}";
-    public string TotalEstudiantesDisplay => TotalEstudiantes.ToString("N2");
+    public string TotalEstudiantesDisplay => TotalEstudiantes.ToString("N0");
     public string TotalBrutoDisplay => $"$ {TotalBruto:N2}";
     public string TotalBecasDisplay => $"$ {TotalBecas:N2}";
     public string TotalNetoDisplay => $"$ {TotalNeto:N2}";

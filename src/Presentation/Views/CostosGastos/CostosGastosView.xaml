@@ -77,7 +77,7 @@
                        FontSize="22"
                        FontWeight="Bold"
                        Foreground="#1A237E"/>
-            <TextBlock Text="Inv. Vin. Becas, Costos y Gastos, y Arancel referencial por costo de carrera"
+            <TextBlock Text="Inv. Vin. Becas, Costos y Gastos, y Costo de la carrera (referencial)"
                        FontSize="12"
                        Foreground="#546E7A"
                        Margin="0,4,0,0"/>
@@ -262,7 +262,7 @@
                 </ScrollViewer>
             </TabItem>
 
-            <TabItem Header="3. Arancel referencial por costo de carrera">
+            <TabItem Header="3. Costo de la carrera (referencial)">
                 <Grid Margin="8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -279,7 +279,7 @@
                         </Border>
                         <Border Style="{StaticResource PanelResumen}">
                             <StackPanel>
-                                <TextBlock Text="Arancel referencial (semestre)" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="Costo por Semestre" FontSize="11" Foreground="#546E7A"/>
                                 <TextBlock Text="{Binding ResultadoCostoCarrera.ArancelSugeridoDisplay, FallbackValue='Pendiente'}"
                                            FontWeight="Bold"/>
                             </StackPanel>

@@ -83,7 +83,6 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
     [ObservableProperty] private DashboardFinancieroDto? _dashboardFinanciero;
     [ObservableProperty] private CesDto? _ces;
     [ObservableProperty] private BalanceProyectadoDto? _balanceProyectado;
-    [ObservableProperty] private string _costoCarrerasSimilares = string.Empty;
     [ObservableProperty] private decimal _factorImprevisto = FactorImprevistoCostosGastosState.FactorPorDefecto;
     [ObservableProperty] private ArancelEfectivoDto? _arancelVigente;
     [ObservableProperty] private CostoCarreraResultadoDto? _arancelReferencial;
@@ -672,6 +671,7 @@ public sealed partial class AnalisisFinancieroViewModel : ObservableObject
                     inversionesPrecalculada: inversiones,
                     costoCarreraPrecalculado: ArancelReferencial,
                     arancelVigentePrecalculado: ArancelVigente,
+                    arancelOptimoPrecalculado: ArancelOptimoBiseccion,
                     factorImprevisto: factorImprevisto));
             Debug.WriteLine($"AF: TOTAL={swTotal.ElapsedMilliseconds}ms");
 

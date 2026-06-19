@@ -184,7 +184,7 @@
                         </Border>
                         <Border Background="#F8F9FF" BorderBrush="#C5CAE9" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,0,6,0">
                             <StackPanel>
-                                <TextBlock Text="Arancel referencial por costo" FontSize="11" Foreground="#546E7A"/>
+                                <TextBlock Text="Costo por semestre (referencial)" FontSize="11" Foreground="#546E7A"/>
                                 <TextBlock Text="{Binding ArancelReferencialComparativoDisplay}" FontWeight="Bold" Foreground="#6A1B9A"/>
                                 <TextBlock Text="Costo de carrera ÷ semestres (hoja 11)" FontSize="10" FontStyle="Italic" Foreground="#90A4AE"/>
                             </StackPanel>
@@ -247,7 +247,7 @@
                                             </DataTemplate>
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>
-                                    <TextBlock Text="'Arancel referencial por costo de carrera' = costo por estudiante/carrera (no es el óptimo financiero). El óptimo VAN=0 se calcula y aplica en Análisis Financiero → Arancel Óptimo."
+                                    <TextBlock Text="'Costo de la carrera (referencial)' = costo por estudiante/carrera (no es el óptimo financiero). El óptimo VAN=0 se calcula y aplica en Análisis Financiero → Arancel Óptimo."
                                                FontSize="10" Foreground="#546E7A" FontStyle="Italic" TextWrapping="Wrap" Margin="0,3,0,0"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1">

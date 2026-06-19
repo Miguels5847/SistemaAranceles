@@ -1046,8 +1046,13 @@ internal static class SeccionesPdf
         {
             row.RelativeItem().CeldaSeccion().Column(c =>
             {
-                c.Item().Text("Arancel por semestre").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text("Arancel por semestre (óptimo VAN=0)").FontSize(8).FontColor(EstilosPdf.ColorGris);
                 c.Item().Text(ces.ArancelPorSemestreDisplay).Bold().FontColor(EstilosPdf.ColorPrimario);
+            });
+            row.RelativeItem().CeldaSeccion().Column(c =>
+            {
+                c.Item().Text("Costo por Semestre").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text(ces.CostoPorSemestreDisplay).Bold().FontColor(EstilosPdf.ColorPrimario);
             });
             row.Spacing(6);
             row.RelativeItem().CeldaSeccion().Column(c =>

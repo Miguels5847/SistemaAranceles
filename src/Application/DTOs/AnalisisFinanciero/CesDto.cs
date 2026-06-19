@@ -48,6 +48,8 @@ public sealed class CesDto
     // INF CES (presupuesto 1ª cohorte por función) + bloque arancel.
     public IReadOnlyList<CesInfFilaDto> InfCes { get; init; } = [];
     public string ArancelPorSemestreDisplay { get; init; } = string.Empty;
+    // Costo referencial (costo carrera ÷ semestres); se muestra junto al arancel óptimo para diferenciarlos.
+    public string CostoPorSemestreDisplay { get; init; } = string.Empty;
     public string MatriculaDisplay { get; init; } = string.Empty;
     public string TotalPorSemestreDisplay { get; init; } = string.Empty;
 
