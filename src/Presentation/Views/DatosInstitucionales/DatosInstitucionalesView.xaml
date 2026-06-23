@@ -515,7 +515,7 @@
                                         </StackPanel>
 
                                         <TextBlock Grid.Row="2" Grid.ColumnSpan="4"
-                                                   Text="Si 'Usar TMR manual' está activo se usa la TMR manual; si no, TMR = tasa interés + inflación promedio + premio al riesgo. La inflación proviene del módulo Inflación, no se escribe aquí. Desmarcar 'Aplicar 15% partic. + 25% renta' iguala el modelo al Excel del tutor (sin impuestos)."
+                                                   Text="Si 'Usar TMR manual' está activo se usa la TMR manual; si no, TMR = tasa interés + inflación promedio + premio al riesgo. La inflación proviene del módulo Inflación, no se escribe aquí. Desmarcar 'Aplicar 15% partic. + 25% renta' iguala el modelo al Excel (sin impuestos)."
                                                    FontSize="11" Foreground="#546E7A" FontStyle="Italic"
                                                    TextWrapping="Wrap" Margin="0,2,0,0"/>
                                 </Grid>
