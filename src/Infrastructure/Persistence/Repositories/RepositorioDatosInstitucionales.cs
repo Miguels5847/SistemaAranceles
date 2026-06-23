@@ -5,7 +5,7 @@ using InfraDatosInstitucionales = SistemaAranceles.Infrastructure.Persistence.En
 
 namespace SistemaAranceles.Infrastructure.Persistence.Repositories;
 
-public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto) : IRepositorioDatosInstitucionales
+public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto, CacheReferencia cache) : IRepositorioDatosInstitucionales
 {
     public async Task<DominioDatosInstitucionales?> ObtenerPorPeriodoAsync(string periodo, CancellationToken cancellationToken = default)
     {
@@ -19,13 +19,21 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
 
     public async Task<DominioDatosInstitucionales?> ObtenerVigenteAsync(CancellationToken cancellationToken = default)
     {
+        // B.1: el vigente se pide en casi todas las queries; se cachea y se invalida al guardar.
+        var cacheado = cache.DatosVigente;
+        if (cacheado is not null)
+            return cacheado;
+
         await AsegurarParametrosInversionAsync(cancellationToken);
 
         var e = await contexto.DatosInstitucionales
             .AsNoTracking()
             .OrderByDescending(x => x.FechaActualizacion)
             .FirstOrDefaultAsync(cancellationToken);
-        return e is null ? null : MapearADominio(e);
+        var dominio = e is null ? null : MapearADominio(e);
+        if (dominio is not null)
+            cache.GuardarDatosVigente(dominio);
+        return dominio;
     }
 
     public async Task<DominioDatosInstitucionales?> ObtenerAnteriorAsync(string periodoActual, CancellationToken cancellationToken = default)
@@ -154,7 +162,10 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
     }
 
     public void Agregar(DominioDatosInstitucionales datos)
-        => contexto.DatosInstitucionales.Add(MapearAInfra(datos));
+    {
+        contexto.DatosInstitucionales.Add(MapearAInfra(datos));
+        cache.InvalidarDatos();
+    }
 
     public void Actualizar(DominioDatosInstitucionales datos)
     {
@@ -166,6 +177,7 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto)
         }
 
         contexto.DatosInstitucionales.Update(MapearAInfra(datos));
+        cache.InvalidarDatos();
     }
 
     private static DominioDatosInstitucionales MapearADominio(InfraDatosInstitucionales e)

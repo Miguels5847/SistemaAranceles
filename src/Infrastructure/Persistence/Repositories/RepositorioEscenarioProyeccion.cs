@@ -5,7 +5,7 @@ using EscenarioPersistencia = SistemaAranceles.Infrastructure.Persistence.Entida
 
 namespace SistemaAranceles.Infrastructure.Persistence.Repositories;
 
-public sealed class RepositorioEscenarioProyeccion(ContextoAplicacion contextoAplicacion) : IRepositorioEscenarioProyeccion
+public sealed class RepositorioEscenarioProyeccion(ContextoAplicacion contextoAplicacion, CacheReferencia cache) : IRepositorioEscenarioProyeccion
 {
     public async Task<IReadOnlyList<EscenarioDominio>> ListarAsync(CancellationToken cancellationToken = default)
     {
@@ -21,10 +21,18 @@ public sealed class RepositorioEscenarioProyeccion(ContextoAplicacion contextoAp
 
     public async Task<EscenarioDominio?> ObtenerPorIdAsync(int id, CancellationToken cancellationToken = default)
     {
+        // B.1: se re-pide por cada query (nombre del escenario); se cachea y se invalida al crear escenarios.
+        var cacheado = cache.ObtenerEscenario(id);
+        if (cacheado is not null)
+            return cacheado;
+
         var entidad = await contextoAplicacion.EscenariosProyeccion
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id && x.EstaActivo, cancellationToken);
-        return entidad is null ? null : MapearADominio(entidad);
+        var dominio = entidad is null ? null : MapearADominio(entidad);
+        if (dominio is not null)
+            cache.GuardarEscenario(id, dominio);
+        return dominio;
     }
 
     public async Task<bool> ExistePorIdAsync(int id, CancellationToken cancellationToken = default)
@@ -57,6 +65,7 @@ public sealed class RepositorioEscenarioProyeccion(ContextoAplicacion contextoAp
         };
 
         await contextoAplicacion.EscenariosProyeccion.AddAsync(entidad, cancellationToken);
+        cache.InvalidarEscenarios();
     }
 
     private static EscenarioDominio MapearADominio(EscenarioPersistencia entidad)

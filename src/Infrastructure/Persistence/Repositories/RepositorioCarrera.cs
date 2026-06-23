@@ -7,7 +7,8 @@ namespace SistemaAranceles.Infrastructure.Persistence.Repositories;
 
 public sealed class RepositorioCarrera(
     ContextoAplicacion contextoAplicacion,
-    IRepositorioGenerico<CarreraPersistencia> repositorioGenerico)
+    IRepositorioGenerico<CarreraPersistencia> repositorioGenerico,
+    CacheReferencia cache)
     : IRepositorioCarrera
 {
     public async Task<IReadOnlyList<CarreraDominio>> ListarAsync(CancellationToken cancellationToken = default)
@@ -22,11 +23,19 @@ public sealed class RepositorioCarrera(
 
     public async Task<CarreraDominio?> ObtenerPorIdAsync(int id, CancellationToken cancellationToken = default)
     {
+        // B.1: se re-pide por cada query (cabecera/labels); se cachea y se invalida al mutar carreras.
+        var cacheada = cache.ObtenerCarrera(id);
+        if (cacheada is not null)
+            return cacheada;
+
         var carrera = await contextoAplicacion.Carreras
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id && x.EstaActivo, cancellationToken);
 
-        return carrera is null ? null : MapearADominio(carrera);
+        var dominio = carrera is null ? null : MapearADominio(carrera);
+        if (dominio is not null)
+            cache.GuardarCarrera(id, dominio);
+        return dominio;
     }
 
     public async Task<CarreraDominio?> ObtenerPorCodigoAsync(string codigo, CancellationToken cancellationToken = default)
@@ -50,6 +59,7 @@ public sealed class RepositorioCarrera(
     {
         ArgumentNullException.ThrowIfNull(carrera);
         await repositorioGenerico.AgregarAsync(MapearAPersistencia(carrera), cancellationToken);
+        cache.InvalidarCarreras();
     }
 
     public async Task ActualizarAsync(CarreraDominio carrera, CancellationToken cancellationToken = default)
@@ -69,6 +79,7 @@ public sealed class RepositorioCarrera(
         existente.FacultadNombre = carrera.FacultadNombre;
         existente.TotalCiclos = carrera.TotalCiclos;
         existente.ActualizadoEn = DateTime.UtcNow;
+        cache.InvalidarCarreras();
     }
 
     public async Task EliminarPorIdAsync(int id, int? eliminadoPorUsuarioId = null, CancellationToken cancellationToken = default)
@@ -82,6 +93,7 @@ public sealed class RepositorioCarrera(
         existente.EstaActivo = false;
         existente.EliminadoEn = DateTime.UtcNow;
         existente.EliminadoPorUsuarioId = eliminadoPorUsuarioId;
+        cache.InvalidarCarreras();
     }
 
     private static CarreraDominio MapearADominio(CarreraPersistencia entidad)

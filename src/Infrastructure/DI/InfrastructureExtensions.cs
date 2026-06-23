@@ -19,6 +19,9 @@ public static class InfrastructureExtensions
             contextLifetime: ServiceLifetime.Scoped,
             optionsLifetime: ServiceLifetime.Singleton);
 
+        // Caché de datos de referencia (B.1): singleton compartido por todos los scopes/repos.
+        services.AddSingleton<Persistence.CacheReferencia>();
+
         // Repositorios
         services.AddTransient(typeof(IRepositorioGenerico<>), typeof(RepositorioGenerico<>));
         services.AddTransient<IRepositorioUsuario, RepositorioUsuario>();
