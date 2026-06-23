@@ -11,7 +11,8 @@ public sealed class ObtenerEstadoPerdidasGananciasQuery(
     CalcularIngresosProyectadosQuery calcularIngresosProyectadosQuery,
     ObtenerMatrizCostosGastosQuery obtenerMatrizCostosGastosQuery,
     IRepositorioCarrera repositorioCarrera,
-    IRepositorioEscenarioProyeccion repositorioEscenario)
+    IRepositorioEscenarioProyeccion repositorioEscenario,
+    IRepositorioDatosInstitucionales repositorioDatos)
 {
     private const decimal PorcentajeParticipacionTrabajadoresPorDefecto = 15m;
     private const decimal PorcentajeImpuestoRentaPorDefecto = 25m;
@@ -65,11 +66,17 @@ public sealed class ObtenerEstadoPerdidasGananciasQuery(
             .GroupBy(c => c.PeriodoAcademicoId)
             .ToDictionary(g => g.Key, g => decimal.Round(g.Sum(c => c.IngresoNeto), 2));
 
+        // Toggle (Datos Institucionales): si está apagado, no se aplican 15% participación ni 25% renta.
+        var datos = await repositorioDatos.ObtenerVigenteAsync(ct);
+        var aplicarImpuestos = datos?.AplicarParticipacionImpuestos ?? true;
+        var pParticipacion = aplicarImpuestos ? PorcentajeParticipacionTrabajadoresPorDefecto : 0m;
+        var pImpuesto = aplicarImpuestos ? PorcentajeImpuestoRentaPorDefecto : 0m;
+
         var valores = costos.ValoresPorPeriodo
             .Select(costo =>
             {
                 ingresosNetosPorPeriodo.TryGetValue(costo.PeriodoAcademicoId, out var ingresoPeriodo);
-                return ConstruirPeriodo(costo, ingresoPeriodo);
+                return ConstruirPeriodo(costo, ingresoPeriodo, pParticipacion, pImpuesto);
             })
             .ToList();
 
@@ -83,8 +90,8 @@ public sealed class ObtenerEstadoPerdidasGananciasQuery(
             CarreraNombre = carrera?.Nombre ?? costos.CarreraNombre,
             EscenarioProyeccionId = escenarioProyeccionId,
             EscenarioNombre = escenario?.Nombre ?? costos.EscenarioNombre,
-            PorcentajeParticipacionTrabajadoresAplicado = PorcentajeParticipacionTrabajadoresPorDefecto,
-            PorcentajeImpuestoRentaAplicado = PorcentajeImpuestoRentaPorDefecto,
+            PorcentajeParticipacionTrabajadoresAplicado = pParticipacion,
+            PorcentajeImpuestoRentaAplicado = pImpuesto,
             EtiquetasPeriodos = etiquetas,
             ValoresPorPeriodo = valores,
             Filas = ConstruirFilas(valores, costos.ValoresPorPeriodo),
@@ -94,7 +101,9 @@ public sealed class ObtenerEstadoPerdidasGananciasQuery(
 
     private static EstadoPerdidasGananciasPeriodoDto ConstruirPeriodo(
         CostoGastoPeriodoDto costo,
-        decimal ingresos)
+        decimal ingresos,
+        decimal porcentajeParticipacion,
+        decimal porcentajeImpuesto)
     {
         var costosServicios = decimal.Round(costo.CostosServicios, 2);
         var gastosAdministracion = decimal.Round(costo.GastosAdministracion, 2);
@@ -105,11 +114,11 @@ public sealed class ObtenerEstadoPerdidasGananciasQuery(
             ingresos - costosServicios - gastosAdministracion - gastosVentas - otrosGastos - gastosFinancieros,
             2);
         var participacion = utilidadAntesParticipacion > 0m
-            ? decimal.Round(utilidadAntesParticipacion * PorcentajeParticipacionTrabajadoresPorDefecto / 100m, 2)
+            ? decimal.Round(utilidadAntesParticipacion * porcentajeParticipacion / 100m, 2)
             : 0m;
         var utilidadAntesImpuestos = decimal.Round(utilidadAntesParticipacion - participacion, 2);
         var impuesto = utilidadAntesImpuestos > 0m
-            ? decimal.Round(utilidadAntesImpuestos * PorcentajeImpuestoRentaPorDefecto / 100m, 2)
+            ? decimal.Round(utilidadAntesImpuestos * porcentajeImpuesto / 100m, 2)
             : 0m;
 
         return new EstadoPerdidasGananciasPeriodoDto

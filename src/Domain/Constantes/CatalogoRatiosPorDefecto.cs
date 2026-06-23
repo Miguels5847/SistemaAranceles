@@ -33,15 +33,16 @@ public static class CatalogoRatiosPorDefecto
         new(CatalogoMaterialesPorDefecto.CategoriaAccesorios, "Grapadora", 1m, PorDocente, 1, 4m, true, "Grapadora"),
         new(CatalogoMaterialesPorDefecto.CategoriaAccesorios, "Perforadora", 1m, PorDocente, 1, 4m, true, "Perforadora"),
 
-        new(CatalogoMaterialesPorDefecto.CategoriaAseo, "Cloro", 5m, PorEstudianteMes, 6, 0m, true, "Cloro (Galón)"),
-        new(CatalogoMaterialesPorDefecto.CategoriaAseo, "Desinfectante", 5m, PorEstudianteMes, 6, 0m, true, "Desinfectante (Galón)"),
+        // Ratios de aseo alineados al Excel validado (hoja "5 Demanda", cantidades por período):
+        // Cloro/Desinfectante = 0,03 unidades/estudiante (0,005 × 6 meses); Jabón Líquido = 0,036 (0,006 × 6).
+        // Antes estaban en 5/6 (1000× altos) e inflaban Materiales y Suministros ~20×.
+        new(CatalogoMaterialesPorDefecto.CategoriaAseo, "Cloro", 0.005m, PorEstudianteMes, 6, 0m, true, "Cloro (Galón)"),
+        new(CatalogoMaterialesPorDefecto.CategoriaAseo, "Desinfectante", 0.005m, PorEstudianteMes, 6, 0m, true, "Desinfectante (Galón)"),
         new(CatalogoMaterialesPorDefecto.CategoriaAseo, "Escoba", 2m, FijoPeriodo, 1, 0m, true, "Escoba"),
         new(CatalogoMaterialesPorDefecto.CategoriaAseo, "Fundas de Basura", 0.2m, PorEstudiante, 1, 0m, true, "Paquete de Fundas de Basura"),
         new(CatalogoMaterialesPorDefecto.CategoriaAseo, "Papel Higenico", 0.13m, PorEstudianteMes, 6, 0m, true, "Papel Higiénico (Rollo Grande)"),
         new(CatalogoMaterialesPorDefecto.CategoriaAseo, "Trapeador", 3m, FijoPeriodo, 1, 0m, true, "Trapeador"),
-        new(CatalogoMaterialesPorDefecto.CategoriaAseo, "Uso de Cloro", 5m, PorEstudiante, 6, 0m, true, "Cloro (Galón)"),
-        new(CatalogoMaterialesPorDefecto.CategoriaAseo, "Uso de Jabon", 0.009m, PorEstudiante, 6, 0m, true, "Jabón Líquido (Galón)"),
-        new(CatalogoMaterialesPorDefecto.CategoriaAseo, "Uso de Jabon Liquido", 6m, PorEstudianteMes, 6, 0m, true, "Jabón Líquido (Galón)"),
+        new(CatalogoMaterialesPorDefecto.CategoriaAseo, "Jabon Liquido", 0.006m, PorEstudianteMes, 6, 0m, true, "Jabón Líquido (Galón)"),
 
         new(CatalogoMaterialesPorDefecto.CategoriaMateriales, "Carpetas de Carton", 2m, PorEstudiante, 1, 0m, true, "Carpetas de cartón"),
         new(CatalogoMaterialesPorDefecto.CategoriaMateriales, "Cartuchos Impresora", 0.02m, PorEstudiante, 1, 0m, true, "Cartuchos de impresora (Color)"),
@@ -50,6 +51,5 @@ public static class CatalogoRatiosPorDefecto
         new(CatalogoMaterialesPorDefecto.CategoriaMateriales, "Grapas,Clips", 0.02m, PorEstudiante, 1, 0m, true, "Grapas, clips (CAJA)"),
         new(CatalogoMaterialesPorDefecto.CategoriaMateriales, "Porta files", 1m, PorEstudiante, 1, 0m, true, "Porta files"),
         new(CatalogoMaterialesPorDefecto.CategoriaMateriales, "Resema", 0.2m, PorEstudiante, 1, 0m, true, "Resma de papel bond de 75 gramos"),
-        new(CatalogoMaterialesPorDefecto.CategoriaMateriales, "Uso de Grapadora", 1m, PorEstudianteMes, 6, 0m, true, "Grapadora"),
     ];
 }

@@ -24,6 +24,7 @@ public sealed class DatosInstitucionales : EntidadDominioBase
     public const decimal PremioRiesgoPorDefecto = 5m;
     public const decimal TmrManualPorDefecto = 0m;
     public const bool UsarTmrManualPorDefecto = false;
+    public const bool AplicarParticipacionImpuestosPorDefecto = true;
     public const decimal ToleranciaVanArancelPorDefecto = 1m;
     public const decimal MargenAproximacionVanArancelPorDefecto = 2m;
     public const decimal ArancelMinimoBusquedaPorDefecto = 500m;
@@ -124,6 +125,8 @@ public sealed class DatosInstitucionales : EntidadDominioBase
     public decimal PremioRiesgo { get; private set; } = PremioRiesgoPorDefecto;
     public decimal TmrManual { get; private set; } = TmrManualPorDefecto;
     public bool UsarTmrManual { get; private set; } = UsarTmrManualPorDefecto;
+    // Habilita el 15% participación + 25% impuesto a la renta en el modelo. Apagar => igual que el Excel del tutor.
+    public bool AplicarParticipacionImpuestos { get; private set; } = AplicarParticipacionImpuestosPorDefecto;
 
     // KAN-44: parámetros de la bisección del arancel óptimo (VAN=0)
     public decimal ToleranciaVanArancel { get; private set; } = ToleranciaVanArancelPorDefecto;
@@ -256,6 +259,12 @@ public sealed class DatosInstitucionales : EntidadDominioBase
         PremioRiesgo = GuardiaDominio.Porcentaje(premioRiesgo, "Premio al riesgo");
         TmrManual = GuardiaDominio.Porcentaje(tmrManual, "TMR manual");
         UsarTmrManual = usarTmrManual;
+    }
+
+    /// <summary>Habilita/deshabilita el 15% participación + 25% impuesto a la renta (P&amp;G, Flujo, bisección VAN=0).</summary>
+    public void CambiarAplicarParticipacionImpuestos(bool aplicar)
+    {
+        AplicarParticipacionImpuestos = aplicar;
     }
 
     /// <summary>KAN-44: parámetros de la bisección del arancel óptimo (VAN=0).</summary>

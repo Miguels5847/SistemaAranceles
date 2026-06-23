@@ -136,7 +136,8 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto,
                 ADD COLUMN IF NOT EXISTS tasa_interes_financiera NUMERIC(7,4) NOT NULL DEFAULT 8.0000,
                 ADD COLUMN IF NOT EXISTS premio_riesgo NUMERIC(7,4) NOT NULL DEFAULT 5.0000,
                 ADD COLUMN IF NOT EXISTS tmr_manual NUMERIC(7,4) NOT NULL DEFAULT 0.0000,
-                ADD COLUMN IF NOT EXISTS usar_tmr_manual BOOLEAN NOT NULL DEFAULT FALSE;
+                ADD COLUMN IF NOT EXISTS usar_tmr_manual BOOLEAN NOT NULL DEFAULT FALSE,
+                ADD COLUMN IF NOT EXISTS aplicar_participacion_impuestos BOOLEAN NOT NULL DEFAULT TRUE;
 
             ALTER TABLE public.datos_institucionales
                 ADD COLUMN IF NOT EXISTS tolerancia_van_arancel NUMERIC(18,2) NOT NULL DEFAULT 1.00,
@@ -225,6 +226,8 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto,
             e.TmrManual,
             e.UsarTmrManual);
 
+        dominio.CambiarAplicarParticipacionImpuestos(e.AplicarParticipacionImpuestos);
+
         dominio.CambiarParametrosArancelOptimo(
             e.ToleranciaVanArancel,
             e.MargenAproximacionVanArancel,
@@ -281,6 +284,7 @@ public sealed class RepositorioDatosInstitucionales(ContextoAplicacion contexto,
         PremioRiesgo = d.PremioRiesgo,
         TmrManual = d.TmrManual,
         UsarTmrManual = d.UsarTmrManual,
+        AplicarParticipacionImpuestos = d.AplicarParticipacionImpuestos,
         ToleranciaVanArancel = d.ToleranciaVanArancel,
         MargenAproximacionVanArancel = d.MargenAproximacionVanArancel,
         ArancelMinimoBusqueda = d.ArancelMinimoBusqueda,

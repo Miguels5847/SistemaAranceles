@@ -41,6 +41,7 @@ internal static class MapeoDatosInstitucionales
         PremioRiesgo = d.PremioRiesgo,
         TmrManual = d.TmrManual,
         UsarTmrManual = d.UsarTmrManual,
+        AplicarParticipacionImpuestos = d.AplicarParticipacionImpuestos,
         ToleranciaVanArancel = d.ToleranciaVanArancel,
         MargenAproximacionVanArancel = d.MargenAproximacionVanArancel,
         ArancelMinimoBusqueda = d.ArancelMinimoBusqueda,

@@ -52,6 +52,7 @@ internal sealed class ConfiguracionDatosInstitucionales : IEntityTypeConfigurati
         builder.Property(x => x.PremioRiesgo).HasColumnName("premio_riesgo").HasColumnType("numeric(7,4)").HasDefaultValue(5m).IsRequired();
         builder.Property(x => x.TmrManual).HasColumnName("tmr_manual").HasColumnType("numeric(7,4)").HasDefaultValue(0m).IsRequired();
         builder.Property(x => x.UsarTmrManual).HasColumnName("usar_tmr_manual").HasDefaultValue(false).IsRequired();
+        builder.Property(x => x.AplicarParticipacionImpuestos).HasColumnName("aplicar_participacion_impuestos").HasDefaultValue(true).IsRequired();
 
         // KAN-44
         builder.Property(x => x.ToleranciaVanArancel).HasColumnName("tolerancia_van_arancel").HasColumnType("numeric(18,2)").HasDefaultValue(1m).IsRequired();

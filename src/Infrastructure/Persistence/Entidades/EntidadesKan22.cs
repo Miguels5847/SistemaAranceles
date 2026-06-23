@@ -44,6 +44,7 @@ public sealed class DatosInstitucionales
     public decimal PremioRiesgo { get; set; } = 5m;
     public decimal TmrManual { get; set; }
     public bool UsarTmrManual { get; set; }
+    public bool AplicarParticipacionImpuestos { get; set; } = true;
 
     // KAN-44: parámetros bisección arancel óptimo
     public decimal ToleranciaVanArancel { get; set; } = 1m;

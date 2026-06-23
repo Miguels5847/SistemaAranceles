@@ -100,6 +100,11 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
         if (datos is null)
             advertencias.Add("No hay Datos Institucionales vigentes; se usaron defaults para matrícula, becas y TMR.");
 
+        // Toggle (Datos Institucionales): si está apagado, la bisección evalúa el VAN sin 15%/25%.
+        var aplicarImpuestos = datos?.AplicarParticipacionImpuestos ?? true;
+        var porcentajeParticipacion = aplicarImpuestos ? PorcentajeParticipacionTrabajadores : 0m;
+        var porcentajeImpuesto = aplicarImpuestos ? PorcentajeImpuestoRenta : 0m;
+
         // KAN-44: parámetros de la bisección desde Datos Institucionales (fallback a constantes).
         var arancelMinimo = datos?.ArancelMinimoBusqueda ?? ArancelMinimo;
         var arancelMaximo = datos?.ArancelMaximoBusqueda ?? ArancelMaximo;
@@ -167,7 +172,9 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             porcentajeMatricula,
             porcentajeBecas,
             tmr.TmrTasa,
-            descuentos);
+            descuentos,
+            porcentajeParticipacion,
+            porcentajeImpuesto);
 
         var resultado = CalculadoraArancelOptimoBiseccion.Calcular(new EntradaBiseccionArancel
         {
@@ -340,7 +347,9 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
         decimal porcentajeMatricula,
         decimal porcentajeBecas,
         decimal tmrTasa,
-        IReadOnlyList<DescuentoArancelCicloDto> descuentos)
+        IReadOnlyList<DescuentoArancelCicloDto> descuentos,
+        decimal porcentajeParticipacion,
+        decimal porcentajeImpuesto)
     {
         var estudiantesPorPeriodo = demanda.PeriodoAcademicoIds
             .Select((periodoId, index) => new
@@ -374,7 +383,9 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             CapitalTrabajo = decimal.Round(capitalTrabajo, 2),
             PorcentajeMatricula = porcentajeMatricula,
             PorcentajeBecas = porcentajeBecas,
-            TmrTasa = tmrTasa
+            TmrTasa = tmrTasa,
+            PorcentajeParticipacion = porcentajeParticipacion,
+            PorcentajeImpuesto = porcentajeImpuesto
         };
     }
 
@@ -430,11 +441,11 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
             var costosYGastos = decimal.Round(costo.TotalCostosGastos, 2);
             var utilidadAntesParticipacion = decimal.Round(ingresosNetos - costosYGastos, 2);
             var participacion = utilidadAntesParticipacion > 0m
-                ? decimal.Round(utilidadAntesParticipacion * PorcentajeParticipacionTrabajadores / 100m, 2)
+                ? decimal.Round(utilidadAntesParticipacion * contexto.PorcentajeParticipacion / 100m, 2)
                 : 0m;
             var utilidadAntesImpuestos = decimal.Round(utilidadAntesParticipacion - participacion, 2);
             var impuesto = utilidadAntesImpuestos > 0m
-                ? decimal.Round(utilidadAntesImpuestos * PorcentajeImpuestoRenta / 100m, 2)
+                ? decimal.Round(utilidadAntesImpuestos * contexto.PorcentajeImpuesto / 100m, 2)
                 : 0m;
             var utilidadEjercicio = decimal.Round(utilidadAntesImpuestos - impuesto, 2);
             var flujoNeto = decimal.Round(
@@ -524,6 +535,8 @@ public sealed class ObtenerArancelOptimoBiseccionQuery(
         public decimal PorcentajeMatricula { get; init; }
         public decimal PorcentajeBecas { get; init; }
         public decimal TmrTasa { get; init; }
+        public decimal PorcentajeParticipacion { get; init; }
+        public decimal PorcentajeImpuesto { get; init; }
     }
 
     private sealed class EvaluacionArancel

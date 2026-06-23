@@ -63,6 +63,7 @@ public sealed class ConfigurarDatosInstitucionalesCommand(
                 dto.PremioRiesgo,
                 dto.TmrManual,
                 dto.UsarTmrManual);
+            datos.CambiarAplicarParticipacionImpuestos(dto.AplicarParticipacionImpuestos);
             datos.CambiarParametrosArancelOptimo(
                 dto.ToleranciaVanArancel,
                 dto.MargenAproximacionVanArancel,
@@ -118,6 +119,7 @@ public sealed class ConfigurarDatosInstitucionalesCommand(
                 dto.PremioRiesgo,
                 dto.TmrManual,
                 dto.UsarTmrManual);
+            existente.CambiarAplicarParticipacionImpuestos(dto.AplicarParticipacionImpuestos);
             existente.CambiarParametrosArancelOptimo(
                 dto.ToleranciaVanArancel,
                 dto.MargenAproximacionVanArancel,

@@ -700,7 +700,6 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
-                        <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
                     <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,8">
@@ -765,8 +764,6 @@
                                 <TextBlock FontSize="11" Foreground="#546E7A" TextWrapping="Wrap">
                                     <Run Text="Rango "/>
                                     <Run Text="{Binding ArancelOptimoBiseccion.RangoArancelDisplay, Mode=OneWay, FallbackValue='$ 500.00 - $ 5,000.00'}"/>
-                                    <Run Text=", iteraciones "/>
-                                    <Run Text="{Binding ArancelOptimoBiseccion.IteracionesUsadas, Mode=OneWay, FallbackValue='0'}"/>
                                     <Run Text=". VAN en mínimo "/>
                                     <Run Text="{Binding ArancelOptimoBiseccion.VanArancelMinimoDisplay, Mode=OneWay, FallbackValue='$ 0.00'}"/>
                                     <Run Text=", VAN en máximo "/>
@@ -851,25 +848,6 @@
                             <DataGridTextColumn Header="Utilidad / pérdida" Binding="{Binding UtilidadPerdidaEjercicioDisplay}" Width="160"/>
                             <DataGridTextColumn Header="Flujo neto" Binding="{Binding FlujoNetoDisplay}" Width="150"/>
                             <DataGridTextColumn Header="Flujo acumulado" Binding="{Binding FlujoAcumuladoDisplay}" Width="160"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-
-                    <DataGrid Grid.Row="3"
-                              ItemsSource="{Binding IteracionesArancelOptimo}"
-                              AutoGenerateColumns="False"
-                              IsReadOnly="True"
-                              RowStyle="{StaticResource EstadoPgRowStyle}"
-                              CellStyle="{StaticResource AnalisisDataGridCellStyle}"
-                              HeadersVisibility="Column"
-                              GridLinesVisibility="Horizontal"
-                              AlternatingRowBackground="#F7FAF7"
-                              BorderBrush="#C8E6C9">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="#" Binding="{Binding Numero}" Width="60"/>
-                            <DataGridTextColumn Header="Arancel mínimo" Binding="{Binding ArancelMinimoDisplay}" Width="160"/>
-                            <DataGridTextColumn Header="Arancel máximo" Binding="{Binding ArancelMaximoDisplay}" Width="160"/>
-                            <DataGridTextColumn Header="Arancel medio" Binding="{Binding ArancelMedioDisplay}" Width="160"/>
-                            <DataGridTextColumn Header="VAN" Binding="{Binding VanDisplay}" Width="170"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>

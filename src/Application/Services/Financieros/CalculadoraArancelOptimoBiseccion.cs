@@ -139,7 +139,11 @@ public static class CalculadoraArancelOptimoBiseccion
 
         for (var i = 1; i <= maxIteraciones; i++)
         {
-            var medio = decimal.Round((bajo + alto) / 2m, 2);
+            // Precisión sub-centavo en la BÚSQUEDA: cada centavo de arancel mueve el VAN ~$10
+            // (cientos de estudiante-semestres), así que redondear a 2 decimales impide caer dentro
+            // de la tolerancia (±$1) y la TIR del óptimo no llega a igualar la TMR. Se redondea a 6
+            // decimales para converger; el arancel a cobrar se redondea a centavos sólo al mostrarlo.
+            var medio = decimal.Round((bajo + alto) / 2m, 6);
             var vanMedio = decimal.Round(entrada.EvaluarVan(medio), 2);
             iteraciones.Add(new IteracionBiseccionArancel
             {

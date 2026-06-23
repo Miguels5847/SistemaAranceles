@@ -46,6 +46,7 @@ public sealed class DatosInstitucionalesDto
     public decimal PremioRiesgo { get; init; } = DatosInstitucionales.PremioRiesgoPorDefecto;
     public decimal TmrManual { get; init; } = DatosInstitucionales.TmrManualPorDefecto;
     public bool UsarTmrManual { get; init; } = DatosInstitucionales.UsarTmrManualPorDefecto;
+    public bool AplicarParticipacionImpuestos { get; init; } = DatosInstitucionales.AplicarParticipacionImpuestosPorDefecto;
 
     // KAN-44
     public decimal ToleranciaVanArancel { get; init; } = DatosInstitucionales.ToleranciaVanArancelPorDefecto;
@@ -123,6 +124,7 @@ public sealed class GuardarDatosInstitucionalesDto
     public decimal PremioRiesgo { get; init; } = DatosInstitucionales.PremioRiesgoPorDefecto;
     public decimal TmrManual { get; init; } = DatosInstitucionales.TmrManualPorDefecto;
     public bool UsarTmrManual { get; init; } = DatosInstitucionales.UsarTmrManualPorDefecto;
+    public bool AplicarParticipacionImpuestos { get; init; } = DatosInstitucionales.AplicarParticipacionImpuestosPorDefecto;
 
     // KAN-44
     public decimal ToleranciaVanArancel { get; init; } = DatosInstitucionales.ToleranciaVanArancelPorDefecto;

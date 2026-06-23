@@ -77,6 +77,7 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
     [ObservableProperty] private decimal _premioRiesgo = DatosInstitucionalesDominio.PremioRiesgoPorDefecto;
     [ObservableProperty] private decimal _tmrManual = DatosInstitucionalesDominio.TmrManualPorDefecto;
     [ObservableProperty] private bool _usarTmrManual = DatosInstitucionalesDominio.UsarTmrManualPorDefecto;
+    [ObservableProperty] private bool _aplicarParticipacionImpuestos = DatosInstitucionalesDominio.AplicarParticipacionImpuestosPorDefecto;
 
     // Parámetros de la bisección del arancel óptimo (VAN=0)
     [ObservableProperty] private decimal _toleranciaVanArancel = DatosInstitucionalesDominio.ToleranciaVanArancelPorDefecto;
@@ -169,6 +170,7 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
                 PremioRiesgo = DatosInstitucionalesDominio.PremioRiesgoPorDefecto;
                 TmrManual = DatosInstitucionalesDominio.TmrManualPorDefecto;
                 UsarTmrManual = DatosInstitucionalesDominio.UsarTmrManualPorDefecto;
+                AplicarParticipacionImpuestos = DatosInstitucionalesDominio.AplicarParticipacionImpuestosPorDefecto;
                 ToleranciaVanArancel = DatosInstitucionalesDominio.ToleranciaVanArancelPorDefecto;
                 MargenAproximacionVanArancel = DatosInstitucionalesDominio.MargenAproximacionVanArancelPorDefecto;
                 ArancelMinimoBusqueda = DatosInstitucionalesDominio.ArancelMinimoBusquedaPorDefecto;
@@ -243,6 +245,7 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
                     PremioRiesgo = PremioRiesgo,
                     TmrManual = TmrManual,
                     UsarTmrManual = UsarTmrManual,
+                    AplicarParticipacionImpuestos = AplicarParticipacionImpuestos,
                     ToleranciaVanArancel = ToleranciaVanArancel,
                     MargenAproximacionVanArancel = MargenAproximacionVanArancel,
                     ArancelMinimoBusqueda = ArancelMinimoBusqueda,
@@ -327,6 +330,7 @@ public sealed partial class DatosInstitucionalesViewModel : ObservableObject
         PremioRiesgo = dto.PremioRiesgo;
         TmrManual = dto.TmrManual;
         UsarTmrManual = dto.UsarTmrManual;
+        AplicarParticipacionImpuestos = dto.AplicarParticipacionImpuestos;
         ToleranciaVanArancel = dto.ToleranciaVanArancel;
         MargenAproximacionVanArancel = dto.MargenAproximacionVanArancel;
         ArancelMinimoBusqueda = dto.ArancelMinimoBusqueda;
