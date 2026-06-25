@@ -8,26 +8,26 @@ Rama documentada: `feature/KAN-47-Informe-CES-INF-CES`.
 
 El proyecto usa Clean Architecture y ya contiene los flujos principales de seguridad, usuarios, carreras, inflacion, tasa de retencion, proyeccion de estudiantes, sueldos carrera, datos institucionales, recursos/depreciacion, mantenimiento e inversion, capital de trabajo, Demanda e Ingresos, Costos y Gastos, Costo de Carrera y Analisis Financiero (incluido el cuadro regulatorio CES / INF CES).
 
-| Area | Estado |
-| --- | --- |
-| Seguridad, login, sesion, usuarios, RBAC y auditoria | Implementado |
-| Carreras y escenarios | Implementado |
-| Inflacion anual, importacion y proyeccion | Implementado |
-| Tasa de Retencion y Graduacion | Implementado |
-| Proyeccion de Estudiantes | Implementado |
-| Sueldos Carrera | Implementado |
-| Datos Institucionales | Implementado y ampliado para Epicas 9-11 |
-| Aporte Planta Central | Implementado |
-| Recursos y Depreciacion | Implementado |
-| Mantenimiento e Inversion | Implementado como contenedor de Mantenimiento, Activos Diferidos e Inversion Inicial |
-| Capital de Trabajo | Implementado |
-| Demanda e Ingresos, Epica 9 | Implementado en sus flujos principales |
-| Costos y Gastos (Epica 10) | Implementado (matriz por periodo + col J = SUM(B:I)) |
-| Costo de Carrera (arancel sugerido) | Implementado |
-| Analisis Financiero (Epica 11) | Implementado: P&G, Flujo de Fondos, TIR/VAN, Periodo de Recuperacion, Punto de Equilibrio, Arancel Optimo, Dashboard y CES / INF CES |
-| Financiamiento y Amortizacion | Implementado (3 fuentes de financiamiento + tabla francesa; el interes alimenta costos/EPG/flujo) |
-| Balance Proyectado | Implementado (pestana 9 de Analisis Financiero y en reportes) |
-| Reportes | Implementado (informe por direccion, Informe CES, exportacion a PDF y XLSX) |
+| Area                                                 | Estado                                                                                                                               |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Seguridad, login, sesion, usuarios, RBAC y auditoria | Implementado                                                                                                                         |
+| Carreras y escenarios                                | Implementado                                                                                                                         |
+| Inflacion anual, importacion y proyeccion            | Implementado                                                                                                                         |
+| Tasa de Retencion y Graduacion                       | Implementado                                                                                                                         |
+| Proyeccion de Estudiantes                            | Implementado                                                                                                                         |
+| Sueldos Carrera                                      | Implementado                                                                                                                         |
+| Datos Institucionales                                | Implementado y ampliado para Epicas 9-11                                                                                             |
+| Aporte Planta Central                                | Implementado                                                                                                                         |
+| Recursos y Depreciacion                              | Implementado                                                                                                                         |
+| Mantenimiento e Inversion                            | Implementado como contenedor de Mantenimiento, Activos Diferidos e Inversion Inicial                                                 |
+| Capital de Trabajo                                   | Implementado                                                                                                                         |
+| Demanda e Ingresos, Epica 9                          | Implementado en sus flujos principales                                                                                               |
+| Costos y Gastos (Epica 10)                           | Implementado (matriz por periodo + col J = SUM(B:I))                                                                                 |
+| Costo de Carrera (arancel sugerido)                  | Implementado                                                                                                                         |
+| Analisis Financiero (Epica 11)                       | Implementado: P&G, Flujo de Fondos, TIR/VAN, Periodo de Recuperacion, Punto de Equilibrio, Arancel Optimo, Dashboard y CES / INF CES |
+| Financiamiento y Amortizacion                        | Implementado (3 fuentes de financiamiento + tabla francesa; el interes alimenta costos/EPG/flujo)                                    |
+| Balance Proyectado                                   | Implementado (pestana 9 de Analisis Financiero y en reportes)                                                                        |
+| Reportes                                             | Implementado (informe por direccion, Informe CES, exportacion a PDF y XLSX)                                                          |
 
 ## Stack
 
@@ -45,25 +45,118 @@ El proyecto usa Clean Architecture y ya contiene los flujos principales de segur
 
 ## Arquitectura
 
+El sistema sigue **Clean Architecture** (arquitectura por capas con inversion de
+dependencias). El codigo se organiza en cuatro proyectos `.NET` independientes bajo `src/`,
+ordenados de adentro (nucleo de negocio) hacia afuera (detalles tecnicos). La regla de oro:
+**las dependencias solo apuntan hacia adentro**; el nucleo no conoce la infraestructura ni la UI.
+
 ```text
-src/
-  Domain/          Entidades, enums, value objects y reglas de dominio
-  Application/     DTOs, interfaces, commands, queries y casos de uso
-  Infrastructure/  EF Core, repositorios, servicios externos, SQL bootstrap y DI
-  Presentation/    WPF Views, ViewModels, converters, state y servicios UI
-sql/               Scripts SQL versionados e idempotentes para Supabase/PostgreSQL
-docs/              Informes y documentacion auxiliar
-tests/             Pruebas automatizadas de Application y Presentation
+                 +---------------------------------------------------+
+   depende de    |                  Presentation                     |   WPF + MVVM
+  hacia adentro  |   (Views, ViewModels, Converters, State)          |
+       |         +------------------------+--------------------------+
+       v                                  | usa
+                 +------------------------v--------------------------+
+                 |                 Infrastructure                    |   EF Core, QuestPDF,
+                 |   (Repositorios, EF Config, Export, Servicios, DI)|   ClosedXML, Npgsql
+                 +------------------------+--------------------------+
+                                          | implementa puertos / usa
+                 +------------------------v--------------------------+
+                 |                  Application                       |   Casos de uso (CQRS),
+                 |   (UseCases, DTOs, Interfaces=puertos, Services)  |   servicios de calculo
+                 +------------------------+--------------------------+
+                                          | usa
+                 +------------------------v--------------------------+
+                 |                     Domain                         |   Entidades + reglas
+                 |   (Entities, Enums, ValueObjects, Constantes)     |   (no depende de NADA)
+                 +---------------------------------------------------+
 ```
 
-Reglas de arquitectura:
+### Estructura de carpetas (real)
 
-- Domain no depende de Application, Infrastructure ni Presentation.
-- Application define contratos `IRepositorio*` y casos de uso.
-- Infrastructure implementa repositorios y configuracion EF.
-- Presentation consume casos de uso y ViewModels; no debe inyectar `ContextoAplicacion` directamente.
-- Los ViewModels que necesitan servicios scoped usan `IServiceProvider.CreateScope()`.
-- Los permisos en runtime se validan con `SesionActual.TienePermiso("MOD.ACCION")`; administrador puede tener bypass explicito cuando el modulo lo requiere.
+```text
+src/
+  Domain/            (~45 .cs)  Nucleo de negocio, SIN dependencias externas
+    Entities/          Entidades de dominio con invariantes (Carrera, EscenarioProyeccion,
+                       CargoFacultad, ActivoFijo, ConfiguracionArancelCarrera,
+                       DatosInstitucionales, RatioMaterialDemanda, ...)
+    Enums/             TipoContrato, CategoriaActivoFijo, ModoCalculoArancel, ...
+    ValueObjects/      Objetos de valor (CorreoInstitucional)
+    Constantes/        Catalogos por defecto (ratios, activos base, servicios)
+    Retencion/         Politicas de retencion y graduacion
+    Common/            EntidadDominioBase, GuardiaDominio, DominioException
+
+  Application/        (~275 .cs) Orquestacion, casos de uso y contratos (puertos)
+    UseCases/          Queries (Obtener*Query) y Commands (Guardar*/Eliminar*Command) por modulo
+    Services/          Calculo puro reutilizable: Financieros (CalculadoraVAN/TIR/TMR,
+                       CalculadoraArancelOptimoBiseccion, ConsolidadorDashboardFinanciero),
+                       Aranceles (DescuentoArancelHelper)
+    Interfaces/Persistencia/  Puertos de salida IRepositorio* (los implementa Infrastructure)
+    Interfaces/Servicios/     Puertos de servicios (IServicioExportacionPdf/Xlsx, IServicioHash, ...)
+    DTOs/              Objetos de transferencia por modulo (entrada/salida de los casos de uso)
+    Options/, Comun/   Configuracion y utilidades compartidas
+
+  Infrastructure/     (~96 .cs)  Detalles tecnicos: implementa los puertos de Application
+    Persistence/Repositories/     Repositorio* que implementan IRepositorio* (EF Core)
+    Persistence/Configuraciones/  Mapeo EF a snake_case (HasColumnName), bootstrap idempotente
+    Persistence/Entidades/        Entidades de persistencia / siembra inicial
+    Persistence/Migrations/       Migraciones EF Core
+    Export/                       Exportacion a PDF (QuestPDF) y XLSX (ClosedXML)
+    Servicios/                    Hash BCrypt, importacion Excel/BCE, etc.
+    DI/                           Registro de dependencias (composition root)
+
+  Presentation/       (~77 .cs)  WPF + MVVM (capa mas externa)
+    Views/             Vistas XAML por modulo
+    ViewModels/        ViewModels por modulo (CommunityToolkit.Mvvm)
+    Converters/, Behaviors/, Services/, State/, Mensajes/, Assets/
+
+sql/                  Scripts SQL versionados e idempotentes para Supabase/PostgreSQL
+docs/                 Documentacion, diagramas (UML/ER) e informes auxiliares
+tests/                Pruebas automatizadas de Application y Presentation
+scripts/              Utilidades (publicar.ps1, limpiar-carpetas-vacias.ps1)
+```
+
+### Regla de dependencias e inversion
+
+- **Domain** no depende de Application, Infrastructure ni Presentation: es C# puro con las
+  entidades y sus invariantes (validadas en el constructor via `GuardiaDominio`). Es el unico
+  proyecto sin paquetes externos.
+- **Application** depende solo de Domain. Define los **puertos** (`IRepositorio*`,
+  `IServicio*`) y los casos de uso que los consumen. No conoce EF Core ni WPF.
+- **Infrastructure** depende de Application y Domain, e **implementa** los puertos
+  (`RepositorioX : IRepositorioX`). Aqui vive todo lo "sucio": base de datos, archivos, PDF.
+- **Presentation** depende de Application e Infrastructure; invoca casos de uso desde los
+  ViewModels. No debe inyectar el `DbContext`/`ContextoAplicacion` directamente.
+- La inversion de dependencias se logra con los puertos `IRepositorio*`: Application declara la
+  interfaz, Infrastructure la implementa y la DI las cablea, de modo que el flujo de control va
+  hacia afuera pero las **dependencias de codigo apuntan hacia adentro**.
+
+### Patrones y convenciones
+
+- **CQRS ligero**: la logica de aplicacion se expresa como `*Query` (lecturas, p. ej.
+  `ObtenerArancelOptimoBiseccionQuery`) y `*Command` (escrituras, p. ej.
+  `GuardarConfiguracionArancelCarreraCommand`), no como "servicios" genericos.
+- **Servicios de calculo puro** en `Application/Services` (`Calculadora*`, `Consolidador*`):
+  funciones deterministas sin estado ni I/O, faciles de testear (VAN, TIR, TMR, biseccion).
+- **Nomenclatura**: puertos `IRepositorio<Entidad>` / implementaciones `Repositorio<Entidad>`;
+  DTOs con sufijo `Dto`; propiedades `*Display` ya formateadas para la UI.
+- **Mapeo EF explicito** a `snake_case` con `HasColumnName` (una columna sin mapear da error 42703).
+- **ViewModels con scope**: los que necesitan servicios scoped usan `IServiceProvider.CreateScope()`.
+- **Patron de precalculados** en Analisis Financiero: los DTOs pesados se calculan una vez y se
+  pasan a las queries dependientes para evitar round-trips N+1 a Supabase.
+- **Permisos en runtime**: `SesionActual.TienePermiso("MOD.ACCION")`; el administrador puede
+  tener bypass explicito cuando el modulo lo requiere.
+
+### Diagramas de clases del dominio
+
+Los diagramas UML de clases por dominio (PlantUML) estan en
+`docs/Diagramas de Clase Dominio puml/` y reflejan las entidades y puertos reales del codigo:
+
+- **DC-01** Dominio Transversal: Seguridad y Auditoria.
+- **DC-02** Dominio Academico: Inflacion, Retencion, Estudiantes y Docentes (Figura 46 = `DC-02 Vista General`).
+- **DC-03** Dominio Operativo-Financiero: Personal, Activos, Materiales.
+- **DC-04** Dominio Financiero-Estrategico: Analisis, Financiamiento, Balance (Figura 47 = `DC-04 Vista General`),
+  con las entidades reales y un bloque aparte para los resultados (DTOs de Application).
 
 ## Configuracion y Ejecucion
 
@@ -476,21 +569,21 @@ Reproduce las hojas Excel "INF CES" y "CES" como cuadro regulatorio de **salida 
 
 ## Mapeo Excel a Sistema
 
-| Hoja / Bloque Excel | Modulo |
-| --- | --- |
-| 1 Estudiantes | Proyeccion de Estudiantes |
-| 2 Tasa de Retencion | Tasa de Retencion y Graduacion |
-| 6 Capital de trabajo | Capital de Trabajo |
-| 7 Sueldos | Sueldos Carrera |
-| 8 Mantenimiento | Mantenimiento e Inversion / Mantenimiento |
-| Activos fijos y depreciacion | Recursos y Depreciacion |
-| Activos diferidos y amortizacion | Mantenimiento e Inversion / Activos Diferidos |
-| Inversion inicial | Mantenimiento e Inversion / Inversion Inicial |
-| Demanda, ingresos y materiales | Demanda e Ingresos |
-| 10 Costos y Gastos | Costos y Gastos |
-| Costo de carrera / arancel sugerido | Costo de Carrera (Analisis Financiero) |
-| Estado de resultados, flujo, TIR/VAN, punto de equilibrio | Analisis Financiero |
-| INF CES y CES | Analisis Financiero / pestana CES / INF CES |
+| Hoja / Bloque Excel                                       | Modulo                                        |
+| --------------------------------------------------------- | --------------------------------------------- |
+| 1 Estudiantes                                             | Proyeccion de Estudiantes                     |
+| 2 Tasa de Retencion                                       | Tasa de Retencion y Graduacion                |
+| 6 Capital de trabajo                                      | Capital de Trabajo                            |
+| 7 Sueldos                                                 | Sueldos Carrera                               |
+| 8 Mantenimiento                                           | Mantenimiento e Inversion / Mantenimiento     |
+| Activos fijos y depreciacion                              | Recursos y Depreciacion                       |
+| Activos diferidos y amortizacion                          | Mantenimiento e Inversion / Activos Diferidos |
+| Inversion inicial                                         | Mantenimiento e Inversion / Inversion Inicial |
+| Demanda, ingresos y materiales                            | Demanda e Ingresos                            |
+| 10 Costos y Gastos                                        | Costos y Gastos                               |
+| Costo de carrera / arancel sugerido                       | Costo de Carrera (Analisis Financiero)        |
+| Estado de resultados, flujo, TIR/VAN, punto de equilibrio | Analisis Financiero                           |
+| INF CES y CES                                             | Analisis Financiero / pestana CES / INF CES   |
 
 ## Scripts SQL Relevantes
 
@@ -562,8 +655,8 @@ Ultima verificacion conocida:
 
 ## Pendientes y Riesgos Conocidos
 
-- Implementados: Costos y Gastos, Costo de Carrera y Analisis Financiero (P&G, Flujo, TIR/VAN, Recuperacion, Punto de Equilibrio, Arancel Optimo, Dashboard y CES / INF CES).
-- Pendientes mayores: Financiamiento, Balance y Reportes.
+- Implementados: todos los modulos del flujo (Configuracion base, Proyeccion academica, Costos y recursos, Financiamiento/Amortizacion, Balance Proyectado, Analisis Financiero y Reportes con exportacion PDF/XLSX).
+- Sin pendientes mayores de modulo; el trabajo restante es validacion contra el Excel y ajustes finos.
 - La remuneracion academica promedio del cuadro CES (C5) es aproximada; la formula original del Excel (`7 Sueldos`!E238) usa un divisor opaco y no se reproduce al centavo.
 - Si la app esta abierta, el build normal puede fallar por bloqueo del `.exe`.
 - Los cambios visuales en WPF requieren cerrar y reabrir la app para ver el binario actualizado.
@@ -571,10 +664,9 @@ Ultima verificacion conocida:
 
 ## Documentacion Adicional
 
-- `.claude.md`: guia operativa para agentes.
-- `contexto.md`: contexto amplio del proyecto.
-- `docs/`: informes y material auxiliar.
-- `Diagramas.md` y `Diagramas Analisis.md`: diagramas y analisis historico.
-- `src/Application/UseCases/BD ER`: diagramas ER.
-- `src/Application/UseCases/Diagramas de Clase Dominio`: diagramas de clases.
-- `src/Application/UseCases/Diagramas de Secuencia`: diagramas de secuencia.
+- `docs/DISTRIBUCION.md`: requisitos, pasos y diagnostico de la distribucion.
+- `docs/`: informes, guias de validacion y material auxiliar.
+- `docs/Diagramas de Clase Dominio puml/`: diagramas de clases del dominio (PlantUML, fuente de Figuras 46/47 y Anexo A).
+- `docs/diagramas/bd-er/`: diagramas entidad-relacion.
+- `docs/diagramas/clases/` y `docs/diagramas/secuencia/`: diagramas de clases y de secuencia.
+- `docs/casos-de-uso/`: especificaciones de casos de uso por modulo.

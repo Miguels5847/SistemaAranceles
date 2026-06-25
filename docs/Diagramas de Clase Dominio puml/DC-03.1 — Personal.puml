@@ -1,0 +1,119 @@
+@startuml
+top to bottom direction
+scale 0.88
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+skinparam arrowColor Black
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 16
+skinparam ranksep 24
+
+title DC-03.1: Personal
+
+package "Domain" #EFF6FF {
+    class CargoFacultad {
+        +int Id
+        +int CarreraId
+        +string NombreCargo
+        +string TipoCargo
+        +decimal SueldoBaseMensual
+        +bool EsCargoDocente
+        +decimal CantidadDefault
+        +TipoContrato TipoContrato
+        +decimal TarifaHora
+    }
+    class ProyeccionCargoFacultad {
+        +int Id
+        +int CargoFacultadId
+        +int PeriodoAcademicoId
+        +decimal CantidadPersonas
+        +decimal FactorPonderacion
+        +decimal FactorInflacion
+        +decimal CostoTotalSemestre
+    }
+    class CargoPlantaCentral {
+        +int Id
+        +string NombreCargo
+        +decimal SueldoMensualTotal
+    }
+    class ProyeccionCargoPlantaCentral {
+        +int Id
+        +int CargoPlantaCentralId
+        +int CarreraId
+        +int PeriodoAcademicoId
+        +decimal ProporcionAsignacion
+        +decimal CostoTotalSemestre
+    }
+
+    CargoFacultad -[hidden]-> ProyeccionCargoFacultad
+    ProyeccionCargoFacultad -[hidden]-> CargoPlantaCentral
+    CargoPlantaCentral -[hidden]-> ProyeccionCargoPlantaCentral
+}
+
+package "Application" #F0FDF4 {
+    interface IRepositorioCargoFacultad <<Interface>> {
+        +ObtenerPorCarrera(carreraId: int) : List~CargoFacultad~
+        +Guardar(cargo: CargoFacultad) : void
+    }
+    interface IRepositorioCargoPlantaCentral <<Interface>> {
+        +ObtenerTodos() : List~CargoPlantaCentral~
+        +Guardar(cargo: CargoPlantaCentral) : void
+    }
+    class GenerarTablaSueldosPeriodoQuery <<Query>> {
+        -IRepositorioCargoFacultad _cargoRepo
+        -IRepositorioCargoPlantaCentral _plantaRepo
+        +Ejecutar(carreraId: int, escenarioId: int) : TablaSueldosDto
+    }
+
+    IRepositorioCargoFacultad -[hidden]-> IRepositorioCargoPlantaCentral
+    IRepositorioCargoPlantaCentral -[hidden]-> GenerarTablaSueldosPeriodoQuery
+}
+
+package "Infrastructure" #FFF7ED {
+    class RepositorioCargoFacultad <<Repository>> {
+        -AppDbContext _context
+        +ObtenerPorCarrera(carreraId: int) : List~CargoFacultad~
+        +Guardar(cargo: CargoFacultad) : void
+    }
+    class RepositorioCargoPlantaCentral <<Repository>> {
+        -AppDbContext _context
+        +ObtenerTodos() : List~CargoPlantaCentral~
+        +Guardar(cargo: CargoPlantaCentral) : void
+    }
+
+    RepositorioCargoFacultad -[hidden]-> RepositorioCargoPlantaCentral
+}
+
+package "Presentation" #FDF4FF {
+    class CargosFacultadViewModel <<ViewModel>> {
+        +ICommand GenerarTablaSueldosCommand
+        +ICommand GuardarCargoCommand
+        +CargarCargos() : void
+    }
+}
+
+Domain -[hidden]-> Application
+Application -[hidden]-> Infrastructure
+Infrastructure -[hidden]-> Presentation
+
+' Relaciones de dominio
+CargoFacultad "1" --> "0..*" ProyeccionCargoFacultad : proyecta
+CargoPlantaCentral "1" --> "0..*" ProyeccionCargoPlantaCentral : proyecta
+
+' Implementaciones
+RepositorioCargoFacultad ..|> IRepositorioCargoFacultad : implementa
+RepositorioCargoPlantaCentral ..|> IRepositorioCargoPlantaCentral : implementa
+
+' Dependencias de casos de uso
+GenerarTablaSueldosPeriodoQuery --> IRepositorioCargoFacultad : usa
+GenerarTablaSueldosPeriodoQuery --> IRepositorioCargoPlantaCentral : usa
+
+' Dependencias de presentación
+CargosFacultadViewModel --> GenerarTablaSueldosPeriodoQuery : invoca
+
+@enduml

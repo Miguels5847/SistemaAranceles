@@ -1,0 +1,128 @@
+@startuml
+top to bottom direction
+scale 0.88
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+skinparam arrowColor Black
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 16
+skinparam ranksep 24
+
+title DC-02.2: Retención
+
+package "Domain" #EFF6FF {
+    class EscenarioProyeccion {
+        +int Id
+        +int CarreraId
+        +string Nombre
+        +bool EsPredeterminado
+        +bool EstaActivo
+    }
+    class ConfiguracionRetencion {
+        +int Id
+        +int CarreraId
+        +int EscenarioProyeccionId
+        +int TotalCiclos
+        +decimal TasaRetencionPorcentaje
+        +decimal TasaGraduacionPorcentaje
+        +decimal EstudiantesPeriodo1
+        +decimal EstudiantesPeriodo2
+        +int ParalelosPeriodo1
+        +int ParalelosPeriodo2
+    }
+    class CriterioReferenciaRetencion {
+        +int Id
+        +int ConfiguracionRetencionId
+        +decimal MetaRetencionPorcentaje
+        +decimal MetaGraduacionPorcentaje
+    }
+    class SimulacionRetencion {
+        +int Id
+        +int ConfiguracionRetencionId
+        +DateTime EjecutadoEn
+        +string Notas
+    }
+    class DetalleSimulacionRetencion {
+        +int Id
+        +int SimulacionRetencionId
+        +int NumeroCiclo
+        +int NumeroPeriodo
+        +decimal ValorEstudiantes
+        +decimal TasaAplicadaPorcentaje
+        +string TipoZona
+    }
+
+    EscenarioProyeccion -[hidden]-> ConfiguracionRetencion
+    ConfiguracionRetencion -[hidden]-> CriterioReferenciaRetencion
+    CriterioReferenciaRetencion -[hidden]-> SimulacionRetencion
+    SimulacionRetencion -[hidden]-> DetalleSimulacionRetencion
+}
+
+package "Application" #F0FDF4 {
+    interface IRepositorioConfiguracionRetencion <<Interface>> {
+        +ObtenerConfiguracion(carreraId: int, escenarioId: int) : ConfiguracionRetencion
+        +Guardar(config: ConfiguracionRetencion) : void
+    }
+    interface IRepositorioSimulacionRetencion <<Interface>> {
+        +CrearSimulacion(configuracionId: int) : SimulacionRetencion
+        +GuardarDetalle(detalle: DetalleSimulacionRetencion) : void
+    }
+    class SimularRetencionUseCase <<UseCase>> {
+        -IRepositorioConfiguracionRetencion _retencionRepo
+        -IRepositorioSimulacionRetencion _simRepo
+        +Ejecutar(configuracionRetencionId: int) : SimulacionDto
+    }
+
+    IRepositorioConfiguracionRetencion -[hidden]-> IRepositorioSimulacionRetencion
+    IRepositorioSimulacionRetencion -[hidden]-> SimularRetencionUseCase
+}
+
+package "Infrastructure" #FFF7ED {
+    class RepositorioConfiguracionRetencion <<Repository>> {
+        -AppDbContext _context
+        +ObtenerConfiguracion(carreraId: int, escenarioId: int) : ConfiguracionRetencion
+        +Guardar(config: ConfiguracionRetencion) : void
+    }
+    class RepositorioSimulacionRetencion <<Repository>> {
+        -AppDbContext _context
+        +CrearSimulacion(configuracionId: int) : SimulacionRetencion
+        +GuardarDetalle(detalle: DetalleSimulacionRetencion) : void
+    }
+
+    RepositorioConfiguracionRetencion -[hidden]-> RepositorioSimulacionRetencion
+}
+
+package "Presentation" #FDF4FF {
+    class SimulacionRetencionViewModel <<ViewModel>> {
+        +ICommand SimularCommand
+        +ICommand GuardarConfigCommand
+        +CargarConfiguracion() : void
+    }
+}
+
+Domain -[hidden]-> Application
+Application -[hidden]-> Infrastructure
+Infrastructure -[hidden]-> Presentation
+
+' Relaciones de dominio
+EscenarioProyeccion "1" --> "0..*" ConfiguracionRetencion : tiene
+ConfiguracionRetencion "1" --> "0..*" CriterioReferenciaRetencion : define
+ConfiguracionRetencion "1" --> "0..*" SimulacionRetencion : origina
+SimulacionRetencion "1" --> "0..*" DetalleSimulacionRetencion : contiene
+
+' Implementaciones
+RepositorioConfiguracionRetencion ..|> IRepositorioConfiguracionRetencion : implementa
+RepositorioSimulacionRetencion ..|> IRepositorioSimulacionRetencion : implementa
+
+' Dependencias de casos de uso
+SimularRetencionUseCase --> IRepositorioConfiguracionRetencion : usa
+SimularRetencionUseCase --> IRepositorioSimulacionRetencion : usa
+
+' Dependencias de presentación
+SimulacionRetencionViewModel --> SimularRetencionUseCase : invoca
+@enduml

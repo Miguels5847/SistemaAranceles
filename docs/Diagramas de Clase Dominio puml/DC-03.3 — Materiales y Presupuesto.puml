@@ -1,0 +1,121 @@
+@startuml
+top to bottom direction
+scale 0.88
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+skinparam arrowColor Black
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 16
+skinparam ranksep 24
+
+title DC-03.3: Materiales y Presupuesto
+
+package "Domain" #EFF6FF {
+    class ItemMaterialInsumo {
+        +int Id
+        +int CarreraId
+        +string NombreItem
+        +string CategoriaNombre
+        +decimal PrecioUnitario
+    }
+    class RatioMaterialDemanda {
+        +int Id
+        +int? CarreraId
+        +string Categoria
+        +string Concepto
+        +int? ItemMaterialInsumoId
+        +decimal RatioConsumo
+        +UnidadRatioMaterial UnidadRatio
+        +int MesesOperativos
+        +decimal CantidadFijaAdicional
+        +bool AplicaInflacion
+    }
+    class DatosInstitucionales {
+        +decimal PresupuestoAnualCapacitacion
+        +decimal PresupuestoAnualInternacionalizacion
+        +decimal PresupuestoAnualMarketing
+        +decimal PolizaSeguroEstudiantilAnual
+        +decimal PresupuestoBaseUniversidad
+        +decimal PorcentajeInvestigacion
+        +decimal PorcentajeVinculacion
+    }
+
+    ItemMaterialInsumo -[hidden]-> RatioMaterialDemanda
+    RatioMaterialDemanda -[hidden]-> DatosInstitucionales
+}
+
+package "Application" #F0FDF4 {
+    interface IRepositorioItemMaterialInsumo <<Interface>> {
+        +ObtenerPorCarrera(carreraId: int) : List~ItemMaterialInsumo~
+        +Guardar(item: ItemMaterialInsumo) : void
+    }
+    interface IRepositorioRatioMaterialDemanda <<Interface>> {
+        +ListarPorCarrera(carreraId: int) : List~RatioMaterialDemanda~
+        +Guardar(ratio: RatioMaterialDemanda) : void
+    }
+    interface IRepositorioDatosInstitucionales <<Interface>> {
+        +Obtener() : DatosInstitucionales
+    }
+    class CalcularMaterialesPorPeriodoQuery <<Query>> {
+        -IRepositorioItemMaterialInsumo _itemRepo
+        -IRepositorioRatioMaterialDemanda _ratioRepo
+        +Ejecutar(carreraId: int, escenarioId: int) : List~MaterialPeriodoDto~
+    }
+
+    IRepositorioItemMaterialInsumo -[hidden]-> IRepositorioRatioMaterialDemanda
+    IRepositorioRatioMaterialDemanda -[hidden]-> IRepositorioDatosInstitucionales
+    IRepositorioDatosInstitucionales -[hidden]-> CalcularMaterialesPorPeriodoQuery
+}
+
+package "Infrastructure" #FFF7ED {
+    class RepositorioItemMaterialInsumo <<Repository>> {
+        -AppDbContext _context
+        +ObtenerPorCarrera(carreraId: int) : List~ItemMaterialInsumo~
+    }
+    class RepositorioRatioMaterialDemanda <<Repository>> {
+        -AppDbContext _context
+        +ListarPorCarrera(carreraId: int) : List~RatioMaterialDemanda~
+    }
+    class RepositorioDatosInstitucionales <<Repository>> {
+        -AppDbContext _context
+        +Obtener() : DatosInstitucionales
+    }
+
+    RepositorioItemMaterialInsumo -[hidden]-> RepositorioRatioMaterialDemanda
+    RepositorioRatioMaterialDemanda -[hidden]-> RepositorioDatosInstitucionales
+}
+
+package "Presentation" #FDF4FF {
+    class CatalogoMaterialesViewModel <<ViewModel>> {
+        +ICommand GuardarMaterialCommand
+        +ICommand SembrarPorDefectoCommand
+        +CargarMateriales() : void
+    }
+}
+
+Domain -[hidden]-> Application
+Application -[hidden]-> Infrastructure
+Infrastructure -[hidden]-> Presentation
+
+' Relaciones de dominio
+ItemMaterialInsumo "1" --> "0..*" RatioMaterialDemanda : referencia precio
+
+' Implementaciones
+RepositorioItemMaterialInsumo ..|> IRepositorioItemMaterialInsumo : implementa
+RepositorioRatioMaterialDemanda ..|> IRepositorioRatioMaterialDemanda : implementa
+RepositorioDatosInstitucionales ..|> IRepositorioDatosInstitucionales : implementa
+
+' Dependencias de casos de uso
+CalcularMaterialesPorPeriodoQuery --> IRepositorioItemMaterialInsumo : usa
+CalcularMaterialesPorPeriodoQuery --> IRepositorioRatioMaterialDemanda : usa
+CalcularMaterialesPorPeriodoQuery --> IRepositorioDatosInstitucionales : usa
+
+' Dependencias de presentación
+CatalogoMaterialesViewModel --> CalcularMaterialesPorPeriodoQuery : invoca
+
+@enduml

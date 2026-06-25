@@ -1,0 +1,144 @@
+@startuml
+top to bottom direction
+scale 0.88
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+skinparam arrowColor Black
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 20
+skinparam ranksep 30
+
+title DC-03 Vista General: Dominio Operativo-Financiero - Personal, Activos, Materiales
+
+package "Domain" #EFF6FF {
+    class CargoFacultad
+    class ProyeccionCargoFacultad
+    class CargoPlantaCentral
+    class ProyeccionCargoPlantaCentral
+    class CatalogoActivoBase
+    class ActivoFijo
+    class InversionFutura
+    class ActivoDiferido
+    class ServicioMantenimiento
+    class ItemMaterialInsumo
+    class RatioMaterialDemanda
+    class DatosInstitucionales
+
+    CargoFacultad -[hidden]-> ProyeccionCargoFacultad
+    ProyeccionCargoFacultad -[hidden]-> CargoPlantaCentral
+    CargoPlantaCentral -[hidden]-> ProyeccionCargoPlantaCentral
+    ProyeccionCargoPlantaCentral -[hidden]-> CatalogoActivoBase
+    CatalogoActivoBase -[hidden]-> ActivoFijo
+    ActivoFijo -[hidden]-> InversionFutura
+    InversionFutura -[hidden]-> ActivoDiferido
+    ActivoDiferido -[hidden]-> ServicioMantenimiento
+    ServicioMantenimiento -[hidden]-> ItemMaterialInsumo
+    ItemMaterialInsumo -[hidden]-> RatioMaterialDemanda
+    RatioMaterialDemanda -[hidden]-> DatosInstitucionales
+}
+
+package "Application" #F0FDF4 {
+    interface IRepositorioCargoFacultad <<Interface>>
+    interface IRepositorioCargoPlantaCentral <<Interface>>
+    interface IRepositorioCatalogoActivoBase <<Interface>>
+    interface IRepositorioActivoFijo <<Interface>>
+    interface IRepositorioActivoDiferido <<Interface>>
+    interface IRepositorioServicioMantenimiento <<Interface>>
+    interface IRepositorioDatosInstitucionales <<Interface>>
+    interface IRepositorioItemMaterialInsumo <<Interface>>
+    interface IRepositorioRatioMaterialDemanda <<Interface>>
+    class GenerarTablaSueldosPeriodoQuery <<Query>>
+    class GestionActivosUseCase <<UseCase>>
+    class GestionCapitalTrabajoUseCase <<UseCase>>
+    class CalcularMaterialesPorPeriodoQuery <<Query>>
+
+    IRepositorioCargoFacultad -[hidden]-> IRepositorioCargoPlantaCentral
+    IRepositorioCargoPlantaCentral -[hidden]-> IRepositorioCatalogoActivoBase
+    IRepositorioCatalogoActivoBase -[hidden]-> IRepositorioActivoFijo
+    IRepositorioActivoFijo -[hidden]-> IRepositorioActivoDiferido
+    IRepositorioActivoDiferido -[hidden]-> IRepositorioServicioMantenimiento
+    IRepositorioServicioMantenimiento -[hidden]-> IRepositorioDatosInstitucionales
+    IRepositorioDatosInstitucionales -[hidden]-> IRepositorioItemMaterialInsumo
+    IRepositorioItemMaterialInsumo -[hidden]-> IRepositorioRatioMaterialDemanda
+    IRepositorioRatioMaterialDemanda -[hidden]-> GenerarTablaSueldosPeriodoQuery
+    GenerarTablaSueldosPeriodoQuery -[hidden]-> GestionActivosUseCase
+    GestionActivosUseCase -[hidden]-> GestionCapitalTrabajoUseCase
+    GestionCapitalTrabajoUseCase -[hidden]-> CalcularMaterialesPorPeriodoQuery
+}
+
+package "Infrastructure" #FFF7ED {
+    class RepositorioCargoFacultad <<Repository>>
+    class RepositorioCargoPlantaCentral <<Repository>>
+    class RepositorioCatalogoActivoBase <<Repository>>
+    class RepositorioActivoFijo <<Repository>>
+    class RepositorioActivoDiferido <<Repository>>
+    class RepositorioServicioMantenimiento <<Repository>>
+    class RepositorioDatosInstitucionales <<Repository>>
+    class RepositorioItemMaterialInsumo <<Repository>>
+    class RepositorioRatioMaterialDemanda <<Repository>>
+
+    RepositorioCargoFacultad -[hidden]-> RepositorioCargoPlantaCentral
+    RepositorioCargoPlantaCentral -[hidden]-> RepositorioCatalogoActivoBase
+    RepositorioCatalogoActivoBase -[hidden]-> RepositorioActivoFijo
+    RepositorioActivoFijo -[hidden]-> RepositorioActivoDiferido
+    RepositorioActivoDiferido -[hidden]-> RepositorioServicioMantenimiento
+    RepositorioServicioMantenimiento -[hidden]-> RepositorioDatosInstitucionales
+    RepositorioDatosInstitucionales -[hidden]-> RepositorioItemMaterialInsumo
+    RepositorioItemMaterialInsumo -[hidden]-> RepositorioRatioMaterialDemanda
+}
+
+package "Presentation" #FDF4FF {
+    class CargosFacultadViewModel <<ViewModel>>
+    class ActivosFijosViewModel <<ViewModel>>
+    class MantenimientoViewModel <<ViewModel>>
+    class CatalogoMaterialesViewModel <<ViewModel>>
+
+    CargosFacultadViewModel -[hidden]-> ActivosFijosViewModel
+    ActivosFijosViewModel -[hidden]-> MantenimientoViewModel
+    MantenimientoViewModel -[hidden]-> CatalogoMaterialesViewModel
+}
+
+Domain -[hidden]-> Application
+Application -[hidden]-> Infrastructure
+Infrastructure -[hidden]-> Presentation
+
+' Relaciones de dominio
+CargoFacultad "1" --> "0..*" ProyeccionCargoFacultad : proyecta
+CargoPlantaCentral "1" --> "0..*" ProyeccionCargoPlantaCentral : proyecta
+CatalogoActivoBase "1" ..> "0..*" ActivoFijo : siembra
+ActivoFijo "1" --> "0..*" InversionFutura : proyecta
+ItemMaterialInsumo "1" --> "0..*" RatioMaterialDemanda : referencia precio
+
+' Implementaciones
+RepositorioCargoFacultad ..|> IRepositorioCargoFacultad : implementa
+RepositorioCargoPlantaCentral ..|> IRepositorioCargoPlantaCentral : implementa
+RepositorioCatalogoActivoBase ..|> IRepositorioCatalogoActivoBase : implementa
+RepositorioActivoFijo ..|> IRepositorioActivoFijo : implementa
+RepositorioActivoDiferido ..|> IRepositorioActivoDiferido : implementa
+RepositorioServicioMantenimiento ..|> IRepositorioServicioMantenimiento : implementa
+RepositorioDatosInstitucionales ..|> IRepositorioDatosInstitucionales : implementa
+RepositorioItemMaterialInsumo ..|> IRepositorioItemMaterialInsumo : implementa
+RepositorioRatioMaterialDemanda ..|> IRepositorioRatioMaterialDemanda : implementa
+
+' Dependencias de casos de uso
+GenerarTablaSueldosPeriodoQuery --> IRepositorioCargoFacultad : usa
+GenerarTablaSueldosPeriodoQuery --> IRepositorioCargoPlantaCentral : usa
+GestionActivosUseCase --> IRepositorioCatalogoActivoBase : usa
+GestionActivosUseCase --> IRepositorioActivoFijo : usa
+GestionCapitalTrabajoUseCase --> IRepositorioDatosInstitucionales : usa
+GestionCapitalTrabajoUseCase --> IRepositorioActivoDiferido : usa
+GestionCapitalTrabajoUseCase --> IRepositorioServicioMantenimiento : usa
+CalcularMaterialesPorPeriodoQuery --> IRepositorioItemMaterialInsumo : usa
+CalcularMaterialesPorPeriodoQuery --> IRepositorioRatioMaterialDemanda : usa
+
+' Dependencias de presentación
+CargosFacultadViewModel --> GenerarTablaSueldosPeriodoQuery : invoca
+ActivosFijosViewModel --> GestionActivosUseCase : invoca
+MantenimientoViewModel --> GestionCapitalTrabajoUseCase : invoca
+CatalogoMaterialesViewModel --> CalcularMaterialesPorPeriodoQuery : invoca
+@enduml

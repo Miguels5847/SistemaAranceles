@@ -1,0 +1,134 @@
+@startuml DC-04.1 Costos y Arancel
+top to bottom direction
+scale 0.88
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+skinparam arrowColor Black
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 16
+skinparam ranksep 24
+
+title DC-04.1: Costos y Arancel
+
+package "Domain" #EFF6FF {
+    class EscenarioProyeccion {
+        +int Id
+        +int CarreraId
+        +string Nombre
+        +bool EsPredeterminado
+        +bool EstaActivo
+    }
+    class ConfiguracionArancelCarrera {
+        +int Id
+        +int CarreraId
+        +int? EscenarioProyeccionId
+        +ModoCalculoArancel ModoCalculo
+        +decimal? ArancelManual
+        +decimal? PorcentajeMatricula
+        +bool UsaPorcentajeMatriculaInstitucional
+    }
+    class DatosInstitucionales {
+        +decimal PorcentajeImprevistosInversion
+        +decimal PorcentajeBecasInstitucionales
+        +decimal ArancelMinimoBusqueda
+        +decimal ArancelMaximoBusqueda
+        +decimal ToleranciaVanArancel
+    }
+
+    EscenarioProyeccion -[hidden]-> ConfiguracionArancelCarrera
+    ConfiguracionArancelCarrera -[hidden]-> DatosInstitucionales
+}
+
+package "Application :: Resultados (DTOs)" #F0FDF4 {
+    class CostoGastoPeriodoDto <<DTO>> {
+        +string EtiquetaPeriodo
+        +decimal TotalSueldosDocentes
+        +decimal TotalMateriales
+        +decimal TotalConImprevistos
+        +decimal CostoPorEstudiante
+    }
+    class ArancelOptimoBiseccionDto <<DTO>> {
+        +decimal ArancelOptimo
+        +decimal MatriculaOptima
+        +decimal Van
+        +decimal TirPorcentaje
+        +string EstadoConvergencia
+    }
+
+    CostoGastoPeriodoDto -[hidden]-> ArancelOptimoBiseccionDto
+}
+
+package "Application" #F0FDF4 {
+    interface IRepositorioConfiguracionArancelCarrera <<Interface>> {
+        +Obtener(carreraId: int, escenarioId: int?) : ConfiguracionArancelCarrera
+        +Guardar(config: ConfiguracionArancelCarrera) : void
+    }
+    interface IRepositorioDatosInstitucionales <<Interface>> {
+        +Obtener() : DatosInstitucionales
+    }
+    class ObtenerMatrizCostosGastosQuery <<Query>> {
+        +Ejecutar(carreraId: int, escenarioId: int) : MatrizCostosGastosDto
+    }
+    class CalculadoraArancelOptimoBiseccion <<Service>> {
+        +Calcular(entrada: EntradaBiseccionArancel) : ResultadoBiseccion
+    }
+    class ObtenerArancelOptimoBiseccionQuery <<Query>> {
+        -CalculadoraArancelOptimoBiseccion _biseccion
+        +Ejecutar(carreraId: int, escenarioId: int) : ArancelOptimoBiseccionDto
+    }
+
+    IRepositorioConfiguracionArancelCarrera -[hidden]-> IRepositorioDatosInstitucionales
+    IRepositorioDatosInstitucionales -[hidden]-> ObtenerMatrizCostosGastosQuery
+    ObtenerMatrizCostosGastosQuery -[hidden]-> CalculadoraArancelOptimoBiseccion
+    CalculadoraArancelOptimoBiseccion -[hidden]-> ObtenerArancelOptimoBiseccionQuery
+}
+
+package "Infrastructure" #FFF7ED {
+    class RepositorioConfiguracionArancelCarrera <<Repository>>
+    class RepositorioDatosInstitucionales <<Repository>>
+
+    RepositorioConfiguracionArancelCarrera -[hidden]-> RepositorioDatosInstitucionales
+}
+
+package "Presentation" #FDF4FF {
+    class CostosGastosViewModel <<ViewModel>> {
+        +ICommand ConsolidarCommand
+        +ICommand ExportarCommand
+        +CargarCostos() : void
+    }
+    class AnalisisFinancieroViewModel <<ViewModel>> {
+        +ICommand CalcularArancelOptimoCommand
+        +CargarDashboard() : void
+    }
+
+    CostosGastosViewModel -[hidden]-> AnalisisFinancieroViewModel
+}
+
+Domain -[hidden]-> Application
+Application -[hidden]-> Infrastructure
+Infrastructure -[hidden]-> Presentation
+
+' Relaciones de dominio
+EscenarioProyeccion "1" --> "0..*" ConfiguracionArancelCarrera : tiene
+DatosInstitucionales "1" ..> "0..*" EscenarioProyeccion : parametriza
+
+' Implementaciones
+RepositorioConfiguracionArancelCarrera ..|> IRepositorioConfiguracionArancelCarrera : implementa
+RepositorioDatosInstitucionales ..|> IRepositorioDatosInstitucionales : implementa
+
+' Casos de uso -> producen DTOs
+ObtenerMatrizCostosGastosQuery ..> CostoGastoPeriodoDto : produce
+ObtenerArancelOptimoBiseccionQuery --> CalculadoraArancelOptimoBiseccion : usa
+ObtenerArancelOptimoBiseccionQuery ..> ArancelOptimoBiseccionDto : produce
+ObtenerArancelOptimoBiseccionQuery --> IRepositorioConfiguracionArancelCarrera : usa
+ObtenerArancelOptimoBiseccionQuery --> IRepositorioDatosInstitucionales : usa
+
+' Dependencias de presentación
+CostosGastosViewModel --> ObtenerMatrizCostosGastosQuery : invoca
+AnalisisFinancieroViewModel --> ObtenerArancelOptimoBiseccionQuery : invoca
+@enduml

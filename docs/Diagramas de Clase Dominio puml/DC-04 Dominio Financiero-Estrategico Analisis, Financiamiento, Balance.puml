@@ -1,0 +1,190 @@
+@startuml DC-04 Dominio Financiero-Estrategico
+top to bottom direction
+scale 0.94
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+skinparam arrowColor Black
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+skinparam nodesep 22
+skinparam ranksep 34
+
+title DC-04: Dominio Financiero-Estratégico - Análisis, Financiamiento, Balance
+
+package "Domain" #EFF6FF {
+    class EscenarioProyeccion {
+        +int Id
+        +int CarreraId
+        +string Nombre
+        +bool EsPredeterminado
+        +bool EstaActivo
+    }
+    class ConfiguracionArancelCarrera {
+        +int Id
+        +int CarreraId
+        +int? EscenarioProyeccionId
+        +ModoCalculoArancel ModoCalculo
+        +decimal? ArancelManual
+        +decimal? PorcentajeMatricula
+        +bool UsaPorcentajeMatriculaInstitucional
+    }
+    class DescuentoArancelCiclo {
+        +int Id
+        +int CarreraId
+        +int? EscenarioProyeccionId
+        +int CicloDesde
+        +int CicloHasta
+        +decimal PorcentajeDescuento
+    }
+    class InversionFutura {
+        +int Id
+        +int ActivoFijoId
+        +int Anio
+        +int Semestre
+        +decimal CantidadProyectada
+    }
+    class DatosInstitucionales {
+        +decimal TasaInteresFinanciera
+        +decimal PremioRiesgo
+        +decimal TmrManual
+        +bool UsarTmrManual
+        +bool AplicarParticipacionImpuestos
+        +decimal PorcentajeFinanciadoPrestamo
+        +decimal PorcentajeFinanciadoConvenio
+        +decimal TasaInteresAnualPrestamo
+        +int PlazoPrestamoMeses
+        +decimal ToleranciaVanArancel
+        +decimal ArancelMinimoBusqueda
+        +decimal ArancelMaximoBusqueda
+    }
+
+    EscenarioProyeccion -[hidden]-> ConfiguracionArancelCarrera
+    ConfiguracionArancelCarrera -[hidden]-> DescuentoArancelCiclo
+    DescuentoArancelCiclo -[hidden]-> InversionFutura
+    InversionFutura -[hidden]-> DatosInstitucionales
+}
+
+package "Application :: Resultados (DTOs)" #F0FDF4 {
+    class CostoGastoPeriodoDto <<DTO>>
+    class ArancelOptimoBiseccionDto <<DTO>>
+    class FlujoFondosDto <<DTO>>
+    class IndicadoresFinancierosDto <<DTO>>
+    class ResumenFinanciamientoDto <<DTO>>
+    class BalanceProyectadoDto <<DTO>>
+    class CesDto <<DTO>>
+
+    CostoGastoPeriodoDto -[hidden]-> ArancelOptimoBiseccionDto
+    ArancelOptimoBiseccionDto -[hidden]-> FlujoFondosDto
+    FlujoFondosDto -[hidden]-> IndicadoresFinancierosDto
+    IndicadoresFinancierosDto -[hidden]-> ResumenFinanciamientoDto
+    ResumenFinanciamientoDto -[hidden]-> BalanceProyectadoDto
+    BalanceProyectadoDto -[hidden]-> CesDto
+}
+
+package "Application" #F0FDF4 {
+    interface IRepositorioConfiguracionArancelCarrera <<Interface>>
+    interface IRepositorioDescuentoArancelCiclo <<Interface>>
+    interface IRepositorioInversionFutura <<Interface>>
+    interface IRepositorioDatosInstitucionales <<Interface>>
+
+    class CalculadoraTMR <<Service>>
+    class CalculadoraVAN <<Service>>
+    class CalculadoraTIR <<Service>>
+    class CalculadoraArancelOptimoBiseccion <<Service>>
+
+    class ObtenerMatrizCostosGastosQuery <<Query>>
+    class ObtenerArancelOptimoBiseccionQuery <<Query>>
+    class ObtenerFlujoFondosQuery <<Query>>
+    class ObtenerIndicadoresFinancierosQuery <<Query>>
+    class ObtenerResumenAmortizacionQuery <<Query>>
+    class ObtenerBalanceProyectadoQuery <<Query>>
+    class ObtenerCesQuery <<Query>>
+
+    IRepositorioConfiguracionArancelCarrera -[hidden]-> IRepositorioDescuentoArancelCiclo
+    IRepositorioDescuentoArancelCiclo -[hidden]-> IRepositorioInversionFutura
+    IRepositorioInversionFutura -[hidden]-> IRepositorioDatosInstitucionales
+    IRepositorioDatosInstitucionales -[hidden]-> CalculadoraTMR
+    CalculadoraTMR -[hidden]-> CalculadoraVAN
+    CalculadoraVAN -[hidden]-> CalculadoraTIR
+    CalculadoraTIR -[hidden]-> CalculadoraArancelOptimoBiseccion
+    CalculadoraArancelOptimoBiseccion -[hidden]-> ObtenerMatrizCostosGastosQuery
+    ObtenerMatrizCostosGastosQuery -[hidden]-> ObtenerArancelOptimoBiseccionQuery
+    ObtenerArancelOptimoBiseccionQuery -[hidden]-> ObtenerFlujoFondosQuery
+    ObtenerFlujoFondosQuery -[hidden]-> ObtenerIndicadoresFinancierosQuery
+    ObtenerIndicadoresFinancierosQuery -[hidden]-> ObtenerResumenAmortizacionQuery
+    ObtenerResumenAmortizacionQuery -[hidden]-> ObtenerBalanceProyectadoQuery
+    ObtenerBalanceProyectadoQuery -[hidden]-> ObtenerCesQuery
+}
+
+package "Infrastructure" #FFF7ED {
+    class RepositorioConfiguracionArancelCarrera <<Repository>>
+    class RepositorioDescuentoArancelCiclo <<Repository>>
+    class RepositorioInversionFutura <<Repository>>
+    class RepositorioDatosInstitucionales <<Repository>>
+
+    RepositorioConfiguracionArancelCarrera -[hidden]-> RepositorioDescuentoArancelCiclo
+    RepositorioDescuentoArancelCiclo -[hidden]-> RepositorioInversionFutura
+    RepositorioInversionFutura -[hidden]-> RepositorioDatosInstitucionales
+}
+
+package "Presentation" #FDF4FF {
+    class CostosGastosViewModel <<ViewModel>>
+    class AnalisisFinancieroViewModel <<ViewModel>>
+    class AmortizacionViewModel <<ViewModel>>
+    class ReportesViewModel <<ViewModel>>
+
+    CostosGastosViewModel -[hidden]-> AnalisisFinancieroViewModel
+    AnalisisFinancieroViewModel -[hidden]-> AmortizacionViewModel
+    AmortizacionViewModel -[hidden]-> ReportesViewModel
+}
+
+Domain -[hidden]-> Application
+Application -[hidden]-> Infrastructure
+Infrastructure -[hidden]-> Presentation
+
+' Relaciones de dominio
+EscenarioProyeccion "1" --> "0..*" ConfiguracionArancelCarrera : tiene
+EscenarioProyeccion "1" --> "0..*" DescuentoArancelCiclo : aplica
+EscenarioProyeccion "1" --> "0..*" InversionFutura : proyecta
+DatosInstitucionales "1" ..> "0..*" EscenarioProyeccion : parametriza
+
+' Implementaciones
+RepositorioConfiguracionArancelCarrera ..|> IRepositorioConfiguracionArancelCarrera : implementa
+RepositorioDescuentoArancelCiclo ..|> IRepositorioDescuentoArancelCiclo : implementa
+RepositorioInversionFutura ..|> IRepositorioInversionFutura : implementa
+RepositorioDatosInstitucionales ..|> IRepositorioDatosInstitucionales : implementa
+
+' Casos de uso -> producen DTOs
+ObtenerMatrizCostosGastosQuery ..> CostoGastoPeriodoDto : produce
+ObtenerArancelOptimoBiseccionQuery --> CalculadoraArancelOptimoBiseccion : usa
+ObtenerArancelOptimoBiseccionQuery --> CalculadoraTMR : usa
+ObtenerArancelOptimoBiseccionQuery ..> ArancelOptimoBiseccionDto : produce
+ObtenerFlujoFondosQuery --> CalculadoraVAN : usa
+ObtenerFlujoFondosQuery ..> FlujoFondosDto : produce
+ObtenerIndicadoresFinancierosQuery --> CalculadoraTIR : usa
+ObtenerIndicadoresFinancierosQuery ..> IndicadoresFinancierosDto : produce
+ObtenerResumenAmortizacionQuery ..> ResumenFinanciamientoDto : produce
+ObtenerBalanceProyectadoQuery ..> BalanceProyectadoDto : produce
+ObtenerCesQuery --> ObtenerArancelOptimoBiseccionQuery : usa
+ObtenerCesQuery ..> CesDto : produce
+
+' Casos de uso -> repositorios de dominio
+ObtenerArancelOptimoBiseccionQuery --> IRepositorioConfiguracionArancelCarrera : usa
+ObtenerArancelOptimoBiseccionQuery --> IRepositorioDatosInstitucionales : usa
+ObtenerFlujoFondosQuery --> IRepositorioDescuentoArancelCiclo : usa
+ObtenerMatrizCostosGastosQuery --> IRepositorioInversionFutura : usa
+
+' Dependencias de presentación
+CostosGastosViewModel --> ObtenerMatrizCostosGastosQuery : invoca
+AnalisisFinancieroViewModel --> ObtenerArancelOptimoBiseccionQuery : invoca
+AnalisisFinancieroViewModel --> ObtenerFlujoFondosQuery : invoca
+AnalisisFinancieroViewModel --> ObtenerIndicadoresFinancierosQuery : invoca
+AnalisisFinancieroViewModel --> ObtenerBalanceProyectadoQuery : invoca
+AmortizacionViewModel --> ObtenerResumenAmortizacionQuery : invoca
+ReportesViewModel --> ObtenerCesQuery : invoca
+@enduml

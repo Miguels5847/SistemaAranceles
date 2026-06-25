@@ -1,0 +1,132 @@
+@startuml
+top to bottom direction
+scale 0.88
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+skinparam arrowColor Black
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 16
+skinparam ranksep 24
+
+title DC-02.3: Estudiantes y Docentes
+
+package "Domain" #EFF6FF {
+    class EscenarioProyeccion {
+        +int Id
+        +int CarreraId
+        +string Nombre
+        +bool EsPredeterminado
+        +bool EstaActivo
+    }
+    class ProyeccionEstudiantes {
+        +int Id
+        +int CarreraId
+        +int EscenarioProyeccionId
+        +int AnioBase
+        +int SemanasPorSemestre
+    }
+    class DetalleProyeccionEstudiantes {
+        +int Id
+        +int ProyeccionEstudiantesId
+        +int PeriodoAcademicoId
+        +int NumeroCiclo
+        +int CantidadParalelos
+        +decimal TotalEstudiantes
+    }
+    class OverrideHorasPeriodo {
+        +int Id
+        +int ProyeccionId
+        +int Periodo
+        +decimal? HorasDocencia
+        +decimal? HorasPractica
+    }
+    class ProyeccionCargoFacultad {
+        +int Id
+        +int CargoFacultadId
+        +int PeriodoAcademicoId
+        +decimal CantidadPersonas
+        +decimal CostoTotalSemestre
+    }
+
+    EscenarioProyeccion -[hidden]-> ProyeccionEstudiantes
+    ProyeccionEstudiantes -[hidden]-> DetalleProyeccionEstudiantes
+    DetalleProyeccionEstudiantes -[hidden]-> OverrideHorasPeriodo
+    OverrideHorasPeriodo -[hidden]-> ProyeccionCargoFacultad
+}
+
+package "Application" #F0FDF4 {
+    interface IRepositorioProyeccionEstudiantes <<Interface>> {
+        +Crear(proyeccion: ProyeccionEstudiantes) : int
+        +GuardarDetalle(detalle: DetalleProyeccionEstudiantes) : void
+        +ObtenerPorEscenario(escenarioId: int) : ProyeccionEstudiantes
+    }
+    interface IRepositorioOverrideHorasPeriodo <<Interface>> {
+        +Guardar(override: OverrideHorasPeriodo) : void
+        +ObtenerPorProyeccion(proyeccionId: int) : List~OverrideHorasPeriodo~
+    }
+    interface IRepositorioProyeccionCargoFacultad <<Interface>> {
+        +Guardar(proyeccion: ProyeccionCargoFacultad) : void
+        +ObtenerPorEscenario(escenarioId: int) : List~ProyeccionCargoFacultad~
+    }
+    class ConsolidadorProyeccionEstudiantes <<Service>> {
+        -IRepositorioProyeccionEstudiantes _proyeccionRepo
+        -IRepositorioOverrideHorasPeriodo _overrideRepo
+        +Consolidar(carreraId: int, escenarioId: int) : ConsolidadoProyeccionDto
+        +DesglosarDocentesPorPeriodo() : List~DocentePeriodoDto~
+    }
+
+    IRepositorioProyeccionEstudiantes -[hidden]-> IRepositorioOverrideHorasPeriodo
+    IRepositorioOverrideHorasPeriodo -[hidden]-> IRepositorioProyeccionCargoFacultad
+    IRepositorioProyeccionCargoFacultad -[hidden]-> ConsolidadorProyeccionEstudiantes
+}
+
+package "Infrastructure" #FFF7ED {
+    class RepositorioProyeccionEstudiantes <<Repository>> {
+        -AppDbContext _context
+        +Crear(proyeccion: ProyeccionEstudiantes) : int
+        +ObtenerPorEscenario(escenarioId: int) : ProyeccionEstudiantes
+    }
+    class RepositorioOverrideHorasPeriodo <<Repository>> {
+        -AppDbContext _context
+        +ObtenerPorProyeccion(proyeccionId: int) : List~OverrideHorasPeriodo~
+    }
+
+    RepositorioProyeccionEstudiantes -[hidden]-> RepositorioOverrideHorasPeriodo
+}
+
+package "Presentation" #FDF4FF {
+    class EstudiantesViewModel <<ViewModel>> {
+        +ICommand GenerarProyeccionCommand
+        +ICommand ExportarCommand
+        +CargarProyeccion() : void
+    }
+}
+
+Domain -[hidden]-> Application
+Application -[hidden]-> Infrastructure
+Infrastructure -[hidden]-> Presentation
+
+' Relaciones de dominio
+EscenarioProyeccion "1" --> "0..*" ProyeccionEstudiantes : tiene
+ProyeccionEstudiantes "1" --> "0..*" DetalleProyeccionEstudiantes : contiene
+ProyeccionEstudiantes "1" --> "0..*" OverrideHorasPeriodo : ajusta
+ConsolidadorProyeccionEstudiantes ..> ProyeccionCargoFacultad : genera (docentes requeridos)
+
+' Implementaciones
+RepositorioProyeccionEstudiantes ..|> IRepositorioProyeccionEstudiantes : implementa
+RepositorioOverrideHorasPeriodo ..|> IRepositorioOverrideHorasPeriodo : implementa
+
+' Dependencias de casos de uso
+ConsolidadorProyeccionEstudiantes --> IRepositorioProyeccionEstudiantes : usa
+ConsolidadorProyeccionEstudiantes --> IRepositorioOverrideHorasPeriodo : usa
+ConsolidadorProyeccionEstudiantes --> IRepositorioProyeccionCargoFacultad : usa
+
+' Dependencias de presentación
+EstudiantesViewModel --> ConsolidadorProyeccionEstudiantes : invoca
+
+@enduml

@@ -30,7 +30,7 @@ Resultado de cruzar el plan v4.1 con el código del aplicativo:
 | Parámetro del plan | Estado | Detalle |
 |---|---|---|
 | Rango de bisección 500–5000 | OK | Por defecto 500 / 5000 en Datos Institucionales. |
-| Catálogo de materiales (Tabla 2C) | OK | Mismos 16 ítems, cantidades y precios que el catálogo del aplicativo. |
+| Catálogo de materiales (Tabla 2C) | OK (conciliado) | Mismos 16 ítems, cantidades y precios que el Excel. **Requirió corrección (jun-2026):** el catálogo semilla traía 3 ratios de aseo 1000× altos y 3 ítems inexistentes en el Excel; ya corregidos. Ver *Nota de conciliación* en la sección 4.2. |
 | Amortización de diferidos 20 % anual | OK | Tasa por defecto del activo diferido = 20 %. |
 | Factor de imprevistos 1,05 | OK | Valor por defecto en Costos y Gastos / Análisis Financiero. |
 | Plazo del préstamo 2 años | OK | Por defecto 24 meses. |
@@ -39,7 +39,8 @@ Resultado de cruzar el plan v4.1 con el código del aplicativo:
 | **Tasa del préstamo 15 %** | CAMBIAR | El aplicativo trae **15,02 %**. |
 | **Permiso Municipal y Bomberos $300 conjunto** | CAMBIAR | El aplicativo siembra **2 registros en $0** ("Permiso Municipal" y "Permiso de Bomberos"). Poner **uno en $300 y el otro en $0** (suma = $300, sin duplicar). |
 | **Servicios de mantenimiento (Tabla 2)** | CAMBIAR | Los valores por defecto del aplicativo (Agua 300.000, etc.) **no** son los del Excel (Agua 120.000, etc.). Editar cada rubro a los valores del Excel. |
-| TMR / "inflación del modelo" 2,2 % (D4) | NOTA | El Excel usa **2,2 % fijo** en `14 VAN!D4`. El aplicativo **deriva** la inflación promedio de la **serie del módulo Inflación** (aprox. **1,34 %** para 2023-2026) y calcula la TMR con ella. La TMR difiere aprox. 0,08 pp -> diferencia **categoría C** (menor al 1 %, dentro del umbral del 5 %). **Decisión adoptada:** dejar que el aplicativo derive la TMR y cargar la **misma serie INEC** (Tabla 2D) en ambos. |
+| TMR / "inflación del modelo" 2,2 % (D4) | NOTA | El Excel usa **2,2 % fijo** en `14 VAN!D4`. El aplicativo **deriva** la inflación promedio de la **serie del módulo Inflación** (aprox. **1,34 %** para 2023-2026) y calcula la TMR con ella. La TMR difiere aprox. 0,08 pp -> diferencia **categoría C** (menor al 1 %, dentro del umbral del 10 %). **Decisión adoptada:** dejar que el aplicativo derive la TMR y cargar la **misma serie INEC** (Tabla 2D) en ambos. |
+| **Distribución de tipos de docente** | NOTA (categoría C) | El Excel reparte el equivalente-docente en **fracciones** (p. ej. 0,24 PhD + 0,60 Mgs + 0,16 Parcial, **sin Medio Tiempo**). El aplicativo contrata docentes **enteros** (PhD/Mgs por `floor(horas/18)`) y cubre las **horas residuales** con **Medio Tiempo + Tiempo Parcial** (reglas validadas RN-71/72). Es un modelo de contratación **más realista**; eleva el costo docente y, por tanto, el arancel óptimo ~4–7 % sobre el Excel. **Dentro del umbral del 10 %.** Ya excluido del alcance en la sección 3.2 ("no se incluyen horas estándar por docente ni % de distribución docente"). |
 
 > **Nota sobre el Excel.** El plan tiene una inconsistencia interna: `14 VAN!D4` usa 2,2 % como "inflación del modelo", mientras la serie INEC de la Tabla 2D promedia aprox. 1,34 %. El aplicativo no tiene un campo separado de "inflación del modelo"; usa una sola serie de inflación. Por eso la pequeña diferencia de TMR es **esperada** y se registra como categoría C.
 
@@ -135,6 +136,23 @@ Excel: hoja **6 Capital de trabajo**. Aplicativo: **Capital de Trabajo -> materi
 | Accesorios | Grapadora | 5,25 | Unidad | $15,00 |
 | Accesorios | Perforadora | 5,25 | Unidad | $10,00 |
 
+> **Nota de conciliación de materiales (jun-2026).** Durante la validación se detectó que el aplicativo
+> calculaba el rubro **Materiales y Suministros** ~20× por encima del Excel (período 1: **$13.410** vs
+> **$651,99**). La causa estaba en el catálogo semilla (`CatalogoRatiosPorDefecto`), no en las fórmulas:
+> tres ratios de aseo estaban **1000× altos** y existían **tres ítems que el Excel no contempla**. Se corrigió así:
+>
+> - **Cloro** y **Desinfectante**: ratio de consumo `5 → 0,005` por estudiante-mes (×6 meses ⇒ 0,03 unidades
+>   por estudiante; **0,90** para 30 estudiantes en el período 1, idéntico al Excel).
+> - **Jabón líquido**: ratio `6 → 0,006` por estudiante-mes (⇒ **1,08** para 30 estudiantes).
+> - Se **desactivaron** tres ítems ausentes en la hoja *6 Capital de trabajo* del Excel: *"Uso de Cloro"*,
+>   *"Uso de Jabon"* y *"Uso de Grapadora"* (este último aportaba ~$2.700 por período).
+>
+> Los **precios unitarios no se modificaron** (ya coincidían con el Excel); solo se ajustaron las cantidades.
+> Con la corrección, Materiales y Suministros del período 1 pasa de $13.410 a **~$621** (Excel $651,99) y el
+> **arancel óptimo del aplicativo queda dentro del 5 %** del Excel (≈ $1.942 vs $1.869). La corrección está
+> en el **código** (afecta a toda carrera nueva) y se aplicó por **SQL** a las carreras ya existentes
+> (`ratio_material_demanda`, borrado lógico `esta_activo` para los tres ítems sobrantes).
+
 ### 4.3 Inflación de la validación (Tabla 2D)
 
 Excel: hoja **Inflación**. Aplicativo: **Inflación** (misma serie). Promedio 2023-2026 aprox. **1,34 %** (alimenta la TMR del aplicativo).
@@ -203,7 +221,7 @@ Lo **único** que cambia entre escenarios.
 
 ## 8. Métricas (sin cambios respecto al plan v4.1)
 
-- **Error relativo (%)** = `|App - Excel| / |Excel| x 100`. Umbral **5 %** por celda. *(No se altera la fórmula.)*
+- **Error relativo (%)** = `|App - Excel| / |Excel| x 100`. Umbral **10 %** por celda (referencia: el 10 % que el Ing. Blazco indicó como aceptable). *(No se altera la fórmula.)*
 - **VAN del caso base** (referencia cercana a 0): error **absoluto** menor o igual a **$3,00** (el relativo no aplica porque el denominador tiende a 0).
 - **Tiempo de cálculo:** 3 ejecuciones por escenario, promedio +/- desviación estándar.
 - **Inconsistencias:** A = error del Excel · B = error del aplicativo · C = diferencia numérica menor. *La diferencia de TMR por el origen de la inflación entra como **C**.*

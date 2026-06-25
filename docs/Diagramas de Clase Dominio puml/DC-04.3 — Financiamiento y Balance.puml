@@ -1,0 +1,157 @@
+@startuml DC-04.3 Financiamiento y Balance
+top to bottom direction
+scale 0.85
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+skinparam arrowColor Black
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+skinparam nodesep 28
+skinparam ranksep 42
+
+title DC-04.3: Financiamiento y Balance
+
+package "Domain" #EFF6FF {
+    class EscenarioProyeccion {
+        +int Id
+        +int CarreraId
+        +string Nombre
+        +bool EstaActivo
+    }
+    class DatosInstitucionales {
+        +decimal PorcentajeFinanciadoPrestamo
+        +decimal PorcentajeFinanciadoConvenio
+        +string? NombreEntidadPrestamo
+        +string? NombreEntidadConvenio
+        +decimal TasaInteresAnualPrestamo
+        +int PlazoPrestamoMeses
+        +decimal PorcentajeRecursosPropios
+    }
+    class InversionFutura {
+        +int ActivoFijoId
+        +int Anio
+        +int Semestre
+        +decimal CantidadProyectada
+    }
+
+    EscenarioProyeccion -[hidden]-> DatosInstitucionales
+    DatosInstitucionales -[hidden]-> InversionFutura
+}
+
+package "Application :: Resultados (DTOs)" #F0FDF4 {
+    class ResumenFinanciamientoDto <<DTO>> {
+        +decimal TotalInversion
+        +decimal MontoPrestamo
+        +decimal CuotaMensual
+        +decimal TotalIntereses
+        +IReadOnlyList~FilaAmortizacionDto~ TablaAmortizacion
+    }
+    class FilaAmortizacionDto <<DTO>> {
+        +int NumeroPago
+        +decimal SaldoCapital
+        +decimal Interes
+        +decimal AmortizacionCapital
+        +decimal Cuota
+    }
+    class BalanceProyectadoDto <<DTO>> {
+        +IReadOnlyList~BalanceProyectadoPeriodoDto~ ValoresPorPeriodo
+        +bool CuadraEnTodosLosPeriodos
+    }
+    class BalanceProyectadoPeriodoDto <<DTO>> {
+        +decimal TotalActivo
+        +decimal TotalPasivo
+        +decimal TotalPatrimonio
+        +decimal Diferencia
+        +bool Cuadra
+    }
+    class CesDto <<DTO>> {
+        +string ArancelPorSemestreDisplay
+        +string CostoPorSemestreDisplay
+        +string MatriculaDisplay
+        +string TotalPorSemestreDisplay
+    }
+
+    ResumenFinanciamientoDto -[hidden]-> FilaAmortizacionDto
+    FilaAmortizacionDto -[hidden]-> BalanceProyectadoDto
+    BalanceProyectadoDto -[hidden]-> BalanceProyectadoPeriodoDto
+    BalanceProyectadoPeriodoDto -[hidden]-> CesDto
+    ResumenFinanciamientoDto *-- FilaAmortizacionDto
+    BalanceProyectadoDto *-- BalanceProyectadoPeriodoDto
+}
+
+package "Application" #F0FDF4 {
+    interface IRepositorioDatosInstitucionales <<Interface>> {
+        +Obtener() : DatosInstitucionales
+    }
+    interface IRepositorioInversionFutura <<Interface>> {
+        +ObtenerPorActivo(activoFijoId: int) : List~InversionFutura~
+    }
+    class AmortizacionPorPeriodo <<Service>>
+    class ObtenerResumenAmortizacionQuery <<Query>> {
+        +Ejecutar(carreraId: int, escenarioId: int) : ResumenFinanciamientoDto
+    }
+    class ObtenerBalanceProyectadoQuery <<Query>> {
+        +Ejecutar(carreraId: int, escenarioId: int) : BalanceProyectadoDto
+    }
+    class ObtenerCesQuery <<Query>> {
+        +Ejecutar(carreraId: int, escenarioId: int) : CesDto
+    }
+
+    IRepositorioDatosInstitucionales -[hidden]-> IRepositorioInversionFutura
+    IRepositorioInversionFutura -[hidden]-> AmortizacionPorPeriodo
+    AmortizacionPorPeriodo -[hidden]-> ObtenerResumenAmortizacionQuery
+    ObtenerResumenAmortizacionQuery -[hidden]-> ObtenerBalanceProyectadoQuery
+    ObtenerBalanceProyectadoQuery -[hidden]-> ObtenerCesQuery
+}
+
+package "Infrastructure" #FFF7ED {
+    class RepositorioDatosInstitucionales <<Repository>>
+    class RepositorioInversionFutura <<Repository>>
+
+    RepositorioDatosInstitucionales -[hidden]-> RepositorioInversionFutura
+}
+
+package "Presentation" #FDF4FF {
+    class AmortizacionViewModel <<ViewModel>> {
+        +ICommand GenerarTablaCommand
+        +CargarResumen() : void
+    }
+    class AnalisisFinancieroViewModel <<ViewModel>> {
+        +ICommand GenerarBalanceCommand
+        +CargarBalance() : void
+    }
+    class ReportesViewModel <<ViewModel>> {
+        +ICommand GenerarInformeCommand
+        +ICommand ExportarXlsxCommand
+        +ICommand ExportarPdfCommand
+    }
+
+    AmortizacionViewModel -[hidden]-> AnalisisFinancieroViewModel
+    AnalisisFinancieroViewModel -[hidden]-> ReportesViewModel
+}
+
+Domain -[hidden]-> Application
+Application -[hidden]-> Infrastructure
+Infrastructure -[hidden]-> Presentation
+
+' Implementaciones
+RepositorioDatosInstitucionales ..|> IRepositorioDatosInstitucionales : implementa
+RepositorioInversionFutura ..|> IRepositorioInversionFutura : implementa
+
+' Casos de uso -> producen DTOs
+ObtenerResumenAmortizacionQuery --> AmortizacionPorPeriodo : usa
+ObtenerResumenAmortizacionQuery --> IRepositorioDatosInstitucionales : usa
+ObtenerResumenAmortizacionQuery ..> ResumenFinanciamientoDto : produce
+ObtenerBalanceProyectadoQuery ..> BalanceProyectadoDto : produce
+ObtenerCesQuery ..> CesDto : produce
+
+' Dependencias de presentación
+AmortizacionViewModel --> ObtenerResumenAmortizacionQuery : invoca
+AnalisisFinancieroViewModel --> ObtenerBalanceProyectadoQuery : invoca
+ReportesViewModel --> ObtenerCesQuery : invoca
+@enduml

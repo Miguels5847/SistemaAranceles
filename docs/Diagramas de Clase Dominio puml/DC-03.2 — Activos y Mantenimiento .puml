@@ -1,0 +1,177 @@
+@startuml
+top to bottom direction
+scale 0.88
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+skinparam arrowColor Black
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 16
+skinparam ranksep 24
+
+title DC-03.2: Activos y Mantenimiento
+
+package "Domain" #EFF6FF {
+    class CatalogoActivoBase {
+        +int Id
+        +string Descripcion
+        +CategoriaActivoFijo Categoria
+        +TipoCalculoCantidad TipoCalculoCantidad
+        +decimal CantidadDefault
+        +decimal ValorUnitario
+        +int VidaUtilAnios
+        +decimal PorcentajeResidual
+    }
+    class ActivoFijo {
+        +int Id
+        +int CarreraId
+        +string Descripcion
+        +CategoriaActivoFijo Categoria
+        +decimal Cantidad
+        +string UnidadMedida
+        +decimal ValorUnitario
+        +TipoCalculoCantidad TipoCalculoCantidad
+        +decimal FactorMultiplicador
+        +decimal OffsetCantidad
+        +decimal ValorTotal
+    }
+    class InversionFutura {
+        +int Id
+        +int ActivoFijoId
+        +int Anio
+        +int Semestre
+        +decimal CantidadProyectada
+    }
+    class ActivoDiferido {
+        +int Id
+        +int CarreraId
+        +string NombreRubro
+        +decimal Valor
+        +decimal TasaAmortizacionAnual
+    }
+    class ServicioMantenimiento {
+        +int Id
+        +int CarreraId
+        +int? EscenarioProyeccionId
+        +string Sede
+        +TipoRubroMantenimiento TipoRubro
+        +string NombreRubro
+        +decimal CostoAnualUniversidad
+    }
+    class DatosInstitucionales {
+        +int MesesCapitalTrabajo
+        +decimal PorcentajeImprevistosInversion
+        +int NumeroEstudiantesUniversidad
+    }
+
+    CatalogoActivoBase -[hidden]-> ActivoFijo
+    ActivoFijo -[hidden]-> InversionFutura
+    InversionFutura -[hidden]-> ActivoDiferido
+    ActivoDiferido -[hidden]-> ServicioMantenimiento
+    ServicioMantenimiento -[hidden]-> DatosInstitucionales
+}
+
+package "Application" #F0FDF4 {
+    interface IRepositorioCatalogoActivoBase <<Interface>> {
+        +ObtenerTodos() : List~CatalogoActivoBase~
+    }
+    interface IRepositorioActivoFijo <<Interface>> {
+        +ObtenerPorCarrera(carreraId: int) : List~ActivoFijo~
+        +Guardar(activo: ActivoFijo) : void
+    }
+    interface IRepositorioInversionFutura <<Interface>> {
+        +ObtenerPorActivo(activoFijoId: int) : List~InversionFutura~
+    }
+    interface IRepositorioActivoDiferido <<Interface>> {
+        +ObtenerPorCarrera(carreraId: int) : List~ActivoDiferido~
+    }
+    interface IRepositorioServicioMantenimiento <<Interface>> {
+        +ObtenerPorCarrera(carreraId: int) : List~ServicioMantenimiento~
+    }
+    interface IRepositorioDatosInstitucionales <<Interface>> {
+        +Obtener() : DatosInstitucionales
+    }
+    class GestionActivosUseCase <<UseCase>> {
+        +RegistrarActivo(dto: ActivoFijoDto) : void
+        +CalcularDepreciacion(carreraId: int) : DepreciacionDto
+    }
+    class GestionCapitalTrabajoUseCase <<UseCase>> {
+        +CalcularInversionInicial(carreraId: int) : InversionInicialDto
+    }
+
+    IRepositorioCatalogoActivoBase -[hidden]-> IRepositorioActivoFijo
+    IRepositorioActivoFijo -[hidden]-> IRepositorioInversionFutura
+    IRepositorioInversionFutura -[hidden]-> IRepositorioActivoDiferido
+    IRepositorioActivoDiferido -[hidden]-> IRepositorioServicioMantenimiento
+    IRepositorioServicioMantenimiento -[hidden]-> IRepositorioDatosInstitucionales
+    IRepositorioDatosInstitucionales -[hidden]-> GestionActivosUseCase
+    GestionActivosUseCase -[hidden]-> GestionCapitalTrabajoUseCase
+}
+
+package "Infrastructure" #FFF7ED {
+    class RepositorioCatalogoActivoBase <<Repository>>
+    class RepositorioActivoFijo <<Repository>>
+    class RepositorioInversionFutura <<Repository>>
+    class RepositorioActivoDiferido <<Repository>>
+    class RepositorioServicioMantenimiento <<Repository>>
+    class RepositorioDatosInstitucionales <<Repository>>
+
+    RepositorioCatalogoActivoBase -[hidden]-> RepositorioActivoFijo
+    RepositorioActivoFijo -[hidden]-> RepositorioInversionFutura
+    RepositorioInversionFutura -[hidden]-> RepositorioActivoDiferido
+    RepositorioActivoDiferido -[hidden]-> RepositorioServicioMantenimiento
+    RepositorioServicioMantenimiento -[hidden]-> RepositorioDatosInstitucionales
+}
+
+package "Presentation" #FDF4FF {
+    class ActivosFijosViewModel <<ViewModel>> {
+        +ICommand RegistrarActivoCommand
+        +ICommand CalcularDepreciacionCommand
+        +CargarActivos() : void
+    }
+    class MantenimientoViewModel <<ViewModel>> {
+        +ICommand GuardarServicioCommand
+        +CargarServicios() : void
+    }
+    class CapitalTrabajoViewModel <<ViewModel>> {
+        +ICommand CalcularInversionCommand
+    }
+
+    ActivosFijosViewModel -[hidden]-> MantenimientoViewModel
+    MantenimientoViewModel -[hidden]-> CapitalTrabajoViewModel
+}
+
+Domain -[hidden]-> Application
+Application -[hidden]-> Infrastructure
+Infrastructure -[hidden]-> Presentation
+
+' Relaciones de dominio
+CatalogoActivoBase "1" ..> "0..*" ActivoFijo : siembra
+ActivoFijo "1" --> "0..*" InversionFutura : proyecta
+
+' Implementaciones
+RepositorioCatalogoActivoBase ..|> IRepositorioCatalogoActivoBase : implementa
+RepositorioActivoFijo ..|> IRepositorioActivoFijo : implementa
+RepositorioInversionFutura ..|> IRepositorioInversionFutura : implementa
+RepositorioActivoDiferido ..|> IRepositorioActivoDiferido : implementa
+RepositorioServicioMantenimiento ..|> IRepositorioServicioMantenimiento : implementa
+RepositorioDatosInstitucionales ..|> IRepositorioDatosInstitucionales : implementa
+
+' Dependencias de casos de uso
+GestionActivosUseCase --> IRepositorioCatalogoActivoBase : usa
+GestionActivosUseCase --> IRepositorioActivoFijo : usa
+GestionActivosUseCase --> IRepositorioInversionFutura : usa
+GestionCapitalTrabajoUseCase --> IRepositorioDatosInstitucionales : usa
+GestionCapitalTrabajoUseCase --> IRepositorioActivoDiferido : usa
+GestionCapitalTrabajoUseCase --> IRepositorioServicioMantenimiento : usa
+
+' Dependencias de presentación
+ActivosFijosViewModel --> GestionActivosUseCase : invoca
+MantenimientoViewModel --> GestionCapitalTrabajoUseCase : invoca
+CapitalTrabajoViewModel --> GestionCapitalTrabajoUseCase : invoca
+
+@enduml

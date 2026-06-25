@@ -49,3 +49,9 @@ Thumbs.db
 # Documentos fuente de validacion (trabajo personal, no versionar)
 docs/Plan_de_Validacion_del_Aplicativo_3_Permisos_converted.md
 docs/Contexto_completo_Claude_Code_validacion_y_permisos.md
+
+# Documentos de oficina (tesis .docx, matrices Excel — trabajo personal, no versionar)
+*.xlsx
+*.xls
+*.docx
+*.doc

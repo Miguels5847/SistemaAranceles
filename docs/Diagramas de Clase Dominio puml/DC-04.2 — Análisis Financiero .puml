@@ -1,0 +1,118 @@
+@startuml DC-04.2 Analisis Financiero
+top to bottom direction
+scale 0.88
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+skinparam arrowColor Black
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 16
+skinparam ranksep 24
+
+title DC-04.2: Análisis Financiero (TMR, VAN, TIR)
+
+package "Domain" #EFF6FF {
+    class EscenarioProyeccion {
+        +int Id
+        +int CarreraId
+        +string Nombre
+        +bool EstaActivo
+    }
+    class DatosInstitucionales {
+        +decimal TasaInteresFinanciera
+        +decimal PremioRiesgo
+        +decimal TmrManual
+        +bool UsarTmrManual
+        +bool AplicarParticipacionImpuestos
+    }
+    class InflacionProyectada {
+        +int Anio
+        +decimal PorcentajeInflacion
+    }
+
+    EscenarioProyeccion -[hidden]-> DatosInstitucionales
+    DatosInstitucionales -[hidden]-> InflacionProyectada
+}
+
+package "Application :: Resultados (DTOs)" #F0FDF4 {
+    class IndicadoresFinancierosDto <<DTO>> {
+        +decimal TmrPorcentaje
+        +decimal Van
+        +bool EsTirCalculable
+        +decimal TirPorcentaje
+        +string EstadoViabilidad
+    }
+    class FlujoFondosDto <<DTO>> {
+        +IReadOnlyList~FlujoPeriodoDto~ Periodos
+        +decimal FlujoNetoTotal
+    }
+
+    IndicadoresFinancierosDto -[hidden]-> FlujoFondosDto
+}
+
+package "Application" #F0FDF4 {
+    interface IRepositorioDatosInstitucionales <<Interface>> {
+        +Obtener() : DatosInstitucionales
+    }
+    class CalculadoraTMR <<Service>>
+    class CalculadoraVAN <<Service>>
+    class CalculadoraTIR <<Service>>
+    class CalculadoraPuntoEquilibrio <<Service>>
+    class CalculadoraPeriodoRecuperacion <<Service>>
+    class ObtenerFlujoFondosQuery <<Query>> {
+        +Ejecutar(carreraId: int, escenarioId: int) : FlujoFondosDto
+    }
+    class ObtenerIndicadoresFinancierosQuery <<Query>> {
+        +Ejecutar(carreraId: int, escenarioId: int) : IndicadoresFinancierosDto
+    }
+
+    IRepositorioDatosInstitucionales -[hidden]-> CalculadoraTMR
+    CalculadoraTMR -[hidden]-> CalculadoraVAN
+    CalculadoraVAN -[hidden]-> CalculadoraTIR
+    CalculadoraTIR -[hidden]-> CalculadoraPuntoEquilibrio
+    CalculadoraPuntoEquilibrio -[hidden]-> CalculadoraPeriodoRecuperacion
+    CalculadoraPeriodoRecuperacion -[hidden]-> ObtenerFlujoFondosQuery
+    ObtenerFlujoFondosQuery -[hidden]-> ObtenerIndicadoresFinancierosQuery
+}
+
+package "Infrastructure" #FFF7ED {
+    class RepositorioDatosInstitucionales <<Repository>> {
+        -AppDbContext _context
+        +Obtener() : DatosInstitucionales
+    }
+}
+
+package "Presentation" #FDF4FF {
+    class AnalisisFinancieroViewModel <<ViewModel>> {
+        +ICommand CalcularIndicadoresCommand
+        +CargarDashboard() : void
+    }
+}
+
+Domain -[hidden]-> Application
+Application -[hidden]-> Infrastructure
+Infrastructure -[hidden]-> Presentation
+
+' Implementaciones
+RepositorioDatosInstitucionales ..|> IRepositorioDatosInstitucionales : implementa
+
+' Servicios y casos de uso -> producen DTOs
+ObtenerFlujoFondosQuery --> CalculadoraVAN : usa
+ObtenerFlujoFondosQuery ..> FlujoFondosDto : produce
+ObtenerIndicadoresFinancierosQuery --> CalculadoraTMR : usa
+ObtenerIndicadoresFinancierosQuery --> CalculadoraVAN : usa
+ObtenerIndicadoresFinancierosQuery --> CalculadoraTIR : usa
+ObtenerIndicadoresFinancierosQuery --> CalculadoraPuntoEquilibrio : usa
+ObtenerIndicadoresFinancierosQuery --> CalculadoraPeriodoRecuperacion : usa
+ObtenerIndicadoresFinancierosQuery --> IRepositorioDatosInstitucionales : usa
+ObtenerIndicadoresFinancierosQuery ..> IndicadoresFinancierosDto : produce
+CalculadoraTMR ..> DatosInstitucionales : lee parámetros
+
+' Dependencias de presentación
+AnalisisFinancieroViewModel --> ObtenerIndicadoresFinancierosQuery : invoca
+AnalisisFinancieroViewModel --> ObtenerFlujoFondosQuery : invoca
+@enduml
