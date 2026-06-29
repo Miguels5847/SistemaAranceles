@@ -641,8 +641,22 @@ public sealed partial class ReportesViewModel : ObservableObject
             if (!Necesita(SeccionReporte.InvVinBecas))
                 return null;
             var demanda = await tDemanda;
+            // Becas institucionales reales (10% del ingreso) para que la fila no salga en 0 en el
+            // reporte, igual que en la pantalla. Salen de Ingresos; si la dirección no los carga,
+            // se obtienen aquí reutilizando el arancel ya calculado.
+            var ingresos = await tIngresos;
+            if (ingresos is null)
+            {
+                var arancel = await tArancel;
+                ingresos = await CargarSeguroAsync(sp => sp.GetRequiredService<CalcularIngresosProyectadosQuery>()
+                    .EjecutarAsync(carreraId, escenarioId, arancelPrecalculado: arancel));
+            }
+            var becasPorPeriodo = ingresos?.CeldasPlanas
+                .GroupBy(c => c.PeriodoAcademicoId)
+                .ToDictionary(g => g.Key, g => g.Sum(c => c.Becas));
             return await CargarSeguroAsync(sp => sp.GetRequiredService<ObtenerMatrizInvVinBecasQuery>()
-                .EjecutarAsync(carreraId, escenarioId, demandaPrecalculada: demanda));
+                .EjecutarAsync(carreraId, escenarioId,
+                    demandaPrecalculada: demanda, becasInstitucionalesPorPeriodo: becasPorPeriodo));
         }
 
         async Task<CesDto?> CargarCesDireccionAsync()

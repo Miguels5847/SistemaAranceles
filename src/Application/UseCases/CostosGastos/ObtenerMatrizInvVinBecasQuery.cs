@@ -57,8 +57,8 @@ public sealed class ObtenerMatrizInvVinBecasQuery(
             advertencias.Add("Datos Institucionales: número de docentes universidad debe ser > 0.");
         if (datos.PresupuestoBaseUniversidad <= 0m)
             advertencias.Add("Presupuesto base universidad está en 0; Investigación y Vinculación quedan en 0.");
-        if (datos.PresupuestoGobiernoBecas <= 0m)
-            advertencias.Add("Presupuesto gobierno becas está en 0; Becas Gobierno quedan en 0.");
+        // El gobierno no aporta dinero para becas en este modelo (igual que el Excel): las Becas
+        // Gobierno quedan en 0 por diseño, no es una incidencia, así que no se emite advertencia.
 
         var semestresPorAnio = datos.SemestresPorAnio > 0 ? datos.SemestresPorAnio : DatosInstitucionales.SemestresPorAnioPorDefecto;
         // KAN-44: Becas Institucionales NO es costo (es descuento al ingreso). Aquí se muestra como dato

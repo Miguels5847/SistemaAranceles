@@ -108,17 +108,29 @@
             <TabItem Header="Reporte CES / INF CES">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="8">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <WrapPanel Margin="0,0,0,8">
                             <Border Style="{StaticResource CardReporte}">
                                 <StackPanel>
-                                    <TextBlock Text="Arancel por semestre (óptimo VAN=0)" FontSize="11" Foreground="#546E7A"/>
-                                    <TextBlock Text="{Binding Ces.ArancelPorSemestreDisplay, FallbackValue='-'}" FontSize="15" FontWeight="Bold" Foreground="#1A237E"/>
+                                    <TextBlock Text="Costo por estudiante (1.ª cohorte)" FontSize="11" Foreground="#546E7A"/>
+                                    <TextBlock Text="{Binding Ces.CostoPorEstudianteDisplay, FallbackValue='-'}" FontSize="15" FontWeight="Bold" Foreground="#6A1B9A"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource CardReporte}">
+                                <StackPanel>
+                                    <TextBlock Text="Costo de la carrera (por estudiante)" FontSize="11" Foreground="#546E7A"/>
+                                    <TextBlock Text="{Binding Ces.CostoDeLaCarreraDisplay, FallbackValue='-'}" FontSize="15" FontWeight="Bold" Foreground="#6A1B9A"/>
                                 </StackPanel>
                             </Border>
                             <Border Style="{StaticResource CardReporte}">
                                 <StackPanel>
                                     <TextBlock Text="Costo por Semestre" FontSize="11" Foreground="#546E7A"/>
                                     <TextBlock Text="{Binding Ces.CostoPorSemestreDisplay, FallbackValue='-'}" FontSize="15" FontWeight="Bold" Foreground="#6A1B9A"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource CardReporte}">
+                                <StackPanel>
+                                    <TextBlock Text="Arancel por semestre (óptimo VAN=0)" FontSize="11" Foreground="#546E7A"/>
+                                    <TextBlock Text="{Binding Ces.ArancelPorSemestreDisplay, FallbackValue='-'}" FontSize="15" FontWeight="Bold" Foreground="#1A237E"/>
                                 </StackPanel>
                             </Border>
                             <Border Style="{StaticResource CardReporte}">
@@ -133,7 +145,7 @@
                                     <TextBlock Text="{Binding Ces.TotalPorSemestreDisplay, FallbackValue='-'}" FontSize="15" FontWeight="Bold" Foreground="#1A237E"/>
                                 </StackPanel>
                             </Border>
-                        </StackPanel>
+                        </WrapPanel>
 
                         <TextBlock Text="INF CES — Presupuesto primera cohorte por función sustantiva"
                                    FontWeight="Bold" Foreground="#1A237E" Margin="0,4,0,4"/>

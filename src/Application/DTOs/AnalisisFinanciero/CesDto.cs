@@ -50,6 +50,10 @@ public sealed class CesDto
     public string ArancelPorSemestreDisplay { get; init; } = string.Empty;
     // Costo referencial (costo carrera ÷ semestres); se muestra junto al arancel óptimo para diferenciarlos.
     public string CostoPorSemestreDisplay { get; init; } = string.Empty;
+    // Costo total de la carrera POR ESTUDIANTE (suma del costo por estudiante de todos los semestres).
+    public string CostoDeLaCarreraDisplay { get; init; } = string.Empty;
+    // Costo por estudiante de la 1ª cohorte (primer período); el más alto por la baja matrícula inicial.
+    public string CostoPorEstudianteDisplay { get; init; } = string.Empty;
     public string MatriculaDisplay { get; init; } = string.Empty;
     public string TotalPorSemestreDisplay { get; init; } = string.Empty;
 

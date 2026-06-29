@@ -18,6 +18,7 @@ public enum DireccionReporte
 
 public enum SeccionReporte
 {
+    ResumenIndicadores,
     ArancelMatricula,
     DemandaTabla,
     GraficoMatricula,
@@ -99,6 +100,7 @@ public static class SeccionesReporte
         ],
         _ =>
         [
+            SeccionReporte.ResumenIndicadores,
             SeccionReporte.ArancelMatricula,
             SeccionReporte.DemandaTabla,
             SeccionReporte.GraficoMatricula,

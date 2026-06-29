@@ -255,6 +255,8 @@ public sealed class ObtenerCesQuery(
             InfCes = infCes,
             ArancelPorSemestreDisplay = Money(arancelCes),
             CostoPorSemestreDisplay = Money(arancelPropuesto),
+            CostoDeLaCarreraDisplay = Money(costoCarrera.CostoCarreraCompleta),
+            CostoPorEstudianteDisplay = Money(costoCarrera.Periodos.Count > 0 ? costoCarrera.Periodos[0].CostoPorEstudiante : 0m),
             MatriculaDisplay = Money(matriculaCes),
             TotalPorSemestreDisplay = Money(totalCes),
             Parametros = parametros,

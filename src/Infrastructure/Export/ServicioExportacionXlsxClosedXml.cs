@@ -32,6 +32,15 @@ public sealed class ServicioExportacionXlsxClosedXml : IServicioExportacionXlsx
     {
         switch (seccion)
         {
+            case SeccionReporte.ResumenIndicadores:
+            {
+                var filas = SeccionesPdf.ResumenIndicadoresFilas(datos);
+                if (filas.Count > 0)
+                    HojaPares(libro, "Resumen",
+                        filas.Select(f => (f.EsGrupo ? $"— {f.Etiqueta} —" : f.Etiqueta, (object)f.Valor)).ToList());
+                break;
+            }
+
             case SeccionReporte.ArancelMatricula when datos.Arancel is not null:
                 HojaPares(libro, "Arancel",
                 [

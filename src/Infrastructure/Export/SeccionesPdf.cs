@@ -8,6 +8,7 @@ using SistemaAranceles.Application.DTOs.DemandaIngresos;
 using SistemaAranceles.Application.DTOs.InversionInicial;
 using SistemaAranceles.Application.DTOs.Mantenimiento;
 using SistemaAranceles.Application.DTOs.RecursosFisicosDepreciacion;
+using SistemaAranceles.Application.DTOs.Reportes;
 using SistemaAranceles.Application.DTOs.SueldosPlantaCentral;
 using SistemaAranceles.Application.DTOs.TasaRetencion;
 
@@ -25,6 +26,109 @@ internal static class SeccionesPdf
         EstilosPdf.TituloSeccion(col, titulo);
         col.Item().Text("No existen datos suficientes para generar esta sección.")
             .FontSize(8).Italic().FontColor(EstilosPdf.ColorGris);
+    }
+
+    // ============ Resumen de Indicadores Clave (KAN) ============
+
+    /// <summary>
+    /// Arma las filas del "Resumen de Indicadores Clave" desde los DTOs ya cargados
+    /// del reporte. Solo agrega un valor si su sección trae datos, así el resumen se
+    /// adapta a la dirección. <c>EsGrupo = true</c> marca una fila de subtítulo.
+    /// Compartido por el PDF y el XLSX para no duplicar la lista de indicadores.
+    /// </summary>
+    public static IReadOnlyList<(string Etiqueta, string Valor, bool EsGrupo)> ResumenIndicadoresFilas(
+        ReporteDireccionDatos d)
+    {
+        var filas = new List<(string, string, bool)>();
+        void Grupo(string t) => filas.Add((t, string.Empty, true));
+        void Val(string et, string? v) { if (!string.IsNullOrWhiteSpace(v)) filas.Add((et, v!, false)); }
+
+        if (d.RetencionSimulacion is { TieneDatos: true } r)
+        {
+            Grupo("Estudiantes y retención");
+            Val("Estudiantes que ingresan (ciclo 1)", r.EstudiantesPeriodo1.ToString("N0"));
+            Val("Tasa de retención aplicada", $"{r.TasaRetencionAplicada:N2} %");
+            Val("Tasa de graduación aplicada", $"{r.TasaGraduacionAplicada:N2} %");
+            if (r.AlumnosPeriodo1PorCiclo.Count > 0 && r.TotalCiclos > 0)
+                Val($"Estudiantes al {r.TotalCiclos}.º ciclo (retención acumulada)",
+                    r.AlumnosPeriodo1PorCiclo[^1].ToString("N0"));
+        }
+
+        if (d.Demanda is { TieneDatos: true } dem)
+        {
+            if (d.RetencionSimulacion is not { TieneDatos: true }) Grupo("Estudiantes");
+            Val("Total estudiantes (acumulado del período)", dem.TotalGeneralDisplay);
+            if (dem.TotalesPorPeriodo.Count > 0)
+                Val("Estudiantes en el último período", dem.TotalesPorPeriodo[^1].ToString("N0"));
+        }
+
+        if (d.Ces is { TieneDatos: true } ces)
+        {
+            Grupo("Costo y arancel por semestre");
+            Val("Costo por estudiante", ces.CostoPorEstudianteDisplay);
+            Val("Costo de la carrera (por estudiante)", ces.CostoDeLaCarreraDisplay);
+            Val("Costo por semestre (referencial)", ces.CostoPorSemestreDisplay);
+            Val("Arancel por semestre (óptimo VAN≈0)", ces.ArancelPorSemestreDisplay);
+            Val("Matrícula", ces.MatriculaDisplay);
+            Val("Total por semestre (arancel + matrícula)", ces.TotalPorSemestreDisplay);
+        }
+
+        if (d.Indicadores is { TieneDatos: true } ind)
+        {
+            Grupo("Indicadores financieros");
+            Val("TMR (tasa mínima de rendimiento)", ind.TmrDisplay);
+            Val("VAN", ind.VanDisplay);
+            Val("TIR", ind.TirDisplay);
+        }
+
+        if (d.PuntoEquilibrio is { TieneDatos: true } pe)
+        {
+            if (d.Indicadores is not { TieneDatos: true }) Grupo("Indicadores financieros");
+            // Valor monetario del período base (último proyectado), igual que la pantalla de
+            // Punto de Equilibrio; el conteo de estudiantes no aplica como "punto de equilibrio anual".
+            var periodoBase = pe.Periodos.FirstOrDefault(x => x.EtiquetaPeriodo == pe.PeriodoBaseEtiqueta)
+                ?? pe.Periodos.LastOrDefault(x => x.EsCalculable);
+            Val("Punto de equilibrio (anual)", periodoBase?.PuntoEquilibrioMonetarioDisplay);
+        }
+
+        return filas;
+    }
+
+    public static void ResumenIndicadores(ColumnDescriptor col, ReporteDireccionDatos datos)
+    {
+        EstilosPdf.TituloSeccion(col, "Resumen de Indicadores Clave");
+        var filas = ResumenIndicadoresFilas(datos);
+        if (filas.Count == 0)
+        {
+            col.Item().Text("No existen datos suficientes para generar esta sección.")
+                .FontSize(8).Italic().FontColor(EstilosPdf.ColorGris);
+            return;
+        }
+
+        col.Item().Text("Valores clave del caso para lectura rápida y para la planilla de validación.")
+            .FontSize(8).Italic().FontColor(EstilosPdf.ColorGris);
+        col.Item().PaddingTop(3).Table(tabla =>
+        {
+            tabla.ColumnsDefinition(c => { c.RelativeColumn(3f); c.RelativeColumn(2f); });
+            tabla.Header(h =>
+            {
+                h.Cell().CeldaHeader().Text("Indicador").Bold();
+                h.Cell().CeldaHeader().AlignRight().Text("Valor").Bold();
+            });
+            foreach (var (etiqueta, valor, esGrupo) in filas)
+            {
+                if (esGrupo)
+                {
+                    tabla.Cell().ColumnSpan(2).Celda()
+                        .Text(t => t.Span(etiqueta).Bold().FontColor(EstilosPdf.ColorPrimario));
+                }
+                else
+                {
+                    tabla.Cell().Celda().Text(etiqueta);
+                    tabla.Cell().Celda().AlignRight().Text(t => t.Span(valor).Bold());
+                }
+            }
+        });
     }
 
     // ============ Demanda / Estrategia Comercial ============

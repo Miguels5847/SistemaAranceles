@@ -37,6 +37,9 @@ internal sealed class ReporteDireccionDocument(ReporteDireccionDatos datos) : ID
     {
         switch (seccion)
         {
+            case SeccionReporte.ResumenIndicadores:
+                SeccionesPdf.ResumenIndicadores(col, datos);
+                break;
             case SeccionReporte.ArancelMatricula:
                 Opcional(col, datos.Arancel, "Arancel y Matrícula vigentes", SeccionesPdf.Arancel);
                 break;
