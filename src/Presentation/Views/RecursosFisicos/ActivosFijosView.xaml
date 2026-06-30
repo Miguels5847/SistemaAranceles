@@ -2,7 +2,8 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:beh="clr-namespace:SistemaAranceles.Presentation.Behaviors"
-             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls">
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+             xmlns:comp="clr-namespace:SistemaAranceles.Presentation.Views.Compartido">
     <UserControl.Resources>
         <Style x:Key="MatrixCell" TargetType="Border">
             <Setter Property="BorderBrush" Value="#D0D7EA"/>
@@ -64,7 +65,13 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="Recursos y Depreciación" FontSize="22" FontWeight="Bold" Foreground="#1A237E" Margin="0,0,0,10"/>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Recursos y Depreciación" FontSize="22" FontWeight="Bold" Foreground="#1A237E"/>
+            <comp:AyudaModulo Margin="10,0,0,0"
+                              Titulo="Recursos y Depreciación"
+                              Ingresar="Los activos fijos (equipos, mobiliario): cantidad, costo y vida útil. Puedes generar los valores por defecto."
+                              Resultados="El valor de los activos y su depreciación anual, que entran a la inversión y a los costos."/>
+        </StackPanel>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
             <TextBlock Text="Carrera" FontSize="11" Foreground="#546E7A" VerticalAlignment="Center" Margin="0,0,8,0"/>

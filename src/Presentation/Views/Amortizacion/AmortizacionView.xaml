@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:beh="clr-namespace:SistemaAranceles.Presentation.Behaviors"
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+             xmlns:comp="clr-namespace:SistemaAranceles.Presentation.Views.Compartido"
              Height="Auto" Width="Auto">
 
     <UserControl.Resources>
@@ -68,8 +69,14 @@
     <Grid Margin="12">
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel>
-                <TextBlock Text="Amortización del Financiamiento"
-                           FontSize="18" FontWeight="Bold" Foreground="#1A237E" Margin="0,0,0,8"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="Amortización del Financiamiento"
+                               FontSize="18" FontWeight="Bold" Foreground="#1A237E"/>
+                    <comp:AyudaModulo Margin="10,0,0,0"
+                                      Titulo="Amortización del Financiamiento"
+                                      Ingresar="El monto financiado, la tasa de interés y el plazo del préstamo se definen en Datos Institucionales; aquí eliges carrera y escenario."
+                                      Resultados="La tabla de amortización (cuota, interés, capital y saldo) y el interés que entra a los costos y al flujo de fondos."/>
+                </StackPanel>
 
                 <Border Background="#EEF1FB" CornerRadius="6" Padding="10" Margin="0,0,0,8">
                     <StackPanel Orientation="Horizontal">

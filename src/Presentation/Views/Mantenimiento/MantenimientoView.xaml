@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:beh="clr-namespace:SistemaAranceles.Presentation.Behaviors"
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+             xmlns:comp="clr-namespace:SistemaAranceles.Presentation.Views.Compartido"
              Height="Auto" Width="Auto">
 
     <UserControl.Resources>
@@ -84,8 +85,14 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="Servicios y Mantenimiento"
-                   FontSize="18" FontWeight="Bold" Foreground="#1A237E" Margin="0,0,0,8"/>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="Servicios y Mantenimiento"
+                       FontSize="18" FontWeight="Bold" Foreground="#1A237E"/>
+            <comp:AyudaModulo Margin="10,0,0,0"
+                              Titulo="Servicios y Mantenimiento"
+                              Ingresar="Los servicios básicos y rubros de mantenimiento por carrera (consumo, costo). Puedes generar los valores por defecto."
+                              Resultados="El costo de mantenimiento por período que entra a Costos y Gastos."/>
+        </StackPanel>
 
         <Border Grid.Row="1" Background="#EEF1FB" CornerRadius="6" Padding="10" Margin="0,0,0,8">
             <StackPanel Orientation="Horizontal">

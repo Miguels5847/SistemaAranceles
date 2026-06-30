@@ -18,6 +18,8 @@ public sealed class OpcionConfiguracionRetencion
     public int TotalCiclos { get; init; }
     public decimal TasaRetencionPorcentaje { get; init; }
     public decimal TasaGraduacionPorcentaje { get; init; }
+    public decimal MetaRetencionPorcentaje { get; init; }
+    public decimal MetaGraduacionPorcentaje { get; init; }
     public decimal EstudiantesPeriodo1 { get; init; }
     public decimal EstudiantesPeriodo2 { get; init; }
     public int ParalelosPeriodo1 { get; init; }
@@ -103,6 +105,8 @@ public sealed partial class SimulacionRetencionViewModel : ObservableObject
                     TotalCiclos = c.TotalCiclos,
                     TasaRetencionPorcentaje = c.TasaRetencionPorcentaje,
                     TasaGraduacionPorcentaje = c.TasaGraduacionPorcentaje,
+                    MetaRetencionPorcentaje = c.MetaRetencionPorcentaje ?? 0m,
+                    MetaGraduacionPorcentaje = c.MetaGraduacionPorcentaje ?? 0m,
                     EstudiantesPeriodo1 = c.EstudiantesPeriodo1,
                     EstudiantesPeriodo2 = c.EstudiantesPeriodo2,
                     ParalelosPeriodo1 = c.ParalelosPeriodo1,
@@ -369,15 +373,21 @@ public sealed partial class SimulacionRetencionViewModel : ObservableObject
         var mitad = totalCiclos / 2;
         var tasaRetencionFactor = configuracion.TasaRetencionPorcentaje / 100m;
         var tasaGraduacionFactor = configuracion.TasaGraduacionPorcentaje / 100m;
-        RetencionResumenTexto = FormatearPorcentaje(configuracion.TasaRetencionPorcentaje);
-        GraduacionResumenTexto = FormatearPorcentaje(configuracion.TasaGraduacionPorcentaje);
 
         var valorPeriodo1 = configuracion.EstudiantesPeriodo1;
         var valorPeriodo2 = configuracion.EstudiantesPeriodo2;
         var columnas = new List<ColumnaComportamientoRetencion>(totalCiclos * 2);
 
+        // Tasas REALIZADAS (acumuladas): último/primer estudiante de cada mitad, igual que el Excel.
+        // valInicio = ciclo 1 (valor previo al bucle); valFinal = valorPeriodo1 al terminar (ciclo final).
+        var valInicio = valorPeriodo1;
+        decimal valMitad = valorPeriodo1, valMitadMas1 = valorPeriodo1;
+
         for (var ciclo = 1; ciclo <= totalCiclos; ciclo++)
         {
+            if (ciclo == mitad) valMitad = valorPeriodo1;
+            if (ciclo == mitad + 1) valMitadMas1 = valorPeriodo1;
+
             columnas.Add(CrearColumna(ciclo, valorPeriodo1, esPeriodoSeptiembre: false));
 
             if (ciclo < totalCiclos)
@@ -390,6 +400,10 @@ public sealed partial class SimulacionRetencionViewModel : ObservableObject
             valorPeriodo1 = decimal.Round(valorPeriodo1 * tasa, 4);
             valorPeriodo2 = decimal.Round(valorPeriodo2 * tasa, 4);
         }
+
+        // Se muestra la META (lo que el usuario fijó); si no hay meta, la tasa realizada (último/primer).
+        RetencionResumenTexto = FormatearPorcentaje(MetaOTasa(configuracion.MetaRetencionPorcentaje, RatioPorcentaje(valMitad, valInicio)));
+        GraduacionResumenTexto = FormatearPorcentaje(MetaOTasa(configuracion.MetaGraduacionPorcentaje, RatioPorcentaje(valorPeriodo1, valMitadMas1)));
 
         TablaComportamiento = new ObservableCollection<ColumnaComportamientoRetencion>(columnas);
         ColumnasComportamiento = Math.Max(1, columnas.Count);
@@ -409,18 +423,25 @@ public sealed partial class SimulacionRetencionViewModel : ObservableObject
     private static string FormatearPorcentaje(decimal valor)
         => $"{valor.ToString("0.0", CultureInfo.GetCultureInfo("es-EC"))}%";
 
+    private static decimal RatioPorcentaje(decimal parte, decimal baseValor)
+        => baseValor <= 0m ? 0m : decimal.Round(parte / baseValor * 100m, 1);
+
+    private static decimal MetaOTasa(decimal meta, decimal tasaFallback)
+        => meta > 0m ? meta : tasaFallback;
+
     private void ActualizarResumenCabecera()
     {
         var simulacion = SimulacionSeleccionada;
         var configuracion = ConfiguracionSeleccionada;
 
+        // La cabecera muestra la META acumuladada (objetivo) cuando existe; si no, la tasa por ciclo.
         if (simulacion is not null)
         {
             ResumenCarrera = string.IsNullOrWhiteSpace(simulacion.CarreraCodigo) ? "-" : simulacion.CarreraCodigo;
             ResumenEscenario = string.IsNullOrWhiteSpace(simulacion.EscenarioNombre) ? "-" : simulacion.EscenarioNombre;
             ResumenAnioIngreso = simulacion.CohorteAnio.ToString(CultureInfo.InvariantCulture);
-            ResumenRetencion = FormatearPorcentaje(simulacion.TasaRetencionConfigurada);
-            ResumenGraduacion = FormatearPorcentaje(simulacion.TasaGraduacionConfigurada);
+            ResumenRetencion = FormatearPorcentaje(MetaOTasa(configuracion?.MetaRetencionPorcentaje ?? 0m, simulacion.TasaRetencionConfigurada));
+            ResumenGraduacion = FormatearPorcentaje(MetaOTasa(configuracion?.MetaGraduacionPorcentaje ?? 0m, simulacion.TasaGraduacionConfigurada));
             return;
         }
 
@@ -432,8 +453,8 @@ public sealed partial class SimulacionRetencionViewModel : ObservableObject
             ResumenAnioIngreso = int.TryParse(CohorteAnio, out var cohorte)
                 ? cohorte.ToString(CultureInfo.InvariantCulture)
                 : "-";
-            ResumenRetencion = FormatearPorcentaje(configuracion.TasaRetencionPorcentaje);
-            ResumenGraduacion = FormatearPorcentaje(configuracion.TasaGraduacionPorcentaje);
+            ResumenRetencion = FormatearPorcentaje(MetaOTasa(configuracion.MetaRetencionPorcentaje, configuracion.TasaRetencionPorcentaje));
+            ResumenGraduacion = FormatearPorcentaje(MetaOTasa(configuracion.MetaGraduacionPorcentaje, configuracion.TasaGraduacionPorcentaje));
             return;
         }
 

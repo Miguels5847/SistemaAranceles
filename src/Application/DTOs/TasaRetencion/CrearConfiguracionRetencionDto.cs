@@ -7,6 +7,9 @@ public sealed class CrearConfiguracionRetencionDto
     public int TotalCiclos { get; init; }
     public decimal TasaRetencionPorcentaje { get; init; }
     public decimal TasaGraduacionPorcentaje { get; init; }
+    // Metas acumuladas (input principal). Si son > 0, las tasas por ciclo se derivan de ellas.
+    public decimal MetaRetencionPorcentaje { get; init; }
+    public decimal MetaGraduacionPorcentaje { get; init; }
     public decimal EstudiantesPeriodo1 { get; init; }
     public decimal EstudiantesPeriodo2 { get; init; }
     public int ParalelosPeriodo1 { get; init; }

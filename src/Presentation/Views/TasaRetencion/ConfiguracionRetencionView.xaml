@@ -1,7 +1,8 @@
 ﻿<UserControl x:Class="SistemaAranceles.Presentation.Views.TasaRetencion.ConfiguracionRetencionView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:beh="clr-namespace:SistemaAranceles.Presentation.Behaviors">
+             xmlns:beh="clr-namespace:SistemaAranceles.Presentation.Behaviors"
+             xmlns:comp="clr-namespace:SistemaAranceles.Presentation.Views.Compartido">
     <Grid Margin="16">
         <Grid.Resources>
             <Style x:Key="ComboEscenarioItemStyle"
@@ -37,12 +38,14 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0"
-                   Text="Retención y Graduación"
-                   FontSize="22"
-                   FontWeight="Bold"
-                   Foreground="#1A237E"
-                   Margin="0,0,0,10"/>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Retención y Graduación"
+                       FontSize="22" FontWeight="Bold" Foreground="#1A237E"/>
+            <comp:AyudaModulo Margin="10,0,0,0"
+                              Titulo="Retención y Graduación"
+                              Ingresar="Carrera y escenario, total de ciclos, las METAS de retención y graduación (% acumulado que debe alcanzar la carrera), los estudiantes que ingresan y los paralelos por período."
+                              Resultados="La tasa por ciclo derivada de cada meta (la que alimenta el cálculo) y, en la pestaña Simulación, cuántos estudiantes quedan ciclo a ciclo con la retención y graduación realizadas."/>
+        </StackPanel>
 
         <StackPanel Grid.Row="1"
                     Orientation="Vertical"
@@ -227,20 +230,34 @@
                                             <TextBox Text="{Binding TotalCiclos, UpdateSourceTrigger=PropertyChanged}"/>
                                         </StackPanel>
 
-                                        <Grid Margin="0,0,0,8">
+                                        <TextBlock Text="Metas acumuladas (lo que la carrera debe alcanzar)"
+                                                   FontSize="11" FontWeight="SemiBold" Foreground="#283593" Margin="0,4,0,4"/>
+                                        <Grid Margin="0,0,0,4">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <StackPanel Grid.Column="0" Margin="0,0,4,0">
-                                                <TextBlock Text="Tasa retencion %" FontSize="11" Foreground="#546E7A"/>
-                                                <TextBox Text="{Binding TasaRetencion, UpdateSourceTrigger=PropertyChanged}"/>
+                                                <TextBlock Text="Meta retención %" FontSize="11" Foreground="#546E7A"
+                                                           ToolTip="% de estudiantes que sigue al llegar a la mitad de la carrera (último ciclo de la 1ª mitad ÷ primer ciclo). Ej.: 65%."/>
+                                                <TextBox Text="{Binding MetaRetencion, UpdateSourceTrigger=PropertyChanged}"/>
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" Margin="4,0,0,0">
-                                                <TextBlock Text="Tasa graduacion %" FontSize="11" Foreground="#546E7A"/>
-                                                <TextBox Text="{Binding TasaGraduacion, UpdateSourceTrigger=PropertyChanged}"/>
+                                                <TextBlock Text="Meta graduación %" FontSize="11" Foreground="#546E7A"
+                                                           ToolTip="% de la 2ª mitad que se gradúa (último ciclo ÷ primer ciclo de la 2ª mitad). Ej.: 100%."/>
+                                                <TextBox Text="{Binding MetaGraduacion, UpdateSourceTrigger=PropertyChanged}"/>
                                             </StackPanel>
                                         </Grid>
+                                        <Border Background="#F0F4FF" CornerRadius="6" Padding="8,6" Margin="0,0,0,8">
+                                            <StackPanel>
+                                                <TextBlock Text="Tasa por ciclo (es la que alimenta el cálculo)"
+                                                           FontSize="10" FontWeight="SemiBold" Foreground="#546E7A"/>
+                                                <TextBlock FontSize="11" Foreground="#37474F" TextWrapping="Wrap">
+                                                    <Run Text="Retención: "/><Run Text="{Binding TasaRetencionDerivadaTexto, Mode=OneWay}" FontWeight="Bold"/>
+                                                    <Run Text="    ·    Graduación: "/><Run Text="{Binding TasaGraduacionDerivadaTexto, Mode=OneWay}" FontWeight="Bold"/>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Border>
 
                                         <TextBlock Text="Período 1" FontSize="11" FontWeight="SemiBold" Foreground="#546E7A" Margin="0,4,0,4"/>
                                         <Grid Margin="0,0,0,8">
@@ -271,25 +288,6 @@
                                             <StackPanel Grid.Column="1" Margin="4,0,0,0">
                                                 <TextBlock Text="Estudiantes Período 2" FontSize="11" Foreground="#546E7A"/>
                                                 <TextBox Text="{Binding EstudiantesPeriodo2, UpdateSourceTrigger=PropertyChanged}"/>
-                                            </StackPanel>
-                                        </Grid>
-
-                                        <Separator Margin="0,4,0,8"/>
-                                        <TextBlock Text="Metas de referencia (opcional)"
-                                                   FontSize="12" FontWeight="SemiBold" Foreground="#283593" Margin="0,0,0,6"/>
-
-                                        <Grid Margin="0,0,0,8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0" Margin="0,0,4,0">
-                                                <TextBlock Text="Meta Retención %" FontSize="11" Foreground="#546E7A"/>
-                                                <TextBox Text="{Binding MetaRetencion, UpdateSourceTrigger=PropertyChanged}"/>
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1" Margin="4,0,0,0">
-                                                <TextBlock Text="Meta Graduacion %" FontSize="11" Foreground="#546E7A"/>
-                                                <TextBox Text="{Binding MetaGraduacion, UpdateSourceTrigger=PropertyChanged}"/>
                                             </StackPanel>
                                         </Grid>
 

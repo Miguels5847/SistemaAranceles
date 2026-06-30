@@ -1,0 +1,16 @@
+<UserControl x:Class="SistemaAranceles.Presentation.Views.Compartido.AyudaModulo"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Raiz">
+    <!-- Badge "?" con ayuda contextual del módulo (KAN-47): qué ingresar y qué resultados se obtienen.
+         Para usuarios no técnicos. Se coloca junto al título de cada vista. El tooltip se arma en
+         code-behind (un ToolTip con bindings internos no resuelve ElementName por el namescope del popup). -->
+    <Border x:Name="Badge" Width="22" Height="22" CornerRadius="11" Background="#1A237E" Cursor="Help"
+            VerticalAlignment="Center" HorizontalAlignment="Center"
+            ToolTipService.InitialShowDelay="150"
+            ToolTipService.ShowDuration="120000"
+            ToolTipService.BetweenShowDelay="0">
+        <TextBlock Text="?" Foreground="White" FontWeight="Bold" FontSize="14"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    </Border>
+</UserControl>

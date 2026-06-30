@@ -47,8 +47,8 @@ internal static class SeccionesPdf
         {
             Grupo("Estudiantes y retención");
             Val("Estudiantes que ingresan (ciclo 1)", r.EstudiantesPeriodo1.ToString("N0"));
-            Val("Tasa de retención aplicada", $"{r.TasaRetencionAplicada:N2} %");
-            Val("Tasa de graduación aplicada", $"{r.TasaGraduacionAplicada:N2} %");
+            Val("Meta de retención", $"{r.TasaRetencionAplicada:N2} %");
+            Val("Meta de graduación", $"{r.TasaGraduacionAplicada:N2} %");
             if (r.AlumnosPeriodo1PorCiclo.Count > 0 && r.TotalCiclos > 0)
                 Val($"Estudiantes al {r.TotalCiclos}.º ciclo (retención acumulada)",
                     r.AlumnosPeriodo1PorCiclo[^1].ToString("N0"));
@@ -226,13 +226,13 @@ internal static class SeccionesPdf
             row.Spacing(6);
             row.RelativeItem().CeldaSeccion().Column(c =>
             {
-                c.Item().Text("Tasa de retención").FontSize(8).FontColor(EstilosPdf.ColorGris);
-                c.Item().Text($"{retencion.TasaRetencionPorcentaje:N1}%").Bold().FontColor(EstilosPdf.ColorPrimario);
+                c.Item().Text("Meta de retención").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text($"{retencion.TasaRetencionAplicada:N1}%").Bold().FontColor(EstilosPdf.ColorPrimario);
             });
             row.RelativeItem().CeldaSeccion().Column(c =>
             {
-                c.Item().Text("Tasa de graduación").FontSize(8).FontColor(EstilosPdf.ColorGris);
-                c.Item().Text($"{retencion.TasaGraduacionPorcentaje:N1}%").Bold().FontColor(EstilosPdf.ColorPrimario);
+                c.Item().Text("Meta de graduación").FontSize(8).FontColor(EstilosPdf.ColorGris);
+                c.Item().Text($"{retencion.TasaGraduacionAplicada:N1}%").Bold().FontColor(EstilosPdf.ColorPrimario);
             });
             row.RelativeItem().CeldaSeccion().Column(c =>
             {
@@ -246,12 +246,9 @@ internal static class SeccionesPdf
             });
         });
 
-        if (retencion.MetaRetencionPorcentaje is not null || retencion.MetaGraduacionPorcentaje is not null)
-        {
-            col.Item().PaddingTop(4).Text(
-                    $"Metas de referencia aplicadas a la proyección y a los cálculos financieros: retención {retencion.TasaRetencionAplicada:N1}%, graduación {retencion.TasaGraduacionAplicada:N1}%.")
-                .FontSize(7.5f).Italic().FontColor(EstilosPdf.ColorGris);
-        }
+        col.Item().PaddingTop(4).Text(
+                $"Tasa por ciclo derivada de las metas (es la que alimenta la proyección y los cálculos financieros): retención {retencion.TasaRetencionPorcentaje:N2}% por ciclo, graduación {retencion.TasaGraduacionPorcentaje:N2}% por ciclo.")
+            .FontSize(7.5f).Italic().FontColor(EstilosPdf.ColorGris);
 
         col.Item().PaddingTop(6).Table(tabla =>
         {

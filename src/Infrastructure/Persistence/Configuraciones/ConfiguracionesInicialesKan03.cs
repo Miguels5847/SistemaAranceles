@@ -349,6 +349,8 @@ internal sealed class ConfiguracionRetencionConfiguracion : IEntityTypeConfigura
         builder.Property(x => x.TotalCiclos).HasColumnName("total_ciclos").IsRequired();
         builder.Property(x => x.TasaRetencionPorcentaje).HasColumnName("tasa_retencion_porcentaje").HasColumnType("decimal(9,4)").IsRequired();
         builder.Property(x => x.TasaGraduacionPorcentaje).HasColumnName("tasa_graduacion_porcentaje").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.MetaRetencionPorcentaje).HasColumnName("meta_retencion_porcentaje").HasColumnType("decimal(9,4)").IsRequired();
+        builder.Property(x => x.MetaGraduacionPorcentaje).HasColumnName("meta_graduacion_porcentaje").HasColumnType("decimal(9,4)").IsRequired();
         builder.Property(x => x.EstudiantesPeriodo1).HasColumnName("estudiantes_periodo_1").HasColumnType("decimal(9,4)").IsRequired();
         builder.Property(x => x.EstudiantesPeriodo2).HasColumnName("estudiantes_periodo_2").HasColumnType("decimal(9,4)").IsRequired();
         builder.Property(x => x.ParalelosPeriodo1).HasColumnName("paralelos_periodo_1").IsRequired();

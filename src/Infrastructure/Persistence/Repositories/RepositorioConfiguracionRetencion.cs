@@ -9,14 +9,48 @@ namespace SistemaAranceles.Infrastructure.Persistence.Repositories;
 
 public sealed class RepositorioConfiguracionRetencion(ContextoAplicacion contextoAplicacion) : IRepositorioConfiguracionRetencion
 {
+    private static readonly SemaphoreSlim _gateEsquema = new(1, 1);
+    private static bool _esquemaListo;
+
+    // DDL self-healing (una vez por proceso): agrega las columnas de meta y, para filas previas,
+    // las rellena desde la tasa por ciclo ya guardada (meta = tasa^pasos), manteniendo coherencia.
+    private async Task AsegurarEsquemaAsync(CancellationToken cancellationToken)
+    {
+        if (_esquemaListo) return;
+        await _gateEsquema.WaitAsync(cancellationToken);
+        try
+        {
+            if (_esquemaListo) return;
+            await contextoAplicacion.Database.ExecuteSqlRawAsync("""
+            ALTER TABLE public.configuracion_retencion
+                ADD COLUMN IF NOT EXISTS meta_retencion_porcentaje NUMERIC(9,4) NOT NULL DEFAULT 0,
+                ADD COLUMN IF NOT EXISTS meta_graduacion_porcentaje NUMERIC(9,4) NOT NULL DEFAULT 0;
+
+            UPDATE public.configuracion_retencion
+               SET meta_retencion_porcentaje =
+                     round(power(tasa_retencion_porcentaje / 100.0, greatest(1, total_ciclos / 2 - 1)) * 100, 4)
+             WHERE meta_retencion_porcentaje = 0 AND tasa_retencion_porcentaje > 0;
+
+            UPDATE public.configuracion_retencion
+               SET meta_graduacion_porcentaje =
+                     round(power(tasa_graduacion_porcentaje / 100.0, greatest(1, total_ciclos - total_ciclos / 2 - 1)) * 100, 4)
+             WHERE meta_graduacion_porcentaje = 0 AND tasa_graduacion_porcentaje > 0;
+            """, cancellationToken);
+            _esquemaListo = true;
+        }
+        finally
+        {
+            _gateEsquema.Release();
+        }
+    }
+
     public async Task<IReadOnlyList<ConfiguracionRetencionDto>> ListarDtoAsync(CancellationToken cancellationToken = default)
     {
+        await AsegurarEsquemaAsync(cancellationToken);
         var lista = await (from c in contextoAplicacion.ConfiguracionesRetencion.AsNoTracking()
                            where c.EstaActivo
                            join car in contextoAplicacion.Carreras.AsNoTracking() on c.CarreraId equals car.Id
                            join esc in contextoAplicacion.EscenariosProyeccion.AsNoTracking() on c.EscenarioProyeccionId equals esc.Id
-                           from cr in contextoAplicacion.CriteriosReferenciaRetencion.AsNoTracking()
-                                       .Where(x => x.ConfiguracionRetencionId == c.Id).DefaultIfEmpty()
                            orderby car.Nombre, esc.Nombre
                            select new ConfiguracionRetencionDto
                            {
@@ -33,9 +67,9 @@ public sealed class RepositorioConfiguracionRetencion(ContextoAplicacion context
                                EstudiantesPeriodo2 = c.EstudiantesPeriodo2,
                                ParalelosPeriodo1 = c.ParalelosPeriodo1,
                                ParalelosPeriodo2 = c.ParalelosPeriodo2,
-                               TieneCriterioReferencia = cr != null,
-                               MetaRetencionPorcentaje = cr != null ? (decimal?)cr.MetaRetencionPorcentaje : null,
-                               MetaGraduacionPorcentaje = cr != null ? (decimal?)cr.MetaGraduacionPorcentaje : null
+                               TieneCriterioReferencia = c.MetaRetencionPorcentaje > 0m || c.MetaGraduacionPorcentaje > 0m,
+                               MetaRetencionPorcentaje = c.MetaRetencionPorcentaje,
+                               MetaGraduacionPorcentaje = c.MetaGraduacionPorcentaje
                            }).ToListAsync(cancellationToken);
 
         return lista;
@@ -43,12 +77,11 @@ public sealed class RepositorioConfiguracionRetencion(ContextoAplicacion context
 
     public async Task<ConfiguracionRetencionDto?> ObtenerDtoPorIdAsync(int id, CancellationToken cancellationToken = default)
     {
+        await AsegurarEsquemaAsync(cancellationToken);
         return await (from c in contextoAplicacion.ConfiguracionesRetencion.AsNoTracking()
                       where c.Id == id && c.EstaActivo
                       join car in contextoAplicacion.Carreras.AsNoTracking() on c.CarreraId equals car.Id
                       join esc in contextoAplicacion.EscenariosProyeccion.AsNoTracking() on c.EscenarioProyeccionId equals esc.Id
-                      from cr in contextoAplicacion.CriteriosReferenciaRetencion.AsNoTracking()
-                                  .Where(x => x.ConfiguracionRetencionId == c.Id).DefaultIfEmpty()
                       select new ConfiguracionRetencionDto
                       {
                           Id = c.Id,
@@ -64,9 +97,9 @@ public sealed class RepositorioConfiguracionRetencion(ContextoAplicacion context
                           EstudiantesPeriodo2 = c.EstudiantesPeriodo2,
                           ParalelosPeriodo1 = c.ParalelosPeriodo1,
                           ParalelosPeriodo2 = c.ParalelosPeriodo2,
-                          TieneCriterioReferencia = cr != null,
-                          MetaRetencionPorcentaje = cr != null ? (decimal?)cr.MetaRetencionPorcentaje : null,
-                          MetaGraduacionPorcentaje = cr != null ? (decimal?)cr.MetaGraduacionPorcentaje : null
+                          TieneCriterioReferencia = c.MetaRetencionPorcentaje > 0m || c.MetaGraduacionPorcentaje > 0m,
+                          MetaRetencionPorcentaje = c.MetaRetencionPorcentaje,
+                          MetaGraduacionPorcentaje = c.MetaGraduacionPorcentaje
                       }).FirstOrDefaultAsync(cancellationToken);
     }
 
@@ -112,6 +145,7 @@ public sealed class RepositorioConfiguracionRetencion(ContextoAplicacion context
     public async Task AgregarAsync(ConfiguracionRetencionDominio configuracion, int? creadoPorUsuarioId = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(configuracion);
+        await AsegurarEsquemaAsync(cancellationToken);
         Trace.TraceInformation($"[{DateTime.UtcNow:O}] ConfRetDB: agregar carrera={configuracion.CarreraId}, escenario={configuracion.EscenarioProyeccionId}, usuario={creadoPorUsuarioId}");
 
         var entidad = new ConfiguracionRetencionPersistencia
@@ -121,6 +155,8 @@ public sealed class RepositorioConfiguracionRetencion(ContextoAplicacion context
             TotalCiclos = configuracion.TotalCiclos,
             TasaRetencionPorcentaje = configuracion.TasaRetencionPorcentaje,
             TasaGraduacionPorcentaje = configuracion.TasaGraduacionPorcentaje,
+            MetaRetencionPorcentaje = configuracion.MetaRetencionPorcentaje,
+            MetaGraduacionPorcentaje = configuracion.MetaGraduacionPorcentaje,
             EstudiantesPeriodo1 = configuracion.EstudiantesPeriodo1,
             EstudiantesPeriodo2 = configuracion.EstudiantesPeriodo2,
             ParalelosPeriodo1 = configuracion.ParalelosPeriodo1,
@@ -137,6 +173,7 @@ public sealed class RepositorioConfiguracionRetencion(ContextoAplicacion context
     public async Task ActualizarAsync(ConfiguracionRetencionDominio configuracion, int? actualizadoPorUsuarioId = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(configuracion);
+        await AsegurarEsquemaAsync(cancellationToken);
         Trace.TraceInformation($"[{DateTime.UtcNow:O}] ConfRetDB: actualizar id={configuracion.Id}, usuario={actualizadoPorUsuarioId}");
 
         var existente = await contextoAplicacion.ConfiguracionesRetencion
@@ -148,6 +185,8 @@ public sealed class RepositorioConfiguracionRetencion(ContextoAplicacion context
         existente.TotalCiclos = configuracion.TotalCiclos;
         existente.TasaRetencionPorcentaje = configuracion.TasaRetencionPorcentaje;
         existente.TasaGraduacionPorcentaje = configuracion.TasaGraduacionPorcentaje;
+        existente.MetaRetencionPorcentaje = configuracion.MetaRetencionPorcentaje;
+        existente.MetaGraduacionPorcentaje = configuracion.MetaGraduacionPorcentaje;
         existente.EstudiantesPeriodo1 = configuracion.EstudiantesPeriodo1;
         existente.EstudiantesPeriodo2 = configuracion.EstudiantesPeriodo2;
         existente.ParalelosPeriodo1 = configuracion.ParalelosPeriodo1;
@@ -190,6 +229,7 @@ public sealed class RepositorioConfiguracionRetencion(ContextoAplicacion context
             entidad.ParalelosPeriodo1,
             entidad.ParalelosPeriodo2);
 
+        dominio.CargarMetas(entidad.MetaRetencionPorcentaje, entidad.MetaGraduacionPorcentaje);
         dominio.RehidratarId(entidad.Id);
         return dominio;
     }

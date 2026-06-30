@@ -15,10 +15,14 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,12">
-            <TextBlock Text="{Binding TituloModulo}"
-                       FontSize="22"
-                       FontWeight="Bold"
-                       Foreground="#1A237E"/>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{Binding TituloModulo}"
+                           FontSize="22" FontWeight="Bold" Foreground="#1A237E"/>
+                <compartido:AyudaModulo Margin="10,0,0,0"
+                                        Titulo="Sueldos y Docentes"
+                                        Ingresar="Los cargos docentes y administrativos: tipo de contrato, sueldo y horas. Puedes generar los valores por defecto."
+                                        Resultados="El total de sueldos por período, el desglose de docentes (tiempo completo, medio tiempo y parcial) y el costo docente que entra a los costos."/>
+            </StackPanel>
             <TextBlock Text="Vista autogenerada por carrera, escenario y período. Datos: Capital de Trabajo + Proyección de Estudiantes + Inflación."
                        FontSize="12"
                        Foreground="#546E7A"

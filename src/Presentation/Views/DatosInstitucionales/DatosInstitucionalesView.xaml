@@ -2,7 +2,8 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:beh="clr-namespace:SistemaAranceles.Presentation.Behaviors"
-             xmlns:conv="clr-namespace:SistemaAranceles.Presentation.Converters">
+             xmlns:conv="clr-namespace:SistemaAranceles.Presentation.Converters"
+             xmlns:comp="clr-namespace:SistemaAranceles.Presentation.Views.Compartido">
         <UserControl.Resources>
                 <conv:DecimalStringConverter x:Key="DecimalStringConverter"/>
         </UserControl.Resources>
@@ -27,12 +28,14 @@
                                         <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
-                                <TextBlock Grid.Column="0"
-                                           Text="Datos Institucionales"
-                                           FontSize="18"
-                                           FontWeight="SemiBold"
-                                           Foreground="#1A237E"
-                                           VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="Datos Institucionales"
+                                                   FontSize="18" FontWeight="SemiBold" Foreground="#1A237E"/>
+                                        <comp:AyudaModulo Margin="10,0,0,0"
+                                                          Titulo="Datos Institucionales"
+                                                          Ingresar="Parámetros globales: TMR (tasa financiera y premio al riesgo), meses de capital de trabajo, % de investigación/vinculación/becas, financiamiento (préstamo/convenio), tolerancias de la búsqueda del arancel e impuestos."
+                                                          Resultados="No produce un reporte propio: estos parámetros alimentan TODOS los cálculos financieros (TMR, VAN, TIR y el arancel óptimo)."/>
+                                </StackPanel>
 
                                 <StackPanel Grid.Column="1"
                                             Orientation="Horizontal"

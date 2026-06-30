@@ -58,6 +58,10 @@ public sealed class ActualizarConfiguracionRetencionUseCase(
             dto.ParalelosPeriodo1,
             dto.ParalelosPeriodo2);
 
+        // Input principal: las metas acumuladas derivan las tasas por ciclo (ver DefinirMetas).
+        if (dto.MetaRetencionPorcentaje > 0m || dto.MetaGraduacionPorcentaje > 0m)
+            nuevaEntidad.DefinirMetas(dto.MetaRetencionPorcentaje, dto.MetaGraduacionPorcentaje);
+
         nuevaEntidad.RehidratarId(entidad.Id);
 
         try

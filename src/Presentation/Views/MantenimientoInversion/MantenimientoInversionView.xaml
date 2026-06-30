@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vM="clr-namespace:SistemaAranceles.Presentation.Views.Mantenimiento"
              xmlns:vAD="clr-namespace:SistemaAranceles.Presentation.Views.ActivoDiferido"
-             xmlns:vII="clr-namespace:SistemaAranceles.Presentation.Views.InversionInicial">
+             xmlns:vII="clr-namespace:SistemaAranceles.Presentation.Views.InversionInicial"
+             xmlns:comp="clr-namespace:SistemaAranceles.Presentation.Views.Compartido">
     <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -11,10 +12,14 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,8">
-            <TextBlock Text="Mantenimiento e Inversión"
-                       FontSize="22"
-                       FontWeight="Bold"
-                       Foreground="#1A237E"/>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Mantenimiento e Inversión"
+                           FontSize="22" FontWeight="Bold" Foreground="#1A237E"/>
+                <comp:AyudaModulo Margin="10,0,0,0"
+                                  Titulo="Mantenimiento e Inversión"
+                                  Ingresar="Los servicios y rubros de mantenimiento, los activos diferidos y las inversiones futuras previstas. Puedes generar los valores por defecto."
+                                  Resultados="El mantenimiento por período, la amortización de los diferidos y el cronograma de inversiones futuras, todo consolidado para los costos y el flujo."/>
+            </StackPanel>
             <TextBlock Text="Servicios y mantenimiento, activos diferidos e inversión inicial consolidada."
                        FontSize="12"
                        Foreground="#546E7A"

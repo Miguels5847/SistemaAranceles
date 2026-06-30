@@ -286,10 +286,14 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,8">
-            <TextBlock Text="Análisis Financiero"
-                       FontSize="22"
-                       FontWeight="Bold"
-                       Foreground="#1A237E"/>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Análisis Financiero"
+                           FontSize="22" FontWeight="Bold" Foreground="#1A237E"/>
+                <compartido:AyudaModulo Margin="10,0,0,0"
+                                        Titulo="Análisis Financiero"
+                                        Ingresar="Carrera y escenario; opcionalmente el arancel a evaluar. El resto se calcula con los Datos Institucionales."
+                                        Resultados="VAN, TIR, TMR, flujo de fondos, balance, punto de equilibrio, el arancel óptimo (VAN≈0) y los cuadros CES."/>
+            </StackPanel>
             <TextBlock Text="Pérdidas y Ganancias, Flujo de Fondos e indicadores financieros"
                        FontSize="12"
                        Foreground="#546E7A"

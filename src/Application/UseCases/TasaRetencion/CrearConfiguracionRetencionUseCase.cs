@@ -53,6 +53,11 @@ public sealed class CrearConfiguracionRetencionUseCase(
             dto.ParalelosPeriodo1,
             dto.ParalelosPeriodo2);
 
+        // Input principal: las metas acumuladas. Si vienen, derivan las tasas por ciclo (sobrescriben
+        // las del constructor); si no, se conserva el modo antiguo (tasa directa) por compatibilidad.
+        if (dto.MetaRetencionPorcentaje > 0m || dto.MetaGraduacionPorcentaje > 0m)
+            entidad.DefinirMetas(dto.MetaRetencionPorcentaje, dto.MetaGraduacionPorcentaje);
+
         // No hay duplicado ACTIVO, pero el índice único (carrera, escenario) cubre filas
         // borradas lógicamente. Si existe una fila inactiva para la misma combinación, se
         // reactiva en lugar de insertar; así no se dispara el error 23505.

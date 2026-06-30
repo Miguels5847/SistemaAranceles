@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:beh="clr-namespace:SistemaAranceles.Presentation.Behaviors"
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+             xmlns:comp="clr-namespace:SistemaAranceles.Presentation.Views.Compartido"
              Height="Auto" Width="Auto">
 
     <UserControl.Resources>
@@ -64,9 +65,14 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="Capital de Trabajo por Carrera"
-                   FontSize="18" FontWeight="Bold" Foreground="#1A237E"
-                   Margin="0,0,0,8"/>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="Capital de Trabajo por Carrera"
+                       FontSize="18" FontWeight="Bold" Foreground="#1A237E"/>
+            <comp:AyudaModulo Margin="10,0,0,0"
+                              Titulo="Capital de Trabajo"
+                              Ingresar="Casi todo se calcula. Los meses de capital de trabajo se definen en Datos Institucionales; aquí eliges carrera y escenario."
+                              Resultados="El capital de trabajo necesario (los meses de costos operativos del arranque) que se suma a la inversión inicial."/>
+        </StackPanel>
 
         <Border Grid.Row="1" BorderBrush="#D8DCE8" BorderThickness="0,0,0,1" Padding="0,0,0,8" Margin="0,0,0,8">
             <Grid>

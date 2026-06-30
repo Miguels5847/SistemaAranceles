@@ -31,8 +31,9 @@ public static class AjustesPorEscenario
 
     private static ValoresSugeridosDto Calcular(ConfiguracionRetencion h, int deltaRet, int deltaGrad, decimal factorEst)
     {
-        var retencion = Math.Round(Math.Clamp(h.TasaRetencionPorcentaje + deltaRet, 0m, 100m), 1);
-        var graduacion = Math.Round(Math.Clamp(h.TasaGraduacionPorcentaje + deltaGrad, 0m, 100m), 1);
+        // Los escenarios ajustan la META acumulada del histórico (input del usuario), no la tasa por ciclo.
+        var retencion = Math.Round(Math.Clamp(h.MetaRetencionPorcentaje + deltaRet, 0m, 100m), 1);
+        var graduacion = Math.Round(Math.Clamp(h.MetaGraduacionPorcentaje + deltaGrad, 0m, 100m), 1);
         var estP1 = Math.Round(h.EstudiantesPeriodo1 * factorEst, 0, MidpointRounding.AwayFromZero);
         var estP2 = Math.Round(h.EstudiantesPeriodo2 * factorEst, 0, MidpointRounding.AwayFromZero);
 

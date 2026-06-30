@@ -73,10 +73,14 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,8">
-            <TextBlock Text="Costos y Gastos"
-                       FontSize="22"
-                       FontWeight="Bold"
-                       Foreground="#1A237E"/>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Costos y Gastos"
+                           FontSize="22" FontWeight="Bold" Foreground="#1A237E"/>
+                <compartido:AyudaModulo Margin="10,0,0,0"
+                                        Titulo="Costos y Gastos"
+                                        Ingresar="Normalmente no se ingresa nada: consolida sueldos, materiales, mantenimiento, depreciación e inversiones. Solo eliges carrera y escenario."
+                                        Resultados="El total de costos y gastos por período, el costo por estudiante y, en la pestaña Costo de Carrera, lo que cuesta un estudiante toda la carrera."/>
+            </StackPanel>
             <TextBlock Text="Inv. Vin. Becas, Costos y Gastos, y Costo de la carrera (referencial)"
                        FontSize="12"
                        Foreground="#546E7A"

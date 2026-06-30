@@ -159,6 +159,8 @@ public sealed class ConfiguracionRetencion : EntidadBase
     public int TotalCiclos { get; set; }
     public decimal TasaRetencionPorcentaje { get; set; }
     public decimal TasaGraduacionPorcentaje { get; set; }
+    public decimal MetaRetencionPorcentaje { get; set; }
+    public decimal MetaGraduacionPorcentaje { get; set; }
     public decimal EstudiantesPeriodo1 { get; set; }
     public decimal EstudiantesPeriodo2 { get; set; }
     public int ParalelosPeriodo1 { get; set; }

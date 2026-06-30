@@ -58,7 +58,28 @@ public sealed class RepositorioCarrera(
     public async Task AgregarAsync(CarreraDominio carrera, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(carrera);
-        await repositorioGenerico.AgregarAsync(MapearAPersistencia(carrera), cancellationToken);
+
+        // El índice único IX_carrera_codigo cubre filas borradas lógicamente. Si el código ya existe en
+        // una fila INACTIVA (carrera eliminada y vuelta a generar), se revive en lugar de insertar; así
+        // no se dispara el 23505. Mismo patrón que configuracion_retencion.
+        var existente = await contextoAplicacion.Carreras
+            .FirstOrDefaultAsync(x => x.Codigo == carrera.Codigo, cancellationToken);
+
+        if (existente is not null)
+        {
+            existente.Nombre = carrera.Nombre;
+            existente.FacultadNombre = carrera.FacultadNombre;
+            existente.TotalCiclos = carrera.TotalCiclos;
+            existente.EstaActivo = true;
+            existente.EliminadoEn = null;
+            existente.EliminadoPorUsuarioId = null;
+            existente.ActualizadoEn = DateTime.UtcNow;
+        }
+        else
+        {
+            await repositorioGenerico.AgregarAsync(MapearAPersistencia(carrera), cancellationToken);
+        }
+
         cache.InvalidarCarreras();
     }
 

@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:beh="clr-namespace:SistemaAranceles.Presentation.Behaviors"
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+             xmlns:comp="clr-namespace:SistemaAranceles.Presentation.Views.Compartido"
              Height="Auto" Width="Auto">
 
     <UserControl.Resources>
@@ -45,8 +46,13 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="Reportes"
-                   FontSize="18" FontWeight="Bold" Foreground="#1A237E" Margin="0,0,0,8"/>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="Reportes" FontSize="18" FontWeight="Bold" Foreground="#1A237E"/>
+            <comp:AyudaModulo Margin="10,0,0,0"
+                              Titulo="Reportes"
+                              Ingresar="Carrera, escenario y la dirección (o secciones) que quieres incluir en el informe."
+                              Resultados="Un informe en PDF o Excel con el Resumen de Indicadores Clave, estudiantes, costos, arancel, VAN/TIR y más."/>
+        </StackPanel>
 
         <Border Grid.Row="1" Background="#EEF1FB" CornerRadius="6" Padding="10" Margin="0,0,0,8">
             <StackPanel>

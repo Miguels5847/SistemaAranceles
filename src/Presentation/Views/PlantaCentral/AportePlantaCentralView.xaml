@@ -1,7 +1,8 @@
 <UserControl x:Class="SistemaAranceles.Presentation.Views.PlantaCentral.AportePlantaCentralView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls">
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+             xmlns:comp="clr-namespace:SistemaAranceles.Presentation.Views.Compartido">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <Grid Margin="12">
             <Grid.RowDefinitions>
@@ -15,12 +16,14 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0"
-                       Text="Aporte de la carrera a Planta Central"
-                       FontSize="18"
-                       FontWeight="SemiBold"
-                       Foreground="#1A237E"
-                       Margin="0,0,0,10"/>
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Aporte de la carrera a Planta Central"
+                           FontSize="18" FontWeight="SemiBold" Foreground="#1A237E"/>
+                <comp:AyudaModulo Margin="10,0,0,0"
+                                  Titulo="Aporte a Planta Central"
+                                  Ingresar="Los aportes/cargos de la planta central (administración universitaria) asignados a la carrera, definidos en Datos Institucionales."
+                                  Resultados="El aporte de planta central por período (mensual, acumulado y promedio) que se incluye en los costos."/>
+            </StackPanel>
 
             <StackPanel Grid.Row="1" Margin="0,0,0,4">
                 <TextBlock Text="{Binding MensajeInfo}"

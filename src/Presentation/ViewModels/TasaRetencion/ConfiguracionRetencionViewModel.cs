@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SistemaAranceles.Application.DTOs.TasaRetencion;
 using SistemaAranceles.Application.Interfaces.Persistencia;
 using SistemaAranceles.Application.UseCases.TasaRetencion;
+using SistemaAranceles.Domain.Entities;
 using SistemaAranceles.Presentation.State;
 
 namespace SistemaAranceles.Presentation.ViewModels.TasaRetencion;
@@ -72,6 +73,29 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
 
     [ObservableProperty] private string _metaRetencion = "0";
     [ObservableProperty] private string _metaGraduacion = "0";
+
+    // Tasas POR CICLO derivadas de las metas (solo lectura: alimentan el cálculo). Se recalculan al
+    // cambiar la meta o el nº de ciclos, para que el usuario vea qué % por ciclo produce su meta.
+    public string TasaRetencionDerivadaTexto => DerivarTasaTexto(MetaRetencion, esRetencion: true);
+    public string TasaGraduacionDerivadaTexto => DerivarTasaTexto(MetaGraduacion, esRetencion: false);
+
+    partial void OnMetaRetencionChanged(string value) => OnPropertyChanged(nameof(TasaRetencionDerivadaTexto));
+    partial void OnMetaGraduacionChanged(string value) => OnPropertyChanged(nameof(TasaGraduacionDerivadaTexto));
+    partial void OnTotalCiclosChanged(string value)
+    {
+        OnPropertyChanged(nameof(TasaRetencionDerivadaTexto));
+        OnPropertyChanged(nameof(TasaGraduacionDerivadaTexto));
+    }
+
+    private string DerivarTasaTexto(string metaTexto, bool esRetencion)
+    {
+        if (!TryDecimal(metaTexto, out var meta) || meta <= 0m) return "-";
+        if (!int.TryParse(TotalCiclos, NumberStyles.Integer, CultureInfo.InvariantCulture, out var ciclos) || ciclos < 2)
+            return "-";
+        var pasos = esRetencion ? ConfiguracionRetencion.PasosRetencion(ciclos) : ConfiguracionRetencion.PasosGraduacion(ciclos);
+        var tasa = ConfiguracionRetencion.TasaPorCicloDesdeMeta(meta, pasos);
+        return $"{tasa.ToString("0.##", CultureInfo.InvariantCulture)} %";
+    }
 
     [ObservableProperty] private bool _estaEditando;
     [ObservableProperty] private bool _estaCargando;
@@ -254,8 +278,7 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
         try
         {
             using var scope = _serviceProvider.CreateScope();
-            var idConfig = await PersistirConfiguracionAsync(scope, datos!);
-            await GuardarCriterioSiAplicaAsync(scope, idConfig);
+            await PersistirConfiguracionAsync(scope, datos!);
 
             var fueActualizacion = EstaEditando && ConfiguracionSeleccionada is not null;
             await CargarAsync();
@@ -276,7 +299,7 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
     }
 
     private sealed record DatosFormulario(
-        int Ciclos, decimal TasaRet, decimal TasaGrad,
+        int Ciclos, decimal TasaRet, decimal TasaGrad, decimal MetaRet, decimal MetaGrad,
         decimal Est1, decimal Est2, int Par1, int Par2);
 
     private bool ValidarFormulario(out DatosFormulario? datos)
@@ -287,8 +310,10 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
         if (EscenarioSeleccionado is null) { MensajeError = "Seleccione un escenario."; return false; }
         if (!int.TryParse(TotalCiclos, NumberStyles.Integer, CultureInfo.InvariantCulture, out var ciclos))
         { MensajeError = "Total de ciclos invalido."; return false; }
-        if (!TryDecimal(TasaRetencion, out var tasaRet)) { MensajeError = "Tasa de retención inválida."; return false; }
-        if (!TryDecimal(TasaGraduacion, out var tasaGrad)) { MensajeError = "Tasa de graduación inválida."; return false; }
+        if (!TryDecimal(MetaRetencion, out var metaRet) || metaRet < 0m || metaRet > 100m)
+        { MensajeError = "Meta de retención inválida (0% a 100%)."; return false; }
+        if (!TryDecimal(MetaGraduacion, out var metaGrad) || metaGrad < 0m || metaGrad > 100m)
+        { MensajeError = "Meta de graduación inválida (0% a 100%)."; return false; }
         if (!TryDecimal(EstudiantesPeriodo1, out var est1)) { MensajeError = "Estudiantes período 1 inválido."; return false; }
         if (!TryDecimal(EstudiantesPeriodo2, out var est2)) { MensajeError = "Estudiantes período 2 inválido."; return false; }
         if (!int.TryParse(ParalelosPeriodo1, NumberStyles.Integer, CultureInfo.InvariantCulture, out var par1))
@@ -296,7 +321,11 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
         if (!int.TryParse(ParalelosPeriodo2, NumberStyles.Integer, CultureInfo.InvariantCulture, out var par2))
         { MensajeError = "Paralelos período 2 inválido."; return false; }
 
-        datos = new DatosFormulario(ciclos, tasaRet, tasaGrad, est1, est2, par1, par2);
+        // La tasa por ciclo (lo que alimenta el cálculo) se deriva de la meta acumulada.
+        var tasaRet = ConfiguracionRetencion.TasaPorCicloDesdeMeta(metaRet, ConfiguracionRetencion.PasosRetencion(ciclos));
+        var tasaGrad = ConfiguracionRetencion.TasaPorCicloDesdeMeta(metaGrad, ConfiguracionRetencion.PasosGraduacion(ciclos));
+
+        datos = new DatosFormulario(ciclos, tasaRet, tasaGrad, metaRet, metaGrad, est1, est2, par1, par2);
         return true;
     }
 
@@ -313,6 +342,8 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
                 TotalCiclos = d.Ciclos,
                 TasaRetencionPorcentaje = d.TasaRet,
                 TasaGraduacionPorcentaje = d.TasaGrad,
+                MetaRetencionPorcentaje = d.MetaRet,
+                MetaGraduacionPorcentaje = d.MetaGrad,
                 EstudiantesPeriodo1 = d.Est1,
                 EstudiantesPeriodo2 = d.Est2,
                 ParalelosPeriodo1 = d.Par1,
@@ -329,41 +360,13 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
             TotalCiclos = d.Ciclos,
             TasaRetencionPorcentaje = d.TasaRet,
             TasaGraduacionPorcentaje = d.TasaGrad,
+            MetaRetencionPorcentaje = d.MetaRet,
+            MetaGraduacionPorcentaje = d.MetaGrad,
             EstudiantesPeriodo1 = d.Est1,
             EstudiantesPeriodo2 = d.Est2,
             ParalelosPeriodo1 = d.Par1,
             ParalelosPeriodo2 = d.Par2
         }, _sesionActual.UsuarioId);
-    }
-
-    private async Task GuardarCriterioSiAplicaAsync(IServiceScope scope, int idConfig)
-    {
-        if (!TryDecimal(MetaRetencion, out var metaRet) || !TryDecimal(MetaGraduacion, out var metaGrad))
-            return;
-
-        if (metaRet <= 0m && metaGrad <= 0m)
-            return;
-
-        var repoCriterio = scope.ServiceProvider.GetRequiredService<IRepositorioCriterioReferenciaRetencion>();
-        var existe = await repoCriterio.ExistePorConfiguracionAsync(idConfig);
-
-        var dto = new GuardarCriterioReferenciaRetencionDto
-        {
-            ConfiguracionRetencionId = idConfig,
-            MetaRetencionPorcentaje = metaRet,
-            MetaGraduacionPorcentaje = metaGrad
-        };
-
-        if (existe)
-        {
-            var uc = scope.ServiceProvider.GetRequiredService<ActualizarCriterioReferenciaRetencionUseCase>();
-            await uc.EjecutarAsync(dto, _sesionActual.UsuarioId);
-        }
-        else
-        {
-            var uc = scope.ServiceProvider.GetRequiredService<CrearCriterioReferenciaRetencionUseCase>();
-            await uc.EjecutarAsync(dto, _sesionActual.UsuarioId);
-        }
     }
 
     [RelayCommand]
@@ -446,8 +449,9 @@ public sealed partial class ConfiguracionRetencionViewModel : ObservableObject
             var uc = scope.ServiceProvider.GetRequiredService<ObtenerValoresSugeridosParaEscenarioUseCase>();
             var result = await uc.EjecutarAsync(CarreraSeleccionada.Id, EscenarioSeleccionado.Descripcion);
 
-            TasaRetencion = result.Retencion.ToString(FmtDecimal, CultureInfo.InvariantCulture);
-            TasaGraduacion = result.Graduacion.ToString(FmtDecimal, CultureInfo.InvariantCulture);
+            // result.Retencion/Graduacion ahora representan METAS acumuladas (ajustadas desde el histórico).
+            MetaRetencion = result.Retencion.ToString(FmtDecimal, CultureInfo.InvariantCulture);
+            MetaGraduacion = result.Graduacion.ToString(FmtDecimal, CultureInfo.InvariantCulture);
             EstudiantesPeriodo1 = result.EstP1.ToString(FmtDecimal, CultureInfo.InvariantCulture);
             EstudiantesPeriodo2 = result.EstP2.ToString(FmtDecimal, CultureInfo.InvariantCulture);
             ParalelosPeriodo1 = result.ParP1.ToString(CultureInfo.InvariantCulture);

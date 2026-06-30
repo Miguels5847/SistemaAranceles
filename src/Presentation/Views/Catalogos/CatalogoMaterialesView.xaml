@@ -1,16 +1,22 @@
 <UserControl x:Class="SistemaAranceles.Presentation.Views.Catalogos.CatalogoMaterialesView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:SistemaAranceles.Presentation.ViewModels.Catalogos">
+             xmlns:vm="clr-namespace:SistemaAranceles.Presentation.ViewModels.Catalogos"
+             xmlns:comp="clr-namespace:SistemaAranceles.Presentation.Views.Compartido">
     <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Catálogo de Materiales y Suministros"
-                FontSize="16"
-                FontWeight="SemiBold"/>
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
+            <TextBlock Text="Catálogo de Materiales y Suministros"
+                    FontSize="16" FontWeight="SemiBold"/>
+            <comp:AyudaModulo Margin="8,0,0,0"
+                              Titulo="Catálogo de Materiales y Suministros"
+                              Ingresar="Los materiales e insumos con su categoría y unidad de medida."
+                              Resultados="La lista de materiales disponibles para asignar por carrera en la proyección de costos."/>
+        </StackPanel>
 
         <DataGrid Grid.Row="1"
                 ItemsSource="{Binding Items}"

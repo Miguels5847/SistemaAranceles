@@ -95,7 +95,13 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="Demanda e Ingresos" FontSize="18" FontWeight="Bold" Foreground="#1A237E" Margin="0,0,0,8"/>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="Demanda e Ingresos" FontSize="18" FontWeight="Bold" Foreground="#1A237E"/>
+            <compartido:AyudaModulo Margin="10,0,0,0"
+                                    Titulo="Demanda e Ingresos"
+                                    Ingresar="Carrera y escenario, y el arancel por semestre a evaluar (o usa el óptimo). Si aplican, los descuentos por ciclo."
+                                    Resultados="Cuántos estudiantes pagan por período, los ingresos por aranceles y matrícula, las becas institucionales y el costo por semestre referencial."/>
+        </StackPanel>
 
         <Border Grid.Row="1" BorderBrush="#D8DCE8" BorderThickness="0,0,0,1" Padding="0,0,0,8" Margin="0,0,0,8">
             <Grid>
