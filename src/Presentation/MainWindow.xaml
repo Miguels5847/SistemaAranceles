@@ -129,7 +129,8 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="220"/>
+            <!-- 240: deja espacio para nombres largos ("Recursos y Depreciación") + la barra de scroll. -->
+            <ColumnDefinition Width="240"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
@@ -173,6 +174,16 @@
                               HorizontalScrollBarVisibility="Disabled"
                               PanningMode="VerticalOnly"
                               CanContentScroll="False">
+                    <ScrollViewer.Resources>
+                        <!-- Variante oscura y delgada para el menú: pista invisible sobre el índigo
+                             y pulgar lila; no tapa los nombres de los módulos. -->
+                        <Style TargetType="ScrollBar" BasedOn="{StaticResource {x:Type ScrollBar}}">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Foreground" Value="#9FA8DA"/>
+                            <Setter Property="Width" Value="8"/>
+                            <Setter Property="MinWidth" Value="8"/>
+                        </Style>
+                    </ScrollViewer.Resources>
                     <ItemsControl ItemsSource="{Binding MenuItems}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>

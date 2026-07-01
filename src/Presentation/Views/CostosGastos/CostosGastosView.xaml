@@ -319,22 +319,8 @@
             </TabItem>
         </TabControl>
 
-        <Border Grid.Row="3"
-                Background="#B3FFFFFF"
-                Visibility="{Binding EstaCargando, Converter={StaticResource BoolToVisibilityConverter}}">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <ProgressBar IsIndeterminate="True"
-                             Width="220"
-                             Height="6"
-                             Foreground="#3949AB"/>
-                <TextBlock Text="Calculando costos y gastos…"
-                           Margin="0,10,0,0"
-                           HorizontalAlignment="Center"
-                           FontWeight="SemiBold"
-                           Foreground="#1A237E"/>
-            </StackPanel>
-        </Border>
-        <!-- KAN-49: estado vacio guiado + overlay de carga estandar -->
+        <!-- KAN-49: estado vacio guiado + overlay de carga estandar (único indicador de carga;
+             antes había además una barra lineal con el mismo EstaCargando = doble indicador). -->
         <compartido:AvisoSeleccionPendiente Grid.Row="2" Grid.RowSpan="97"/>
         <compartido:OverlayCarga Grid.Row="0" Grid.RowSpan="99"
                                  Visibility="{Binding EstaCargando, Converter={StaticResource BoolToVisibilityConverter}}"/>

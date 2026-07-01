@@ -31,11 +31,10 @@ public sealed class RatioMaterialDemandaDto
     public string CantidadFijaAdicionalDisplay => CantidadFijaAdicional.ToString("0.####");
     public string PrecioReferenciaDisplay => $"$ {PrecioUnitarioReferencia:N2}";
     public string InflacionDisplay => AplicaInflacion ? "Sí" : "No";
+    // Solo el nombre: la categoría entre paréntesis ensuciaba la columna "Item vinculado".
     public string ItemVinculadoDisplay => string.IsNullOrWhiteSpace(ItemMaterialInsumoNombre)
         ? "(sin item)"
-        : string.IsNullOrWhiteSpace(ItemMaterialInsumoCategoria)
-            ? ItemMaterialInsumoNombre
-            : $"{ItemMaterialInsumoNombre} ({ItemMaterialInsumoCategoria})";
+        : ItemMaterialInsumoNombre;
 }
 
 public sealed class GuardarRatioMaterialDemandaDto

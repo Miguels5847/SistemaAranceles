@@ -38,6 +38,9 @@
                 <Setter Property="Width" Value="14"/>
                 <Setter Property="MinWidth" Value="14"/>
                 <Setter Property="Background" Value="#EDEFF7"/>
+                <!-- Foreground = color del pulgar; los estados hover/arrastre solo cambian opacidad,
+                     así cada panel (claro u oscuro) puede recolorear la barra sin otro template. -->
+                <Setter Property="Foreground" Value="#7B89C4"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ScrollBar">
@@ -54,13 +57,14 @@
                                         <Thumb Focusable="False">
                                             <Thumb.Template>
                                                 <ControlTemplate TargetType="Thumb">
-                                                    <Border x:Name="Pulgar" Background="#BFC7E3" CornerRadius="5" Margin="2"/>
+                                                    <Border x:Name="Pulgar" CornerRadius="5" Margin="2" Opacity="0.55"
+                                                            Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ScrollBar}}"/>
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="Pulgar" Property="Background" Value="#8F9CCB"/>
+                                                            <Setter TargetName="Pulgar" Property="Opacity" Value="0.85"/>
                                                         </Trigger>
                                                         <Trigger Property="IsDragging" Value="True">
-                                                            <Setter TargetName="Pulgar" Property="Background" Value="#5C6BC0"/>
+                                                            <Setter TargetName="Pulgar" Property="Opacity" Value="1"/>
                                                         </Trigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
