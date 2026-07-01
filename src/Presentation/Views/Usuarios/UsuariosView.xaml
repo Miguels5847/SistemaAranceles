@@ -1,7 +1,8 @@
 ﻿<UserControl x:Class="SistemaAranceles.Presentation.Views.Usuarios.UsuariosView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:beh="clr-namespace:SistemaAranceles.Presentation.Behaviors">
+             xmlns:beh="clr-namespace:SistemaAranceles.Presentation.Behaviors"
+             xmlns:comp="clr-namespace:SistemaAranceles.Presentation.Views.Compartido">
 
         <Grid Margin="16">
                 <Grid.RowDefinitions>
@@ -21,6 +22,10 @@
                                    FontWeight="Bold"
                                    Foreground="#1A237E"
                                    VerticalAlignment="Center"/>
+                        <comp:AyudaModulo Margin="10,0,0,0"
+                                          Titulo="Gestión de Usuarios"
+                                          Ingresar="Los usuarios del sistema: nombre, correo institucional, contraseña, rol (Administrador, Financiero, etc.) y permisos individuales."
+                                          Resultados="La lista de usuarios activos, su rol y estado. Cada rol define qué módulos puede ver o editar cada persona."/>
                         <Button Content="+ Nuevo Usuario"
                                 Margin="20,0,0,0"
                                 Padding="12,6"

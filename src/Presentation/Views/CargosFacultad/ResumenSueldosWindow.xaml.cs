@@ -11,6 +11,11 @@ public partial class ResumenSueldosWindow : Window
     public ResumenSueldosWindow()
     {
         InitializeComponent();
+
+        // No exceder el área de trabajo del monitor (pantallas pequeñas tipo 1366x768).
+        var area = SystemParameters.WorkArea;
+        Width = Math.Min(Width, area.Width);
+        Height = Math.Min(Height, area.Height);
     }
 
     public void CargarResumen(ResumenSueldosVistaDto resumen)

@@ -1,5 +1,6 @@
 using System.Text;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace SistemaAranceles.Presentation.Views.Compartido;
 
@@ -36,6 +37,14 @@ public partial class AyudaModulo
             if (sb.Length > 0) sb.Append("\n\n");
             sb.Append("▸ QUÉ RESULTADOS VERÁS:\n").Append(c.Resultados);
         }
-        c.Badge.ToolTip = sb.ToString();
+
+        // TextBlock con wrap: un string plano produce un tooltip de una sola línea kilométrica.
+        c.Badge.ToolTip = new TextBlock
+        {
+            Text = sb.ToString(),
+            TextWrapping = TextWrapping.Wrap,
+            MaxWidth = 420,
+            FontSize = 12
+        };
     }
 }

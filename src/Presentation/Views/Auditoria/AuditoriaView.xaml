@@ -1,6 +1,7 @@
 <UserControl x:Class="SistemaAranceles.Presentation.Views.Auditoria.AuditoriaView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:comp="clr-namespace:SistemaAranceles.Presentation.Views.Compartido">
 
     <Grid Margin="16">
         <Grid.RowDefinitions>
@@ -11,12 +12,14 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0"
-                   Text="Audit Log - Acciones Críticas"
-                   FontSize="20"
-                   FontWeight="Bold"
-                   Foreground="#1A237E"
-                   Margin="0,0,0,12"/>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+            <TextBlock Text="Audit Log - Acciones Críticas"
+                       FontSize="20" FontWeight="Bold" Foreground="#1A237E"/>
+            <comp:AyudaModulo Margin="10,0,0,0"
+                              Titulo="Auditoría"
+                              Ingresar="Nada: este módulo es de solo lectura. Puedes filtrar por módulo, usuario o fecha."
+                              Resultados="El historial de acciones críticas (crear, editar, eliminar) con quién la hizo, cuándo y sobre qué registro."/>
+        </StackPanel>
 
         <Border Grid.Row="1"
                 BorderBrush="#C5CAE9"
