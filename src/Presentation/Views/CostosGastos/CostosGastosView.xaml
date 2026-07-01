@@ -78,8 +78,8 @@
                            FontSize="22" FontWeight="Bold" Foreground="#1A237E"/>
                 <compartido:AyudaModulo Margin="10,0,0,0"
                                         Titulo="Costos y Gastos"
-                                        Ingresar="Normalmente no se ingresa nada: consolida sueldos, materiales, mantenimiento, depreciación e inversiones. Solo eliges carrera y escenario."
-                                        Resultados="El total de costos y gastos por período, el costo por estudiante y, en la pestaña Costo de Carrera, lo que cuesta un estudiante toda la carrera."/>
+                                        Ingresar="Nada: esta ventana junta automáticamente los sueldos, materiales, mantenimiento, depreciación e inversiones ya registrados. Solo eliges carrera y escenario."
+                                        Resultados="Cuánto cuesta operar la carrera en cada período, el costo por estudiante y, en la pestaña Costo de Carrera, cuánto cuesta formar a UN estudiante durante toda la carrera."/>
             </StackPanel>
             <TextBlock Text="Inv. Vin. Becas, Costos y Gastos, y Costo de la carrera (referencial)"
                        FontSize="12"

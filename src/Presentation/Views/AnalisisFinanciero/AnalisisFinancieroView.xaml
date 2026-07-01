@@ -291,8 +291,8 @@
                            FontSize="22" FontWeight="Bold" Foreground="#1A237E"/>
                 <compartido:AyudaModulo Margin="10,0,0,0"
                                         Titulo="Análisis Financiero"
-                                        Ingresar="Carrera y escenario; opcionalmente el arancel a evaluar. El resto se calcula con los Datos Institucionales."
-                                        Resultados="VAN, TIR, TMR, flujo de fondos, balance, punto de equilibrio, el arancel óptimo (VAN≈0) y los cuadros CES."/>
+                                        Ingresar="Solo elige carrera y escenario; si quieres, prueba un arancel distinto al sugerido. Todo lo demás se calcula solo."
+                                        Resultados="Si la carrera es viable: VAN y TIR (pestaña Indicadores), el Arancel Óptimo (el valor a cobrar para que la carrera se pague sola), pérdidas y ganancias, flujo de fondos, balance, punto de equilibrio y los cuadros del CES."/>
             </StackPanel>
             <TextBlock Text="Pérdidas y Ganancias, Flujo de Fondos e indicadores financieros"
                        FontSize="12"

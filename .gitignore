@@ -17,6 +17,7 @@ SistemaAranceles-win64.zip
 
 # Configuración local de Claude Code
 .claude/
+.agents/
 
 # NuGet
 packages/

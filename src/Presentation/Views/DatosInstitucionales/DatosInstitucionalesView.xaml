@@ -33,8 +33,8 @@
                                                    FontSize="18" FontWeight="SemiBold" Foreground="#1A237E"/>
                                         <comp:AyudaModulo Margin="10,0,0,0"
                                                           Titulo="Datos Institucionales"
-                                                          Ingresar="Parámetros globales: TMR (tasa financiera y premio al riesgo), meses de capital de trabajo, % de investigación/vinculación/becas, financiamiento (préstamo/convenio), tolerancias de la búsqueda del arancel e impuestos."
-                                                          Resultados="No produce un reporte propio: estos parámetros alimentan TODOS los cálculos financieros (TMR, VAN, TIR y el arancel óptimo)."/>
+                                                          Ingresar="Los parámetros generales de la universidad: tasas para el rendimiento mínimo (TMR), meses de capital de trabajo, porcentajes de investigación, vinculación y becas, cómo se financia la inversión (préstamo o convenio) y si se aplican impuestos. Se configuran una sola vez y aplican a todas las carreras."
+                                                          Resultados="Esta ventana no genera un reporte propio: lo que se guarda aquí alimenta todos los cálculos financieros del sistema (VAN, TIR y el arancel óptimo)."/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="1"

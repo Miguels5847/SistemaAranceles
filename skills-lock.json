@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "design-review-process": {
+      "source": "owl-listener/designer-skills",
+      "sourceType": "github",
+      "skillPath": "design-ops/skills/design-review-process/SKILL.md",
+      "computedHash": "bd84c7079703dfa562efa3c2a8d0ab3e7130896337b0aa98eb27cba593b299cc"
+    },
+    "loading-states": {
+      "source": "owl-listener/designer-skills",
+      "sourceType": "github",
+      "skillPath": "interaction-design/skills/loading-states/SKILL.md",
+      "computedHash": "0fdc9b6e647d99cb08a69ce7f7f5beaaa236ee9c6791386e69d28af0f22fcd9c"
+    },
+    "state-machine": {
+      "source": "owl-listener/designer-skills",
+      "sourceType": "github",
+      "skillPath": "interaction-design/skills/state-machine/SKILL.md",
+      "computedHash": "f54f14a0555113cbf78a679890b7ba250915e48da8c998f98b86ffd0641c683c"
+    }
+  }
+}

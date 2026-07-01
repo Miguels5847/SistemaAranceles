@@ -17,6 +17,18 @@
                               Titulo="Gestión de Carreras"
                               Ingresar="Los datos de cada carrera: código, nombre, total de ciclos y modalidad."
                               Resultados="La lista de carreras sobre las que se hacen todas las proyecciones y cálculos del sistema."/>
+            <Button Margin="16,0,0,0" Padding="12,5" Cursor="Hand"
+                    Background="#1A237E" Foreground="White" FontWeight="SemiBold" FontSize="13"
+                    BorderThickness="0" Click="AbrirGuia_Click"
+                    ToolTip="Abre la guía paso a paso: qué botón pulsar en cada módulo, en orden, desde crear la carrera hasta exportar el reporte.">
+                <StackPanel Orientation="Horizontal">
+                    <Border Width="20" Height="20" CornerRadius="10" Background="White" Margin="0,0,8,0">
+                        <TextBlock Text="?" Foreground="#1A237E" FontWeight="Bold" FontSize="13"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Text="Guía completa: de la carrera al reporte" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
         </StackPanel>
 
         <StackPanel Grid.Row="1"
