@@ -132,6 +132,15 @@ scripts/             publicar.ps1 (ejecutable + zip), utilidades
 - **Mapeo EF explícito** a `snake_case` con `HasColumnName`.
 - **Permisos en runtime**: `SesionActual.TienePermiso("MOD.ACCION")`, con bypass del
   administrador donde aplica.
+- **Borrado lógico + índice único** (regla anti-23505): si una tabla usa soft delete y
+  tiene índice único, el índice debe ser **filtrado** (`WHERE esta_activo = TRUE`, como
+  `mantenimiento_servicio`) o el insert debe **revivir** la fila inactiva de la misma
+  clave (como `carrera`, `configuracion_retencion`, `proyeccion_estudiantes`). Nunca
+  insertar a ciegas.
+- **Sin dependencias ocultas entre carreras**: los datos por carrera se copian desde
+  plantillas/catálogos (siembra al crear la carrera o botón "Generar por defecto");
+  prohibido que una carrera "preste" sus filas a otra en tiempo de consulta — borrar la
+  carrera dueña rompería a las demás (bug de la plantilla de cargos, KAN-47).
 
 ## Configuración y ejecución
 

@@ -54,7 +54,7 @@
                 Background="#FDFEFF"
                 Padding="10"
                 Margin="0,0,0,8">
-            <StackPanel Orientation="Horizontal">
+            <WrapPanel>
                 <StackPanel Margin="0,0,12,0">
                     <TextBlock Text="Carrera"
                             FontSize="11"
@@ -95,29 +95,37 @@
                              Padding="6,4"/>
                 </StackPanel>
                 <StackPanel VerticalAlignment="Bottom"
-                        Orientation="Horizontal">
+                        Orientation="Horizontal"
+                        Margin="0,4,0,0">
                     <Button Content="Generar / Recalcular"
                             Command="{Binding GenerarCommand}"
-                            Padding="12,6"
+                            Padding="12,0"
+                            Height="30"
+                            VerticalAlignment="Bottom"
                             Background="#3949AB"
                             Foreground="White"
                             BorderThickness="0"/>
                     <Button Content="Cargos por defecto"
                             Command="{Binding GenerarCargosPorDefectoCommand}"
-                            Padding="12,6"
+                            ToolTip="Copia la plantilla de cargos (Decano, Secretario, docentes…) como cargos propios de esta carrera."
+                            Padding="12,0"
+                            Height="30"
+                            VerticalAlignment="Bottom"
                             Margin="8,0,0,0"
                             Background="#6D4C41"
                             Foreground="White"
                             BorderThickness="0"/>
                     <Button Content="Resumen Sueldos"
                             Command="{Binding MostrarResumenSueldosCommand}"
-                            Padding="12,6"
+                            Padding="12,0"
+                            Height="30"
+                            VerticalAlignment="Bottom"
                             Margin="8,0,0,0"
                             Background="#00897B"
                             Foreground="White"
                             BorderThickness="0"/>
                 </StackPanel>
-            </StackPanel>
+            </WrapPanel>
         </Border>
 
         <Border Grid.Row="3"
