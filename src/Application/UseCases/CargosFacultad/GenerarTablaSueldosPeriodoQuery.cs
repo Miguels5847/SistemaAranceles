@@ -80,21 +80,12 @@ public sealed class GenerarTablaSueldosPeriodoQuery(
 
         var cargos = await repositorioCargo.ListarPorCarreraAsync(carreraId, cancellationToken);
 
-        // Fallback: si la carrera seleccionada no tiene cargos en el catálogo,
-        // usar los de cualquier carrera que sí los tenga como plantilla compartida.
+        // Fallback: si la carrera seleccionada no tiene cargos propios, usar la plantilla
+        // compartida (la carrera con más cargos, aunque esté eliminada lógicamente). Antes se
+        // iteraban solo carreras ACTIVAS: al borrar la única carrera con cargos, todas las que
+        // dependían de la plantilla quedaban sin sueldos administrativos (Decano, Guardia...).
         if (cargos.Count == 0)
-        {
-            var todasLasCarreras = await repositorioCarrera.ListarAsync();
-            foreach (var c in todasLasCarreras.Where(x => x.Id != carreraId))
-            {
-                var alternativos = await repositorioCargo.ListarPorCarreraAsync(c.Id, cancellationToken);
-                if (alternativos.Count > 0)
-                {
-                    cargos = alternativos;
-                    break;
-                }
-            }
-        }
+            cargos = await repositorioCargo.ListarPlantillaCompartidaAsync(carreraId, cancellationToken);
 
         return new ContextoSueldosCarrera
         {

@@ -14,10 +14,13 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+        <StackPanel Grid.Row="0"
+                Margin="0,0,0,12">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="{Binding TituloModulo}"
-                           FontSize="22" FontWeight="Bold" Foreground="#1A237E"/>
+                           FontSize="22"
+                        FontWeight="Bold"
+                        Foreground="#1A237E"/>
                 <compartido:AyudaModulo Margin="10,0,0,0"
                                         Titulo="Sueldos y Docentes"
                                         Ingresar="Los cargos docentes y administrativos: tipo de contrato, sueldo y horas. Puedes generar los valores por defecto."
@@ -29,13 +32,15 @@
                        Margin="0,4,0,0"/>
         </StackPanel>
 
-        <StackPanel Grid.Row="1" Margin="0,0,0,8">
+        <StackPanel Grid.Row="1"
+                Margin="0,0,0,8">
             <TextBlock Text="{Binding MensajeError}"
                        Foreground="#C62828"
                        FontSize="12"
                        TextWrapping="Wrap"
                        Visibility="{Binding MensajeError, Converter={StaticResource StringToVisibilityConverter}}"/>
-            <TextBlock Text="{Binding MensajeExito}" beh:AutoOcultarMensaje.Habilitado="True"
+            <TextBlock Text="{Binding MensajeExito}"
+                    beh:AutoOcultarMensaje.Habilitado="True"
                        Foreground="#2E7D32"
                        FontSize="12"
                        TextWrapping="Wrap"
@@ -51,7 +56,9 @@
                 Margin="0,0,0,8">
             <StackPanel Orientation="Horizontal">
                 <StackPanel Margin="0,0,12,0">
-                    <TextBlock Text="Carrera" FontSize="11" Foreground="#546E7A"/>
+                    <TextBlock Text="Carrera"
+                            FontSize="11"
+                            Foreground="#546E7A"/>
                     <ComboBox ItemsSource="{Binding Carreras}"
                               SelectedItem="{Binding CarreraSeleccionada, Mode=TwoWay}"
                               DisplayMemberPath="Nombre"
@@ -59,7 +66,9 @@
                               Padding="6,4"/>
                 </StackPanel>
                 <StackPanel Margin="0,0,12,0">
-                    <TextBlock Text="Escenario" FontSize="11" Foreground="#546E7A"/>
+                    <TextBlock Text="Escenario"
+                            FontSize="11"
+                            Foreground="#546E7A"/>
                     <ComboBox ItemsSource="{Binding Escenarios}"
                               SelectedItem="{Binding EscenarioSeleccionado, Mode=TwoWay}"
                               DisplayMemberPath="Nombre"
@@ -68,7 +77,9 @@
                               Padding="6,4"/>
                 </StackPanel>
                 <StackPanel Margin="0,0,12,0">
-                    <TextBlock Text="Período" FontSize="11" Foreground="#546E7A"/>
+                    <TextBlock Text="Período"
+                            FontSize="11"
+                            Foreground="#546E7A"/>
                     <ComboBox ItemsSource="{Binding Periodos}"
                               SelectedItem="{Binding PeriodoSeleccionado, Mode=TwoWay}"
                               DisplayMemberPath="DisplayText"
@@ -76,16 +87,26 @@
                               Padding="6,4"/>
                 </StackPanel>
                 <StackPanel Margin="0,0,12,0">
-                    <TextBlock Text="Estudiantes UA" FontSize="11" Foreground="#546E7A"/>
+                    <TextBlock Text="Estudiantes UA"
+                            FontSize="11"
+                            Foreground="#546E7A"/>
                     <TextBox Text="{Binding EstudiantesUAInput, UpdateSourceTrigger=PropertyChanged}"
                              MinWidth="100"
                              Padding="6,4"/>
                 </StackPanel>
-                <StackPanel VerticalAlignment="Bottom" Orientation="Horizontal">
+                <StackPanel VerticalAlignment="Bottom"
+                        Orientation="Horizontal">
                     <Button Content="Generar / Recalcular"
                             Command="{Binding GenerarCommand}"
                             Padding="12,6"
                             Background="#3949AB"
+                            Foreground="White"
+                            BorderThickness="0"/>
+                    <Button Content="Cargos por defecto"
+                            Command="{Binding GenerarCargosPorDefectoCommand}"
+                            Padding="12,6"
+                            Margin="8,0,0,0"
+                            Background="#6D4C41"
                             Foreground="White"
                             BorderThickness="0"/>
                     <Button Content="Resumen Sueldos"
@@ -106,16 +127,25 @@
                 Background="#FCFDFF"
                 Padding="10"
                 Margin="0,0,0,8">
-            <UniformGrid Rows="1" Columns="2">
+            <UniformGrid Rows="1"
+                    Columns="2">
                 <StackPanel Margin="0,0,8,0">
-                    <TextBlock Text="Estudiantes carrera (período)" FontSize="11" Foreground="#546E7A"/>
+                    <TextBlock Text="Estudiantes carrera (período)"
+                            FontSize="11"
+                            Foreground="#546E7A"/>
                     <TextBlock Text="{Binding TextoEstudiantesCarrera}"
-                               FontSize="16" FontWeight="SemiBold" Foreground="#1A237E"/>
+                               FontSize="16"
+                            FontWeight="SemiBold"
+                            Foreground="#1A237E"/>
                 </StackPanel>
                 <StackPanel>
-                    <TextBlock Text="Inflación del año del período" FontSize="11" Foreground="#546E7A"/>
+                    <TextBlock Text="Inflación del año del período"
+                            FontSize="11"
+                            Foreground="#546E7A"/>
                     <TextBlock Text="{Binding TextoInflacionPeriodo}"
-                               FontSize="16" FontWeight="SemiBold" Foreground="#1A237E"/>
+                               FontSize="16"
+                            FontWeight="SemiBold"
+                            Foreground="#1A237E"/>
                 </StackPanel>
             </UniformGrid>
         </Border>
@@ -141,33 +171,50 @@
                       BorderBrush="#C5CAE9">
                 <DataGrid.RowStyle>
                     <Style TargetType="DataGridRow">
-                        <Setter Property="Foreground" Value="#263238"/>
+                        <Setter Property="Foreground"
+                                Value="#263238"/>
                         <Style.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#EEF2FF"/>
-                                <Setter Property="Foreground" Value="#1A237E"/>
+                            <Trigger Property="IsMouseOver"
+                                    Value="True">
+                                <Setter Property="Background"
+                                        Value="#EEF2FF"/>
+                                <Setter Property="Foreground"
+                                        Value="#1A237E"/>
                             </Trigger>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#E0E7FF"/>
-                                <Setter Property="Foreground" Value="#1A237E"/>
+                            <Trigger Property="IsSelected"
+                                    Value="True">
+                                <Setter Property="Background"
+                                        Value="#E0E7FF"/>
+                                <Setter Property="Foreground"
+                                        Value="#1A237E"/>
                             </Trigger>
                         </Style.Triggers>
                     </Style>
                 </DataGrid.RowStyle>
                 <DataGrid.CellStyle>
                     <Style TargetType="DataGridCell">
-                        <Setter Property="Background" Value="Transparent"/>
-                        <Setter Property="Foreground" Value="#263238"/>
-                        <Setter Property="BorderBrush" Value="Transparent"/>
-                        <Setter Property="BorderThickness" Value="0"/>
-                        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                        <Setter Property="Background"
+                                Value="Transparent"/>
+                        <Setter Property="Foreground"
+                                Value="#263238"/>
+                        <Setter Property="BorderBrush"
+                                Value="Transparent"/>
+                        <Setter Property="BorderThickness"
+                                Value="0"/>
+                        <Setter Property="FocusVisualStyle"
+                                Value="{x:Null}"/>
                         <Style.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Foreground" Value="#1A237E"/>
+                            <Trigger Property="IsMouseOver"
+                                    Value="True">
+                                <Setter Property="Foreground"
+                                        Value="#1A237E"/>
                             </Trigger>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#E0E7FF"/>
-                                <Setter Property="Foreground" Value="#1A237E"/>
+                            <Trigger Property="IsSelected"
+                                    Value="True">
+                                <Setter Property="Background"
+                                        Value="#E0E7FF"/>
+                                <Setter Property="Foreground"
+                                        Value="#1A237E"/>
                             </Trigger>
                         </Style.Triggers>
                     </Style>
@@ -216,11 +263,13 @@
                 Padding="0"
                 Margin="0,8,0,0">
             <StackPanel>
-                <Grid Background="#E3E8FF" Margin="0">
+                <Grid Background="#E3E8FF"
+                        Margin="0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="80"/>
                         <ColumnDefinition Width="100"/>
-                        <ColumnDefinition Width="*" MinWidth="180"/>
+                        <ColumnDefinition Width="*"
+                                MinWidth="180"/>
                         <ColumnDefinition Width="120"/>
                         <ColumnDefinition Width="100"/>
                         <ColumnDefinition Width="100"/>
@@ -229,27 +278,57 @@
                         <ColumnDefinition Width="130"/>
                         <ColumnDefinition Width="120"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="" Padding="6,6"/>
-                    <TextBlock Grid.Column="1" Text="" Padding="6,6"/>
-                    <TextBlock Grid.Column="2" Text="TOTALES"
-                               FontWeight="Bold" Foreground="#1A237E" Padding="6,6"/>
-                    <TextBlock Grid.Column="3" Text="{Binding TotalSueldoMensual, StringFormat={}{0:N2}}"
-                               FontWeight="SemiBold" Foreground="#1A237E" Padding="6,6"/>
-                    <TextBlock Grid.Column="4" Text="{Binding TotalDecimoTercero, StringFormat={}{0:N2}}"
-                               FontWeight="SemiBold" Foreground="#1A237E" Padding="6,6"/>
-                    <TextBlock Grid.Column="5" Text="{Binding TotalDecimoCuarto, StringFormat={}{0:N2}}"
-                               FontWeight="SemiBold" Foreground="#1A237E" Padding="6,6"/>
-                    <TextBlock Grid.Column="6" Text="{Binding TotalVacaciones, StringFormat={}{0:N2}}"
-                               FontWeight="SemiBold" Foreground="#1A237E" Padding="6,6"/>
-                    <TextBlock Grid.Column="7" Text="{Binding TotalFondoReserva, StringFormat={}{0:N2}}"
-                               FontWeight="SemiBold" Foreground="#1A237E" Padding="6,6"/>
-                    <TextBlock Grid.Column="8" Text="{Binding TotalAportePatronal, StringFormat={}{0:N2}}"
-                               FontWeight="SemiBold" Foreground="#1A237E" Padding="6,6"/>
-                    <TextBlock Grid.Column="9" Text="{Binding TotalSemestrePeriodo, StringFormat={}{0:N2}}"
-                               FontWeight="Bold" Foreground="#1A237E" Padding="6,6"/>
+                    <TextBlock Grid.Column="0"
+                            Text=""
+                            Padding="6,6"/>
+                    <TextBlock Grid.Column="1"
+                            Text=""
+                            Padding="6,6"/>
+                    <TextBlock Grid.Column="2"
+                            Text="TOTALES"
+                               FontWeight="Bold"
+                            Foreground="#1A237E"
+                            Padding="6,6"/>
+                    <TextBlock Grid.Column="3"
+                            Text="{Binding TotalSueldoMensual, StringFormat={}{0:N2}}"
+                               FontWeight="SemiBold"
+                            Foreground="#1A237E"
+                            Padding="6,6"/>
+                    <TextBlock Grid.Column="4"
+                            Text="{Binding TotalDecimoTercero, StringFormat={}{0:N2}}"
+                               FontWeight="SemiBold"
+                            Foreground="#1A237E"
+                            Padding="6,6"/>
+                    <TextBlock Grid.Column="5"
+                            Text="{Binding TotalDecimoCuarto, StringFormat={}{0:N2}}"
+                               FontWeight="SemiBold"
+                            Foreground="#1A237E"
+                            Padding="6,6"/>
+                    <TextBlock Grid.Column="6"
+                            Text="{Binding TotalVacaciones, StringFormat={}{0:N2}}"
+                               FontWeight="SemiBold"
+                            Foreground="#1A237E"
+                            Padding="6,6"/>
+                    <TextBlock Grid.Column="7"
+                            Text="{Binding TotalFondoReserva, StringFormat={}{0:N2}}"
+                               FontWeight="SemiBold"
+                            Foreground="#1A237E"
+                            Padding="6,6"/>
+                    <TextBlock Grid.Column="8"
+                            Text="{Binding TotalAportePatronal, StringFormat={}{0:N2}}"
+                               FontWeight="SemiBold"
+                            Foreground="#1A237E"
+                            Padding="6,6"/>
+                    <TextBlock Grid.Column="9"
+                            Text="{Binding TotalSemestrePeriodo, StringFormat={}{0:N2}}"
+                               FontWeight="Bold"
+                            Foreground="#1A237E"
+                            Padding="6,6"/>
                 </Grid>
-                <Border Background="#1A237E" Padding="12,8">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Border Background="#1A237E"
+                        Padding="12,8">
+                    <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right">
                         <TextBlock Text="TOTAL DEL PERÍODO:"
                                    FontSize="14"
                                    FontWeight="SemiBold"
@@ -266,19 +345,30 @@
             </StackPanel>
         </Border>
 
-        <Border Grid.Row="0" Grid.RowSpan="6"
+        <Border Grid.Row="0"
+                Grid.RowSpan="6"
                 Background="#B3FFFFFF"
                 Panel.ZIndex="10"
                 IsHitTestVisible="False"
                 Visibility="{Binding EstaProcesando, Converter={StaticResource BoolToVisibilityConverter}}">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <ProgressBar IsIndeterminate="True" Width="220" Height="6" Foreground="#1A237E"/>
-                <TextBlock Text="Cargando sueldos…" Margin="0,10,0,0" Foreground="#1A237E" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+            <StackPanel HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True"
+                        Width="220"
+                        Height="6"
+                        Foreground="#1A237E"/>
+                <TextBlock Text="Cargando sueldos…"
+                        Margin="0,10,0,0"
+                        Foreground="#1A237E"
+                        FontWeight="SemiBold"
+                        HorizontalAlignment="Center"/>
             </StackPanel>
         </Border>
         <!-- KAN-49: estado vacio guiado + overlay de carga estandar -->
-        <compartido:AvisoSeleccionPendiente Grid.Row="2" Grid.RowSpan="97"/>
-        <compartido:OverlayCarga Grid.Row="0" Grid.RowSpan="99"
+        <compartido:AvisoSeleccionPendiente Grid.Row="2"
+                Grid.RowSpan="97"/>
+        <compartido:OverlayCarga Grid.Row="0"
+                Grid.RowSpan="99"
                                  Visibility="{Binding EstaCargando, Converter={StaticResource BoolToVisibilityConverter}}"/>
     </Grid>
 </UserControl>

@@ -218,6 +218,12 @@ public sealed partial class CarrerasViewModel : ObservableObject
                     var sembrarDiferidos = scope.ServiceProvider
                         .GetRequiredService<SistemaAranceles.Application.UseCases.ActivoDiferido.GenerarActivosDiferidosPorDefectoCarreraCommand>();
                     await sembrarDiferidos.EjecutarAsync(creada.Id);
+
+                    // Cargos propios copiados de la plantilla compartida: la carrera nace con sus
+                    // sueldos (Decano, Secretario, docentes...) y no depende de otra carrera.
+                    var sembrarCargos = scope.ServiceProvider
+                        .GetRequiredService<SistemaAranceles.Application.UseCases.CargosFacultad.GenerarCargosPorDefectoCarreraCommand>();
+                    await sembrarCargos.EjecutarAsync(creada.Id);
                 }
 
                 await CargarAsync();

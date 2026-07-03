@@ -106,6 +106,39 @@ public class GenerarResumenSueldosPlantaCentralIntegrationTests
         Assert.Equal(0.25m, filaResumen.NumeroPersonas);
     }
 
+    [Fact]
+    public async Task PrepararContexto_SinCargosPropios_UsaPlantillaCompartidaAunqueLaCarreraDuenaEsteInactiva()
+    {
+        // Regresión: al borrar (lógicamente) la única carrera con cargos, las demás quedaban sin
+        // plantilla y Costos y Gastos advertía "No se encontró el cargo 'Decano'..." con sueldos 0.
+        var proyeccion = NuevaProyeccion((2026, 1, 100m));
+        var plantilla = new CargoFacultad(99, "Decano", "Directivo", 3000m, false);
+
+        var query = new GenerarTablaSueldosPeriodoQuery(
+            new RepositorioCargoFacultadSinCargosPropiosFake([plantilla]),
+            new RepositorioInflacionAnualFake(),
+            new RepositorioProyeccionEstudiantesFake(proyeccion),
+            new RepositorioCarreraFake());
+
+        var contexto = await query.PrepararContextoAsync(carreraId: 1, escenarioProyeccionId: 1);
+
+        Assert.NotNull(contexto);
+        Assert.Single(contexto!.Cargos);
+        Assert.Equal("Decano", contexto.Cargos[0].NombreCargo);
+    }
+
+    private sealed class RepositorioCargoFacultadSinCargosPropiosFake(IReadOnlyList<CargoFacultad> plantilla) : IRepositorioCargoFacultad
+    {
+        public Task<CargoFacultad?> ObtenerPorIdAsync(int id, CancellationToken ct = default) => Task.FromResult<CargoFacultad?>(null);
+        public Task<IReadOnlyList<CargoFacultad>> ListarPorCarreraAsync(int carreraId, CancellationToken ct = default)
+            => Task.FromResult<IReadOnlyList<CargoFacultad>>([]);
+        public Task<IReadOnlyList<CargoFacultad>> ListarPlantillaCompartidaAsync(int carreraExcluidaId, CancellationToken ct = default)
+            => Task.FromResult(plantilla);
+        public Task AgregarAsync(CargoFacultad cargo, CancellationToken ct = default) => Task.CompletedTask;
+        public void Actualizar(CargoFacultad cargo) { }
+        public void Eliminar(CargoFacultad cargo) { }
+    }
+
     private static DatosInstitucionales NuevoDatos(decimal totalMensual = 100000m, int estudiantesUniv = 10000)
     {
         return new DatosInstitucionales(
@@ -157,6 +190,8 @@ public class GenerarResumenSueldosPlantaCentralIntegrationTests
     {
         public Task<CargoFacultad?> ObtenerPorIdAsync(int id, CancellationToken ct = default) => Task.FromResult<CargoFacultad?>(cargos.FirstOrDefault());
         public Task<IReadOnlyList<CargoFacultad>> ListarPorCarreraAsync(int carreraId, CancellationToken ct = default)
+            => Task.FromResult(cargos);
+        public Task<IReadOnlyList<CargoFacultad>> ListarPlantillaCompartidaAsync(int carreraExcluidaId, CancellationToken ct = default)
             => Task.FromResult(cargos);
         public Task AgregarAsync(CargoFacultad cargo, CancellationToken ct = default) => Task.CompletedTask;
         public void Actualizar(CargoFacultad cargo) { }

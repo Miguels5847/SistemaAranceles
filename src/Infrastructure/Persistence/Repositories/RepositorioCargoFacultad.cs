@@ -22,6 +22,24 @@ public sealed class RepositorioCargoFacultad(ContextoAplicacion contextoAplicaci
         return lista.Select(MapearADominio).ToList();
     }
 
+    public async Task<IReadOnlyList<Domain.Entities.CargoFacultad>> ListarPlantillaCompartidaAsync(int carreraExcluidaId, CancellationToken ct = default)
+    {
+        // Carrera con más cargos = plantilla más completa; empate → menor id (determinista).
+        // A propósito NO se filtra por carrera activa: los cargos de una carrera borrada
+        // lógicamente siguen siendo una plantilla válida.
+        var plantillaCarreraId = await contextoAplicacion.CargosFacultad
+            .Where(x => x.CarreraId != carreraExcluidaId)
+            .GroupBy(x => x.CarreraId)
+            .OrderByDescending(g => g.Count())
+            .ThenBy(g => g.Key)
+            .Select(g => (int?)g.Key)
+            .FirstOrDefaultAsync(ct);
+
+        return plantillaCarreraId is null
+            ? []
+            : await ListarPorCarreraAsync(plantillaCarreraId.Value, ct);
+    }
+
     public async Task AgregarAsync(Domain.Entities.CargoFacultad cargo, CancellationToken ct = default)
         => await contextoAplicacion.CargosFacultad.AddAsync(MapearAInfra(cargo), ct);
 

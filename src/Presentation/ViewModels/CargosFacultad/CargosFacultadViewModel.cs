@@ -17,6 +17,8 @@ namespace SistemaAranceles.Presentation.ViewModels.CargosFacultad;
 
 public sealed partial class CargosFacultadViewModel : ObservableObject
 {
+    private const string MensajeAccesoDenegadoSueldos = "Acceso denegado al módulo de Sueldos.";
+
     private readonly IServiceProvider _serviceProvider;
     private readonly SesionActual _sesionActual;
     private readonly ConsolidadoEstudiantesActualState _consolidadoActualState;
@@ -106,14 +108,12 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
 
     partial void OnEstaCargandoChanged(bool value)
     {
-        _ = value;
-        OnPropertyChanged(nameof(EstaProcesando));
+        NotificarEstadoProcesando();
     }
 
     partial void OnEstaGenerandoChanged(bool value)
     {
-        _ = value;
-        OnPropertyChanged(nameof(EstaProcesando));
+        NotificarEstadoProcesando();
     }
 
     public static string TituloModulo => "Sueldos";
@@ -122,12 +122,17 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
 
     public string TextoEstudiantesCarrera => string.Format(CultureInfo.CurrentCulture, "{0:N0}", EstudiantesCarrera);
 
+    private void NotificarEstadoProcesando()
+    {
+        OnPropertyChanged(nameof(EstaProcesando));
+    }
+
     [RelayCommand]
     private async Task CargarAsync()
     {
         if (!PuedeVer)
         {
-            MensajeError = "Acceso denegado al módulo de Sueldos.";
+            MensajeError = MensajeAccesoDenegadoSueldos;
             return;
         }
 
@@ -274,7 +279,7 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
     {
         if (!PuedeVer)
         {
-            MensajeError = "Acceso denegado al módulo de Sueldos.";
+            MensajeError = MensajeAccesoDenegadoSueldos;
             return;
         }
 
@@ -362,11 +367,48 @@ public sealed partial class CargosFacultadViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task GenerarCargosPorDefectoAsync()
+    {
+        if (!PuedeVer)
+        {
+            MensajeError = MensajeAccesoDenegadoSueldos;
+            return;
+        }
+
+        if (CarreraSeleccionada is null)
+        {
+            MensajeError = "Seleccione una carrera antes de generar cargos por defecto.";
+            return;
+        }
+
+        try
+        {
+            int creados;
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var command = scope.ServiceProvider.GetRequiredService<GenerarCargosPorDefectoCarreraCommand>();
+                creados = await command.EjecutarAsync(CarreraSeleccionada.Id);
+            }
+
+            MensajeExito = creados > 0
+                ? $"Se generaron {creados} cargos por defecto."
+                : "La carrera ya tiene los cargos por defecto.";
+
+            if (EscenarioSeleccionado is not null && PeriodoSeleccionado is not null)
+                await GenerarAsync();
+        }
+        catch (Exception ex)
+        {
+            MensajeError = $"Error al generar cargos por defecto: {ObtenerDetalle(ex)}";
+        }
+    }
+
+    [RelayCommand]
     private async Task MostrarResumenSueldosAsync()
     {
         if (!PuedeVer)
         {
-            MensajeError = "Acceso denegado al módulo de Sueldos.";
+            MensajeError = MensajeAccesoDenegadoSueldos;
             return;
         }
 
